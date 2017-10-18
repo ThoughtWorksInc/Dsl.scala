@@ -27,7 +27,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
   val analyzerPlugin: AnalyzerPlugin = new AnalyzerPlugin {
     private val resetSymbol = symbolOf[EachOps.reset]
 
-    private val bangSymbol = typeOf[EachOps[Any]].member(TermName("!"))
+    private val EachSymbol = typeOf[EachOps[Any]].declaration(TermName("each"))
+    private val BangSymbol = typeOf[EachOps[Any]].declaration(TermName("unary_!").encodedName)
 
     override def canAdaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Boolean = {
       tree.tpe.annotations.exists { annotation =>
@@ -40,7 +41,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       val Seq(typedCpsTree) = tree.tpe.annotations.collect {
         case annotation if annotation.matches(resetSymbol) =>
           val cpsTree = attachment(identity)
-          println("replacing " + tree + " to " + cpsTree)
+//          reporter.info(tree.pos, s"Translating to continuation-passing style: $cpsTree", false)
           deact {
             typer.context.withMode(ContextMode.ReTyping) {
               typer.typed(cpsTree, Mode.EXPRmode)
@@ -63,7 +64,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       pt
     }
 
-    private def cps(tree: Tree)(continue: Tree => Tree): Tree = {
+    private def cpsAttachment(tree: Tree)(continue: Tree => Tree): Tree = {
       tree.attachments.get[EachAttachment] match {
         case Some(attachment) => attachment(continue)
         case None             => continue(tree)
@@ -74,7 +75,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
         case Nil =>
           continue(Nil)
         case head :: tail =>
-          cps(head) { headValue =>
+          cpsAttachment(head) { headValue =>
             cpsParameter(tail) { tailValues =>
               continue(headValue :: tailValues)
             }
@@ -93,10 +94,99 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           }
       }
     }
+
+    private def isCpsTree(tree: Tree) = {
+      def hasEachAttachment(child: Any): Boolean = {
+        child match {
+          case list: List[_]   => list.exists(hasEachAttachment)
+          case childTree: Tree => childTree.hasAttachment[EachAttachment]
+          case _               => false
+        }
+      }
+      tree.productIterator.exists(hasEachAttachment)
+    }
+
+    private def isEachMethod(tree: Tree): Boolean = {
+      val symbol = tree.symbol
+      symbol match {
+        case EachSymbol | BangSymbol => true
+        case _                       => false
+      }
+    }
     override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
-      def attachmentOption: Option[EachAttachment] = tree match {
-        case q"$eachOps.!" if eachOps.tpe <:< weakTypeOf[EachOps[Any]] =>
-          Some[EachAttachment] { continue: (Tree => Tree) =>
+      def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
+        tree match {
+          case q"$eachOps.!" if eachOps.tpe <:< weakTypeOf[EachOps[Any]] =>
+            val aName = currentUnit.freshTermName("a")
+            q"""
+            $eachOps { $aName: $tpe =>
+              ${continue(q"$aName")}
+            }
+            """
+          case q"$prefix.$method[..$typeParameters](...$parameterLists)" =>
+            cpsAttachment(prefix) { prefixValue =>
+              cpsParameterList(parameterLists) { parameterListsValues =>
+                atPos(tree.pos) {
+                  q"$prefixValue.$method[..$typeParameters](...$parameterListsValues)"
+                }
+              }
+            }
+          case Block(stats, expr) =>
+            def loop(stats: List[Tree]): Tree = {
+              stats match {
+                case Nil =>
+                  cpsAttachment(expr)(continue)
+                case head :: tail =>
+                  def notPure(head: Tree): List[Tree] = {
+                    if (head.isInstanceOf[Ident]) {
+                      Nil
+                    } else {
+                      head :: Nil
+                    }
+                  }
+                  cpsAttachment(head) { headValue =>
+                    q"..${notPure(headValue)}; ${loop(tail)}"
+                  }
+              }
+            }
+            loop(stats)
+          case If(cond, thenp, elsep) =>
+            val endIfName = currentUnit.freshTermName("endIf")
+            val ifResultName = currentUnit.freshTermName("ifResult")
+            val endIfBody = continue(q"$ifResultName")
+            atPos(tree.pos) {
+              cpsAttachment(cond) { condValue =>
+                atPos(tree.pos) {
+                  q"""
+                  @_root_.scala.inline def $endIfName($ifResultName: $tpe) = $endIfBody
+                  if ($condValue) ${cpsAttachment(thenp) { result =>
+                    q"$endIfName($result)"
+                  }} else ${cpsAttachment(elsep) { result =>
+                    q"$endIfName($result)"
+                  }}
+                  """
+                }
+              }
+            }
+        }
+      }
+      def checkResetAnnotation: Type = {
+        tree.attachments.get[Reset.type] match {
+          case None =>
+            tpe
+          case Some(_) =>
+            tpe.withAnnotations(List(Annotation(deact {
+              typer.context.withMode(ContextMode.NOmode) {
+                typer.typed(q"new _root_.com.thoughtworks.each.EachOps.reset()", Mode.EXPRmode)
+              }
+            })))
+        }
+      }
+      if (mode.inExprMode) {
+
+        if (isEachMethod(tree)) {
+          val q"$eachOps.$eachMethod" = tree
+          val attachment: EachAttachment = { continue: (Tree => Tree) =>
             val aName = currentUnit.freshTermName("a")
             atPos(tree.pos) {
               q"""
@@ -106,109 +196,15 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               """
             }
           }
-        case q"$prefix.$method[..$typeParameters](...$parameterLists)" =>
-          if (prefix.hasAttachment[EachAttachment] ||
-              parameterLists.exists(_.exists(_.hasAttachment[EachAttachment]))) {
-            Some[EachAttachment] { continue =>
-              cps(prefix) { prefixValue =>
-                cpsParameterList(parameterLists) { parameterListsValues =>
-                  atPos(tree.pos) {
-                    q"$prefixValue.$method[..$typeParameters](...$parameterListsValues)"
-                  }
-                }
-              }
-            }
-          } else {
-            None
-          }
-        case Block(stats, expr) =>
-          def loop(stats: List[Tree]): Option[EachAttachment] = {
-            stats match {
-              case Nil =>
-                expr.attachments.get[EachAttachment]
-              case head :: tail =>
-                def notPure(head: Tree): List[Tree] = {
-                  if (head.isInstanceOf[Ident]) {
-                    Nil
-                  } else {
-                    head :: Nil
-                  }
-                }
-                loop(tail) match {
-                  case Some(tailContinuation) =>
-                    head.attachments.get[EachAttachment] match {
-                      case Some(headContinuation) =>
-                        Some[EachAttachment] { (continue: Tree => Tree) =>
-                          headContinuation { headValue =>
-                            q"..${notPure(headValue)}; ${tailContinuation(continue)}"
-                          }
-                        }
-                      case None =>
-                        Some[EachAttachment] { (continue: Tree => Tree) =>
-                          q"..${notPure(head)}; ${tailContinuation(continue)}"
-                        }
-                    }
-                  case None =>
-                    head.attachments.get[EachAttachment] match {
-                      case Some(headContinuation) =>
-                        Some[EachAttachment] { (continue: Tree => Tree) =>
-                          headContinuation { headValue =>
-                            Block(notPure(headValue) ::: tail, continue(expr))
-                          }
-                        }
-                      case None =>
-                        None
-                    }
-                }
-            }
-          }
-          loop(stats)
-
-        case If(cond, thenp, elsep) =>
-          if (cond.hasAttachment[EachAttachment] || thenp.hasAttachment[EachAttachment] || elsep
-                .hasAttachment[EachAttachment]) {
-            Some[EachAttachment] { continue =>
-              val endIfName = currentUnit.freshTermName("endIf")
-              val ifResultName = currentUnit.freshTermName("ifResult")
-              val endIfBody = continue(q"$ifResultName")
-              atPos(tree.pos) {
-                cps(cond) { condValue =>
-                  q"""
-                  @_root_.scala.inline def $endIfName($ifResultName: $tpe) = $endIfBody
-                  if ($condValue) ${cps(thenp) { result =>
-                    q"$endIfName($result)"
-                  }} else ${cps(elsep) { result =>
-                    q"$endIfName($result)"
-                  }}
-                """
-                }
-              }
-            }
-
-          } else {
-            None
-          }
-        case _ =>
-          None
-      }
-
-      if (mode.inExprMode) {
-        attachmentOption match {
-          case None =>
-            tpe
-          case Some(attachment) =>
-            tree.updateAttachment(attachment)
-            tree.attachments.get[Reset.type] match {
-              case None =>
-                tpe
-              case Some(_) =>
-                tpe.withAnnotations(List(Annotation(deact {
-                  typer.context.withMode(ContextMode.NOmode) {
-                    typer.typed(q"new _root_.com.thoughtworks.each.EachOps.reset()", Mode.EXPRmode)
-                  }
-                })))
-            }
+          tree.updateAttachment[EachAttachment](attachment)
+          checkResetAnnotation
+        } else if (isCpsTree(tree)) {
+          tree.updateAttachment[EachAttachment](cps)
+          checkResetAnnotation
+        } else {
+          tpe
         }
+
       } else {
         tpe
       }
