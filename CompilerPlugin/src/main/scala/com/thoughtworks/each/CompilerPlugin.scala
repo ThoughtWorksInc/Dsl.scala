@@ -63,31 +63,31 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       pt
     }
 
-    private def listen(tree: Tree)(continue: Tree => Tree): Tree = {
+    private def cps(tree: Tree)(continue: Tree => Tree): Tree = {
       tree.attachments.get[EachAttachment] match {
         case Some(attachment) => attachment(continue)
         case None             => continue(tree)
       }
     }
-    private def listenParameter(parameters: List[Tree])(continue: List[Tree] => Tree): Tree = {
+    private def cpsParameter(parameters: List[Tree])(continue: List[Tree] => Tree): Tree = {
       parameters match {
         case Nil =>
           continue(Nil)
         case head :: tail =>
-          listen(head) { headValue =>
-            listenParameter(tail) { tailValues =>
+          cps(head) { headValue =>
+            cpsParameter(tail) { tailValues =>
               continue(headValue :: tailValues)
             }
           }
       }
     }
-    private def listenParameterList(parameterLists: List[List[Tree]])(continue: List[List[Tree]] => Tree): Tree = {
+    private def cpsParameterList(parameterLists: List[List[Tree]])(continue: List[List[Tree]] => Tree): Tree = {
       parameterLists match {
         case Nil =>
           continue(Nil)
         case headList :: tailList =>
-          listenParameter(headList) { headValue =>
-            listenParameterList(tailList) { tailValues =>
+          cpsParameter(headList) { headValue =>
+            cpsParameterList(tailList) { tailValues =>
               continue(headValue :: tailValues)
             }
           }
@@ -110,8 +110,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           if (prefix.hasAttachment[EachAttachment] ||
               parameterLists.exists(_.exists(_.hasAttachment[EachAttachment]))) {
             Some[EachAttachment] { continue =>
-              listen(prefix) { prefixValue =>
-                listenParameterList(parameterLists) { parameterListsValues =>
+              cps(prefix) { prefixValue =>
+                cpsParameterList(parameterLists) { parameterListsValues =>
                   atPos(tree.pos) {
                     q"$prefixValue.$method[..$typeParameters](...$parameterListsValues)"
                   }
@@ -172,12 +172,12 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               val ifResultName = currentUnit.freshTermName("ifResult")
               val endIfBody = continue(q"$ifResultName")
               atPos(tree.pos) {
-                listen(cond) { condValue =>
+                cps(cond) { condValue =>
                   q"""
                   @_root_.scala.inline def $endIfName($ifResultName: $tpe) = $endIfBody
-                  if ($condValue) ${listen(thenp) { result =>
+                  if ($condValue) ${cps(thenp) { result =>
                     q"$endIfName($result)"
-                  }} else ${listen(elsep) { result =>
+                  }} else ${cps(elsep) { result =>
                     q"$endIfName($result)"
                   }}
                 """

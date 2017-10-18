@@ -40,7 +40,7 @@ class EachOpsSpec extends FreeSpec with Matchers {
 
     "When create a continuation that uses Yield" - {
 
-      def yield42: Continuation[Stream[Int], Unit] = _ {
+      def yield4243: Continuation[Stream[Int], Unit] = _ {
         Yield(42).!
         Yield(43).!
       }
@@ -49,7 +49,7 @@ class EachOpsSpec extends FreeSpec with Matchers {
 
         def generator: Stream[Int] = {
           Yield(0).!
-          yield42.!
+          yield4243.!
           Yield(1).!
           Stream.empty
         }
