@@ -16,6 +16,28 @@ class EachOpsSpec extends FreeSpec with Matchers {
       }
     }
 
+    "When create a generator that contains conditional Yield" - {
+      def generator: Stream[Int] = {
+        if (false) {
+          Yield(0).!
+        }
+        if (true) {
+          Yield(1).!
+        }
+        if ({ Yield(2).!; false }) {
+          Yield(3).!
+        } else {
+          Yield(4).!
+        }
+        Stream.empty
+      }
+
+      "Then the generator should contains values in selected branches" in {
+        generator should be(Seq(1, 2, 4))
+      }
+
+    }
+
     "When create a continuation that uses Yield" - {
 
       def yield42: Continuation[Stream[Int], Unit] = _ {

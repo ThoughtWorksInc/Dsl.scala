@@ -25,7 +25,9 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     "A compiler plugin that converts native imperative syntax to monadic expressions or continuation-passing style expressions"
 
   val analyzerPlugin: AnalyzerPlugin = new AnalyzerPlugin {
-    val resetSymbol = symbolOf[EachOps.reset]
+    private val resetSymbol = symbolOf[EachOps.reset]
+
+    private val bangSymbol = typeOf[EachOps[Any]].member(TermName("!"))
 
     override def canAdaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Boolean = {
       tree.tpe.annotations.exists { annotation =>
@@ -35,16 +37,17 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
 
     override def adaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
       val Some(attachment) = tree.attachments.get[EachAttachment]
-      val Seq(result) = tree.tpe.annotations.collect {
+      val Seq(typedCpsTree) = tree.tpe.annotations.collect {
         case annotation if annotation.matches(resetSymbol) =>
+          val cpsTree = attachment(identity)
+          println("replacing " + tree + " to " + cpsTree)
           deact {
             typer.context.withMode(ContextMode.ReTyping) {
-              typer.typed(attachment(identity), Mode.EXPRmode)
+              typer.typed(cpsTree, Mode.EXPRmode)
             }
           }
       }
-//      println("replace " + tree + " to " + result)
-      result
+      typedCpsTree
     }
 
     override def pluginsPt(pt: Type, typer: Typer, tree: Tree, mode: Mode): Type = {
@@ -150,7 +153,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                       case Some(headContinuation) =>
                         Some[EachAttachment] { (continue: Tree => Tree) =>
                           headContinuation { headValue =>
-                            Block(notPure(headValue) ::: tail, expr)
+                            Block(notPure(headValue) ::: tail, continue(expr))
                           }
                         }
                       case None =>
@@ -160,6 +163,31 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }
           }
           loop(stats)
+
+        case If(cond, thenp, elsep) =>
+          if (cond.hasAttachment[EachAttachment] || thenp.hasAttachment[EachAttachment] || elsep
+                .hasAttachment[EachAttachment]) {
+            Some[EachAttachment] { continue =>
+              val endIfName = currentUnit.freshTermName("endIf")
+              val ifResultName = currentUnit.freshTermName("ifResult")
+              val endIfBody = continue(q"$ifResultName")
+              atPos(tree.pos) {
+                listen(cond) { condValue =>
+                  q"""
+                  @_root_.scala.inline def $endIfName($ifResultName: $tpe) = $endIfBody
+                  if ($condValue) ${listen(thenp) { result =>
+                    q"$endIfName($result)"
+                  }} else ${listen(elsep) { result =>
+                    q"$endIfName($result)"
+                  }}
+                """
+                }
+              }
+            }
+
+          } else {
+            None
+          }
         case _ =>
           None
       }
