@@ -2,9 +2,9 @@ libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value 
 
 autoCompilerPlugins := true
 
-scalacOptions in Compile ++= {
-  if(scalaBinaryVersion.value == "2.11") {
-    Seq("–Xexperimental")
+scalacOptions ++= {
+  if (scalaBinaryVersion.value == "2.11") {
+    Seq("–Yexperimental")
   } else {
     Seq()
   }
