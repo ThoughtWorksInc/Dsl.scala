@@ -40,7 +40,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       val Some(attachment) = tree.attachments.get[EachAttachment]
       val Seq(typedCpsTree) = tree.tpe.annotations.collect {
         case annotation if annotation.matches(resetSymbol) =>
-          val cpsTree = attachment(identity)
+          val cpsTree = resetAttrs(attachment(identity))
 //          reporter.info(tree.pos, s"Translating to continuation-passing style: $cpsTree", false)
           deact {
             typer.context.withMode(ContextMode.ReTyping) {
@@ -116,19 +116,22 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
       def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
         tree match {
-          case q"$eachOps.!" if eachOps.tpe <:< weakTypeOf[EachOps[Any]] =>
-            val aName = currentUnit.freshTermName("a")
-            q"""
-            $eachOps { $aName: $tpe =>
-              ${continue(q"$aName")}
-            }
-            """
           case q"$prefix.$method[..$typeParameters](...$parameterLists)" =>
             cpsAttachment(prefix) { prefixValue =>
               cpsParameterList(parameterLists) { parameterListsValues =>
                 atPos(tree.pos) {
                   q"$prefixValue.$method[..$typeParameters](...$parameterListsValues)"
                 }
+              }
+            }
+          // TODO: lazy val
+          case ValDef(mods, name, tpt, rhs) =>
+            cpsAttachment(rhs) { rhsValue =>
+              atPos(tree.pos) {
+                q"""
+                ${treeCopy.ValDef(tree, mods, name, tpt, rhsValue)}
+                ${continue(q"()")}
+                """
               }
             }
           case Block(stats, expr) =>
@@ -154,20 +157,47 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             val endIfName = currentUnit.freshTermName("endIf")
             val ifResultName = currentUnit.freshTermName("ifResult")
             val endIfBody = continue(q"$ifResultName")
-            atPos(tree.pos) {
-              cpsAttachment(cond) { condValue =>
-                atPos(tree.pos) {
-                  q"""
-                  @_root_.scala.inline def $endIfName($ifResultName: $tpe) = $endIfBody
-                  if ($condValue) ${cpsAttachment(thenp) { result =>
-                    q"$endIfName($result)"
-                  }} else ${cpsAttachment(elsep) { result =>
-                    q"$endIfName($result)"
-                  }}
-                  """
-                }
+            q"""
+            @_root_.scala.inline def $endIfName($ifResultName: $tpe) = $endIfBody
+            ${cpsAttachment(cond) { condValue =>
+              atPos(tree.pos) {
+                q"""
+                if ($condValue) ${cpsAttachment(thenp) { result =>
+                  q"$endIfName($result)"
+                }} else ${cpsAttachment(elsep) { result =>
+                  q"$endIfName($result)"
+                }}
+                """
               }
+            }}
+            """
+          case _: CaseDef =>
+            // This CaseDef tree contains some bang notations, and will be translated by enclosing Try tree, not here
+            EmptyTree
+          case Try(block, catches, finalizer) =>
+            val finalizerName = currentUnit.freshTermName("finalizer")
+            val tryResultName = currentUnit.freshTermName("tryResult")
+            q"""
+            @_root_.scala.inline def $finalizerName($tryResultName: $tpe) = ${cpsAttachment(finalizer) {
+              finalizerValue =>
+                q"""
+                $finalizerValue
+                ${continue(q"$tryResultName")}
+              """
+            }}
+            ${cpsAttachment(block) { blockValue =>
+              q"$finalizerName($blockValue)"
+            }}.partialCatch {
+              case ..${catches.map {
+              case caseDef @ CaseDef(pat, guard, body) =>
+                atPos(caseDef.pos) {
+                  CaseDef(pat, guard, cpsAttachment(body) { bodyValue =>
+                    q"$finalizerName($bodyValue)"
+                  })
+                }
+            }}
             }
+            """
         }
       }
       def checkResetAnnotation: Type = {
@@ -183,7 +213,6 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
         }
       }
       if (mode.inExprMode) {
-
         if (isEachMethod(tree)) {
           val q"$eachOps.$eachMethod" = tree
           val attachment: EachAttachment = { continue: (Tree => Tree) =>

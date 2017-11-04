@@ -98,6 +98,35 @@ class EachOpsSpec extends FreeSpec with Matchers {
       }
 
     }
+
+    "try/catch" in {
+
+      def continuation: Continuation[TryContinuation[Stream[Int]], String] = _ {
+        !Yield(0)
+        val tryResult = try {
+          !Yield(1)
+          (0 / 0)
+          !Yield(2)
+          "try"
+        } catch {
+          case e: ArithmeticException =>
+            !Yield(3)
+            "catch"
+        } finally {
+          !Yield(4)
+          "finally"
+        }
+        !Yield(5)
+        "returns " + tryResult
+      }
+
+      continuation { result: String =>
+        result should be("returns catch")
+        TryContinuation.success(Stream.empty)
+      }.underlying { e =>
+        Stream.empty
+      } should be(Seq(0, 1, 3, 4, 5))
+    }
   }
 
 }
@@ -146,7 +175,25 @@ object EachOpsSpec {
   }
 
   // TODO: Make it an opacity type
-  final case class TryContinuation[R](underlying: Continuation[R, Throwable])
+  final case class TryContinuation[R](underlying: Continuation[R, Throwable]) {
+
+    def partialCatch(f: PartialFunction[Throwable, TryContinuation[R]]): TryContinuation[R] = {
+
+      TryContinuation { failureHandler =>
+        underlying { e =>
+          object Extractor {
+            def unapply(e: Throwable): Option[TryContinuation[R]] = f.lift(e)
+          }
+
+          e match {
+            case Extractor(handled) => handled.underlying(failureHandler)
+            case _                  => failureHandler(e)
+          }
+        }
+      }
+    }
+  }
+
   object TryContinuation {
     def success[R](r: R): TryContinuation[R] = TryContinuation(Function.const(r))
     def failure[R](e: Throwable): TryContinuation[R] = TryContinuation(_(e))
