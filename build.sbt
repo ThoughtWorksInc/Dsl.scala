@@ -10,11 +10,13 @@ lazy val Await = project.dependsOn(Continuation)
 
 lazy val Yield = project.dependsOn(Continuation, Await % Test)
 
-lazy val `scalaz-bind` = project
+lazy val ScalazBind = project.dependsOn(Continuation, Await % Test, Yield % Test)
 
-lazy val `cats-flatmap` = project
+lazy val CatsFlatMap = project.dependsOn(Continuation)
 
 organization in ThisBuild := "com.thoughtworks.each"
+
+scalacOptions in ScalazBind in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
 
 scalacOptions in Yield in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
 
