@@ -2,7 +2,6 @@ package com.thoughtworks.each
 
 import com.thoughtworks.each.Await.AsyncFunction
 import org.scalatest.{FreeSpec, Matchers}
-import scalaz.std.list._
 import scalaz.std.stream._
 
 import scalaz.OptionT
@@ -59,11 +58,11 @@ class ScalazBindSpec extends FreeSpec with Matchers {
   }
 
   "Given a monadic expression that contains a Scalaz OptionT" - {
-    def myOptionalList: OptionT[List, String] = {
-      val threadId = !ScalazBind(List(0, 1, 2))
-      val subThreadId = !ScalazBind(OptionT(List(Some(10), None, Some(30))))
-      val subSubThreadId = !ScalazBind(OptionT(List(Some(100), Some(200), None)))
-      OptionT[List, String](List(Some(s"Fork thread $threadId-$subThreadId-$subSubThreadId")))
+    def myOptionalList: OptionT[Stream, String] = {
+      val threadId = !ScalazBind(Stream(0, 1, 2))
+      val subThreadId = !ScalazBind(OptionT(Stream(Some(10), None, Some(30))))
+      val subSubThreadId = !ScalazBind(OptionT(Stream(Some(100), Some(200), None)))
+      OptionT[Stream, String](Stream(Some(s"Fork thread $threadId-$subThreadId-$subSubThreadId")))
     }
 
     "Then it should skips those elements that contains a None" in {
