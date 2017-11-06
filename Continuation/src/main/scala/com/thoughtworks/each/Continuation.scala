@@ -9,6 +9,7 @@ import scala.annotation.compileTimeOnly
   * @tparam Value The value held inside `Instruction`.
   * @author 杨博 (Yang Bo)
   */
+// TODO: Rename to CpsApply
 trait Continuation[-Instruction, State, +Value] {
 
   /** Registers an asynchronous callback function on `instruction`, to handle the `Value` when it complete */
@@ -40,14 +41,14 @@ object Continuation {
       """Magic call to `!` method requires compiler plugin: `addCompilerPlugin("com.thoughtworks.each" %% "compilerplugin" % "latest.release")`""")
     final def unary_! : Value = ???
 
-    //    def apply[State1, State0](handler: Value => State1)(implicit lift: Lift[State0, State], constraint: State1 <:< State0): State0 = {
+    //    def cpsApply[State1, State0](handler: Value => State1)(implicit lift: Lift[State0, State], constraint: State1 <:< State0): State0 = {
     //      // FIXME: Use <:<.substitute instead of asInstanceOf for Scala 2.13
     //      val substitution = handler.asInstanceOf[Value => State0]
     //      lift.lift(underlying)(substitution)
     //    }
     final def cpsApply[State](handler: Value => State)(
-        implicit continuation: Continuation[Instruction, State, Value]): State = {
-      continuation.cpsApply(self, handler)
+        implicit typeClass: Continuation[Instruction, State, Value]): State = {
+      typeClass.cpsApply(self, handler)
     }
   }
 }
