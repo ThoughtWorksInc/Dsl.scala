@@ -1,5 +1,7 @@
 package com.thoughtworks.each
 
+import com.thoughtworks.each.annotations.{reset, shift}
+
 import scala.tools.nsc.{Global, Mode, Phase}
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.typechecker.ContextMode
@@ -25,10 +27,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     "A compiler plugin that converts native imperative syntax to monadic expressions or continuation-passing style expressions"
 
   val analyzerPlugin: AnalyzerPlugin = new AnalyzerPlugin {
-    private val resetSymbol = symbolOf[EachOps.reset]
-
-    private val EachSymbol = typeOf[EachOps[Any]].declaration(TermName("each"))
-    private val BangSymbol = typeOf[EachOps[Any]].declaration(TermName("unary_!").encodedName)
+    private val resetSymbol = symbolOf[reset]
+    private val shiftSymbol = symbolOf[shift]
 
     override def canAdaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Boolean = {
       tree.tpe.annotations.exists { annotation =>
@@ -106,13 +106,6 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       tree.productIterator.exists(hasEachAttachment)
     }
 
-    private def isEachMethod(tree: Tree): Boolean = {
-      val symbol = tree.symbol
-      symbol match {
-        case EachSymbol | BangSymbol => true
-        case _                       => false
-      }
-    }
     override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
       def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
         tree match {
@@ -158,7 +151,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             val ifResultName = currentUnit.freshTermName("ifResult")
             val endIfBody = continue(q"$ifResultName")
             q"""
-            @_root_.scala.inline def $endIfName($ifResultName: $tpe) = $endIfBody
+            @${definitions.ScalaInlineClass} def $endIfName($ifResultName: $tpe) = $endIfBody
             ${cpsAttachment(cond) { condValue =>
               atPos(tree.pos) {
                 q"""
@@ -178,7 +171,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             val finalizerName = currentUnit.freshTermName("finalizer")
             val tryResultName = currentUnit.freshTermName("tryResult")
             q"""
-            @_root_.scala.inline def $finalizerName($tryResultName: $tpe) = ${cpsAttachment(finalizer) {
+            @${definitions.ScalaInlineClass} def $finalizerName($tryResultName: $tpe) = ${cpsAttachment(finalizer) {
               finalizerValue =>
                 q"""
                 $finalizerValue
@@ -187,7 +180,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }}
             ${cpsAttachment(block) { blockValue =>
               q"$finalizerName($blockValue)"
-            }}.partialCatch {
+            }}.cpsCatch {
               case ..${catches.map {
               case caseDef @ CaseDef(pat, guard, body) =>
                 atPos(caseDef.pos) {
@@ -207,19 +200,20 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           case Some(_) =>
             tpe.withAnnotations(List(Annotation(deact {
               typer.context.withMode(ContextMode.NOmode) {
-                typer.typed(q"new _root_.com.thoughtworks.each.EachOps.reset()", Mode.EXPRmode)
+                typer.typed(q"new $resetSymbol()", Mode.EXPRmode)
               }
             })))
         }
       }
       if (mode.inExprMode) {
-        if (isEachMethod(tree)) {
+        val symbol = tree.symbol
+        if (symbol != null && symbol.hasAnnotation(shiftSymbol)) {
           val q"$eachOps.$eachMethod" = tree
           val attachment: EachAttachment = { continue: (Tree => Tree) =>
             val aName = currentUnit.freshTermName("a")
             atPos(tree.pos) {
               q"""
-                $eachOps { $aName: $tpe =>
+                $eachOps.cpsApply { $aName: $tpe =>
                   ${continue(q"$aName")}
                 }
               """
