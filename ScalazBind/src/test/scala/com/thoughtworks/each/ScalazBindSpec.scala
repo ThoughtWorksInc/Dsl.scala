@@ -59,6 +59,7 @@ class ScalazBindSpec extends FreeSpec with Matchers {
 
   "Given a monadic expression that contains a Scalaz OptionT" - {
     def myOptionalList: OptionT[Stream, String] = {
+      // TODO: Is it possible to have `Yield` expressions here?
       val threadId = !ScalazBind(Stream(0, 1, 2))
       val subThreadId = !ScalazBind(OptionT(Stream(Some(10), None, Some(30))))
       val subSubThreadId = !ScalazBind(OptionT(Stream(Some(100), Some(200), None)))
