@@ -1,27 +1,39 @@
-lazy val CompilerPlugin = project.dependsOn(annotations % Provided)
+lazy val `delimitedcontinuation-annotations` = project
 
-lazy val annotations = project
+lazy val `delimitedcontinuation-CompilerPlugin` = project.dependsOn(`delimitedcontinuation-annotations` % Provided)
 
-lazy val Continuation = project.dependsOn(annotations)
+lazy val Dsl = project.dependsOn(`delimitedcontinuation-annotations`)
 
-lazy val MayFail = project.dependsOn(Continuation, Await % Test, Yield % Test)
+lazy val `states-MayFail` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
 
-lazy val Await = project.dependsOn(Continuation)
+lazy val `instructions-Await` = project.dependsOn(Dsl)
 
-lazy val Yield = project.dependsOn(Continuation, Await % Test)
+lazy val `instructions-Each` = project.dependsOn(Dsl)
 
-lazy val ScalazBind = project.dependsOn(Continuation, Await % Test, Yield % Test)
+lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Await` % Test)
 
-lazy val CatsFlatMap = project.dependsOn(Continuation)
+lazy val `instructions-ScalazBind` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
 
-organization in ThisBuild := "com.thoughtworks.each"
+lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl)
 
-scalacOptions in ScalazBind in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
+organization in ThisBuild := "com.thoughtworks.dsl"
 
-scalacOptions in Yield in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
+scalacOptions in `instructions-ScalazBind` in Test += raw"""-Xplugin:${(packageBin in `delimitedcontinuation-CompilerPlugin` in Compile).value}"""
 
-scalacOptions in Await in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
+scalacOptions in `instructions-Yield` in Test += raw"""-Xplugin:${(packageBin in `delimitedcontinuation-CompilerPlugin` in Compile).value}"""
 
-scalacOptions in MayFail in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
+scalacOptions in `instructions-Await` in Test += raw"""-Xplugin:${(packageBin in `delimitedcontinuation-CompilerPlugin` in Compile).value}"""
+
+scalacOptions in `states-MayFail` in Test += raw"""-Xplugin:${(packageBin in `delimitedcontinuation-CompilerPlugin` in Compile).value}"""
 
 crossScalaVersions in ThisBuild := Seq("2.11.11", "2.12.4")
+
+lazy val unidoc =
+  project
+    .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
+    .settings(
+      UnidocKeys.unidocProjectFilter in ScalaUnidoc in UnidocKeys.unidoc := inAggregates(LocalRootProject),
+      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
+      scalacOptions += "-Xexperimental",
+      scalacOptions += "-Ypartial-unification"
+    )
