@@ -15,13 +15,14 @@ lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Await` % Te
 
 lazy val `instructions-ScalazBind` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
 
-lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl)
+lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
 for {
   testingProject <- Seq(
     `instructions-Await`,
+    `instructions-CatsFlatMap`,
     `instructions-Each`,
     `instructions-ScalazBind`,
     `instructions-Yield`,
