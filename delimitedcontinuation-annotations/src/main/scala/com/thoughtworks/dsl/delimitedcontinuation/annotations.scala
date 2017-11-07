@@ -92,7 +92,7 @@ import scala.annotation.{StaticAnnotation, TypeConstraint}
 object annotations {
 
   /** An annotation to explicitly perform reset control operator on a code block. */
-  final class reset extends StaticAnnotation with TypeConstraint
+  final class reset extends StaticAnnotation
 
   /** An annotation to mark a method is a shift control operator. */
   final class shift extends StaticAnnotation

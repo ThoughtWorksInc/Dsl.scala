@@ -31,9 +31,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     private val shiftSymbol = symbolOf[shift]
 
     override def canAdaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Boolean = {
-      tree.tpe.annotations.exists { annotation =>
-        annotation.matches(resetSymbol)
-      }
+      mode.inExprMode && tree.tpe.hasAnnotation(resetSymbol)
     }
 
     override def adaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
@@ -41,7 +39,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       val Seq(typedCpsTree) = tree.tpe.annotations.collect {
         case annotation if annotation.matches(resetSymbol) =>
           val cpsTree = resetAttrs(attachment(identity))
-//          reporter.info(tree.pos, s"Translating to continuation-passing style: $cpsTree", false)
+//          reporter.info(tree.pos, s"Translating to continuation-passing style: $cpsTree", true)
           deact {
             typer.context.withMode(ContextMode.ReTyping) {
               typer.typed(cpsTree, Mode.EXPRmode)
@@ -58,6 +56,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             function.body.updateAttachment(Reset)
           case defDef: DefDef =>
             defDef.rhs.updateAttachment(Reset)
+          case implDef: ImplDef =>
+            implDef.impl.body.foreach(_.updateAttachment(Reset))
           case _ =>
         }
       }
