@@ -9,7 +9,7 @@ lazy val `domains-ExceptionHandling` = project.dependsOn(Dsl, `instructions-Awai
 
 lazy val `instructions-Await` = project.dependsOn(Dsl)
 
-lazy val `instructions-Each` = project.dependsOn(Dsl)
+lazy val `instructions-Each` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
 
 lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Await` % Test)
 
@@ -22,6 +22,7 @@ organization in ThisBuild := "com.thoughtworks.dsl"
 for {
   testingProject <- Seq(
     `instructions-Await`,
+    `instructions-Each`,
     `instructions-ScalazBind`,
     `instructions-Yield`,
     `domains-ExceptionHandling`,
