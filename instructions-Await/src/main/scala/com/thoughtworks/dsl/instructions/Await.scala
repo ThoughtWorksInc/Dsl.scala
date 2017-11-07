@@ -12,7 +12,7 @@ final case class Await[Domain, A](continuation: (A => Domain) => Domain)
 
 object Await {
 
-  implicit def awaitCps[Domain, A]: Dsl[Await[Domain, A], Domain, A] =
+  implicit def awaitDsl[Domain, A]: Dsl[Await[Domain, A], Domain, A] =
     new Dsl[Await[Domain, A], Domain, A] {
       def interpret(self: Await[Domain, A], mapper: A => Domain): Domain = self.continuation(mapper)
     }
