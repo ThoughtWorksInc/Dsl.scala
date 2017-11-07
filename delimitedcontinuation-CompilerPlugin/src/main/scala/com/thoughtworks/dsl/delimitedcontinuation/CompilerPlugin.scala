@@ -17,7 +17,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
   import global._
   import global.analyzer._
 
-  private type EachAttachment = (Tree => Tree) => Tree
+  private type CpsAttachment = (Tree => Tree) => Tree
 
   val name: String = "delimitedcontinuation"
 
@@ -37,7 +37,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     }
 
     override def adaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
-      val Some(attachment) = tree.attachments.get[EachAttachment]
+      val Some(attachment) = tree.attachments.get[CpsAttachment]
       val Seq(typedCpsTree) = tree.tpe.annotations.collect {
         case annotation if annotation.matches(resetSymbol) =>
           val cpsTree = resetAttrs(attachment(identity))
@@ -65,7 +65,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     }
 
     private def cpsAttachment(tree: Tree)(continue: Tree => Tree): Tree = {
-      tree.attachments.get[EachAttachment] match {
+      tree.attachments.get[CpsAttachment] match {
         case Some(attachment) => attachment(continue)
         case None             => continue(tree)
       }
@@ -96,14 +96,14 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     }
 
     private def isCpsTree(tree: Tree) = {
-      def hasEachAttachment(child: Any): Boolean = {
+      def hasCpsAttachment(child: Any): Boolean = {
         child match {
-          case list: List[_]   => list.exists(hasEachAttachment)
-          case childTree: Tree => childTree.hasAttachment[EachAttachment]
+          case list: List[_]   => list.exists(hasCpsAttachment)
+          case childTree: Tree => childTree.hasAttachment[CpsAttachment]
           case _               => false
         }
       }
-      tree.productIterator.exists(hasEachAttachment)
+      tree.productIterator.exists(hasCpsAttachment)
     }
 
     override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
@@ -125,6 +125,12 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                 ${treeCopy.ValDef(tree, mods, name, tpt, rhsValue)}
                 ${continue(q"()")}
                 """
+              }
+            }
+          case Typed(expr, tpt) =>
+            cpsAttachment(expr) { exprValue =>
+              atPos(tree.pos) {
+                continue(treeCopy.Typed(tree, exprValue, tpt))
               }
             }
           case Block(stats, expr) =>
@@ -193,7 +199,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             """
         }
       }
-      def checkResetAnnotation: Type = {
+      def checkResetAttachment: Type = {
         tree.attachments.get[Reset.type] match {
           case None =>
             tpe
@@ -207,9 +213,9 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       }
       if (mode.inExprMode) {
         val symbol = tree.symbol
-        if (symbol != null && symbol.hasAnnotation(shiftSymbol)) {
+        if (symbol != null && symbol.hasAnnotation(shiftSymbol) && !tree.isDef) {
           val q"$shiftOps.$shiftMethod" = tree
-          val attachment: EachAttachment = { continue: (Tree => Tree) =>
+          val attachment: CpsAttachment = { continue: (Tree => Tree) =>
             val aName = currentUnit.freshTermName("a")
             atPos(tree.pos) {
               q"""
@@ -219,11 +225,11 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               """
             }
           }
-          tree.updateAttachment[EachAttachment](attachment)
-          checkResetAnnotation
+          tree.updateAttachment[CpsAttachment](attachment)
+          checkResetAttachment
         } else if (isCpsTree(tree)) {
-          tree.updateAttachment[EachAttachment](cps)
-          checkResetAnnotation
+          tree.updateAttachment[CpsAttachment](cps)
+          checkResetAttachment
         } else {
           tpe
         }
