@@ -43,7 +43,7 @@ import scala.annotation.{StaticAnnotation, TypeConstraint}
   *          explicitResetResult should be(42)
   *          }}}
   *
-  *          and the result differs if you move the position of [[reset]] annotation.
+  *          and the result differs if you move the [[reset]] annotation.
   *
   *          {{{
   *          val explicitResetResult2 = {
