@@ -4,16 +4,16 @@ import com.thoughtworks.dsl.delimitedcontinuation.annotations.shift
 
 import scala.annotation.compileTimeOnly
 
-/** The domain-specific interpreter for `Instruction`,
-  * which is a dependent type type class that registers an asynchronous callback function on `Instruction`,
-  * to handle the `Value` when it complete.
+/** The domain-specific interpreter for `Instruction` in `Domain`,
+  * which is a dependent type type class that registers an asynchronous callback function,
+  * to handle the `Value` inside `Instruction`.
   *
   * @tparam Value The value held inside `Instruction`.
   * @author 杨博 (Yang Bo)
   */
 trait Dsl[-Instruction, Domain, +Value] {
 
-  /** Registers an asynchronous callback function on `instruction`, to handle the `Value` when it complete */
+  /** Registers an asynchronous callback `handler` on `instruction`, to handle the `Value`. */
   def interpret(instruction: Instruction, handler: Value => Domain): Domain
 
 }
