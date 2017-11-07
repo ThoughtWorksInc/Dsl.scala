@@ -4,7 +4,7 @@ lazy val `delimitedcontinuation-CompilerPlugin` = project.dependsOn(`delimitedco
 
 lazy val Dsl = project.dependsOn(`delimitedcontinuation-annotations`)
 
-lazy val `states-MayFail` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
+lazy val `domains-MayFail` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
 
 lazy val `instructions-Await` = project.dependsOn(Dsl)
 
@@ -24,7 +24,7 @@ scalacOptions in `instructions-Yield` in Test += raw"""-Xplugin:${(packageBin in
 
 scalacOptions in `instructions-Await` in Test += raw"""-Xplugin:${(packageBin in `delimitedcontinuation-CompilerPlugin` in Compile).value}"""
 
-scalacOptions in `states-MayFail` in Test += raw"""-Xplugin:${(packageBin in `delimitedcontinuation-CompilerPlugin` in Compile).value}"""
+scalacOptions in `domains-MayFail` in Test += raw"""-Xplugin:${(packageBin in `delimitedcontinuation-CompilerPlugin` in Compile).value}"""
 
 crossScalaVersions in ThisBuild := Seq("2.11.11", "2.12.4")
 

@@ -6,15 +6,15 @@ import com.thoughtworks.dsl.Dsl.Instruction
 /**
   * @author 杨博 (Yang Bo)
   */
-final case class Await[State, A](asyncFunction: (A => State) => State)
+final case class Await[Domain, A](continuation: (A => Domain) => Domain)
     extends AnyVal
-    with Instruction[Await[State, A], A]
+    with Instruction[Await[Domain, A], A]
 
 object Await {
 
-  implicit def awaitCps[State, A]: Dsl[Await[State, A], State, A] =
-    new Dsl[Await[State, A], State, A] {
-      def interpret(self: Await[State, A], mapper: A => State): State = self.asyncFunction(mapper)
+  implicit def awaitCps[Domain, A]: Dsl[Await[Domain, A], Domain, A] =
+    new Dsl[Await[Domain, A], Domain, A] {
+      def interpret(self: Await[Domain, A], mapper: A => Domain): Domain = self.continuation(mapper)
     }
 
 }

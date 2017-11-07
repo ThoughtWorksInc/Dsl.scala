@@ -11,17 +11,17 @@ import scala.annotation.compileTimeOnly
   * @tparam Value The value held inside `Instruction`.
   * @author 杨博 (Yang Bo)
   */
-trait Dsl[-Instruction, State, +Value] {
+trait Dsl[-Instruction, Domain, +Value] {
 
   /** Registers an asynchronous callback function on `instruction`, to handle the `Value` when it complete */
-  def interpret(instruction: Instruction, handler: Value => State): State
+  def interpret(instruction: Instruction, handler: Value => Domain): Domain
 
 }
 
 object Dsl {
 
-  def apply[Instruction, State, Value](
-      implicit typeClass: Dsl[Instruction, State, Value]): Dsl[Instruction, State, Value] =
+  def apply[Instruction, Domain, Value](
+      implicit typeClass: Dsl[Instruction, Domain, Value]): Dsl[Instruction, Domain, Value] =
     typeClass
 
   /**
@@ -36,12 +36,12 @@ object Dsl {
       """Magic call to `!` method requires compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "delimitedcontinuation-compilerplugin" % "latest.release")`""")
     final def unary_! : Value = ???
 
-    //    def cpsApply[State1, State0](handler: Value => State1)(implicit lift: Lift[State0, State], constraint: State1 <:< State0): State0 = {
+    //    def cpsApply[Domain1, Domain0](handler: Value => Domain1)(implicit lift: Lift[Domain0, Domain], constraint: Domain1 <:< Domain0): Domain0 = {
     //      // FIXME: Use <:<.substitute instead of asInstanceOf for Scala 2.13
-    //      val substitution = handler.asInstanceOf[Value => State0]
+    //      val substitution = handler.asInstanceOf[Value => Domain0]
     //      lift.lift(underlying)(substitution)
     //    }
-    final def cpsApply[State](handler: Value => State)(implicit dsl: Dsl[Self, State, Value]): State = {
+    final def cpsApply[Domain](handler: Value => Domain)(implicit dsl: Dsl[Self, Domain, Value]): Domain = {
       dsl.interpret(this, handler)
     }
 

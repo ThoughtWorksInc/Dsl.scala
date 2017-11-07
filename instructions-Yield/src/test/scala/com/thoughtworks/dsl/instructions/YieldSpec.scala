@@ -6,7 +6,7 @@ import org.scalatest.{FreeSpec, Matchers}
   * @author 杨博 (Yang Bo)
   */
 class YieldSpec extends FreeSpec with Matchers {
-  type AsyncFunction[State, +A] = (A => State) => State
+  type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
   "Given a generator that contains conditional Yield" - {
     def generator = {

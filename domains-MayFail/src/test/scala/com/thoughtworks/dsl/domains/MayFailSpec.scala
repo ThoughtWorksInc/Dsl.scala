@@ -1,4 +1,4 @@
-package com.thoughtworks.dsl.states
+package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.instructions.Yield
 import org.scalatest.{FreeSpec, Matchers}
@@ -7,7 +7,7 @@ import org.scalatest.{FreeSpec, Matchers}
   * @author 杨博 (Yang Bo)
   */
 final class MayFailSpec extends FreeSpec with Matchers {
-  type AsyncFunction[State, +A] = (A => State) => State
+  type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
   "Given a continuation that throws an exception" - {
     object MyException extends Exception

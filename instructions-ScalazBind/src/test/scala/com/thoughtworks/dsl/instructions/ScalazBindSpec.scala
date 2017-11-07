@@ -9,7 +9,7 @@ import scalaz.std.stream._
   * @author 杨博 (Yang Bo)
   */
 class ScalazBindSpec extends FreeSpec with Matchers {
-  type AsyncFunction[State, +A] = (A => State) => State
+  type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
   "Given a continuation that uses Yield and ScalazBind expressions" - {
 
