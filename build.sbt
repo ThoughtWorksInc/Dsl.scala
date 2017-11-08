@@ -45,3 +45,5 @@ lazy val unidoc =
       scalacOptions += "-Xexperimental",
       scalacOptions += "-Ypartial-unification"
     )
+
+publishArtifact := false
