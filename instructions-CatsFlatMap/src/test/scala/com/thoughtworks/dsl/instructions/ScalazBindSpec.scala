@@ -19,13 +19,13 @@ class CatsFlatMapSpec extends FreeSpec with Matchers {
       !Yield("Leaving asyncFunction")
     }
 
-    "When create a generator that contains Yield, Await, and CatsFlatMap expressions" - {
+    "When create a generator that contains Yield, Shift, and CatsFlatMap expressions" - {
 
       def generator: Stream[String] = {
         !Yield("Entering generator")
         val threadId = !CatsFlatMap(Stream(0, 1))
         !Yield(s"Fork thread $threadId")
-        !Await(asyncFunction)
+        !Shift(asyncFunction)
         Stream("Leaving generator")
       }
 

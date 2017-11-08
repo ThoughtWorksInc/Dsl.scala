@@ -20,13 +20,13 @@ class ScalazBindSpec extends FreeSpec with Matchers {
       !Yield("Leaving asyncFunction")
     }
 
-    "When create a generator that contains Yield, Await, and ScalazBind expressions" - {
+    "When create a generator that contains Yield, Shift, and ScalazBind expressions" - {
 
       def generator: Stream[String] = {
         !Yield("Entering generator")
         val threadId = !ScalazBind(Stream(0, 1))
         !Yield(s"Fork thread $threadId")
-        !Await(asyncFunction)
+        !Shift(asyncFunction)
         Stream("Leaving generator")
       }
 

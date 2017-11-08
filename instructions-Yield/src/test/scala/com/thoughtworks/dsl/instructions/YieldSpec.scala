@@ -2,11 +2,33 @@ package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
 
+import scala.annotation.tailrec
+
 /**
   * @author 杨博 (Yang Bo)
   */
 class YieldSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
+
+  "tailrec" in {
+
+    def bar: Stream[Int] = {
+
+      @tailrec
+      @inline
+      def foo(i: Int): Int = {
+        if (i > 100) {
+//          !Yield(0)
+          i
+        } else {
+          foo(i + 1)
+        }
+      }
+
+      Stream(-foo(90))
+    }
+
+  }
 
   "Given a generator that contains conditional Yield" - {
     def generator = {
@@ -41,7 +63,7 @@ class YieldSpec extends FreeSpec with Matchers {
 
       def generator: Stream[Int] = {
         !Yield(0)
-        !Await(yield4243)
+        !Shift(yield4243)
         !Yield(1)
         Stream.empty[Int]
       }

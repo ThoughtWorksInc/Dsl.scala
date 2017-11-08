@@ -5,23 +5,23 @@ lazy val `delimitedcontinuation-CompilerPlugin` =
 
 lazy val Dsl = project.dependsOn(`delimitedcontinuation-annotations`)
 
-lazy val `domains-ExceptionHandling` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
+lazy val `domains-ExceptionHandling` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
-lazy val `instructions-Await` = project.dependsOn(Dsl)
+lazy val `instructions-Shift` = project.dependsOn(Dsl)
 
-lazy val `instructions-Each` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
+lazy val `instructions-Each` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
-lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Await` % Test)
+lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Shift` % Test)
 
-lazy val `instructions-ScalazBind` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
+lazy val `instructions-ScalazBind` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
-lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl, `instructions-Await` % Test, `instructions-Yield` % Test)
+lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
 for {
   testingProject <- Seq(
-    `instructions-Await`,
+    `instructions-Shift`,
     `instructions-CatsFlatMap`,
     `instructions-Each`,
     `instructions-ScalazBind`,
