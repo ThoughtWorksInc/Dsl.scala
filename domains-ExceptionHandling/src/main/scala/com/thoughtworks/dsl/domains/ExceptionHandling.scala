@@ -12,26 +12,38 @@ import scala.util.control.NonFatal
 trait ExceptionHandling[OtherDomain] { self =>
   def onFailure(handler: Throwable => OtherDomain): OtherDomain
 
-  final def cpsCatch(catcher: Catcher[ExceptionHandling[OtherDomain]]): ExceptionHandling[OtherDomain] =
-    new ExceptionHandling[OtherDomain] {
-      def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
-        self.onFailure { e =>
-          object Extractor {
-            def unapply(e: Throwable): Option[ExceptionHandling[OtherDomain]] = catcher.lift(e)
-          }
-
-          e match {
-            case Extractor(handled) => handled.onFailure(failureHandler)
-            case _                  => failureHandler(e)
-          }
-
-        }
-      }
-    }
-
 }
 
 object ExceptionHandling {
+
+  implicit final class ByNameOps[A, OtherDomain](byName: => A)(
+      implicit asExceptionHandling: A <:< ExceptionHandling[OtherDomain]) {
+
+    @inline
+    def cpsCatch(catcher: Catcher[ExceptionHandling[OtherDomain]]): ExceptionHandling[OtherDomain] =
+      new ExceptionHandling[OtherDomain] {
+        def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
+
+          object Extractor {
+            def unapply(e: Throwable): Option[ExceptionHandling[OtherDomain]] = catcher.lift(e)
+          }
+          val byValue: ExceptionHandling[OtherDomain] = try {
+            byName
+          } catch {
+            case Extractor(handled) => return handled.onFailure(failureHandler)
+            case NonFatal(e)        => return failureHandler(e)
+          }
+
+          byValue.onFailure { e =>
+            e match {
+              case Extractor(handled) => handled.onFailure(failureHandler)
+              case NonFatal(e)        => failureHandler(e)
+            }
+          }
+        }
+      }
+  }
+
   def success[Domain](r: Domain): ExceptionHandling[Domain] = new ExceptionHandling[Domain] {
     def onFailure(handler: Throwable => Domain): Domain = r
   }
@@ -43,7 +55,7 @@ object ExceptionHandling {
   implicit def mayFailDsl[Instruction, Domain, A](
       implicit restDsl: Dsl[Instruction, Domain, A]): Dsl[Instruction, ExceptionHandling[Domain], A] =
     new Dsl[Instruction, ExceptionHandling[Domain], A] {
-      def interpret(continuation: Instruction,
+      def interpret(instruction: Instruction,
                     successHandler: A => ExceptionHandling[Domain]): ExceptionHandling[Domain] =
         new ExceptionHandling[Domain] {
           def onFailure(failureHandler: Throwable => Domain): Domain = {
@@ -55,7 +67,7 @@ object ExceptionHandling {
                   return failureHandler(e)
               }).onFailure(failureHandler)
 
-            restDsl.interpret(continuation, restHandler)
+            restDsl.interpret(instruction, restHandler)
           }
         }
 

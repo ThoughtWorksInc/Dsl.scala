@@ -98,9 +98,10 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     private def isCpsTree(tree: Tree) = {
       def hasCpsAttachment(child: Any): Boolean = {
         child match {
-          case list: List[_]   => list.exists(hasCpsAttachment)
-          case childTree: Tree => childTree.hasAttachment[CpsAttachment]
-          case _               => false
+          case list: List[_]             => list.exists(hasCpsAttachment)
+          case CaseDef(pat, guard, body) => hasCpsAttachment(body)
+          case childTree: Tree           => childTree.hasAttachment[CpsAttachment]
+          case _                         => false
         }
       }
       tree.productIterator.exists(hasCpsAttachment)
