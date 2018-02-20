@@ -35,33 +35,55 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
 
     }
   }
-
-  "try/catch" in {
-
-    def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
-      !Yield(0)
-      val tryResult = try {
-        !Yield(1)
-        (0 / 0)
-        !Yield(2)
-        "try"
-      } catch {
-        case e: ArithmeticException =>
-          !Yield(3)
-          "catch"
-      } finally {
-        !Yield(4)
-        "finally"
+  "try/catch" - {
+    "yield and catch" in {
+      def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
+        val tryResult = try {
+          locally(0 / 0)
+        } catch {
+          case e: ArithmeticException =>
+            !Yield(3)
+            "catch"
+        }
+        "returns " + tryResult
       }
-      !Yield(5)
-      "returns " + tryResult
+      continuation { result: String =>
+        result should be("returns catch")
+        ExceptionHandling.success(Stream.empty)
+      }.onFailure { e =>
+        Stream.empty
+      } should be(Seq(3))
     }
 
-    continuation { result: String =>
-      result should be("returns catch")
-      ExceptionHandling.success(Stream.empty)
-    }.onFailure { e =>
-      Stream.empty
-    } should be(Seq(0, 1, 3, 4, 5))
+    "complex" in {
+
+      def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
+        !Yield(0)
+        val tryResult = try {
+          !Yield(1)
+          locally(0 / 0)
+          !Yield(2)
+          "try"
+        } catch {
+          case e: ArithmeticException =>
+            !Yield(3)
+            "catch"
+        } finally {
+          !Yield(4)
+
+          def ignoredFinalResult = "finally"
+          ignoredFinalResult
+        }
+        !Yield(5)
+        "returns " + tryResult
+      }
+
+      continuation { result: String =>
+        result should be("returns catch")
+        ExceptionHandling.success(Stream.empty)
+      }.onFailure { e =>
+        Stream.empty
+      } should be(Seq(0, 1, 3, 4, 5))
+    }
   }
 }
