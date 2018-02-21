@@ -161,9 +161,9 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           case q"$prefix.$method[..$typeParameters](...$parameterLists)" =>
             cpsAttachment(prefix) { prefixValue =>
               cpsParameterList(parameterLists) { parameterListsValues =>
-                atPos(tree.pos) {
+                continue(atPos(tree.pos) {
                   q"$prefixValue.$method[..$typeParameters](...$parameterListsValues)"
-                }
+                })
               }
             }
           // TODO: lazy val
