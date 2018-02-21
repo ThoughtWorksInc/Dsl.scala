@@ -36,8 +36,10 @@ class YieldSpec extends FreeSpec with Matchers {
       def generator: Stream[Int] = {
         var i = 5
         do {
-          !Yield(i)
-          i -= 1
+          i -= {
+            !Yield(i)
+            1
+          }
         } while ({
           !Yield(-i)
           i > 0
