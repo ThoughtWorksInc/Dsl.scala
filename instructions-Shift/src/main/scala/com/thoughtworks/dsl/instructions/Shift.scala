@@ -12,7 +12,7 @@ final case class Shift[Domain, A](continuation: (A => Domain) => Domain)
 
 object Shift {
 
-  implicit def awaitDsl[Domain, A]: Dsl[Shift[Domain, A], Domain, A] =
+  implicit def shiftDsl[Domain, A]: Dsl[Shift[Domain, A], Domain, A] =
     new Dsl[Shift[Domain, A], Domain, A] {
       def interpret(self: Shift[Domain, A], mapper: A => Domain): Domain = self.continuation(mapper)
     }
