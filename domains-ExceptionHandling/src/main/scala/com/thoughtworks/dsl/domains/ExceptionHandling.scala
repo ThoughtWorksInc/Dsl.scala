@@ -22,8 +22,8 @@ object ExceptionHandling {
       : ExceptionHandling[OtherDomain] = {
       new ExceptionHandling[OtherDomain] {
         def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
-          def handle(e: Throwable): OtherDomain = {
-            {
+          def handleRethrow(e: Throwable): OtherDomain = {
+            locally {
               try {
                 catcher.lift(e)
               } catch {
@@ -36,15 +36,15 @@ object ExceptionHandling {
             }
           }
 
-          val safeTryResult: ExceptionHandling[OtherDomain] = try {
-            continuation { domain =>
-              ExceptionHandling.success(domain.onFailure(failureHandler))
+          locally {
+            try {
+              continuation { domain =>
+                ExceptionHandling.success(domain.onFailure(failureHandler))
+              }
+            } catch {
+              case e: Throwable => return handleRethrow(e)
             }
-          } catch {
-            case e: Throwable => return handle(e)
-          }
-
-          safeTryResult.onFailure(handle)
+          }.onFailure(handleRethrow)
         }
       }
     }
