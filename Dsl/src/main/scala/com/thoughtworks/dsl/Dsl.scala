@@ -36,11 +36,6 @@ object Dsl {
       """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "delimitedcontinuation-compilerplugin" % "latest.release")`""")
     final def unary_! : Value = sys.error("Calls to this method should have been translated to `cpsApply`.")
 
-    //    def cpsApply[Domain1, Domain0](handler: Value => Domain1)(implicit lift: Lift[Domain0, Domain], constraint: Domain1 <:< Domain0): Domain0 = {
-    //      // FIXME: Use <:<.substitute instead of asInstanceOf for Scala 2.13
-    //      val substitution = handler.asInstanceOf[Value => Domain0]
-    //      lift.lift(underlying)(substitution)
-    //    }
     final def cpsApply[Domain](handler: Value => Domain)(implicit dsl: Dsl[Self, Domain, Value]): Domain = {
       dsl.interpret(this, handler)
     }
