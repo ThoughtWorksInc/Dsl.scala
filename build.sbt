@@ -39,7 +39,9 @@ lazy val unidoc =
   project
     .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
     .settings(
-      unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := inAggregates(LocalRootProject),
+      unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := {
+        inAggregates(LocalRootProject) -- inProjects(CompilerPlugin)
+      },
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
       scalacOptions += "-Xexperimental",
       scalacOptions += "-Ypartial-unification"
