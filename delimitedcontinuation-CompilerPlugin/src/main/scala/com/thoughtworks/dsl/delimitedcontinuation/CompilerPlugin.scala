@@ -107,6 +107,54 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       tree.productIterator.exists(hasCpsAttachment)
     }
 
+    private val whileName = currentUnit.freshTermName("while")
+    private val whileDef = {
+      val domainName = currentUnit.freshTypeName("Domain")
+      val conditionName = currentUnit.freshTermName("condition")
+      val conditionValueName = currentUnit.freshTermName("conditionValue")
+      val bodyName = currentUnit.freshTermName("body")
+      val endWhileName = currentUnit.freshTermName("endWhile")
+      q"""
+      @${definitions.ScalaInlineClass} def $whileName[$domainName]($endWhileName: () => $domainName)(
+        $bodyName: (() => $domainName) => $domainName,
+        $conditionName: (_root_.scala.Boolean => $domainName) => $domainName): $domainName = {
+        $conditionName { $conditionValueName: ${TypeTree()} =>
+          if ($conditionValueName) {
+            $bodyName { () =>
+              $whileName[$domainName]($endWhileName)($bodyName, $conditionName)
+            }
+          } else {
+            $endWhileName()
+          }
+        }
+      }
+      """
+    }
+    private val doWhileName = currentUnit.freshTermName("doWhile")
+
+    private val doWhileDef = {
+      val domainName = currentUnit.freshTypeName("Domain")
+      val conditionName = currentUnit.freshTermName("condition")
+      val conditionValueName = currentUnit.freshTermName("conditionValue")
+      val bodyName = currentUnit.freshTermName("body")
+      val endDoWhileName = currentUnit.freshTermName("endDoWhile")
+      q"""
+      @${definitions.ScalaInlineClass} def $doWhileName[$domainName]($endDoWhileName: () => $domainName)(
+        $bodyName: (() => $domainName) => $domainName,
+        $conditionName: (_root_.scala.Boolean => $domainName) => $domainName): $domainName = {
+        $bodyName { () =>
+          $conditionName { $conditionValueName: ${TypeTree()} =>
+            if ($conditionValueName) {
+              $doWhileName[$domainName]($endDoWhileName)($bodyName, $conditionName)
+            } else {
+              $endDoWhileName()
+            }
+          }
+        }
+      }
+      """
+    }
+
     override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
       def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
         tree match {
@@ -239,30 +287,30 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }}}
             """
           case q"while($condition) $body" =>
-            val domainName = currentUnit.freshTypeName("Domain")
-            val whileName = currentUnit.freshTermName("while")
-            val conditionName = currentUnit.freshTermName("condition")
-            val conditionValueName = currentUnit.freshTermName("conditionValue")
-            val conditionHandlerName = currentUnit.freshTermName("conditionHandler")
-            val bodyName = currentUnit.freshTermName("body")
             val continueName = currentUnit.freshTermName("continue")
-            val endWhileName = currentUnit.freshTermName("endWhile")
+            val conditionHandlerName = currentUnit.freshTermName("conditionHandler")
             q"""
-            @${definitions.ScalaInlineClass} def $whileName[$domainName]($endWhileName: () => $domainName)(
-              $bodyName: (() => $domainName) => $domainName,
-              $conditionName: (_root_.scala.Boolean => $domainName) => $domainName): $domainName = {
-              $conditionName { $conditionValueName: ${TypeTree()} =>
-                if ($conditionValueName) {
-                  $bodyName { () =>
-                    $whileName[$domainName]($endWhileName)($bodyName, $conditionName)
-                  }
-                } else {
-                  $endWhileName()
-                }
-              }
-            }
-
+            $whileDef
             $whileName({ () =>
+              ${continue(q"()")}
+            })({ $continueName: ${TypeTree()} => ${cpsAttachment(body) { bodyValue =>
+              q"""
+                $bodyValue
+                $continueName()
+              """
+            }}},
+            { $conditionHandlerName: ${TypeTree()} => ${cpsAttachment(condition) { conditionValue =>
+              q"$conditionHandlerName($conditionValue)"
+            }}})
+            """
+
+          case q"do $body while($condition)" =>
+            val continueName = currentUnit.freshTermName("continue")
+            val conditionHandlerName = currentUnit.freshTermName("conditionHandler")
+            q"""
+            $doWhileDef
+
+            $doWhileName({ () =>
               ${continue(q"()")}
             })({ $continueName: ${TypeTree()} => ${cpsAttachment(body) { bodyValue =>
               q"""
