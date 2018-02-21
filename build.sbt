@@ -33,7 +33,7 @@ for {
   scalacOptions in testingProject in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
 }
 
-crossScalaVersions in ThisBuild := Seq("2.11.11", "2.12.4")
+crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.4")
 
 lazy val unidoc =
   project
