@@ -287,6 +287,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }}}
             """
           case q"while($condition) $body" =>
+            // TODO: Trampoline
             val continueName = currentUnit.freshTermName("continue")
             val conditionHandlerName = currentUnit.freshTermName("conditionHandler")
             q"""
@@ -303,8 +304,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               q"$conditionHandlerName($conditionValue)"
             }}})
             """
-
           case q"do $body while($condition)" =>
+            // TODO: Trampoline
             val continueName = currentUnit.freshTermName("continue")
             val conditionHandlerName = currentUnit.freshTermName("conditionHandler")
             q"""
