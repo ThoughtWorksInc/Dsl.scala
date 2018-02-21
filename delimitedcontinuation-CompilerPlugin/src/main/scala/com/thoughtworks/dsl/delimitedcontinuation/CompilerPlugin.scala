@@ -156,9 +156,11 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           case If(cond, thenp, elsep) =>
             val endIfName = currentUnit.freshTermName("endIf")
             val ifResultName = currentUnit.freshTermName("ifResult")
-            val endIfBody = continue(q"$ifResultName")
+
             q"""
-            @${definitions.ScalaInlineClass} def $endIfName($ifResultName: $tpe) = $endIfBody
+            @${definitions.ScalaInlineClass} val $endIfName = { ($ifResultName: $tpe) => 
+              ${continue(q"$ifResultName")}
+            }
             ${cpsAttachment(cond) { condValue =>
               atPos(tree.pos) {
                 q"""
