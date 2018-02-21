@@ -331,6 +331,10 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             cpsAttachment(expr) { exprValue =>
               continue(treeCopy.Throw(tree, exprValue))
             }
+          case Return(expr) =>
+            cpsAttachment(expr) { exprValue =>
+              continue(treeCopy.Return(tree, exprValue))
+            }
         }
       }
       def checkResetAttachment: Type = {
