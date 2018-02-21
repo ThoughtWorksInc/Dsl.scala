@@ -22,9 +22,18 @@ object ExceptionHandling {
       : ExceptionHandling[OtherDomain] = {
       new ExceptionHandling[OtherDomain] {
         def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
-
-          object Extractor {
-            def unapply(e: Throwable): Option[ExceptionHandling[OtherDomain]] = catcher.lift(e)
+          def handle(e: Throwable): OtherDomain = {
+            {
+              try {
+                catcher.lift(e)
+              } catch {
+                case rethrown: Throwable =>
+                  return failureHandler(rethrown)
+              }
+            } match {
+              case Some(handled) => handled.onFailure(failureHandler)
+              case None          => failureHandler(e)
+            }
           }
 
           val safeTryResult: ExceptionHandling[OtherDomain] = try {
@@ -32,14 +41,10 @@ object ExceptionHandling {
               ExceptionHandling.success(domain.onFailure(failureHandler))
             }
           } catch {
-            case Extractor(handled) => return handled.onFailure(failureHandler)
-            case e: Throwable       => return failureHandler(e)
+            case e: Throwable => return handle(e)
           }
 
-          safeTryResult.onFailure {
-            case Extractor(handled) => handled.onFailure(failureHandler)
-            case e: Throwable       => failureHandler(e)
-          }
+          safeTryResult.onFailure(handle)
         }
       }
     }

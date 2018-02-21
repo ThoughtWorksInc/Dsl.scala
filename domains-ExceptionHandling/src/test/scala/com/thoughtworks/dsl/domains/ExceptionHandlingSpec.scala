@@ -76,6 +76,40 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
 
     }
 
+    "empty try" in {
+      def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
+        val tryResult = try {
+          0 / 0
+          !Yield(-1)
+        } finally {}
+        "returns " + tryResult
+      }
+      continuation { result: String =>
+        ExceptionHandling.failure(new AssertionError())
+      }.onFailure { e =>
+        e should be(a[ArithmeticException])
+        Stream.empty
+      } should be(Seq())
+    }
+    "rethrow" in {
+      def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
+        val tryResult = try {
+          0 / 0
+        } catch {
+          case e: ArithmeticException =>
+            !Yield(42)
+            throw e
+        }
+        "returns " + tryResult
+      }
+      continuation { result: String =>
+        ExceptionHandling.failure(new AssertionError())
+      }.onFailure { e =>
+        e should be(a[ArithmeticException])
+        Stream.empty
+      } should be(Seq(42))
+    }
+
     "complex" in {
       def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
         !Yield(0)
