@@ -327,7 +327,10 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               q"$conditionHandlerName($conditionValue)"
             }}})
             """
-
+          case Throw(expr) =>
+            cpsAttachment(expr) { exprValue =>
+              continue(treeCopy.Throw(tree, exprValue))
+            }
         }
       }
       def checkResetAttachment: Type = {
