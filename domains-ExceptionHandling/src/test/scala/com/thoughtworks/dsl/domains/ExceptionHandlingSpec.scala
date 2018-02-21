@@ -39,7 +39,7 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
     "yield and catch" in {
       def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
         val tryResult = try {
-          locally(0 / 0)
+          0 / 0
         } catch {
           case e: ArithmeticException =>
             !Yield(3)
@@ -55,26 +55,52 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
       } should be(Seq(3))
     }
 
-    "complex" in {
+    "issue 2" in {
+      def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
+        !Yield(1)
+        try {} catch {
+          case e: ArithmeticException =>
+            !Yield(2)
+        }
+        !Yield(3)
+        0 / 0
+        "OK"
+      }
 
+      continuation { result: String =>
+        ExceptionHandling.failure(new AssertionError())
+      }.onFailure { e =>
+        e should be(a[ArithmeticException])
+        Stream.empty
+      } should be(Stream(1, 3))
+
+    }
+
+    "complex" in {
       def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
         !Yield(0)
         val tryResult = try {
           !Yield(1)
-          locally(0 / 0)
-          !Yield(2)
+          try {} catch {
+            case e: ArithmeticException =>
+              !Yield(2)
+          }
+          !Yield(3)
+
+          0 / 0
+          !Yield(4)
           "try"
         } catch {
           case e: ArithmeticException =>
-            !Yield(3)
+            !Yield(5)
             "catch"
         } finally {
-          !Yield(4)
+          !Yield(6)
 
           def ignoredFinalResult = "finally"
           ignoredFinalResult
         }
-        !Yield(5)
+        !Yield(7)
         "returns " + tryResult
       }
 
@@ -83,7 +109,7 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
         ExceptionHandling.success(Stream.empty)
       }.onFailure { e =>
         Stream.empty
-      } should be(Seq(0, 1, 3, 4, 5))
+      } should be(Seq(0, 1, 3, 5, 6, 7))
     }
   }
 }

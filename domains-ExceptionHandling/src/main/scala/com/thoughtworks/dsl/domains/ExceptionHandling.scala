@@ -3,7 +3,6 @@ package com.thoughtworks.dsl.domains
 import com.thoughtworks.dsl.Dsl
 
 import scala.util.control.Exception.Catcher
-import scala.util.control.NonFatal
 
 /** The state for DSL in exception-handling domain.
   *
@@ -16,32 +15,34 @@ trait ExceptionHandling[OtherDomain] { self =>
 
 object ExceptionHandling {
 
-  implicit final class ByNameOps[A, OtherDomain](byName: => A)(
-      implicit asExceptionHandling: A <:< ExceptionHandling[OtherDomain]) {
-
-    @inline
-    def cpsCatch(catcher: Catcher[ExceptionHandling[OtherDomain]]): ExceptionHandling[OtherDomain] =
+  implicit final class CpsCatchOps[OtherDomain](catcher: Catcher[ExceptionHandling[OtherDomain]]) {
+    def cpsCatch(
+        continuation: (
+            ExceptionHandling[OtherDomain] => ExceptionHandling[OtherDomain]) => ExceptionHandling[OtherDomain])
+      : ExceptionHandling[OtherDomain] = {
       new ExceptionHandling[OtherDomain] {
         def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
 
           object Extractor {
             def unapply(e: Throwable): Option[ExceptionHandling[OtherDomain]] = catcher.lift(e)
           }
-          val byValue: ExceptionHandling[OtherDomain] = try {
-            byName
+
+          val safeTryResult: ExceptionHandling[OtherDomain] = try {
+            continuation { domain =>
+              ExceptionHandling.success(domain.onFailure(failureHandler))
+            }
           } catch {
             case Extractor(handled) => return handled.onFailure(failureHandler)
-            case NonFatal(e)        => return failureHandler(e)
+            case e: Throwable       => return failureHandler(e)
           }
 
-          byValue.onFailure { e =>
-            e match {
-              case Extractor(handled) => handled.onFailure(failureHandler)
-              case NonFatal(e)        => failureHandler(e)
-            }
+          safeTryResult.onFailure {
+            case Extractor(handled) => handled.onFailure(failureHandler)
+            case e: Throwable       => failureHandler(e)
           }
         }
       }
+    }
   }
 
   def success[Domain](r: Domain): ExceptionHandling[Domain] = new ExceptionHandling[Domain] {
@@ -63,7 +64,7 @@ object ExceptionHandling {
               (try {
                 successHandler(a)
               } catch {
-                case NonFatal(e) =>
+                case e: Throwable =>
                   return failureHandler(e)
               }).onFailure(failureHandler)
 

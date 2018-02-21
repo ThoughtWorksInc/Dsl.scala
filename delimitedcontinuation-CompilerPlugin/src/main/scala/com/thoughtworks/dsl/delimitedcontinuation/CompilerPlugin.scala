@@ -177,26 +177,42 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           case Try(block, catches, finalizer) =>
             val finalizerName = currentUnit.freshTermName("finalizer")
             val tryResultName = currentUnit.freshTermName("tryResult")
+            val continueName = currentUnit.freshTermName("continue")
+            val unhandledExceptionName = currentUnit.freshTermName("unhandledException")
+            val asCatcherName = currentUnit.freshTermName("asCatcher")
+
             q"""
-            @${definitions.ScalaInlineClass} def $finalizerName($tryResultName: $tpe) = ${cpsAttachment(finalizer) {
-              finalizerValue =>
+            @${definitions.ScalaInlineClass} val $finalizerName = { ($tryResultName: _root_.scala.util.Try[$tpe]) => ${{
+              cpsAttachment(finalizer) { finalizerValue =>
                 q"""
-                $finalizerValue
-                ${continue(q"$tryResultName")}
-              """
-            }}
-            ${cpsAttachment(block) { blockValue =>
-              q"$finalizerName($blockValue)"
-            }}.cpsCatch {
-              case ..${catches.map {
-              case caseDef @ CaseDef(pat, guard, body) =>
+                  $finalizerValue
+                  ${continue(q"$tryResultName.get")}
+                """
+              }
+            }}}
+
+            @${definitions.ScalaInlineClass} def $asCatcherName[A](c: _root_.scala.util.control.Exception.Catcher[A]) = c
+
+            $asCatcherName {
+              case ..${{
+              catches.map { caseDef =>
                 atPos(caseDef.pos) {
-                  CaseDef(pat, guard, cpsAttachment(body) { bodyValue =>
-                    q"$finalizerName($bodyValue)"
+                  CaseDef(caseDef.pat, caseDef.guard, cpsAttachment(caseDef.body) { bodyValue =>
+                    q"$finalizerName(_root_.scala.util.Success($bodyValue))"
                   })
                 }
+              }
             }}
-            }
+              case $unhandledExceptionName: _root_.scala.Throwable =>
+                $finalizerName(_root_.scala.util.Failure($unhandledExceptionName))
+            }.cpsCatch { $continueName: ${TypeTree()} => ${{
+              cpsAttachment(block) { blockValue =>
+                q"""
+                val $tryResultName = $blockValue
+                $continueName(${continue(q"$tryResultName")})
+                """
+              }
+            }}}
             """
         }
       }
