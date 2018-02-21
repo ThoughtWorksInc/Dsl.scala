@@ -17,8 +17,10 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
       object MyException extends Exception
       def generator: ExceptionHandling[Stream[Int]] = {
         !Yield(1)
-        !Yield(2)
-        throw MyException
+        throw {
+          !Yield(2)
+          MyException
+        }
         !Yield(3)
         ExceptionHandling.success(Stream.empty)
       }
