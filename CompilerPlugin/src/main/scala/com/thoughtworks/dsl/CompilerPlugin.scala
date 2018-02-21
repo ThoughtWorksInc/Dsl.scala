@@ -1,6 +1,6 @@
-package com.thoughtworks.dsl.delimitedcontinuation
+package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.delimitedcontinuation.annotations.{reset, shift}
+import com.thoughtworks.dsl.annotations.{reset, shift}
 
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.typechecker.ContextMode

@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.delimitedcontinuation.annotations.shift
+import com.thoughtworks.dsl.annotations.shift
 
 import scala.annotation.compileTimeOnly
 

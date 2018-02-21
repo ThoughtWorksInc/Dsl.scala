@@ -1,4 +1,4 @@
-package com.thoughtworks.dsl.delimitedcontinuation
+package com.thoughtworks.dsl
 
 import scala.annotation.{StaticAnnotation, TypeConstraint}
 
@@ -14,7 +14,7 @@ import scala.annotation.{StaticAnnotation, TypeConstraint}
   * Given a class that contains a `doShift` method, which is marked as `@shift`
   *
   * {{{
-  * import com.thoughtworks.dsl.delimitedcontinuation.annotations.{reset, shift}
+  * import com.thoughtworks.dsl.annotations.{reset, shift}
   * implicit class ShiftOps[R, A](f: (A => R) => R) {
   *   def cpsApply(handler: A => R): R = f(handler)
   *   @shift def doShift: A = sys.error("Calls to this method should have been translated to `cpsApply`")

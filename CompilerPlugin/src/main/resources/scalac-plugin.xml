@@ -1,0 +1,4 @@
+<plugin>
+    <name>delimitedcontinuation</name>
+    <classname>com.thoughtworks.dsl.CompilerPlugin</classname>
+</plugin>
