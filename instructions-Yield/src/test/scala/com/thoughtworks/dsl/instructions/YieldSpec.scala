@@ -136,4 +136,23 @@ class YieldSpec extends FreeSpec with Matchers {
     }
 
   }
+
+  "apply" in {
+    def generator: Stream[Int] = {
+      val f = {
+        !Yield(1)
+
+        { (x: Int) =>
+          -x
+        }
+      }
+
+      val result = f({
+        !Yield(2)
+        42
+      })
+      Stream(result)
+    }
+    generator should be(Stream(1, 2, -42))
+  }
 }
