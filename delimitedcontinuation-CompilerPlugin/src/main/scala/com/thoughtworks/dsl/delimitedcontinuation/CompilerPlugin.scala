@@ -154,6 +154,13 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       }
       """
     }
+    private def notPure(head: Tree): List[Tree] = {
+      if (head.isInstanceOf[Ident]) {
+        Nil
+      } else {
+        head :: Nil
+      }
+    }
 
     override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
       def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
@@ -188,13 +195,6 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                 case Nil =>
                   cpsAttachment(expr)(continue)
                 case head :: tail =>
-                  def notPure(head: Tree): List[Tree] = {
-                    if (head.isInstanceOf[Ident]) {
-                      Nil
-                    } else {
-                      head :: Nil
-                    }
-                  }
                   cpsAttachment(head) { headValue =>
                     q"..${notPure(headValue)}; ${loop(tail)}"
                   }
@@ -300,7 +300,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               ${continue(q"()")}
             })({ $continueName: ${TypeTree()} => ${cpsAttachment(body) { bodyValue =>
               q"""
-                $bodyValue
+                ..${notPure(bodyValue)}
                 $continueName()
               """
             }}},
@@ -319,7 +319,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               ${continue(q"()")}
             })({ $continueName: ${TypeTree()} => ${cpsAttachment(body) { bodyValue =>
               q"""
-                $bodyValue
+                ..${notPure(bodyValue)}
                 $continueName()
               """
             }}},
