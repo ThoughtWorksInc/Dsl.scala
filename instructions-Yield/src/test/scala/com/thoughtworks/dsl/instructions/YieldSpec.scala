@@ -10,6 +10,57 @@ import scala.annotation.tailrec
 class YieldSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
+  "do/while" - {
+    "empty body" in {
+      def generator: Stream[Int] = {
+        do {} while ({
+          !Yield(100)
+          false
+        })
+        Stream.empty[Int]
+      }
+      generator should be(Stream(100))
+    }
+
+    "false" in {
+      def generator: Stream[Int] = {
+        do {
+          !Yield(100)
+        } while (false)
+        Stream.empty[Int]
+      }
+      generator should be(Stream(100))
+    }
+
+    "with var" in {
+      def generator: Stream[Int] = {
+        var i = 5
+        do {
+          !Yield(i)
+          i -= 1
+        } while ({
+          !Yield(-i)
+          i > 0
+        })
+        Stream.empty[Int]
+      }
+      generator should be(Stream(5, -4, 4, -3, 3, -2, 2, -1, 1, 0))
+    }
+  }
+
+  "while" - {
+    "false" in {
+      def whileFalse: Stream[Int] = {
+        while (false) {
+          !Yield(100)
+        }
+        Stream.empty[Int]
+      }
+
+      whileFalse should be(Stream.empty)
+    }
+  }
+
   "match/case" in {
 
     def loop(i: Int): Stream[Int] = {
