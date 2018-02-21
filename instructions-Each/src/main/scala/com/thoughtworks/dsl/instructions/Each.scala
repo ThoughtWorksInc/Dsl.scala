@@ -9,8 +9,10 @@ import scala.collection.generic.CanBuildFrom
 /**
   * @author 杨博 (Yang Bo)
   */
-final case class Each[Element](elements: Element*) extends Instruction[Each[Element], Element]
+final case class Each[Element](elements: Traversable[Element]) extends Instruction[Each[Element], Element]
 object Each {
+  def apply[Element](elements: Element*) = new Each[Element](elements)
+
   implicit def eachDsl[Element, That, B](
       implicit thatIsTraversableOnce: (Element => That) <:< (Element => GenTraversableOnce[B]),
       bf: CanBuildFrom[Nothing, B, That]
