@@ -10,6 +10,19 @@ import scala.annotation.tailrec
 class YieldSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
+  "while" - {
+    "false" in {
+      def whileFalse: Stream[Int] = {
+        while (false) {
+          !Yield(100)
+        }
+        Stream.empty[Int]
+      }
+
+      whileFalse should be(Stream.empty)
+    }
+  }
+
   "match/case" in {
 
     def loop(i: Int): Stream[Int] = {

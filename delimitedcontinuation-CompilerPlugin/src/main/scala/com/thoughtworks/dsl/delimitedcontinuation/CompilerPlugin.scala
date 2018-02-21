@@ -238,6 +238,43 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               }
             }}}
             """
+          case q"while($condition) $body" =>
+            val domainName = currentUnit.freshTypeName("Domain")
+            val whileName = currentUnit.freshTermName("while")
+            val conditionName = currentUnit.freshTermName("condition")
+            val conditionValueName = currentUnit.freshTermName("conditionValue")
+            val conditionHandlerName = currentUnit.freshTermName("conditionHandler")
+            val bodyName = currentUnit.freshTermName("body")
+            val continueName = currentUnit.freshTermName("continue")
+            val endWhileName = currentUnit.freshTermName("endWhile")
+            q"""
+            @${definitions.ScalaInlineClass} def $whileName[$domainName]($endWhileName: () => $domainName)(
+              $bodyName: (() => $domainName) => $domainName,
+              $conditionName: (_root_.scala.Boolean => $domainName) => $domainName): $domainName = {
+              $conditionName { $conditionValueName: ${TypeTree()} =>
+                if ($conditionValueName) {
+                  $bodyName { () =>
+                    $whileName[$domainName]($endWhileName)($bodyName, $conditionName)
+                  }
+                } else {
+                  $endWhileName()
+                }
+              }
+            }
+
+            $whileName({ () =>
+              ${continue(q"()")}
+            })({ $continueName: ${TypeTree()} => ${cpsAttachment(body) { bodyValue =>
+              q"""
+                $bodyValue
+                $continueName()
+              """
+            }}},
+            { $conditionHandlerName: ${TypeTree()} => ${cpsAttachment(condition) { conditionValue =>
+              q"$conditionHandlerName($conditionValue)"
+            }}})
+            """
+
         }
       }
       def checkResetAttachment: Type = {
