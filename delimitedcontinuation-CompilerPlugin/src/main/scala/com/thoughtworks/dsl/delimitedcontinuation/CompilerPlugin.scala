@@ -286,6 +286,10 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               }
             }}}
             """
+          case Assign(lhs, rhs) =>
+            cpsAttachment(rhs) { rhsValue =>
+              continue(treeCopy.Assign(tree, lhs, rhsValue))
+            }
           case q"while($condition) $body" =>
             // TODO: Trampoline
             val continueName = currentUnit.freshTermName("continue")
