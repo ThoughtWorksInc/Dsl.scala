@@ -10,23 +10,33 @@ import scala.annotation.tailrec
 class YieldSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
-  "tailrec" in {
+  "match/case" in {
 
-    def bar: Stream[Int] = {
-
-      @tailrec
-      @inline
-      def foo(i: Int): Int = {
-        if (i > 100) {
-//          !Yield(0)
-          i
-        } else {
-          foo(i + 1)
-        }
+    def loop(i: Int): Stream[Int] = {
+      i match {
+        case 100 =>
+          Stream.empty
+        case _ =>
+          !Yield(i)
+          loop(i + 1)
       }
-
-      Stream(-foo(90))
     }
+
+    loop(90) should be(Stream(90, 91, 92, 93, 94, 95, 96, 97, 98, 99))
+
+  }
+
+  "recursive" in {
+    def loop(i: Int): Stream[Int] = {
+      if (i < 100) {
+        !Yield(i)
+        loop(i + 1)
+      } else {
+        Stream.empty
+      }
+    }
+
+    loop(90) should be(Stream(90, 91, 92, 93, 94, 95, 96, 97, 98, 99))
 
   }
 

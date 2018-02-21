@@ -173,8 +173,30 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               }
             }}
             """
+          case Match(selector, cases) =>
+            val endMatchName = currentUnit.freshTermName("endMatch")
+            val matchResultName = currentUnit.freshTermName("matchResult")
+            val endMatchBody = continue(q"$matchResultName")
+
+            q"""
+            @${definitions.ScalaInlineClass} def $endMatchName($matchResultName: $tpe) = $endMatchBody
+            ${cpsAttachment(selector) { selectorValue =>
+              atPos(tree.pos) {
+                Match(
+                  selectorValue,
+                  cases.map {
+                    case caseDef @ CaseDef(pat, guard, body) =>
+                      treeCopy.CaseDef(caseDef, pat, guard, cpsAttachment(body) { bodyValue =>
+                        q"$endMatchName($bodyValue)"
+                      })
+                  }
+                )
+              }
+            }}
+            """
           case _: CaseDef =>
-            // This CaseDef tree contains some bang notations, and will be translated by enclosing Try tree, not here
+            println("CasDef")
+            // This CaseDef tree contains some bang notations, and will be translated by enclosing Try or Match tree, not here
             EmptyTree
           case Try(block, catches, finalizer) =>
             val finalizerName = currentUnit.freshTermName("finalizer")
@@ -236,6 +258,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           val q"$shiftOps.$shiftMethod" = tree
           val attachment: CpsAttachment = { continue: (Tree => Tree) =>
             val aName = currentUnit.freshTermName("a")
+
+            // FIXME: tpe is a by-name type. I don't know why.
             atPos(tree.pos) {
               q"""
                 $shiftOps.cpsApply { $aName: $tpe =>

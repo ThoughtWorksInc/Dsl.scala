@@ -12,8 +12,8 @@ object Yield {
 
   implicit def yieldDsl[Element]: Dsl[Yield[Element], Stream[Element], Unit] =
     new Dsl[Yield[Element], Stream[Element], Unit] {
-      def interpret(self: Yield[Element], mapper: Unit => Stream[Element]): Stream[Element] = {
-        new Stream.Cons(self.element, mapper(()))
+      def interpret(instruction: Yield[Element], mapper: Unit => Stream[Element]): Stream[Element] = {
+        new Stream.Cons(instruction.element, mapper(()))
       }
     }
 }
