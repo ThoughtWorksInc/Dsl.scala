@@ -3,6 +3,7 @@ package com.thoughtworks.dsl.instructions
 import org.scalatest.{FreeSpec, Matchers}
 
 import scala.annotation.tailrec
+import scala.runtime.NonLocalReturnControl
 
 /**
   * @author 杨博 (Yang Bo)
@@ -157,4 +158,19 @@ class YieldSpec extends FreeSpec with Matchers {
     }
     generator should be(Stream(1, 2, -42))
   }
+
+  "return" in {
+    def generator: Stream[Int] = {
+      if (true) {
+        return {
+          !Yield(100)
+          Stream(42)
+        }
+      }
+      Stream.empty[Int]
+    }
+
+    a[NonLocalReturnControl[Stream[Int]]] should be thrownBy generator.last
+  }
+
 }
