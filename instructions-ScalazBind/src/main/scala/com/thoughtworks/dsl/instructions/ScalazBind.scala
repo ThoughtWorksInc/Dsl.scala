@@ -5,8 +5,10 @@ import com.thoughtworks.dsl.Dsl.Instruction
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
+import scalaz.{Bind, Monad, MonadError, MonadTrans}
 
-import scalaz.{Bind, Monad, MonadTrans}
+import scala.util.control.Exception.Catcher
+import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
@@ -14,6 +16,22 @@ import scalaz.{Bind, Monad, MonadTrans}
 final case class ScalazBind[F[_], A](fa: F[A]) extends AnyVal with Instruction[ScalazBind[F, A], A]
 
 object ScalazBind {
+
+  implicit final class ScalazMonadErrorCatchOps[F[_], A](catcher: Catcher[F[A]])(
+      implicit monadError: MonadError[F, Throwable]) {
+    def cpsCatch(continuation: (F[A] => F[A]) => F[A]): F[A] = {
+      try {
+        continuation { fa: F[A] =>
+          monadError.handleError(fa) { e =>
+            catcher.applyOrElse(e, monadError.raiseError)
+          }
+        }
+      } catch {
+        case NonFatal(e) =>
+          catcher.applyOrElse(e, monadError.raiseError)
+      }
+    }
+  }
 
   implicit def implicitScalazBind[F[_], A](fa: F[A]): ScalazBind[F, A] = ScalazBind(fa)
 

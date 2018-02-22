@@ -1,14 +1,30 @@
 package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
-
 import scalaz.OptionT
+import scalaz.concurrent.Task
 import scalaz.std.stream._
 
 /**
   * @author 杨博 (Yang Bo)
   */
 class ScalazBindSpec extends FreeSpec with Matchers {
+
+  "MonadError" in {
+    import ScalazBind._
+    def task: Task[Int] = Task.now {
+      try {
+        0 / 0
+      } catch {
+        case e: ArithmeticException =>
+          42
+      } finally {
+        !Task.now(())
+      }
+    }
+    task.unsafePerformSync should be(42)
+  }
+
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
   "Given a continuation that uses Yield and ScalazBind expressions" - {
