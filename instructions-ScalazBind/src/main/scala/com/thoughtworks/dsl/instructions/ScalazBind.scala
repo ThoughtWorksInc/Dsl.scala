@@ -4,6 +4,8 @@ import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Instruction
 
 import scala.language.higherKinds
+import scala.language.implicitConversions
+
 import scalaz.{Bind, Monad, MonadTrans}
 
 /**
@@ -12,6 +14,8 @@ import scalaz.{Bind, Monad, MonadTrans}
 final case class ScalazBind[F[_], A](fa: F[A]) extends AnyVal with Instruction[ScalazBind[F, A], A]
 
 object ScalazBind {
+
+  implicit def implicitScalazBind[F[_], A](fa: F[A]): ScalazBind[F, A] = ScalazBind(fa)
 
   implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](
       implicit monadTrans: MonadTrans[F],
@@ -57,7 +61,7 @@ object ScalazBind {
     def interpret(instruction: ScalazBind[F, A], handler: A => G[B]): G[B] = {
       monad.bind(lift(instruction.fa))(handler)
     }
-    */
+   */
   }
 
 }
