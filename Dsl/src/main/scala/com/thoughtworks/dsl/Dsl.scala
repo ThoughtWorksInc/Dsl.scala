@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 
 import com.thoughtworks.dsl.annotations.shift
 
-import scala.annotation.compileTimeOnly
+import scala.annotation.{compileTimeOnly, implicitNotFound}
 
 /** The domain-specific interpreter for `Instruction` in `Domain`,
   * which is a dependent type type class that registers an asynchronous callback function,
@@ -11,6 +11,7 @@ import scala.annotation.compileTimeOnly
   * @tparam Value The value held inside `Instruction`.
   * @author 杨博 (Yang Bo)
   */
+@implicitNotFound("Cannot interpret the DSL instruction ${Instruction} inside a function that returns ${Domain}.")
 trait Dsl[-Instruction, Domain, +Value] {
 
   /** Registers an asynchronous callback `handler` on `instruction`, to handle the `Value`. */
