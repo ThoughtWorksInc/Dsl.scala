@@ -16,6 +16,8 @@ lazy val `instructions-ScalazBind` = project.dependsOn(Dsl, `instructions-Shift`
 
 lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
+lazy val `package` = project
+
 organization in ThisBuild := "com.thoughtworks.dsl"
 
 for {

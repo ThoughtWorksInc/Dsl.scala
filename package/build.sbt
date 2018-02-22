@@ -1,0 +1,3 @@
+enablePlugins(Example)
+
+publishArtifact := false
