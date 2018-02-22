@@ -19,7 +19,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
 
   private type CpsAttachment = (Tree => Tree) => Tree
 
-  val name: String = "delimitedcontinuation"
+  val name: String = "dsl"
 
   val components: List[PluginComponent] = Nil
 
