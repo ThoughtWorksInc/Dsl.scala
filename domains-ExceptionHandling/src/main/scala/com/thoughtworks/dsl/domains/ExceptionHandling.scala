@@ -3,6 +3,7 @@ package com.thoughtworks.dsl.domains
 import com.thoughtworks.dsl.Dsl
 
 import scala.util.control.Exception.Catcher
+import scala.util.control.NonFatal
 
 /** The state for DSL in exception-handling domain.
   *
@@ -27,7 +28,7 @@ object ExceptionHandling {
               try {
                 catcher.lift(e)
               } catch {
-                case rethrown: Throwable =>
+                case NonFatal(rethrown) =>
                   return failureHandler(rethrown)
               }
             } match {
@@ -42,7 +43,7 @@ object ExceptionHandling {
                 ExceptionHandling.success(domain.onFailure(failureHandler))
               }
             } catch {
-              case e: Throwable => return handleRethrow(e)
+              case NonFatal(e) => return handleRethrow(e)
             }
           }.onFailure(handleRethrow)
         }
@@ -69,7 +70,7 @@ object ExceptionHandling {
               (try {
                 successHandler(a)
               } catch {
-                case e: Throwable =>
+                case NonFatal(e) =>
                   return failureHandler(e)
               }).onFailure(failureHandler)
 

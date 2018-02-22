@@ -8,6 +8,7 @@ import scala.language.implicitConversions
 import scalaz.{Bind, Monad, MonadError, MonadTrans}
 
 import scala.util.control.Exception.Catcher
+import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
@@ -26,7 +27,7 @@ object ScalazBind {
           }
         }
       } catch {
-        case e: Throwable =>
+        case NonFatal(e) =>
           catcher.applyOrElse(e, monadError.raiseError)
       }
     }
