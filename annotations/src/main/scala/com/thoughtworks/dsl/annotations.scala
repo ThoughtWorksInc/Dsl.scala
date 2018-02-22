@@ -6,7 +6,7 @@ import scala.annotation.{StaticAnnotation, TypeConstraint}
   *
   * All annotations defined here requires the Scala compiler plugin, which can be added in `build.sbt`:
   * `<pre>
-  * addCompilerPlugin("com.thoughtworks.dsl" %% "delimitedcontinuation-compilerplugin" % "latest.release")
+  * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")
   * </pre>`
   *
   * == Example of definition of shift control operator ==
