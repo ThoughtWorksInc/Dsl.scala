@@ -13,7 +13,8 @@ import scala.language.implicitConversions
   */
 final case class Each[Element](elements: Traversable[Element]) extends Instruction[Each[Element], Element]
 object Each {
-  def apply[Element](elements: Element*) = new Each[Element](elements)
+
+  def fork[ThreadId](threadIds: ThreadId*) = new Each[ThreadId](threadIds)
 
   implicit def implicitEach[Element](elements: Traversable[Element]): Each[Element] = Each[Element](elements)
 
@@ -26,4 +27,5 @@ object Each {
         instruction.elements.flatMap(handler)(collection.breakOut(bf))
       }
     }
+
 }

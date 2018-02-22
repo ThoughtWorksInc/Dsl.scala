@@ -1,6 +1,7 @@
 package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
+import Each.fork
 
 /**
   * @author 杨博 (Yang Bo)
@@ -12,7 +13,7 @@ class EachSpec extends FreeSpec with Matchers {
 
     def asyncFunction: AsyncFunction[Stream[String], Unit] = _ {
       !Yield("Entering asyncFunction")
-      val subThreadId:Int = !Each(0, 1)
+      val subThreadId:Int = !fork(0, 1)
       !Yield(s"Fork sub-thread $subThreadId")
       !Yield("Leaving asyncFunction")
     }
@@ -21,7 +22,7 @@ class EachSpec extends FreeSpec with Matchers {
 
       def generator: Stream[String] = {
         !Yield("Entering generator")
-        val threadId = !Each(0, 1)
+        val threadId = !fork(0, 1)
         !Yield(s"Fork thread $threadId")
         !Shift(asyncFunction)
         Stream("Leaving generator")
