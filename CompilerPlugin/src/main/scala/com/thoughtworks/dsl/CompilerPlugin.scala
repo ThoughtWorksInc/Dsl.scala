@@ -260,7 +260,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             @${definitions.ScalaInlineClass} val $finalizerName = { ($tryResultName: _root_.scala.util.Try[$tpe]) => ${{
               cpsAttachment(finalizer) { finalizerValue =>
                 q"""
-                  $finalizerValue
+                  ..${notPure(finalizerValue)}
                   ${continue(q"$tryResultName.get")}
                 """
               }
