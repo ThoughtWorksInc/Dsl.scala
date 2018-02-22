@@ -53,9 +53,12 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             function.body.updateAttachment(Reset)
           case defDef: DefDef =>
             defDef.rhs.updateAttachment(Reset)
+            defDef.vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
           case implDef: ImplDef =>
-            implDef.impl.body.foreach{
-              case ValDef(mods, name, tpt, rhs) => rhs.updateAttachment(Reset)
+            implDef.impl.body.foreach {
+              case valDef: ValDef =>
+                valDef.mods.isLazy
+                valDef.rhs.updateAttachment(Reset)
               case _ =>
             }
           case _ =>

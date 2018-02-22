@@ -9,6 +9,16 @@ import Each.fork
 class EachSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
+  "default parameter" in {
+
+    def foo(s: Seq[Int] = Seq {
+      !fork(1, 2, 3) + 100
+    }) = s
+
+    foo() should be(Seq(101, 102, 103))
+
+  }
+
   "val in class" in {
     class C {
       val ascii: Set[Int] = Set(
