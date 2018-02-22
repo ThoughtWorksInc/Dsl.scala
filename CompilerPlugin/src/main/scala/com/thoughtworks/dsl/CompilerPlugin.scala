@@ -5,21 +5,18 @@ import com.thoughtworks.dsl.annotations.{reset, shift}
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.typechecker.ContextMode
 import scala.tools.nsc.{Global, Mode}
-private object CompilerPlugin {
-  private[CompilerPlugin] object Reset
-}
 
 /**
   * @author 杨博 (Yang Bo)
   */
 final class CompilerPlugin(override val global: Global) extends Plugin {
-  import CompilerPlugin._
   import global._
   import global.analyzer._
 
   private type CpsAttachment = (Tree => Tree) => Tree
+  private[CompilerPlugin] object Reset
 
-  val name: String = "delimitedcontinuation"
+  val name: String = "dsl"
 
   val components: List[PluginComponent] = Nil
 
