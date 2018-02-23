@@ -14,7 +14,6 @@ class EachSpec extends FreeSpec with Matchers {
     var accumulator = 0
     def loop(): Unit = {
       accumulator += !Each(seq)
-      new AnyRef
     }
     loop()
     accumulator should be(55)
