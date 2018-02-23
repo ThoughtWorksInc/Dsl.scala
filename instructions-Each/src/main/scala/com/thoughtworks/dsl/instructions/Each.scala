@@ -28,4 +28,11 @@ object Each {
       }
     }
 
+  implicit def foreachDsl[Element]: Dsl[Each[Element], Unit, Element] =
+    new Dsl[Each[Element], Unit, Element] {
+      def interpret(instruction: Each[Element], handler: Element => Unit): Unit = {
+        instruction.elements.foreach(handler)
+      }
+    }
+
 }

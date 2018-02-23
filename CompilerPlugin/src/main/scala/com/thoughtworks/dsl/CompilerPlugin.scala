@@ -50,6 +50,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       if (mode.inExprMode) {
         tree match {
           case function: Function =>
+            // FIXME: the Reset attachment will be discarded when the body tree is replaced
+            // (e.g. the body tree is a `+=` call, which will be replaced to an Assign tree
             function.body.updateAttachment(Reset)
           case defDef: DefDef =>
             defDef.rhs.updateAttachment(Reset)

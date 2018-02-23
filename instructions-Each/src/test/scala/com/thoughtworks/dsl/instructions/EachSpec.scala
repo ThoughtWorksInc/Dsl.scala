@@ -9,6 +9,17 @@ import Each.fork
 class EachSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
+  "foreach" in {
+    val seq = 1 to 10
+    var accumulator = 0
+    def loop(): Unit = {
+      accumulator += !Each(seq)
+      new AnyRef
+    }
+    loop()
+    accumulator should be(55)
+  }
+
   "default parameter" in {
 
     def foo(s: Seq[Int] = Seq {
