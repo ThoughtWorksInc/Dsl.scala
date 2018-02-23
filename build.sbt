@@ -16,12 +16,22 @@ lazy val `instructions-ScalazBind` = project.dependsOn(Dsl, `instructions-Shift`
 
 lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
-lazy val `package` = project
+lazy val `package` = project.dependsOn(
+  `instructions-Shift`,
+  `instructions-CatsFlatMap`,
+  `instructions-Each`,
+  `instructions-ScalazBind`,
+  `instructions-Yield`,
+  `domains-ExceptionHandling`,
+  CompilerPlugin,
+  annotations,
+  Dsl
+)
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
 for {
-  testingProject <- Seq(
+  testingProject <- Seq[ProjectReference](
     `instructions-Shift`,
     `instructions-CatsFlatMap`,
     `instructions-Each`,
@@ -29,7 +39,8 @@ for {
     `instructions-Yield`,
     `domains-ExceptionHandling`,
     CompilerPlugin,
-    annotations
+    annotations,
+    LocalProject("package")
   )
 } yield {
   scalacOptions in testingProject in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
