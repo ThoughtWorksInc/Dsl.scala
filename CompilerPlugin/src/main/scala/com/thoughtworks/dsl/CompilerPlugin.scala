@@ -167,13 +167,20 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
       def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
         tree match {
-          case q"$prefix.$method[..$typeParameters](...$parameterLists)" =>
+          case q"$prefix.$methodName[..$typeParameters](...$parameterLists)" =>
             cpsAttachment(prefix) { prefixValue =>
               cpsParameterList(parameterLists) { parameterListsValues =>
                 continue(atPos(tree.pos) {
-                  q"$prefixValue.$method[..$typeParameters](...$parameterListsValues)"
+                  q"$prefixValue.$methodName[..$typeParameters](...$parameterListsValues)"
                 })
               }
+            }
+
+          case q"${method: Ident}[..$typeParameters](...$parameterLists)" =>
+            cpsParameterList(parameterLists) { parameterListsValues =>
+              continue(atPos(tree.pos) {
+                q"$method[..$typeParameters](...$parameterListsValues)"
+              })
             }
           // TODO: lazy val
           case ValDef(mods, name, tpt, rhs) =>
