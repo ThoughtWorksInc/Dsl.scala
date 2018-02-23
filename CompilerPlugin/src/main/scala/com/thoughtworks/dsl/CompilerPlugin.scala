@@ -57,7 +57,6 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           case implDef: ImplDef =>
             implDef.impl.body.foreach {
               case valDef: ValDef =>
-                valDef.mods.isLazy
                 valDef.rhs.updateAttachment(Reset)
               case _ =>
             }
