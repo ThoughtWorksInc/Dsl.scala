@@ -11,6 +11,24 @@ import scala.runtime.NonLocalReturnControl
 class YieldSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
+  "local method" in {
+    def generator: Stream[Int] = {
+      def id[A](a: A) = a
+      id(!Yield(100))
+      Stream.empty[Int]
+    }
+    generator should be(Stream(100))
+  }
+
+  "local function" in {
+    def generator: Stream[Int] = {
+      def id[A](a: A) = a
+      (id[Unit] _)(!Yield(100))
+      Stream.empty[Int]
+    }
+    generator should be(Stream(100))
+  }
+
   "do/while" - {
     "empty body" in {
       def generator: Stream[Int] = {
