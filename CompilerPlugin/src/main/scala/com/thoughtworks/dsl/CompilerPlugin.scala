@@ -58,6 +58,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             implDef.impl.body.foreach {
               case valDef: ValDef =>
                 valDef.rhs.updateAttachment(Reset)
+              case termTree: TermTree =>
+                termTree.updateAttachment(Reset)
               case _ =>
             }
           case _ =>
@@ -157,10 +159,11 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       """
     }
     private def notPure(head: Tree): List[Tree] = {
-      if (head.isInstanceOf[Ident]) {
-        Nil
-      } else {
-        head :: Nil
+      head match {
+        case (_: Ident) | (_: Literal) =>
+          Nil
+        case _ =>
+          head :: Nil
       }
     }
 
