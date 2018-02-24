@@ -1,11 +1,20 @@
 package com.thoughtworks
 
-/** This project, '''Dsl.scala''', is a framework to create embedded '''D'''omain-'''S'''pecific '''L'''anguages compatible with Scala control flows.
+/** This project, '''Dsl.scala''', is a framework to create embedded DSLs('''D'''omain-'''S'''pecific '''L'''anguages).
+  *
+  * DSLs written in '''Dsl.scala''' are collaborative with others DSLs and Scala control flows.
+  * DSL users can create functions that contains interleaved DSLs implemented by different vendors,
+  * along with ordinary Scala control flows.
   *
   * We also provide some built-in DSLs for asynchronous programming, collection manipulation,
-  * and any other classes that support [[scalaz.Monad]] or [[cats.Monad]].
+  * and adapters to [[scalaz.Monad]] or [[cats.Monad]].
   * Those built-in DSLs can be used as a replacement of
-  * [[https://docs.scala-lang.org/tour/for-comprehensions.html `for` comprehension]] or monadic expression.
+  * [[https://docs.scala-lang.org/tour/for-comprehensions.html `for` comprehension]],
+  * [[https://github.com/scala/scala-continuations scala-continuations]],
+  * [[https://github.com/scala/scala-async scala-async]],
+  * [[http://monadless.io/ Monadless]],
+  * [[https://github.com/pelotom/effectful effectful]]
+  * and [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
   *
   * = Introduction =
   *
@@ -42,11 +51,12 @@ package com.thoughtworks
   * including [[scalaz.Monad]], [[cats.Monad]] and [[com.twitter.algebird.Monad]].
   * A DSL author only have to implement two abstract method in [[scalaz.Monad]],
   * and all the derived control flow operations
-  * like [[scalaz.syntax.MonadOps.whileM whileM]], [[scalaz.syntax.BindOps.ifM ifM]] are available.
+  * like [[scalaz.syntax.MonadOps.whileM]], [[scalaz.syntax.BindOps.ifM]] are available.
   * In addition, those monadic data type can be created and composed
   * from Scala's built-in [[https://docs.scala-lang.org/tour/for-comprehensions.html `for` comprehension]].
   *
-  * For example, you can use the same [[scalaz.syntax syntax]] to create [[org.scalacheck.Gen random value generators]]
+  * For example, you can use the same [[scalaz.syntax syntax]] or `for` comprehension
+  * to create [[org.scalacheck.Gen random value generators]]
   * and [[com.thoughtworks.binding.Binding data-binding expressions]],
   * as long as there are [[scalaz.Monad Monad]] instances
   * for [[org.scalacheck.Gen]] and [[com.thoughtworks.binding.Binding]] respectively.
@@ -83,7 +93,7 @@ package com.thoughtworks
   * [[https://www.schoolofhaskell.com/user/dpiponi/the-mother-of-all-monads the mother of all monads]],
   * where control flows in specific domain can be supported by specific final result types of continuations.
   *
-  * [[https://github.com/scala/scala-continuations scala-continuation]]
+  * [[https://github.com/scala/scala-continuations scala-continuations]]
   * and [[https://github.com/qifun/stateless-future stateless-future]]
   * are two delimited continuation implementations.
   * Both projects can convert ordinary control flow to continuation-passing style closure chains at compiler time.
@@ -94,19 +104,37 @@ package com.thoughtworks
   * Unlike [[akka.actor.AbstractFSM]]'s inconsistent control flows, users can create complex finite-state machines
   * from simple ordinary control flows along with `stateless-future-akka`'s domain-specific instruction `nextMessage`.
   *
-  * == Adaptive [[Dsl]] type class ==
+  * == Collaborative DSLs ==
   *
-  * = Package Structure =
+  * The above DSLs lack of the ability to collaborate with other DSLs.
+  * Each of the above DSLs can be exclusively enabled in a code block.
+  * For example,
+  * [[https://github.com/scala/scala-continuations scala-continuations]]
+  * enables calls to `@cps` method in `reset` blocks,
+  * and [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]]
+  * enables the magic `each` method for [[scalaz.Monad]] in `monadic` blocks.
+  * It is impossible to enable both DSL in one function.
   *
-  * @see [[https://www.schoolofhaskell.com/user/dpiponi/the-mother-of-all-monads The Mother of all Monads]]
-  * @see [[https://docs.scala-lang.org/tour/for-comprehensions.html `for` comprehension]]
-  * @see [[https://github.com/scala/scala-continuations scala-continuation]]
-  * @see [[https://github.com/scala/scala-async scala-async]]
-  * @see [[scalaz.syntax.MonadOps]],
-  * @see [[cats.syntax.MonadOps]],
-  * @see [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]]
-  * @see [[http://monadless.io/ Monadless]]
-  * @see [[https://github.com/pelotom/effectful effectful]]
+  * This [[https://github.com/ThoughtWorksInc/Dsl.scala Dsl.scala]] project resolves this problem.
+  *
+  * We also provide adapters to all the above kind of DSLs.
+  * Instead of switching different DSL between different function,
+  * DSL users can use different DSLs together in one function,
+  * by simply adding [[CompilerPlugin our Scala compiler plug-in]].
+  *
+  * @example TODO: the usage of all built-in instructions together
+  *
+  * @see [[Dsl]] for the guideline to create your custom DSL.
+  *
   *
   */
 package object dsl
+
+package dsl {
+
+  /** Contains built-in domain-specific [[com.thoughtworks.dsl.Dsl.Instruction Instruction]]s and their corresponding interpreters.
+    *
+    *
+    */
+  package object instructions
+}
