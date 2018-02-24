@@ -9,6 +9,72 @@ import Each.fork
 class EachSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
+  "nested" - {
+    "each" - {
+
+      "val" in {
+        val seq = 1 to 10
+
+        def run(): Seq[Int] = Seq {
+          val plus100 = Seq {
+            !Each(seq) + 100
+          }
+          plus100.length should be(1)
+          !Each(plus100)
+        }
+
+        val result = run()
+        result.length should be(10)
+        result.last should be(110)
+      }
+      "def" in {
+        val seq = 1 to 10
+
+        def run(): Seq[Int] = Seq {
+          def plus100 = Seq {
+            !Each(seq) + 100
+          }
+          plus100.length should be(10)
+          !Each(plus100)
+        }
+
+        val result = run()
+        result.length should be(10)
+        result.last should be(110)
+      }
+    }
+
+    "foreach" - {
+
+      "val" in {
+        val seq = 1 to 10
+
+        def run(): Unit = {
+          val plus100 = Seq {
+            !Each(seq) + 100
+          }
+          plus100.length should be(1)
+          !Each(plus100)
+        }
+
+        run()
+      }
+      "def" in {
+        val seq = 1 to 10
+
+        def run(): Unit = {
+          def plus100 = Seq {
+            !Each(seq) + 100
+          }
+          plus100.length should be(10)
+          !Each(plus100)
+        }
+
+        run()
+      }
+    }
+  }
+
   "foreach" in {
     val seq = 1 to 10
     var accumulator = 0
