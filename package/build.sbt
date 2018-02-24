@@ -2,6 +2,8 @@ enablePlugins(Example)
 
 publishArtifact := false
 
+libraryDependencies += "org.scala-lang.modules" %% "scala-async" % "0.9.7"
+
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.5.10"
 
 libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.19"

@@ -20,7 +20,7 @@ package com.thoughtworks
   * Instead, they reinvent control flow in their own DSL.
   *
   * For example, the [[https://akka.io akka]] provides
-  * [[https://doc.akka.io/docs/akka/2.5.10/fsm.html a DSL to create Finite State Machines]],
+  * [[https://doc.akka.io/docs/akka/2.5.10/fsm.html a DSL to create finite-state machines]],
   * which consists of some domain-specific instructions like [[akka.actor.AbstractFSM#when when]],
   * [[akka.actor.AbstractFSM#goto goto]] and [[akka.actor.AbstractFSM#stay stay]].
   * Unfortunately, you cannot embedded those instructions into your ordinary `if` / `while` / `try` control flows,
@@ -31,9 +31,9 @@ package com.thoughtworks
   * Caolan's [[https://github.com/caolan/async async]] library are examples of reinventing control flow
   * in languages other than Scala.
   *
-  * == Monad: an interface of control flow ==
+  * == Monad: the generic interface of control flow ==
   *
-  * It's too trivial to reinvent the whole set of control flow for each DSL.
+  * It's too trivial to reinvent the whole set of control flows for each DSL.
   * A simpler approach is only implementing a minimal interface required for control flows for each domain,
   * while the syntax of other control flow operations are derived from the interface, shared between different domains.
   *
@@ -49,17 +49,50 @@ package com.thoughtworks
   * For example, you can use the same [[scalaz.syntax syntax]] to create [[org.scalacheck.Gen random value generators]]
   * and [[com.thoughtworks.binding.Binding data-binding expressions]],
   * as long as there are [[scalaz.Monad Monad]] instances
-  * for [[org.scalacheck.Gen]] and [[com.thoughtworks.binding.Binding]].
+  * for [[org.scalacheck.Gen]] and [[com.thoughtworks.binding.Binding]] respectively.
   *
   * Although the effort of creating a DSL is minimized with the help of monads,
   * the syntax is still unsatisfactory.
-  * Methods in `MonadOps` still seem like reinventing control flow,
+  * Methods in `MonadOps` still seem like a duplicate of ordinary control flow,
   * and `for` comprehension supports only a limited set of functionality in comparison to ordinary control flows.
   * `if` / `while` / `try` and other block expressions cannot appear in the enumerator clause of `for` comprehension.
   *
-  * == Native control flows via monads ==
+  * == Enabling ordinary control flows in DSL via macros ==
   *
-  * == Continuation: The Mother of all Monads ==
+  * An idea to avoid inconsistency between domain-specific control flow and ordinary control flow is
+  * converting ordinary control flow to domain-specific control flow at compiler time.
+  *
+  * For example, [[https://github.com/scala/scala-async scala.async]] provides a macro
+  * to generate asynchronous control flow.
+  * The users just wrap normal synchronous code in a [[scala.async]] block,
+  * and it runs asynchronously.
+  *
+  * This approach can be generalized to any monadic data types.
+  * [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]], [[http://monadless.io/ Monadless]]
+  * and [[https://github.com/pelotom/effectful effectful]] are macros
+  * that convert ordinary control flow to monadic control flow.
+  *
+  * For example, with the help of [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]],
+  * [[https://github.com/ThoughtWorksInc/Binding.scala Binding.scala]] is used to create reactive HTML templating
+  * from ordinary Scala control flow.
+  *
+  * == Delimited continuations ==
+  *
+  * Another generic interface of control flow is continuation,
+  * which is known as
+  * [[https://www.schoolofhaskell.com/user/dpiponi/the-mother-of-all-monads the mother of all monads]],
+  * where control flows in specific domain can be supported by specific final result types of continuations.
+  *
+  * [[https://github.com/scala/scala-continuations scala-continuation]]
+  * and [[https://github.com/qifun/stateless-future stateless-future]]
+  * are two delimited continuation implementations.
+  * Both projects can convert ordinary control flow to continuation-passing style closure chains at compiler time.
+  *
+  * For example, [[https://github.com/qifun/stateless-future-akka stateless-future-akka]],
+  * based on `stateless-future`,
+  * provides a special final result type for akka actors.
+  * Unlike [[akka.actor.AbstractFSM]]'s inconsistent control flows, users can create complex finite-state machines
+  * from simple ordinary control flows along with `stateless-future-akka`'s domain-specific instruction `nextMessage`.
   *
   * == Adaptive [[Dsl]] type class ==
   *
