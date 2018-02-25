@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.annotations.{ResetAnnotation, nonTypeConstraintReset, shift}
+import com.thoughtworks.dsl.Dsl.{ResetAnnotation, nonTypeConstraintReset, shift}
 
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.transform.Transform
@@ -487,7 +487,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     }
   }
 
-  /** A [[AnalyzerPlugin]] that converts [[Reset]] attachments to [[com.thoughtworks.dsl.annotations.nonTypeConstraintReset generatedReset]] annotations */
+  /** A [[AnalyzerPlugin]] that converts [[Reset]] attachments to [[com.thoughtworks.dsl.Dsl.nonTypeConstraintReset generatedReset]] annotations */
   trait ResetAttachmentConverter extends AnalyzerPlugin {
     object Reset
     override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {

@@ -1,8 +1,8 @@
-lazy val annotations = project
+//lazy val annotations = project
 
-lazy val CompilerPlugin = project.dependsOn(annotations % Test, annotations % Provided)
+lazy val CompilerPlugin = project.dependsOn(Dsl % Test, Dsl % Provided)
 
-lazy val Dsl = project.dependsOn(annotations)
+lazy val Dsl = project
 
 lazy val `domains-ExceptionHandling` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
@@ -26,8 +26,7 @@ for {
     `instructions-ScalazBind`,
     `instructions-Yield`,
     `domains-ExceptionHandling`,
-    CompilerPlugin,
-    annotations
+    CompilerPlugin
   )
 } yield {
   scalacOptions in testingProject in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""

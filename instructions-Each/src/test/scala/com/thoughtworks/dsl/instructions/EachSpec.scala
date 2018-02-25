@@ -2,7 +2,7 @@ package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
 import Each.fork
-import com.thoughtworks.dsl.annotations.reset
+import com.thoughtworks.dsl.Dsl.reset
 
 /**
   * @author 杨博 (Yang Bo)
