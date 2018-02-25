@@ -24,7 +24,7 @@ package com.thoughtworks
   * == Reinventing control flow in DSL ==
   *
   * Ideally, a domain-specific instruction should be an optional extension,
-  * can be present everywhere in the ordinary control flow of the hosting language.
+  * which can be present everywhere in the ordinary control flow of the hosting language.
   * However, in practice, many of embedded DSLs badly interoperate with hosting language control flow.
   * Instead, they reinvent control flow in their own DSL.
   *
