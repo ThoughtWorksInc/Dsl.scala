@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import scala.annotation.{StaticAnnotation, TypeConstraint}
+import scala.annotation.{Annotation, StaticAnnotation, TypeConstraint}
 
 /** The namespace that contains annotations of control operators for [[https://en.wikipedia.org/wiki/Delimited_continuation delimited continuation]].
   *
@@ -91,8 +91,11 @@ import scala.annotation.{StaticAnnotation, TypeConstraint}
   */
 object annotations {
 
+  private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
+  private[dsl] final class nonTypeConstraintReset extends ResetAnnotation with StaticAnnotation
+
   /** An annotation to explicitly perform reset control operator on a code block. */
-  final class reset extends StaticAnnotation
+  final class reset extends ResetAnnotation with StaticAnnotation with TypeConstraint
 
   /** An annotation to mark a method is a shift control operator. */
   final class shift extends StaticAnnotation
