@@ -3,6 +3,7 @@ package com.thoughtworks.dsl.domains
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.instructions.Catch
 
+import scala.util.Try
 import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
 
@@ -10,10 +11,7 @@ import scala.util.control.NonFatal
   *
   * @author 杨博 (Yang Bo)
   */
-trait ExceptionHandling[OtherDomain] { self =>
-  def onFailure(handler: Throwable => OtherDomain): OtherDomain
-
-}
+trait ExceptionHandling[OtherDomain] extends ((Throwable => OtherDomain) => OtherDomain)
 
 object ExceptionHandling {
 
@@ -30,7 +28,7 @@ object ExceptionHandling {
         : ExceptionHandling[OtherDomain] = {
 
         new ExceptionHandling[OtherDomain] {
-          def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
+          def apply(failureHandler: Throwable => OtherDomain): OtherDomain = {
             def handleRethrow(e: Throwable): OtherDomain = {
               locally {
                 try {
@@ -39,19 +37,19 @@ object ExceptionHandling {
                   case NonFatal(rethrown) =>
                     return failureHandler(rethrown)
                 }
-              }.onFailure(failureHandler)
+              }.apply(failureHandler)
 
             }
 
             locally {
               try {
                 continuation { domain =>
-                  ExceptionHandling.success(domain.onFailure(failureHandler))
+                  ExceptionHandling.success(domain.apply(failureHandler))
                 }
               } catch {
                 case NonFatal(e) => return handleRethrow(e)
               }
-            }.onFailure(handleRethrow)
+            }.apply(handleRethrow)
           }
         }
 
@@ -60,11 +58,11 @@ object ExceptionHandling {
   }
 
   def success[Domain](r: Domain): ExceptionHandling[Domain] = new ExceptionHandling[Domain] {
-    def onFailure(handler: Throwable => Domain): Domain = r
+    def apply(handler: Throwable => Domain): Domain = r
   }
 
   def failure[Domain](e: Throwable): ExceptionHandling[Domain] = new ExceptionHandling[Domain] {
-    def onFailure(handler: Throwable => Domain): Domain = handler(e)
+    def apply(handler: Throwable => Domain): Domain = handler(e)
   }
 
   implicit def exceptionHandlingDsl[Instruction, Domain, A](
@@ -73,14 +71,14 @@ object ExceptionHandling {
       def interpret(instruction: Instruction,
                     successHandler: A => ExceptionHandling[Domain]): ExceptionHandling[Domain] =
         new ExceptionHandling[Domain] {
-          def onFailure(failureHandler: Throwable => Domain): Domain = {
+          def apply(failureHandler: Throwable => Domain): Domain = {
             def restHandler(a: A): Domain =
               (try {
                 successHandler(a)
               } catch {
                 case NonFatal(e) =>
                   return failureHandler(e)
-              }).onFailure(failureHandler)
+              }).apply(failureHandler)
 
             restDsl.interpret(instruction, restHandler)
           }

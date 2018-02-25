@@ -1,5 +1,3 @@
-//lazy val annotations = project
-
 lazy val CompilerPlugin =
   project.dependsOn(Dsl % Test, Dsl % Provided, `instructions-Catch` % Provided, `instructions-Catch` % Test)
 
@@ -22,21 +20,28 @@ lazy val `instructions-ScalazBind` =
 lazy val `instructions-CatsFlatMap` =
   project.dependsOn(Dsl, `instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
+lazy val `domains-Scope` = project.dependsOn(Dsl)
+
+lazy val `instructions-Arm` =
+  project.dependsOn(Dsl,
+                    `domains-Scope`,
+                    `instructions-Catch`,
+                    `instructions-Shift`,
+                    `instructions-Yield` % Test,
+                    `domains-ExceptionHandling`)
+
 organization in ThisBuild := "com.thoughtworks.dsl"
 
-for {
-  testingProject <- Seq(
-    `instructions-Shift`,
-    `instructions-CatsFlatMap`,
-    `instructions-Each`,
-    `instructions-ScalazBind`,
-    `instructions-Yield`,
-    `domains-ExceptionHandling`,
-    `instructions-Catch`,
-    CompilerPlugin
-  )
-} yield {
-  scalacOptions in testingProject in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
+Seq(
+  `instructions-Shift`,
+  `instructions-CatsFlatMap`,
+  `instructions-Each`,
+  `instructions-ScalazBind`,
+  `instructions-Yield`,
+  `domains-ExceptionHandling`,
+  `instructions-Arm`
+).map { testingProject =>
+  scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
 }
 
 crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.4")

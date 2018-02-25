@@ -19,7 +19,7 @@ object Shift {
 
   implicit def shiftDsl[Domain, A]: Dsl[Shift[Domain, A], Domain, A] =
     new Dsl[Shift[Domain, A], Domain, A] {
-      def interpret(self: Shift[Domain, A], mapper: A => Domain): Domain = self.continuation(mapper)
+      def interpret(shift: Shift[Domain, A], mapper: A => Domain): Domain = shift.continuation(mapper)
     }
 
 }
