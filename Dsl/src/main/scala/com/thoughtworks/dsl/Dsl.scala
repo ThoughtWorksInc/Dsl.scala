@@ -3,6 +3,7 @@ package com.thoughtworks.dsl
 import com.thoughtworks.dsl.Dsl.shift
 
 import scala.annotation.{Annotation, StaticAnnotation, TypeConstraint, compileTimeOnly}
+import scala.util.control.NonFatal
 
 /** The domain-specific interpreter for `Instruction` in `Domain`,
   * which is a dependent type type class that registers an asynchronous callback function,

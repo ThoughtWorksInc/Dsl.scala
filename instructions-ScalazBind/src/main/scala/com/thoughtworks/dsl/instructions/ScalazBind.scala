@@ -17,6 +17,30 @@ final case class ScalazBind[F[_], A](fa: F[A]) extends AnyVal with Instruction[S
 
 object ScalazBind {
 
+  implicit def scalazCatchDsl[F[_], A](
+      implicit monadError: MonadError[F, Throwable]): Dsl[Catch[F[A]], F[A], F[A] => F[A]] =
+    new Dsl[Catch[F[A]], F[A], F[A] => F[A]] {
+      def interpret(instruction: Catch[F[A]], continuation: (F[A] => F[A]) => F[A]): F[A] = {
+        def exceptionHandler(e: Throwable): F[A] = {
+          try {
+            instruction.onFailure(e)
+          } catch {
+            case NonFatal(rethrown) =>
+              monadError.raiseError(rethrown)
+          }
+        }
+
+        try {
+          continuation { fa: F[A] =>
+            monadError.handleError(fa)(exceptionHandler)
+          }
+        } catch {
+          case NonFatal(e) =>
+            exceptionHandler(e)
+        }
+      }
+    }
+
   implicit final class ScalazMonadErrorCatchOps[F[_], A](catcher: Catcher[F[A]])(
       implicit monadError: MonadError[F, Throwable]) {
     def cpsCatch(continuation: (F[A] => F[A]) => F[A]): F[A] = {

@@ -1,20 +1,26 @@
 //lazy val annotations = project
 
-lazy val CompilerPlugin = project.dependsOn(Dsl % Test, Dsl % Provided)
+lazy val CompilerPlugin =
+  project.dependsOn(Dsl % Test, Dsl % Provided, `instructions-Catch` % Provided, `instructions-Catch` % Test)
 
 lazy val Dsl = project
 
-lazy val `domains-ExceptionHandling` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
+lazy val `domains-ExceptionHandling` =
+  project.dependsOn(`instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
 lazy val `instructions-Shift` = project.dependsOn(Dsl)
+
+lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
 lazy val `instructions-Each` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
 lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Shift` % Test)
 
-lazy val `instructions-ScalazBind` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
+lazy val `instructions-ScalazBind` =
+  project.dependsOn(Dsl, `instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
-lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
+lazy val `instructions-CatsFlatMap` =
+  project.dependsOn(Dsl, `instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
@@ -26,6 +32,7 @@ for {
     `instructions-ScalazBind`,
     `instructions-Yield`,
     `domains-ExceptionHandling`,
+    `instructions-Catch`,
     CompilerPlugin
   )
 } yield {

@@ -277,9 +277,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               }
             }}}
 
-            @${definitions.ScalaInlineClass} def $asCatcherName[A](c: _root_.scala.util.control.Exception.Catcher[A]) = c
-
-            $asCatcherName {
+            _root_.com.thoughtworks.dsl.instructions.Catch {
               case ..${{
               catches.map { caseDef =>
                 atPos(caseDef.pos) {
@@ -291,7 +289,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }}
               case $unhandledExceptionName: _root_.scala.Throwable =>
                 $finalizerName(_root_.scala.util.Failure($unhandledExceptionName))
-            }.cpsCatch { $continueName: ${TypeTree()} => ${{
+            }.cpsApply { $continueName: ${TypeTree()} => ${{
               cpsAttachment(block) { blockValue =>
                 q"""
                 val $tryResultName = $blockValue
