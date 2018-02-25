@@ -2,6 +2,7 @@ package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
 import Each.fork
+import com.thoughtworks.dsl.annotations.reset
 
 /**
   * @author 杨博 (Yang Bo)
@@ -9,8 +10,78 @@ import Each.fork
 class EachSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
+  "reset helper" - {
+    def resetReturnValue[A](a: A): A @reset = a
+    def forceParameter[A](a: => A @reset): A = a
+
+    "@reset parameter" ignore {
+      val seq = 1 to 10
+      def run(): Seq[Int] = Seq {
+        val plus100 = forceParameter(Seq {
+          !Each(seq) + 100
+        })
+        plus100.length should be(10)
+        !Each(plus100)
+      }
+
+      val result = run()
+      result.length should be(10)
+      result.last should be(110)
+    }
+
+    "@reset block" in {
+      val seq = 1 to 10
+      def run(): Seq[Int] = Seq {
+        val plus100 = resetReturnValue {
+          Seq(!Each(seq) + 100)
+        }
+        plus100.length should be(10)
+        !Each(plus100)
+      }
+
+      val result = run()
+      result.length should be(10)
+      result.last should be(110)
+    }
+
+    "@reset result value" ignore {
+      val seq = 1 to 10
+      def run(): Seq[Int] = Seq {
+        val plus100 = {
+          val element = !Each(seq)
+          resetReturnValue {
+            Seq(element + 100)
+          }
+        }
+        plus100.length should be(1)
+        !Each(plus100)
+      }
+
+      val result = run()
+      result.length should be(10)
+      result.last should be(110)
+    }
+
+  }
+
   "nested" - {
+
     "each" - {
+      "explicit @reset" in {
+        val seq = 1 to 10
+
+        def run(): Seq[Int] = Seq {
+          val plus100: Seq[Int] @reset = Seq {
+            !Each(seq) + 100
+          }
+          plus100.length should be(1)
+          !Each(plus100)
+        }
+
+        val result = run()
+        result.length should be(10)
+        result.last should be(110)
+      }
 
       "val" in {
         val seq = 1 to 10
@@ -27,6 +98,7 @@ class EachSpec extends FreeSpec with Matchers {
         result.length should be(10)
         result.last should be(110)
       }
+
       "def" in {
         val seq = 1 to 10
 

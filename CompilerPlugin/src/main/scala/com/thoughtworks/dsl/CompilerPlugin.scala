@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.annotations.{reset, shift}
+import com.thoughtworks.dsl.annotations.{ResetAnnotation, nonTypeConstraintReset, shift}
 
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.transform.Transform
@@ -28,18 +28,28 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
 
   private type CpsAttachment = (Tree => Tree) => Tree
 
-  private val resetSymbol = symbolOf[reset]
+  private val nonTypeConstraintResetSymbol = symbolOf[nonTypeConstraintReset]
+  private val resetAnnotationSymbol = symbolOf[ResetAnnotation]
   private val shiftSymbol = symbolOf[shift]
 
-  private val cpsAnalyzerPlugin: AnalyzerPlugin = new AnalyzerPlugin {
+  trait Deactable extends AnalyzerPlugin {
+    override def isActive(): Boolean = {
+      active && phase.id < currentRun.picklerPhase.id
+    }
+  }
 
+  /** An [[AnalyzerPlugin]] that replaces trees annatated as [[ResetAnnotation]] to its cps transformed trees */
+  trait TreeResetter extends AnalyzerPlugin {
     override def canAdaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Boolean = {
-      mode.inExprMode && tree.tpe.hasAnnotation(resetSymbol) && tree.hasAttachment[CpsAttachment]
+      super.canAdaptAnnotations(tree, typer, mode, pt) || {
+        mode.inExprMode && tree.tpe.hasAnnotation(resetAnnotationSymbol) && tree.hasAttachment[CpsAttachment]
+      }
     }
 
-    override def adaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
+    override def adaptAnnotations(tree0: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
+      val tree = super.adaptAnnotations(tree0, typer, mode, pt)
       val Seq(typedCpsTree) = tree.tpe.annotations.collect {
-        case annotation if annotation.matches(resetSymbol) =>
+        case annotation if annotation.matches(resetAnnotationSymbol) =>
           val Some(attachment) = tree.attachments.get[CpsAttachment]
           val cpsTree = resetAttrs(attachment(identity))
 //          reporter.info(tree.pos, s"Translating to continuation-passing style: $cpsTree", true)
@@ -49,8 +59,12 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }
           }
       }
-      typedCpsTree
+      typedCpsTree.modifyType(_.filterAnnotations(!_.matches(resetAnnotationSymbol)))
     }
+
+  }
+
+  trait CpsTransformer extends AnalyzerPlugin {
 
     private def cpsAttachment(tree: Tree)(continue: Tree => Tree): Tree = {
       tree.attachments.get[CpsAttachment] match {
@@ -151,7 +165,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       }
     }
 
-    override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
+    override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
+      val tpe = super.pluginsTyped(tpe0, typer, tree, mode, pt)
       def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
         tree match {
           case q"$prefix.$methodName[..$typeParameters](...$parameterLists)" =>
@@ -182,7 +197,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           case Typed(expr, tpt) =>
             cpsAttachment(expr) { exprValue =>
               atPos(tree.pos) {
-                if (tpt.tpe.hasAnnotation(resetSymbol)) {
+                if (tpt.tpe.hasAnnotation(resetAnnotationSymbol)) {
                   continue(exprValue)
                 } else {
                   continue(Typed(exprValue, tpt))
@@ -360,18 +375,11 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       tpe
     }
 
-    override def isActive(): Boolean = {
-      active && phase.id < currentRun.picklerPhase.id
-    }
-
-    override def pluginsPt(pt: Type, typer: Typer, tree: Tree, mode: Mode): Type = {
-      super.pluginsPt(pt, typer, tree, mode)
-    }
   }
 
   val name: String = "dsl"
 
-  private def resetMarker: PluginComponent = new PluginComponent with Transform {
+  final class ResetAnnotationCreator extends PluginComponent with Transform {
 
     val global: CompilerPlugin.this.global.type = CompilerPlugin.this.global
     val phaseName: String = "resetmarker"
@@ -381,7 +389,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     protected def newTransformer(unit: CompilationUnit): Transformer = new Transformer {
 
       private def annotateAsReset(tree: Tree) = {
-        Annotated(q"new $resetSymbol()", transform(tree))
+        Annotated(q"new $nonTypeConstraintResetSymbol()", transform(tree))
       }
 
       private def transformRootValDef(tree: ValDef) = {
@@ -431,10 +439,10 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
   override def init(options: List[String], error: String => Unit): Boolean = {
     options match {
       case Nil =>
-        global.analyzer.addAnalyzerPlugin(cpsAnalyzerPlugin)
+        global.analyzer.addAnalyzerPlugin(new Deactable with TreeResetter with CpsTransformer)
       case List("macro-annotation-workaround") =>
-        global.analyzer.addAnalyzerPlugin(macroAnnotationWorkaroundAnalyzerPlugin)
-        global.analyzer.addAnalyzerPlugin(cpsAnalyzerPlugin)
+        global.analyzer.addAnalyzerPlugin(
+          new Deactable with TreeResetter with CpsTransformer with ResetAttachmentConverter with ResetAttachmentCreator)
       case _ =>
         error(this.optionsHelp.get)
     }
@@ -448,13 +456,13 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     if (options.contains("macro-annotation-workaround")) {
       Nil
     } else {
-      List(resetMarker)
+      List(new ResetAnnotationCreator)
     }
   }
 
-  private val macroAnnotationWorkaroundAnalyzerPlugin = new AnalyzerPlugin {
-    object Reset
-    override def pluginsPt(pt: Type, typer: Typer, tree: Tree, mode: Mode): Type = {
+  trait ResetAttachmentCreator extends ResetAttachmentConverter {
+    override def pluginsPt(pt0: Type, typer: Typer, tree: Tree, mode: Mode): Type = {
+      val pt = super.pluginsPt(pt0: Type, typer: Typer, tree: Tree, mode: Mode)
       if (mode.inExprMode) {
         tree match {
           case function: Function =>
@@ -477,22 +485,25 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       }
       pt
     }
-    override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
+  }
+
+  /** A [[AnalyzerPlugin]] that converts [[Reset]] attachments to [[com.thoughtworks.dsl.annotations.nonTypeConstraintReset generatedReset]] annotations */
+  trait ResetAttachmentConverter extends AnalyzerPlugin {
+    object Reset
+    override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
+      val tpe = super.pluginsTyped(tpe0, typer, tree, mode, pt)
       tree.attachments.get[Reset.type] match {
         case None =>
           tpe
         case Some(_) =>
           tpe.withAnnotations(List(Annotation(deactAnalyzerPlugins {
             typer.context.withMode(ContextMode.NOmode) {
-              typer.typed(q"new $resetSymbol()", Mode.EXPRmode)
+              typer.typed(q"new $nonTypeConstraintResetSymbol()", Mode.EXPRmode)
             }
           })))
       }
     }
 
-    override def isActive(): Boolean = {
-      active && phase.id < currentRun.picklerPhase.id
-    }
   }
 
 }
