@@ -1,6 +1,7 @@
 package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl
+import com.thoughtworks.dsl.instructions.Catch
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
@@ -16,40 +17,82 @@ trait ExceptionHandling[OtherDomain] { self =>
 
 object ExceptionHandling {
 
-  implicit final class CpsCatchOps[OtherDomain](catcher: Catcher[ExceptionHandling[OtherDomain]]) {
-    def cpsCatch(
-        continuation: (
-            ExceptionHandling[OtherDomain] => ExceptionHandling[OtherDomain]) => ExceptionHandling[OtherDomain])
-      : ExceptionHandling[OtherDomain] = {
-      new ExceptionHandling[OtherDomain] {
-        def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
-          def handleRethrow(e: Throwable): OtherDomain = {
+  implicit def catchDsl[OtherDomain]: Dsl[Catch[ExceptionHandling[OtherDomain]],
+                                          ExceptionHandling[OtherDomain],
+                                          ExceptionHandling[OtherDomain] => ExceptionHandling[OtherDomain]] = {
+    new Dsl[Catch[ExceptionHandling[OtherDomain]],
+            ExceptionHandling[OtherDomain],
+            ExceptionHandling[OtherDomain] => ExceptionHandling[OtherDomain]] {
+      def interpret(
+          instruction: Catch[ExceptionHandling[OtherDomain]],
+          continuation: (
+              ExceptionHandling[OtherDomain] => ExceptionHandling[OtherDomain]) => ExceptionHandling[OtherDomain])
+        : ExceptionHandling[OtherDomain] = {
+
+        new ExceptionHandling[OtherDomain] {
+          def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
+            def handleRethrow(e: Throwable): OtherDomain = {
+              locally {
+                try {
+                  instruction.onFailure(e)
+                } catch {
+                  case NonFatal(rethrown) =>
+                    return failureHandler(rethrown)
+                }
+              }.onFailure(failureHandler)
+
+            }
+
             locally {
               try {
-                catcher.lift(e)
+                continuation { domain =>
+                  ExceptionHandling.success(domain.onFailure(failureHandler))
+                }
               } catch {
-                case NonFatal(rethrown) =>
-                  return failureHandler(rethrown)
+                case NonFatal(e) => return handleRethrow(e)
               }
-            } match {
-              case Some(handled) => handled.onFailure(failureHandler)
-              case None          => failureHandler(e)
-            }
+            }.onFailure(handleRethrow)
           }
-
-          locally {
-            try {
-              continuation { domain =>
-                ExceptionHandling.success(domain.onFailure(failureHandler))
-              }
-            } catch {
-              case NonFatal(e) => return handleRethrow(e)
-            }
-          }.onFailure(handleRethrow)
         }
+
       }
     }
   }
+//
+//  implicit final class CpsCatchOps[OtherDomain](catcher: Catcher[ExceptionHandling[OtherDomain]]) {
+//    def cpsCatch(
+//        continuation: (
+//            ExceptionHandling[OtherDomain] => ExceptionHandling[OtherDomain]) => ExceptionHandling[OtherDomain])
+//      : ExceptionHandling[OtherDomain] = {
+//      new ExceptionHandling[OtherDomain] {
+//        def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
+//          def handleRethrow(e: Throwable): OtherDomain = {
+//            locally {
+//              try {
+//                catcher.lift(e)
+//              } catch {
+//                case NonFatal(rethrown) =>
+//                  return failureHandler(rethrown)
+//              }
+//            } match {
+//              case Some(handled) => handled.onFailure(failureHandler)
+//              case None          => failureHandler(e)
+//            }
+//          }
+//
+//          locally {
+//            try {
+//              continuation { domain =>
+//                ExceptionHandling.success(domain.onFailure(failureHandler))
+//              }
+//            } catch {
+//              case NonFatal(e) => return handleRethrow(e)
+//            }
+//          }.onFailure(handleRethrow)
+//        }
+//      }
+//    }
+//  }
 
   def success[Domain](r: Domain): ExceptionHandling[Domain] = new ExceptionHandling[Domain] {
     def onFailure(handler: Throwable => Domain): Domain = r
@@ -59,7 +102,7 @@ object ExceptionHandling {
     def onFailure(handler: Throwable => Domain): Domain = handler(e)
   }
 
-  implicit def mayFailDsl[Instruction, Domain, A](
+  implicit def exceptionHandlingDsl[Instruction, Domain, A](
       implicit restDsl: Dsl[Instruction, Domain, A]): Dsl[Instruction, ExceptionHandling[Domain], A] =
     new Dsl[Instruction, ExceptionHandling[Domain], A] {
       def interpret(instruction: Instruction,
