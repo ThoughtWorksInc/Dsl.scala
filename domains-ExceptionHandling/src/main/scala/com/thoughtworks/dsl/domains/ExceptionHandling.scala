@@ -58,41 +58,6 @@ object ExceptionHandling {
       }
     }
   }
-//
-//  implicit final class CpsCatchOps[OtherDomain](catcher: Catcher[ExceptionHandling[OtherDomain]]) {
-//    def cpsCatch(
-//        continuation: (
-//            ExceptionHandling[OtherDomain] => ExceptionHandling[OtherDomain]) => ExceptionHandling[OtherDomain])
-//      : ExceptionHandling[OtherDomain] = {
-//      new ExceptionHandling[OtherDomain] {
-//        def onFailure(failureHandler: Throwable => OtherDomain): OtherDomain = {
-//          def handleRethrow(e: Throwable): OtherDomain = {
-//            locally {
-//              try {
-//                catcher.lift(e)
-//              } catch {
-//                case NonFatal(rethrown) =>
-//                  return failureHandler(rethrown)
-//              }
-//            } match {
-//              case Some(handled) => handled.onFailure(failureHandler)
-//              case None          => failureHandler(e)
-//            }
-//          }
-//
-//          locally {
-//            try {
-//              continuation { domain =>
-//                ExceptionHandling.success(domain.onFailure(failureHandler))
-//              }
-//            } catch {
-//              case NonFatal(e) => return handleRethrow(e)
-//            }
-//          }.onFailure(handleRethrow)
-//        }
-//      }
-//    }
-//  }
 
   def success[Domain](r: Domain): ExceptionHandling[Domain] = new ExceptionHandling[Domain] {
     def onFailure(handler: Throwable => Domain): Domain = r
