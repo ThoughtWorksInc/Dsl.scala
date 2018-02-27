@@ -167,6 +167,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
 
     override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
       val tpe = super.pluginsTyped(tpe0, typer, tree, mode, pt)
+
       def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
         tree match {
           case q"$prefix.$methodName[..$typeParameters](...$parameterLists)" =>
@@ -215,6 +216,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                   }
               }
             }
+
             loop(stats)
           case If(cond, thenp, elsep) =>
             val endIfName = currentUnit.freshTermName("endIf")
@@ -292,8 +294,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }.cpsApply { $continueName: ${TypeTree()} => ${{
               cpsAttachment(block) { blockValue =>
                 q"""
-                val $tryResultName = $blockValue
-                $continueName(${continue(q"$tryResultName")})
+                $continueName(${q"$finalizerName(_root_.scala.util.Success($blockValue))"})
                 """
               }
             }}}
@@ -349,20 +350,23 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }
         }
       }
+
       if (mode.inExprMode) {
         val symbol = tree.symbol
         if (symbol != null && symbol.hasAnnotation(shiftSymbol) && !tree.isDef) {
           val q"$shiftOps.$shiftMethod" = tree
-          val attachment: CpsAttachment = { continue: (Tree => Tree) =>
+          def attachment: CpsAttachment = { continue: (Tree => Tree) =>
             val aName = currentUnit.freshTermName("a")
 
             // FIXME: tpe is a by-name type. I don't know why.
-            atPos(tree.pos) {
-              q"""
-                $shiftOps.cpsApply { $aName: $tpe =>
+            cpsAttachment(shiftOps) { shiftOpsValue =>
+              atPos(tree.pos) {
+                q"""
+                $shiftOpsValue.cpsApply { $aName: $tpe =>
                   ${continue(q"$aName")}
                 }
               """
+              }
             }
           }
           tree.updateAttachment[CpsAttachment](attachment)
@@ -370,6 +374,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           tree.updateAttachment[CpsAttachment](cps)
         }
       }
+
       tpe
     }
 
@@ -402,14 +407,23 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           parents,
           self,
           body.mapConserve {
-            case valDef: ValDef =>
+            case valDef: ValDef if !valDef.mods.isParamAccessor =>
               transformRootValDef(valDef)
             case initializer: TermTree =>
               annotateAsReset(initializer)
             case stat =>
-              super.transform(stat)
+              transform(stat)
           }
         )
+      }
+
+      private def annotateArgsAsReset(tree: Tree): Tree = {
+        tree match {
+          case tree: Apply =>
+            treeCopy.Apply(tree, annotateArgsAsReset(tree.fun), tree.args.mapConserve(annotateAsReset))
+          case fun =>
+            fun
+        }
       }
 
       override def transform(tree: global.Tree): global.Tree = {
@@ -420,10 +434,14 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             treeCopy.Typed(tree, transform(expr), tpt)
           case Function(vparams, body) =>
             treeCopy.Function(tree, vparams, annotateAsReset(body))
-          case DefDef(mods, name, tparams, vparamss, tpt, rhs) =>
+          case DefDef(mods, name, tparams, vparamss, tpt, rhs) if name != termNames.CONSTRUCTOR && rhs.nonEmpty =>
             treeCopy.DefDef(tree, mods, name, tparams, transformValDefss(vparamss), tpt, annotateAsReset(rhs))
           case valDef: ValDef if valDef.mods.hasDefault =>
             transformRootValDef(valDef)
+          case q"${Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
+            annotateArgsAsReset(tree)
+          case q"super.${termNames.CONSTRUCTOR}(...$argss)" =>
+            annotateArgsAsReset(tree)
           case _ =>
             super.transform(tree)
         }
@@ -467,12 +485,17 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             // FIXME: the Reset attachment will be discarded when the body tree is replaced
             // (e.g. the body tree is a `+=` call, which will be replaced to an Assign tree
             function.body.updateAttachment(Reset)
-          case defDef: DefDef =>
-            defDef.rhs.updateAttachment(Reset)
-            defDef.vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
+          case defDef @ DefDef(mods, name, tparams, vparamss, tpt, rhs)
+              if name != termNames.CONSTRUCTOR && rhs.nonEmpty =>
+            rhs.updateAttachment(Reset)
+            vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
+          case q"${fun @ Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
+            argss.foreach(_.foreach(_.updateAttachment(Reset)))
+          case q"${fun @ q"super.${termNames.CONSTRUCTOR}"}(...$argss)" =>
+            argss.foreach(_.foreach(_.updateAttachment(Reset)))
           case implDef: ImplDef =>
             implDef.impl.body.foreach {
-              case valDef: ValDef =>
+              case valDef: ValDef if !valDef.mods.isParamAccessor =>
                 valDef.rhs.updateAttachment(Reset)
               case termTree: TermTree =>
                 termTree.updateAttachment(Reset)

@@ -26,7 +26,7 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
       }
 
       "When catching exception thrown from the generator" - {
-        val catching = generator.onFailure { e: Throwable =>
+        val catching = generator.apply { e: Throwable =>
           e should be(MyException)
           Stream(100)
         }
@@ -52,7 +52,7 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
       continuation { result: String =>
         result should be("returns catch")
         ExceptionHandling.success(Stream.empty)
-      }.onFailure { e =>
+      }.apply { e =>
         Stream.empty
       } should be(Seq(3))
     }
@@ -71,7 +71,7 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
 
       continuation { result: String =>
         ExceptionHandling.failure(new AssertionError())
-      }.onFailure { e =>
+      }.apply { e =>
         e should be(a[ArithmeticException])
         Stream.empty
       } should be(Stream(1, 3))
@@ -88,7 +88,7 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
       }
       continuation { result: String =>
         ExceptionHandling.failure(new AssertionError())
-      }.onFailure { e =>
+      }.apply { e =>
         e should be(a[ArithmeticException])
         Stream.empty
       } should be(Seq())
@@ -106,7 +106,7 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
       }
       continuation { result: String =>
         ExceptionHandling.failure(new AssertionError())
-      }.onFailure { e =>
+      }.apply { e =>
         e should be(a[ArithmeticException])
         Stream.empty
       } should be(Seq(42))
@@ -143,7 +143,7 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
       continuation { result: String =>
         result should be("returns catch")
         ExceptionHandling.success(Stream.empty)
-      }.onFailure { e =>
+      }.apply { e =>
         Stream.empty
       } should be(Seq(0, 1, 3, 5, 6, 7))
     }
