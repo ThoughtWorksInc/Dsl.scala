@@ -20,12 +20,8 @@ lazy val `instructions-ScalazBind` =
 lazy val `instructions-CatsFlatMap` =
   project.dependsOn(Dsl, `instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
-lazy val `domains-Scope` = project.dependsOn(Dsl)
-
 lazy val `instructions-Arm` =
-  project.dependsOn(Dsl,
-                    `domains-Scope`,
-                    `instructions-Catch`,
+  project.dependsOn(`instructions-Catch`,
                     `instructions-Shift`,
                     `instructions-Yield` % Test,
                     `domains-ExceptionHandling`)
