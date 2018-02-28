@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
-import Each.fork
+import com.thoughtworks.dsl.Dsl.reset
 
 /**
   * @author 杨博 (Yang Bo)
@@ -9,8 +9,78 @@ import Each.fork
 class EachSpec extends FreeSpec with Matchers {
   type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
+  "reset helper" - {
+    def resetReturnValue[A](a: A): A @reset = a
+    def forceParameter[A](a: => A @reset): A = a
+
+    "@reset parameter" ignore {
+      val seq = 1 to 10
+      def run(): Seq[Int] = Seq {
+        val plus100 = forceParameter(Seq {
+          !Each(seq) + 100
+        })
+        plus100.length should be(10)
+        !Each(plus100)
+      }
+
+      val result = run()
+      result.length should be(10)
+      result.last should be(110)
+    }
+
+    "@reset block" in {
+      val seq = 1 to 10
+      def run(): Seq[Int] = Seq {
+        val plus100 = resetReturnValue {
+          Seq(!Each(seq) + 100)
+        }
+        plus100.length should be(10)
+        !Each(plus100)
+      }
+
+      val result = run()
+      result.length should be(10)
+      result.last should be(110)
+    }
+
+    "@reset result value" ignore {
+      val seq = 1 to 10
+      def run(): Seq[Int] = Seq {
+        val plus100 = {
+          val element = !Each(seq)
+          resetReturnValue {
+            Seq(element + 100)
+          }
+        }
+        plus100.length should be(1)
+        !Each(plus100)
+      }
+
+      val result = run()
+      result.length should be(10)
+      result.last should be(110)
+    }
+
+  }
+
   "nested" - {
+
     "each" - {
+      "explicit @reset" in {
+        val seq = 1 to 10
+
+        def run(): Seq[Int] = Seq {
+          val plus100: Seq[Int] @reset = Seq {
+            !Each(seq) + 100
+          }
+          plus100.length should be(1)
+          !Each(plus100)
+        }
+
+        val result = run()
+        result.length should be(10)
+        result.last should be(110)
+      }
 
       "val" in {
         val seq = 1 to 10
@@ -27,6 +97,7 @@ class EachSpec extends FreeSpec with Matchers {
         result.length should be(10)
         result.last should be(110)
       }
+
       "def" in {
         val seq = 1 to 10
 
@@ -88,7 +159,7 @@ class EachSpec extends FreeSpec with Matchers {
   "default parameter" in {
 
     def foo(s: Seq[Int] = Seq {
-      !fork(1, 2, 3) + 100
+      !Each(Seq(1, 2, 3)) + 100
     }) = s
 
     foo() should be(Seq(101, 102, 103))
@@ -109,7 +180,7 @@ class EachSpec extends FreeSpec with Matchers {
 
     def asyncFunction: AsyncFunction[Stream[String], Unit] = _ {
       !Yield("Entering asyncFunction")
-      val subThreadId: Int = !fork(0, 1)
+      val subThreadId: Int = !Each(Seq(0, 1))
       !Yield(s"Fork sub-thread $subThreadId")
       !Yield("Leaving asyncFunction")
     }
@@ -118,7 +189,7 @@ class EachSpec extends FreeSpec with Matchers {
 
       def generator: Stream[String] = {
         !Yield("Entering generator")
-        val threadId = !fork(0, 1)
+        val threadId = !Each(Seq(0, 1))
         !Yield(s"Fork thread $threadId")
         !Shift(asyncFunction)
         Stream("Leaving generator")

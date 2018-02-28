@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.annotations.{reset, shift}
+import com.thoughtworks.dsl.Dsl.{ResetAnnotation, nonTypeConstraintReset, shift}
 
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.transform.Transform
@@ -37,18 +37,28 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
 
   private type CpsAttachment = (Tree => Tree) => Tree
 
-  private val resetSymbol = symbolOf[reset]
+  private val nonTypeConstraintResetSymbol = symbolOf[nonTypeConstraintReset]
+  private val resetAnnotationSymbol = symbolOf[ResetAnnotation]
   private val shiftSymbol = symbolOf[shift]
 
-  private val cpsAnalyzerPlugin: AnalyzerPlugin = new AnalyzerPlugin {
+  trait Deactable extends AnalyzerPlugin {
+    override def isActive(): Boolean = {
+      active && phase.id < currentRun.picklerPhase.id
+    }
+  }
 
+  /** An [[AnalyzerPlugin]] that replaces trees annatated as [[ResetAnnotation]] to its cps transformed trees */
+  trait TreeResetter extends AnalyzerPlugin {
     override def canAdaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Boolean = {
-      mode.inExprMode && tree.tpe.hasAnnotation(resetSymbol) && tree.hasAttachment[CpsAttachment]
+      super.canAdaptAnnotations(tree, typer, mode, pt) || {
+        mode.inExprMode && tree.tpe.hasAnnotation(resetAnnotationSymbol) && tree.hasAttachment[CpsAttachment]
+      }
     }
 
-    override def adaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
+    override def adaptAnnotations(tree0: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
+      val tree = super.adaptAnnotations(tree0, typer, mode, pt)
       val Seq(typedCpsTree) = tree.tpe.annotations.collect {
-        case annotation if annotation.matches(resetSymbol) =>
+        case annotation if annotation.matches(resetAnnotationSymbol) =>
           val Some(attachment) = tree.attachments.get[CpsAttachment]
           val cpsTree = resetAttrs(attachment(identity))
 //          reporter.info(tree.pos, s"Translating to continuation-passing style: $cpsTree", true)
@@ -58,8 +68,12 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }
           }
       }
-      typedCpsTree
+      typedCpsTree.modifyType(_.filterAnnotations(!_.matches(resetAnnotationSymbol)))
     }
+
+  }
+
+  trait CpsTransformer extends AnalyzerPlugin {
 
     private def cpsAttachment(tree: Tree)(continue: Tree => Tree): Tree = {
       tree.attachments.get[CpsAttachment] match {
@@ -102,6 +116,26 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
         }
       }
       tree.productIterator.exists(hasCpsAttachment)
+    }
+
+    /** Avoid [[UnApply]] in `patterTree` to suppress compiler crash due to `unexpected UnApply xxx`.
+      *
+      * @see https://github.com/scala/bug/issues/8825
+      */
+    private def scalaBug8825Workaround(patterTree: Tree): Tree = {
+      val transformer = new Transformer {
+        override def transform(tree: global.Tree): global.Tree = {
+          tree match {
+            case UnApply(
+                Apply(Select(prefix, termNames.unapply | termNames.unapplySeq), List(Ident(termNames.SELECTOR_DUMMY))),
+                args) =>
+              pq"$prefix(..${transformTrees(args)})"
+            case _ =>
+              super.transform(tree)
+          }
+        }
+      }
+      transformer.transform(patterTree)
     }
 
     private val whileName = currentUnit.freshTermName("while")
@@ -160,7 +194,9 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       }
     }
 
-    override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
+    override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
+      val tpe = super.pluginsTyped(tpe0, typer, tree, mode, pt)
+
       def cps(continue: Tree => Tree): Tree = atPos(tree.pos) {
         tree match {
           case q"$prefix.$methodName[..$typeParameters](...$parameterLists)" =>
@@ -191,7 +227,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           case Typed(expr, tpt) =>
             cpsAttachment(expr) { exprValue =>
               atPos(tree.pos) {
-                if (tpt.tpe.hasAnnotation(resetSymbol)) {
+                if (tpt.tpe.hasAnnotation(resetAnnotationSymbol)) {
                   continue(exprValue)
                 } else {
                   continue(Typed(exprValue, tpt))
@@ -209,6 +245,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                   }
               }
             }
+
             loop(stats)
           case If(cond, thenp, elsep) =>
             val endIfName = currentUnit.freshTermName("endIf")
@@ -243,7 +280,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                   selectorValue,
                   cases.map {
                     case caseDef @ CaseDef(pat, guard, body) =>
-                      treeCopy.CaseDef(caseDef, pat, guard, cpsAttachment(body) { bodyValue =>
+                      treeCopy.CaseDef(caseDef, scalaBug8825Workaround(pat), guard, cpsAttachment(body) { bodyValue =>
                         q"$endMatchName($bodyValue)"
                       })
                   }
@@ -271,25 +308,27 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               }
             }}}
 
-            @${definitions.ScalaInlineClass} def $asCatcherName[A](c: _root_.scala.util.control.Exception.Catcher[A]) = c
-
-            $asCatcherName {
+            _root_.com.thoughtworks.dsl.instructions.Catch {
               case ..${{
               catches.map { caseDef =>
                 atPos(caseDef.pos) {
-                  CaseDef(caseDef.pat, caseDef.guard, cpsAttachment(caseDef.body) { bodyValue =>
-                    q"$finalizerName(_root_.scala.util.Success($bodyValue))"
-                  })
+                  treeCopy.CaseDef(
+                    caseDef,
+                    scalaBug8825Workaround(caseDef.pat),
+                    caseDef.guard,
+                    cpsAttachment(caseDef.body) { bodyValue =>
+                      q"$finalizerName(_root_.scala.util.Success($bodyValue))"
+                    }
+                  )
                 }
               }
             }}
               case $unhandledExceptionName: _root_.scala.Throwable =>
                 $finalizerName(_root_.scala.util.Failure($unhandledExceptionName))
-            }.cpsCatch { $continueName: ${TypeTree()} => ${{
+            }.cpsApply { $continueName: ${TypeTree()} => ${{
               cpsAttachment(block) { blockValue =>
                 q"""
-                val $tryResultName = $blockValue
-                $continueName(${continue(q"$tryResultName")})
+                $continueName(${q"$finalizerName(_root_.scala.util.Success($blockValue))"})
                 """
               }
             }}}
@@ -345,20 +384,23 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             }
         }
       }
+
       if (mode.inExprMode) {
         val symbol = tree.symbol
         if (symbol != null && symbol.hasAnnotation(shiftSymbol) && !tree.isDef) {
           val q"$shiftOps.$shiftMethod" = tree
-          val attachment: CpsAttachment = { continue: (Tree => Tree) =>
+          def attachment: CpsAttachment = { continue: (Tree => Tree) =>
             val aName = currentUnit.freshTermName("a")
 
             // FIXME: tpe is a by-name type. I don't know why.
-            atPos(tree.pos) {
-              q"""
-                $shiftOps.cpsApply { $aName: $tpe =>
+            cpsAttachment(shiftOps) { shiftOpsValue =>
+              atPos(tree.pos) {
+                q"""
+                $shiftOpsValue.cpsApply { $aName: $tpe =>
                   ${continue(q"$aName")}
                 }
               """
+              }
             }
           }
           tree.updateAttachment[CpsAttachment](attachment)
@@ -366,21 +408,15 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           tree.updateAttachment[CpsAttachment](cps)
         }
       }
+
       tpe
     }
 
-    override def isActive(): Boolean = {
-      active && phase.id < currentRun.picklerPhase.id
-    }
-
-    override def pluginsPt(pt: Type, typer: Typer, tree: Tree, mode: Mode): Type = {
-      super.pluginsPt(pt, typer, tree, mode)
-    }
   }
 
   val name: String = "dsl"
 
-  private def resetMarker: PluginComponent = new PluginComponent with Transform {
+  final class ResetAnnotationCreator extends PluginComponent with Transform {
 
     val global: CompilerPlugin.this.global.type = CompilerPlugin.this.global
     val phaseName: String = "resetmarker"
@@ -390,7 +426,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     protected def newTransformer(unit: CompilationUnit): Transformer = new Transformer {
 
       private def annotateAsReset(tree: Tree) = {
-        Annotated(q"new $resetSymbol()", transform(tree))
+        Annotated(q"new $nonTypeConstraintResetSymbol()", transform(tree))
       }
 
       private def transformRootValDef(tree: ValDef) = {
@@ -405,14 +441,23 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           parents,
           self,
           body.mapConserve {
-            case valDef: ValDef =>
+            case valDef: ValDef if !valDef.mods.isParamAccessor =>
               transformRootValDef(valDef)
             case initializer: TermTree =>
               annotateAsReset(initializer)
             case stat =>
-              super.transform(stat)
+              transform(stat)
           }
         )
+      }
+
+      private def annotateArgsAsReset(tree: Tree): Tree = {
+        tree match {
+          case tree: Apply =>
+            treeCopy.Apply(tree, annotateArgsAsReset(tree.fun), tree.args.mapConserve(annotateAsReset))
+          case fun =>
+            fun
+        }
       }
 
       override def transform(tree: global.Tree): global.Tree = {
@@ -423,10 +468,16 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             treeCopy.Typed(tree, transform(expr), tpt)
           case Function(vparams, body) =>
             treeCopy.Function(tree, vparams, annotateAsReset(body))
-          case DefDef(mods, name, tparams, vparamss, tpt, rhs) =>
+          case DefDef(mods, name, tparams, vparamss, tpt, rhs)
+              if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
+                .hasAnnotationNamed(definitions.TailrecClass.name) =>
             treeCopy.DefDef(tree, mods, name, tparams, transformValDefss(vparamss), tpt, annotateAsReset(rhs))
           case valDef: ValDef if valDef.mods.hasDefault =>
             transformRootValDef(valDef)
+          case q"${Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
+            annotateArgsAsReset(tree)
+          case q"super.${termNames.CONSTRUCTOR}(...$argss)" =>
+            annotateArgsAsReset(tree)
           case _ =>
             super.transform(tree)
         }
@@ -440,10 +491,10 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
   override def init(options: List[String], error: String => Unit): Boolean = {
     options match {
       case Nil =>
-        global.analyzer.addAnalyzerPlugin(cpsAnalyzerPlugin)
+        global.analyzer.addAnalyzerPlugin(new Deactable with TreeResetter with CpsTransformer)
       case List("macro-annotation-workaround") =>
-        global.analyzer.addAnalyzerPlugin(macroAnnotationWorkaroundAnalyzerPlugin)
-        global.analyzer.addAnalyzerPlugin(cpsAnalyzerPlugin)
+        global.analyzer.addAnalyzerPlugin(
+          new Deactable with TreeResetter with CpsTransformer with ResetAttachmentConverter with ResetAttachmentCreator)
       case _ =>
         error(this.optionsHelp.get)
     }
@@ -457,25 +508,31 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
     if (options.contains("macro-annotation-workaround")) {
       Nil
     } else {
-      List(resetMarker)
+      List(new ResetAnnotationCreator)
     }
   }
 
-  private val macroAnnotationWorkaroundAnalyzerPlugin = new AnalyzerPlugin {
-    object Reset
-    override def pluginsPt(pt: Type, typer: Typer, tree: Tree, mode: Mode): Type = {
+  trait ResetAttachmentCreator extends ResetAttachmentConverter {
+    override def pluginsPt(pt0: Type, typer: Typer, tree: Tree, mode: Mode): Type = {
+      val pt = super.pluginsPt(pt0: Type, typer: Typer, tree: Tree, mode: Mode)
       if (mode.inExprMode) {
         tree match {
           case function: Function =>
             // FIXME: the Reset attachment will be discarded when the body tree is replaced
             // (e.g. the body tree is a `+=` call, which will be replaced to an Assign tree
             function.body.updateAttachment(Reset)
-          case defDef: DefDef =>
-            defDef.rhs.updateAttachment(Reset)
-            defDef.vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
+          case DefDef(mods, name, tparams, vparamss, tpt, rhs)
+              if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
+                .hasAnnotationNamed(definitions.TailrecClass.name) =>
+            rhs.updateAttachment(Reset)
+            vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
+          case q"${fun @ Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
+            argss.foreach(_.foreach(_.updateAttachment(Reset)))
+          case q"${fun @ q"super.${termNames.CONSTRUCTOR}"}(...$argss)" =>
+            argss.foreach(_.foreach(_.updateAttachment(Reset)))
           case implDef: ImplDef =>
             implDef.impl.body.foreach {
-              case valDef: ValDef =>
+              case valDef: ValDef if !valDef.mods.isParamAccessor =>
                 valDef.rhs.updateAttachment(Reset)
               case termTree: TermTree =>
                 termTree.updateAttachment(Reset)
@@ -486,22 +543,25 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       }
       pt
     }
-    override def pluginsTyped(tpe: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
+  }
+
+  /** A [[AnalyzerPlugin]] that converts [[Reset]] attachments to [[com.thoughtworks.dsl.Dsl.nonTypeConstraintReset generatedReset]] annotations */
+  trait ResetAttachmentConverter extends AnalyzerPlugin {
+    object Reset
+    override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
+      val tpe = super.pluginsTyped(tpe0, typer, tree, mode, pt)
       tree.attachments.get[Reset.type] match {
         case None =>
           tpe
         case Some(_) =>
           tpe.withAnnotations(List(Annotation(deactAnalyzerPlugins {
             typer.context.withMode(ContextMode.NOmode) {
-              typer.typed(q"new $resetSymbol()", Mode.EXPRmode)
+              typer.typed(q"new $nonTypeConstraintResetSymbol()", Mode.EXPRmode)
             }
           })))
       }
     }
 
-    override def isActive(): Boolean = {
-      active && phase.id < currentRun.picklerPhase.id
-    }
   }
 
 }

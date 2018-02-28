@@ -17,25 +17,32 @@ final case class CatsFlatMap[F[_], A](fa: F[A]) extends AnyVal with Instruction[
 
 object CatsFlatMap {
 
-  implicit final class CatsMonadErrorCatchOps[F[_], A](catcher: Catcher[F[A]])(
-      implicit monadError: MonadError[F, Throwable]) {
-    def cpsCatch(continuation: (F[A] => F[A]) => F[A]): F[A] = {
-      try {
-        continuation { fa: F[A] =>
-          monadError.handleErrorWith(fa) { e =>
-            catcher.applyOrElse(e, monadError.raiseError)
+  implicit def catsCatchDsl[F[_], A](implicit monadError: MonadError[F, Throwable]): Dsl[Catch[F[A]], F[A], F[A] => F[A]] =
+    new Dsl[Catch[F[A]], F[A], F[A] => F[A]] {
+      def interpret(instruction: Catch[F[A]], continuation: (F[A] => F[A]) => F[A]): F[A] = {
+        def exceptionHandler(e: Throwable): F[A] = {
+          try {
+            instruction.onFailure(e)
+          } catch {
+            case NonFatal(rethrown) =>
+              monadError.raiseError(rethrown)
           }
         }
-      } catch {
-        case NonFatal(e) =>
-          catcher.applyOrElse(e, monadError.raiseError)
+
+        try {
+          continuation { fa: F[A] =>
+            monadError.handleErrorWith(fa)(exceptionHandler)
+          }
+        } catch {
+          case NonFatal(e) =>
+            exceptionHandler(e)
+        }
       }
     }
-  }
 
   implicit def implicitCatsFlatMap[F[_], A](fa: F[A]): CatsFlatMap[F, A] = CatsFlatMap(fa)
 
-  implicit def scalazBindDsl[F[_], A, B](implicit flatMap: FlatMap[F]): Dsl[CatsFlatMap[F, A], F[B], A] =
+  implicit def catsFlatMapDsl[F[_], A, B](implicit flatMap: FlatMap[F]): Dsl[CatsFlatMap[F, A], F[B], A] =
     new Dsl[CatsFlatMap[F, A], F[B], A] {
       def interpret(instruction: CatsFlatMap[F, A], handler: A => F[B]): F[B] = {
         flatMap.flatMap(instruction.fa)(handler)

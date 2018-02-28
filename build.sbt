@@ -1,20 +1,39 @@
-lazy val annotations = project
+lazy val CompilerPlugin =
+  project.dependsOn(Dsl % Test, Dsl % Provided, `instructions-Catch` % Provided, `instructions-Catch` % Test)
 
-lazy val CompilerPlugin = project.dependsOn(annotations % Test, annotations % Provided)
+lazy val Dsl = project
 
-lazy val Dsl = project.dependsOn(annotations)
+lazy val task = project.dependsOn(`instructions-Fork`, `domains-ExceptionHandling`, `instructions-Arm`)
 
-lazy val `domains-ExceptionHandling` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
+lazy val `domains-ExceptionHandling` =
+  project.dependsOn(`instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
+
+lazy val `instructions-Fork` =
+  project.dependsOn(Dsl, `instructions-Shift`, `instructions-Catch`, `instructions-Hang`, `instructions-Each`)
+
+lazy val `instructions-Hang` = project.dependsOn(Dsl)
 
 lazy val `instructions-Shift` = project.dependsOn(Dsl)
+
+lazy val `instructions-AutoClose` = project.dependsOn(`instructions-Catch`, `instructions-Shift`)
+
+lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
 lazy val `instructions-Each` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
 lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Shift` % Test)
 
-lazy val `instructions-ScalazBind` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
+lazy val `instructions-ScalazBind` =
+  project.dependsOn(Dsl, `instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
-lazy val `instructions-CatsFlatMap` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
+lazy val `instructions-CatsFlatMap` =
+  project.dependsOn(Dsl, `instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
+
+lazy val `instructions-Arm` =
+  project.dependsOn(`instructions-Catch`,
+                    `instructions-Shift`,
+                    `instructions-Yield` % Test,
+                    `domains-ExceptionHandling` % Test)
 
 lazy val `package` = project.dependsOn(
   `instructions-Shift`,
@@ -24,26 +43,23 @@ lazy val `package` = project.dependsOn(
   `instructions-Yield`,
   `domains-ExceptionHandling`,
   CompilerPlugin,
-  annotations,
   Dsl
 )
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
-for {
-  testingProject <- Seq[ProjectReference](
-    `instructions-Shift`,
-    `instructions-CatsFlatMap`,
-    `instructions-Each`,
-    `instructions-ScalazBind`,
-    `instructions-Yield`,
-    `domains-ExceptionHandling`,
-    CompilerPlugin,
-    annotations,
-    LocalProject("package")
-  )
-} yield {
-  scalacOptions in testingProject in Test += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
+Seq[ProjectReference](
+  `instructions-Fork`,
+  `instructions-Shift`,
+  `instructions-CatsFlatMap`,
+  `instructions-Each`,
+  `instructions-ScalazBind`,
+  `instructions-Yield`,
+  `domains-ExceptionHandling`,
+  `instructions-Arm`,
+  LocalProject("task")
+).map { testingProject =>
+  scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
 }
 
 crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.4")

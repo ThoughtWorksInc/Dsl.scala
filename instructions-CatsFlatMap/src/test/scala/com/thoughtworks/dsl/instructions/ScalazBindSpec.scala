@@ -1,18 +1,16 @@
 package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
-
 import cats.instances.stream._
 
 /**
   * @author 杨博 (Yang Bo)
   */
 class CatsFlatMapSpec extends FreeSpec with Matchers {
-  type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
   "Given a continuation that uses Yield and CatsFlatMap expressions" - {
 
-    def asyncFunction: AsyncFunction[Stream[String], Unit] = _ {
+    def asyncFunction: (Unit => Stream[String]) => Stream[String] = _ {
       !Yield("Entering asyncFunction")
       val subThreadId = !CatsFlatMap(Stream(0, 1))
       !Yield(s"Fork sub-thread $subThreadId")

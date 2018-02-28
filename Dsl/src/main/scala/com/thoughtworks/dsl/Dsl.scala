@@ -1,8 +1,7 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.annotations.shift
-
 import scala.annotation.{compileTimeOnly, implicitNotFound}
+import scala.annotation.{Annotation, StaticAnnotation, TypeConstraint, compileTimeOnly}
 
 /** The domain-specific interpreter for `Instruction` in `Domain`,
   * which is a dependent type type class that registers an asynchronous callback function,
@@ -28,6 +27,30 @@ trait Dsl[-Instruction, Domain, +Value] {
 
 object Dsl {
 
+  implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
+      implicit restDsl: Dsl[Instruction, Domain, InstructionValue])
+    : Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
+    new Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] {
+      def interpret(
+          instruction: Instruction,
+          handler: InstructionValue => (FinalResult => Domain) => Domain): (FinalResult => Domain) => Domain = {
+        (continue: FinalResult => Domain) =>
+          restDsl.interpret(instruction, { a =>
+            handler(a)(continue)
+          })
+      }
+    }
+  }
+
+  private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
+  private[dsl] final class nonTypeConstraintReset extends ResetAnnotation with StaticAnnotation
+
+  /** An annotation to explicitly perform reset control operator on a code block. */
+  final class reset extends ResetAnnotation with StaticAnnotation with TypeConstraint
+
+  /** An annotation to mark a method is a shift control operator. */
+  final class shift extends StaticAnnotation
+
   def apply[Instruction, Domain, Value](
       implicit typeClass: Dsl[Instruction, Domain, Value]): Dsl[Instruction, Domain, Value] =
     typeClass
@@ -40,8 +63,8 @@ object Dsl {
   trait Instruction[Self, Value] extends Any { this: Self =>
 
     @shift
-    @compileTimeOnly(
-      """This method requires the following compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")`""")
+//    @compileTimeOnly(
+//      """This method requires the following compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")`""")
     final def unary_! : Value = sys.error("Calls to this method should have been translated to `cpsApply`.")
 
     final def cpsApply[Domain](handler: Value => Domain)(implicit dsl: Dsl[Self, Domain, Value]): Domain = {
