@@ -109,11 +109,11 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       tree.productIterator.exists(hasCpsAttachment)
     }
 
-    /** Avoid [[UnApply]] in `patterTree` to suppress compiler crash due to `unexpected UnApply xxx`.
+    /** Avoid [[UnApply]] in `patternTree` to suppress compiler crash due to `unexpected UnApply xxx`.
       *
       * @see https://github.com/scala/bug/issues/8825
       */
-    private def scalaBug8825Workaround(patterTree: Tree): Tree = {
+    private def scalaBug8825Workaround(patternTree: Tree): Tree = {
       val transformer = new Transformer {
         override def transform(tree: global.Tree): global.Tree = {
           tree match {
@@ -126,7 +126,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           }
         }
       }
-      transformer.transform(patterTree)
+      transformer.transform(patternTree)
     }
 
     private val whileName = currentUnit.freshTermName("while")
