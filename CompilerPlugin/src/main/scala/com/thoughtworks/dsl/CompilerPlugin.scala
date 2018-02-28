@@ -109,6 +109,26 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       tree.productIterator.exists(hasCpsAttachment)
     }
 
+    /** Avoid [[UnApply]] in `patterTree` to suppress compiler crash due to `unexpected UnApply xxx`.
+      *
+      * @see https://github.com/scala/bug/issues/8825
+      */
+    private def scalaBug8825Workaround(patterTree: Tree): Tree = {
+      val transformer = new Transformer {
+        override def transform(tree: global.Tree): global.Tree = {
+          tree match {
+            case UnApply(
+                Apply(Select(prefix, termNames.unapply | termNames.unapplySeq), List(Ident(termNames.SELECTOR_DUMMY))),
+                args) =>
+              pq"$prefix(..${transformTrees(args)})"
+            case _ =>
+              super.transform(tree)
+          }
+        }
+      }
+      transformer.transform(patterTree)
+    }
+
     private val whileName = currentUnit.freshTermName("while")
     private val whileDef = {
       val domainName = currentUnit.freshTypeName("Domain")
@@ -251,7 +271,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                   selectorValue,
                   cases.map {
                     case caseDef @ CaseDef(pat, guard, body) =>
-                      treeCopy.CaseDef(caseDef, pat, guard, cpsAttachment(body) { bodyValue =>
+                      treeCopy.CaseDef(caseDef, scalaBug8825Workaround(pat), guard, cpsAttachment(body) { bodyValue =>
                         q"$endMatchName($bodyValue)"
                       })
                   }
@@ -283,9 +303,14 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
               case ..${{
               catches.map { caseDef =>
                 atPos(caseDef.pos) {
-                  CaseDef(caseDef.pat, caseDef.guard, cpsAttachment(caseDef.body) { bodyValue =>
-                    q"$finalizerName(_root_.scala.util.Success($bodyValue))"
-                  })
+                  treeCopy.CaseDef(
+                    caseDef,
+                    scalaBug8825Workaround(caseDef.pat),
+                    caseDef.guard,
+                    cpsAttachment(caseDef.body) { bodyValue =>
+                      q"$finalizerName(_root_.scala.util.Success($bodyValue))"
+                    }
+                  )
                 }
               }
             }}
@@ -434,7 +459,9 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             treeCopy.Typed(tree, transform(expr), tpt)
           case Function(vparams, body) =>
             treeCopy.Function(tree, vparams, annotateAsReset(body))
-          case DefDef(mods, name, tparams, vparamss, tpt, rhs) if name != termNames.CONSTRUCTOR && rhs.nonEmpty =>
+          case DefDef(mods, name, tparams, vparamss, tpt, rhs)
+              if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
+                .hasAnnotationNamed(definitions.TailrecClass.name) =>
             treeCopy.DefDef(tree, mods, name, tparams, transformValDefss(vparamss), tpt, annotateAsReset(rhs))
           case valDef: ValDef if valDef.mods.hasDefault =>
             transformRootValDef(valDef)
@@ -485,8 +512,9 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             // FIXME: the Reset attachment will be discarded when the body tree is replaced
             // (e.g. the body tree is a `+=` call, which will be replaced to an Assign tree
             function.body.updateAttachment(Reset)
-          case defDef @ DefDef(mods, name, tparams, vparamss, tpt, rhs)
-              if name != termNames.CONSTRUCTOR && rhs.nonEmpty =>
+          case DefDef(mods, name, tparams, vparamss, tpt, rhs)
+              if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
+                .hasAnnotationNamed(definitions.TailrecClass.name) =>
             rhs.updateAttachment(Reset)
             vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
           case q"${fun @ Ident(termNames.CONSTRUCTOR)}(...$argss)" =>

@@ -1,9 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.Dsl.shift
-
 import scala.annotation.{Annotation, StaticAnnotation, TypeConstraint, compileTimeOnly}
-import scala.util.control.NonFatal
 
 /** The domain-specific interpreter for `Instruction` in `Domain`,
   * which is a dependent type type class that registers an asynchronous callback function,
@@ -20,6 +17,21 @@ trait Dsl[-Instruction, Domain, +Value] {
 }
 
 object Dsl {
+
+  implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
+      implicit restDsl: Dsl[Instruction, Domain, InstructionValue])
+    : Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
+    new Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] {
+      def interpret(
+          instruction: Instruction,
+          handler: InstructionValue => (FinalResult => Domain) => Domain): (FinalResult => Domain) => Domain = {
+        (continue: FinalResult => Domain) =>
+          restDsl.interpret(instruction, { a =>
+            handler(a)(continue)
+          })
+      }
+    }
+  }
 
   private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
   private[dsl] final class nonTypeConstraintReset extends ResetAnnotation with StaticAnnotation

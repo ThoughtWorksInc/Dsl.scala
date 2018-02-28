@@ -2,7 +2,6 @@ package com.thoughtworks.dsl.instructions
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Instruction
-import com.thoughtworks.dsl.domains.{ExceptionHandling, Scope}
 import resource.Resource
 
 /**
@@ -31,28 +30,5 @@ object Arm {
         }
       }
     }
-
-  implicit def armDsl[Domain, R](
-      implicit dsl: com.thoughtworks.dsl.Dsl[com.thoughtworks.dsl.instructions.Catch[Domain], Domain, Domain => Domain])
-    : Dsl[Arm[R], Scope[Domain], R] = new Dsl[Arm[R], Scope[Domain], R] {
-    def interpret(arm: Arm[R], inUse: R => Scope[Domain]): Scope[Domain] = {
-      val resourceFactory = arm.resourceFactory
-      val resource = arm.resource
-
-      new Scope[Domain] {
-        def apply(continue: Domain => Domain): Domain = {
-          continue {
-            val r = resourceFactory()
-            try {
-              resource.open(r)
-              !Shift(inUse(r))
-            } finally {
-              resource.close(r)
-            }
-          }
-        }
-      }
-    }
-  }
 
 }

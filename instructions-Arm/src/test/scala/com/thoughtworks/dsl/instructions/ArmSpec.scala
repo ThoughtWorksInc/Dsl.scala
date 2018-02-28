@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl.instructions
 
-import com.thoughtworks.dsl.domains.{ExceptionHandling, Scope}
-import com.thoughtworks.dsl.instructions.Shift.Continuation
+import com.thoughtworks.dsl.domains.ExceptionHandling
 import org.scalatest.{FreeSpec, Matchers}
 
 /**
@@ -10,28 +9,16 @@ import org.scalatest.{FreeSpec, Matchers}
 class ArmSpec extends FreeSpec with Matchers {
 
   "AutoCloseable" - {
-    //
-    //    "using" in {
-    //      var isOpen = false
-    //      def autoCloseable: Unit = {
-    //        isOpen should be(false)
-    //        !Arm(new AutoCloseable {
-    //          def close(): Unit = {
-    //            isOpen should be(true)
-    //            isOpen = false
-    //          }
-    //        })
-    //        isOpen should be(true)
-    //      }
-    //      isOpen should be(false)
-    //    }
+
+    type Scope[A] = (A => A) => A
+    def noop[A](a: A): Scope[A] = _(a)
 
     "scope" - {
 
       "arm" in {
         var isOpen = false
 
-        def raii: Scope[ExceptionHandling[Stream[Int]]] = Scope.noop {
+        def raii: Scope[ExceptionHandling[Stream[Int]]] = noop {
           ExceptionHandling.success {
             !Yield(1)
             isOpen should be(false)

@@ -7,19 +7,18 @@ import scala.language.implicitConversions
 /**
   * @author 杨博 (Yang Bo)
   */
-final case class Shift[Domain, A](continuation: Shift.Continuation[Domain, A])
+final case class Shift[Domain, Value](continuation: (Value => Domain) => Domain)
     extends AnyVal
-    with Instruction[Shift[Domain, A], A]
+    with Instruction[Shift[Domain, Value], Value]
 
 object Shift {
 
-  type Continuation[Domain, +A] = (A => Domain) => Domain
+  implicit def implicitShift[Domain, Value](fa: (Value => Domain) => Domain): Shift[Domain, Value] =
+    Shift[Domain, Value](fa)
 
-  implicit def implicitShift[Domain, A](fa: Continuation[Domain, A]): Shift[Domain, A] = Shift[Domain, A](fa)
-
-  implicit def shiftDsl[Domain, A]: Dsl[Shift[Domain, A], Domain, A] =
-    new Dsl[Shift[Domain, A], Domain, A] {
-      def interpret(shift: Shift[Domain, A], mapper: A => Domain): Domain = shift.continuation(mapper)
+  implicit def shiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
+    new Dsl[Shift[Domain, Value], Domain, Value] {
+      def interpret(shift: Shift[Domain, Value], mapper: Value => Domain): Domain = shift.continuation(mapper)
     }
 
 }

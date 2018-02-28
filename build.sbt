@@ -3,9 +3,15 @@ lazy val CompilerPlugin =
 
 lazy val Dsl = project
 
+lazy val task = project.dependsOn(`instructions-Fork`, `domains-ExceptionHandling`, `instructions-Arm`)
+
 lazy val `domains-ExceptionHandling` =
   project.dependsOn(`instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
+lazy val `instructions-Fork` =
+  project.dependsOn(Dsl, `instructions-Shift`, `instructions-Catch`, `instructions-Hang`, `instructions-Each`)
+
+lazy val `instructions-Hang` = project.dependsOn(Dsl)
 lazy val `instructions-Shift` = project.dependsOn(Dsl)
 
 lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
@@ -20,26 +26,24 @@ lazy val `instructions-ScalazBind` =
 lazy val `instructions-CatsFlatMap` =
   project.dependsOn(Dsl, `instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
-lazy val `domains-Scope` = project.dependsOn(Dsl)
-
 lazy val `instructions-Arm` =
-  project.dependsOn(Dsl,
-                    `domains-Scope`,
-                    `instructions-Catch`,
+  project.dependsOn(`instructions-Catch`,
                     `instructions-Shift`,
                     `instructions-Yield` % Test,
-                    `domains-ExceptionHandling`)
+                    `domains-ExceptionHandling` % Test)
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
-Seq(
+Seq[ProjectReference](
+  `instructions-Fork`,
   `instructions-Shift`,
   `instructions-CatsFlatMap`,
   `instructions-Each`,
   `instructions-ScalazBind`,
   `instructions-Yield`,
   `domains-ExceptionHandling`,
-  `instructions-Arm`
+  `instructions-Arm`,
+  LocalProject("task")
 ).map { testingProject =>
   scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
 }
