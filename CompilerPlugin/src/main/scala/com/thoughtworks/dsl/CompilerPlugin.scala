@@ -459,7 +459,9 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             treeCopy.Typed(tree, transform(expr), tpt)
           case Function(vparams, body) =>
             treeCopy.Function(tree, vparams, annotateAsReset(body))
-          case DefDef(mods, name, tparams, vparamss, tpt, rhs) if name != termNames.CONSTRUCTOR && rhs.nonEmpty =>
+          case DefDef(mods, name, tparams, vparamss, tpt, rhs)
+              if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
+                .hasAnnotationNamed(definitions.TailrecClass.name) =>
             treeCopy.DefDef(tree, mods, name, tparams, transformValDefss(vparamss), tpt, annotateAsReset(rhs))
           case valDef: ValDef if valDef.mods.hasDefault =>
             transformRootValDef(valDef)
@@ -510,8 +512,9 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             // FIXME: the Reset attachment will be discarded when the body tree is replaced
             // (e.g. the body tree is a `+=` call, which will be replaced to an Assign tree
             function.body.updateAttachment(Reset)
-          case defDef @ DefDef(mods, name, tparams, vparamss, tpt, rhs)
-              if name != termNames.CONSTRUCTOR && rhs.nonEmpty =>
+          case DefDef(mods, name, tparams, vparamss, tpt, rhs)
+              if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
+                .hasAnnotationNamed(definitions.TailrecClass.name) =>
             rhs.updateAttachment(Reset)
             vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
           case q"${fun @ Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
