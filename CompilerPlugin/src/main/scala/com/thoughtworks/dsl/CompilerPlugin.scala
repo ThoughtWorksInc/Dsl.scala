@@ -46,12 +46,32 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
       }
     }
 
+    /** Avoid [[UnApply]] in `tree` to suppress compiler crash due to `unexpected UnApply xxx`.
+      *
+      * @see https://github.com/scala/bug/issues/8825
+      */
+    private def scalaBug8825Workaround(tree: Tree): Tree = {
+      val transformer = new Transformer {
+        override def transform(tree: global.Tree): global.Tree = {
+          tree match {
+            case UnApply(
+                Apply(Select(prefix, termNames.unapply | termNames.unapplySeq), List(Ident(termNames.SELECTOR_DUMMY))),
+                args) =>
+              pq"$prefix(..${transformTrees(args)})"
+            case _ =>
+              super.transform(tree)
+          }
+        }
+      }
+      transformer.transform(tree)
+    }
+
     override def adaptAnnotations(tree0: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
       val tree = super.adaptAnnotations(tree0, typer, mode, pt)
       val Seq(typedCpsTree) = tree.tpe.annotations.collect {
         case annotation if annotation.matches(resetAnnotationSymbol) =>
           val Some(attachment) = tree.attachments.get[CpsAttachment]
-          val cpsTree = resetAttrs(attachment(identity))
+          val cpsTree = scalaBug8825Workaround(resetAttrs(attachment(identity)))
 //          reporter.info(tree.pos, s"Translating to continuation-passing style: $cpsTree", true)
           deactAnalyzerPlugins {
             typer.context.withMode(ContextMode.ReTyping) {
@@ -107,26 +127,6 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
         }
       }
       tree.productIterator.exists(hasCpsAttachment)
-    }
-
-    /** Avoid [[UnApply]] in `patternTree` to suppress compiler crash due to `unexpected UnApply xxx`.
-      *
-      * @see https://github.com/scala/bug/issues/8825
-      */
-    private def scalaBug8825Workaround(patternTree: Tree): Tree = {
-      val transformer = new Transformer {
-        override def transform(tree: global.Tree): global.Tree = {
-          tree match {
-            case UnApply(
-                Apply(Select(prefix, termNames.unapply | termNames.unapplySeq), List(Ident(termNames.SELECTOR_DUMMY))),
-                args) =>
-              pq"$prefix(..${transformTrees(args)})"
-            case _ =>
-              super.transform(tree)
-          }
-        }
-      }
-      transformer.transform(patternTree)
     }
 
     private val whileName = currentUnit.freshTermName("while")
@@ -271,7 +271,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                   selectorValue,
                   cases.map {
                     case caseDef @ CaseDef(pat, guard, body) =>
-                      treeCopy.CaseDef(caseDef, scalaBug8825Workaround(pat), guard, cpsAttachment(body) { bodyValue =>
+                      treeCopy.CaseDef(caseDef, pat, guard, cpsAttachment(body) { bodyValue =>
                         q"$endMatchName($bodyValue)"
                       })
                   }
@@ -305,7 +305,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                 atPos(caseDef.pos) {
                   treeCopy.CaseDef(
                     caseDef,
-                    scalaBug8825Workaround(caseDef.pat),
+                    caseDef.pat,
                     caseDef.guard,
                     cpsAttachment(caseDef.body) { bodyValue =>
                       q"$finalizerName(_root_.scala.util.Success($bodyValue))"

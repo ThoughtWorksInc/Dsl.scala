@@ -18,8 +18,7 @@ object AutoClose {
       implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): AutoClose[R] = new AutoClose(r _)
 
   implicit def autoCloseDsl[Domain, R <: AutoCloseable, A](
-      implicit dsl: com.thoughtworks.dsl.Dsl[com.thoughtworks.dsl.instructions.Catch[Domain], Domain, Domain => Domain])
-    : Dsl[AutoClose[R], ((A => Domain) => Domain), R] =
+      implicit dsl: Dsl[Catch[Domain], Domain, Domain => Domain]): Dsl[AutoClose[R], ((A => Domain) => Domain), R] =
     new Dsl[AutoClose[R], ((A => Domain) => Domain), R] {
       def interpret(autoClose: AutoClose[R], inUse: R => ((A => Domain) => Domain)): ((A => Domain) => Domain) = _ {
         val r = autoClose.open()

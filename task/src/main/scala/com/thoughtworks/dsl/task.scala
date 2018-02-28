@@ -8,6 +8,7 @@ import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
+import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
@@ -47,17 +48,29 @@ object task {
     def now[A](a: A): Task[A] = _(a)
 
     @inline
-    def delay[A](f: () => A): Task[A] = _(f())
+    def delay[A](f: () => A): Task[A] = { continue =>
+      new ExceptionHandling[Unit] {
+        def apply(failureHandler: Throwable => Unit): Unit = {
+          continue {
+            try {
+              f()
+            } catch {
+              case NonFatal(e) =>
+                return failureHandler(e)
+            }
+          }(failureHandler)
+        }
+      }
+
+    }
 
     @inline
-    def reset[A](a: A): Task[A] @reset = Task.now(a)
+    implicit def reset[A](a: => A): Task[A] @reset = delay(a _)
 
   }
 
   implicit def await[Domain, Value](continuation: (Value => Domain) => Domain): Shift[Domain, Value] =
     Shift(continuation)
-
-  implicit def reset[A](a: A): Task[A] @reset = Task.now(a)
 
   def taskToFuture[A](task: Task[A]): Future[A] = {
     val promise = Promise[A]()
