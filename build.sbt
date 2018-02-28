@@ -28,7 +28,7 @@ lazy val `instructions-Arm` =
   project.dependsOn(`instructions-Catch`,
                     `instructions-Shift`,
                     `instructions-Yield` % Test,
-                    `domains-ExceptionHandling`)
+                    `domains-ExceptionHandling` % Test)
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
