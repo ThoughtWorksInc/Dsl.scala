@@ -50,14 +50,12 @@ object task {
     def delay[A](f: () => A): Task[A] = _(f())
 
     @inline
-    def reset[A](a: A): Task[A] @reset = Task.now(a)
+    implicit def reset[A](a: => A): Task[A] @reset = delay(a _)
 
   }
 
   implicit def await[Domain, Value](continuation: (Value => Domain) => Domain): Shift[Domain, Value] =
     Shift(continuation)
-
-  implicit def reset[A](a: A): Task[A] @reset = Task.now(a)
 
   def taskToFuture[A](task: Task[A]): Future[A] = {
     val promise = Promise[A]()

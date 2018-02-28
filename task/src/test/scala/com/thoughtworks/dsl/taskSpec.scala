@@ -10,13 +10,13 @@ import com.thoughtworks.dsl.instructions.{Each, Fork}
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
-  "taskToFuture" in {
+  "taskToFuture" in taskToFuture(Task.reset {
     succeed
-  }
+  })
 
-  "loop" in taskToFuture {
+  "loop" in taskToFuture(Task.reset {
 
-    val task1: Task[Int] = 1
+    val task1: Task[Int] = Task.now(1)
 
     val ts = Task.join {
       !Fork(0 until 10) + !task1
@@ -24,6 +24,25 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
     !ts should be(1 until 11)
 
-  }
+  })
+
+  "try" in taskToFuture(Task.reset {
+    class MyException extends Exception
+    val task1: Task[Int] = Task.reset {
+      throw new MyException
+    }
+
+    val task2 = Task.reset {
+      try {
+        !task1
+        "no exception"
+      } catch {
+        case myException: MyException =>
+          "my exception"
+      }
+    }
+
+    !task2 should be("my exception")
+  })
 
 }

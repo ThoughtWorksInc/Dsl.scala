@@ -1,5 +1,5 @@
 lazy val CompilerPlugin =
-  project.dependsOn(Dsl % Test, Dsl % Provided, `instructions-Catch` % Provided, `instructions-Catch` % Test)
+  project.dependsOn(Dsl % Test, Dsl % Provided)
 
 lazy val Dsl = project
 
@@ -17,7 +17,7 @@ lazy val `instructions-Shift` = project.dependsOn(Dsl)
 
 lazy val `instructions-AutoClose` = project.dependsOn(`instructions-Catch`, `instructions-Shift`)
 
-lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
+lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift`, `instructions-Yield` % Test)
 
 lazy val `instructions-Each` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
@@ -39,6 +39,7 @@ organization in ThisBuild := "com.thoughtworks.dsl"
 
 Seq[ProjectReference](
   `instructions-Fork`,
+  `instructions-Catch`,
   `instructions-Shift`,
   `instructions-CatsFlatMap`,
   `instructions-Each`,
