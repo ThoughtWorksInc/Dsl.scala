@@ -6,6 +6,10 @@ lazy val Dsl = project
 lazy val `domains-ExceptionHandling` =
   project.dependsOn(`instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
+lazy val `instructions-Fork` =
+  project.dependsOn(Dsl, `instructions-Shift`, `instructions-Catch`, `instructions-Hang`, `instructions-Each`)
+
+lazy val `instructions-Hang` = project.dependsOn(Dsl)
 lazy val `instructions-Shift` = project.dependsOn(Dsl)
 
 lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
@@ -28,7 +32,8 @@ lazy val `instructions-Arm` =
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
-Seq(
+Seq[ProjectReference](
+  `instructions-Fork`,
   `instructions-Shift`,
   `instructions-CatsFlatMap`,
   `instructions-Each`,
