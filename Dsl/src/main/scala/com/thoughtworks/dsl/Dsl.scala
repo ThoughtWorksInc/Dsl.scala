@@ -18,12 +18,13 @@ trait Dsl[-Instruction, Domain, +Value] {
 
 object Dsl {
 
-  implicit def scopeDsl[Instruction, Domain, FinalResult, InstructionValue](
+  implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
       implicit restDsl: Dsl[Instruction, Domain, InstructionValue])
     : Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
     new Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] {
-      def interpret(instruction: Instruction,
-                    handler: InstructionValue => (FinalResult => Domain) => Domain): (FinalResult => Domain) => Domain = {
+      def interpret(
+          instruction: Instruction,
+          handler: InstructionValue => (FinalResult => Domain) => Domain): (FinalResult => Domain) => Domain = {
         (continue: FinalResult => Domain) =>
           restDsl.interpret(instruction, { a =>
             handler(a)(continue)
