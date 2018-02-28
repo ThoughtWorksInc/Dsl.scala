@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl.instructions
 
 import com.thoughtworks.dsl.domains.ExceptionHandling
-import com.thoughtworks.dsl.instructions.Shift.Continuation
 import org.scalatest.{FreeSpec, Matchers}
 
 /**
