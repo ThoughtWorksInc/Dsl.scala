@@ -19,14 +19,16 @@ object Arm {
       implicit dsl: com.thoughtworks.dsl.Dsl[com.thoughtworks.dsl.instructions.Catch[Domain], Domain, Domain => Domain])
     : Dsl[Arm[R], ((A => Domain) => Domain), R] =
     new Dsl[Arm[R], ((A => Domain) => Domain), R] {
-      def interpret(arm: Arm[R], inUse: R => ((A => Domain) => Domain)): ((A => Domain) => Domain) = _ {
+      def interpret(arm: Arm[R], inUse: R => ((A => Domain) => Domain)): ((A => Domain) => Domain) = {
         val Arm(resourceFactory, resource) = arm
-        val r = resourceFactory()
-        try {
-          resource.open(r)
-          !Shift(inUse(r))
-        } finally {
-          resource.close(r)
+        _ {
+          val r = resourceFactory()
+          try {
+            resource.open(r)
+            !Shift(inUse(r))
+          } finally {
+            resource.close(r)
+          }
         }
       }
     }
