@@ -4,6 +4,7 @@ import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Instruction
 
 import scala.util.control.Exception.Catcher
+import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
@@ -26,9 +27,20 @@ object Catch {
           block: (((Value => Domain) => Domain) => (Value => Domain) => Domain) => (Value => Domain) => Domain)
         : (Value => Domain) => Domain = _ {
         try {
-          !Shift(block(identity)) // TODO: catch exception in block(identity) ?
+          !Shift(
+            block { (continuation: (Value => Domain) => Domain) =>
+              _ {
+                try {
+                  !Shift(continuation)
+                } catch {
+                  case NonFatal(e) =>
+                    !Shift(catcher.onFailure(e))
+                }
+              }
+            }
+          )
         } catch {
-          case e: Throwable =>
+          case NonFatal(e) =>
             !Shift(catcher.onFailure(e))
         }
       }

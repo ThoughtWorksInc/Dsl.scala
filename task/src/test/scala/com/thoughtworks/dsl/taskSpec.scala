@@ -5,6 +5,8 @@ import org.scalatest.{Assertion, AsyncFreeSpec, Matchers}
 import task._
 import com.thoughtworks.dsl.instructions.{Each, Fork}
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * @author 杨博 (Yang Bo)
   */
@@ -45,4 +47,33 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     !task2 should be("my exception")
   })
 
+  "empty try" in {
+    val logs = ArrayBuffer.empty[String]
+
+    class MyException extends Exception {
+      logs += "MyException"
+    }
+    val task1: Task[String] = Task.reset {
+      throw new MyException
+    }
+
+    val task2 = Task.reset {
+      try {
+        "no exception"
+      } catch {
+        case myException: MyException =>
+          "my exception"
+      }
+      !task1
+    }
+
+    task2 { s =>
+      logs += s
+      throw new AssertionError()
+    } { e =>
+      e should be(a[MyException])
+      logs += "uncaught MyException"
+    }
+    logs should be(ArrayBuffer("MyException", "uncaught MyException"))
+  }
 }
