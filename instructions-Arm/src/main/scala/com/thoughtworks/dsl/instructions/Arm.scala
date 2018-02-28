@@ -3,6 +3,7 @@ package com.thoughtworks.dsl.instructions
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Instruction
 import resource.Resource
+import scala.language.implicitConversions
 
 /**
   * @author 杨博 (Yang Bo)
@@ -10,6 +11,8 @@ import resource.Resource
 final case class Arm[R](resourceFactory: () => R, resource: Resource[R]) extends Instruction[Arm[R], R]
 
 object Arm {
+
+  implicit def implicitArm[R: Resource](r: => R): Arm[R] = Arm[R](r)
 
   def apply[R](r: => R)(implicit resource: Resource[R], dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit) = {
     new Arm[R](r _, resource)
