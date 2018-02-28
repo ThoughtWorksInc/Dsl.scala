@@ -15,7 +15,7 @@ lazy val `instructions-Hang` = project.dependsOn(Dsl)
 
 lazy val `instructions-Shift` = project.dependsOn(Dsl)
 
-lazy val `instructions-AutoClose` = project.dependsOn(`instructions-Catch` ,`instructions-Shift`)
+lazy val `instructions-AutoClose` = project.dependsOn(`instructions-Catch`, `instructions-Shift`)
 
 lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
