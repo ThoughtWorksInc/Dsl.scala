@@ -3,6 +3,8 @@ lazy val CompilerPlugin =
 
 lazy val Dsl = project
 
+lazy val task = project.dependsOn(`instructions-Fork`, `domains-ExceptionHandling`, `instructions-Arm`)
+
 lazy val `domains-ExceptionHandling` =
   project.dependsOn(`instructions-Catch`, `instructions-Shift` % Test, `instructions-Yield` % Test)
 
@@ -40,7 +42,8 @@ Seq[ProjectReference](
   `instructions-ScalazBind`,
   `instructions-Yield`,
   `domains-ExceptionHandling`,
-  `instructions-Arm`
+  `instructions-Arm`,
+  LocalProject("task")
 ).map { testingProject =>
   scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
 }
