@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
-import Each.fork
 import com.thoughtworks.dsl.Dsl.reset
 
 /**
@@ -160,7 +159,7 @@ class EachSpec extends FreeSpec with Matchers {
   "default parameter" in {
 
     def foo(s: Seq[Int] = Seq {
-      !fork(1, 2, 3) + 100
+      !Each(Seq(1, 2, 3)) + 100
     }) = s
 
     foo() should be(Seq(101, 102, 103))
@@ -181,7 +180,7 @@ class EachSpec extends FreeSpec with Matchers {
 
     def asyncFunction: AsyncFunction[Stream[String], Unit] = _ {
       !Yield("Entering asyncFunction")
-      val subThreadId: Int = !fork(0, 1)
+      val subThreadId: Int = !Each(Seq(0, 1))
       !Yield(s"Fork sub-thread $subThreadId")
       !Yield("Leaving asyncFunction")
     }
@@ -190,7 +189,7 @@ class EachSpec extends FreeSpec with Matchers {
 
       def generator: Stream[String] = {
         !Yield("Entering generator")
-        val threadId = !fork(0, 1)
+        val threadId = !Each(Seq(0, 1))
         !Yield(s"Fork thread $threadId")
         !Shift(asyncFunction)
         Stream("Leaving generator")
