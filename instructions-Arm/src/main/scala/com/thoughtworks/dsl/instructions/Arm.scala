@@ -18,7 +18,7 @@ object Arm {
     new Arm[R](r _, resource)
   }
 
-  implicit def armContinuationDsl[Domain, R, A](
+  implicit def armDsl[Domain, R, A](
       implicit dsl: com.thoughtworks.dsl.Dsl[com.thoughtworks.dsl.instructions.Catch[Domain], Domain, Domain => Domain])
     : Dsl[Arm[R], ((A => Domain) => Domain), R] =
     new Dsl[Arm[R], ((A => Domain) => Domain), R] {
