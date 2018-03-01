@@ -11,14 +11,25 @@ final case class Shift[Domain, Value](continuation: (Value => Domain) => Domain)
     extends AnyVal
     with Instruction[Shift[Domain, Value], Value]
 
-object Shift {
+private[instructions] trait LowPriorityShift {
+
+  implicit def stackUnsafeShiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
+    new Dsl[Shift[Domain, Value], Domain, Value] {
+      def interpret(shift: Shift[Domain, Value], mapper: Value => Domain): Domain =
+        shift.continuation(mapper)
+    }
+}
+
+object Shift extends LowPriorityShift {
+  trait StackSafeShiftDsl[Domain, Value] extends Dsl[Shift[Domain, Value], Domain, Value]
 
   implicit def implicitShift[Domain, Value](fa: (Value => Domain) => Domain): Shift[Domain, Value] =
     Shift[Domain, Value](fa)
 
-  implicit def shiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
-    new Dsl[Shift[Domain, Value], Domain, Value] {
-      def interpret(shift: Shift[Domain, Value], mapper: Value => Domain): Domain = shift.continuation(mapper)
-    }
+  @inline
+  implicit def stackSafeShiftDsl[Domain, Value](
+      implicit stackSafeShiftDsl: StackSafeShiftDsl[Domain, Value]): Dsl[Shift[Domain, Value], Domain, Value] = {
+    stackSafeShiftDsl
+  }
 
 }

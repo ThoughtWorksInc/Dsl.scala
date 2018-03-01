@@ -1,6 +1,7 @@
 package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl
+import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
 import com.thoughtworks.dsl.instructions._
 
 import scala.annotation.tailrec
@@ -15,20 +16,34 @@ import scala.util.control.NonFatal
 trait ExceptionHandling[OtherDomain] extends ((Throwable => OtherDomain) => OtherDomain)
 
 object ExceptionHandling {
-//
-//  abstract class Trampoline[OtherDomain] extends ExceptionHandling[OtherDomain] {
-//    def step(): ExceptionHandling[OtherDomain]
-//
-//    @tailrec
-//    final def apply(failureHandler: Throwable => OtherDomain): OtherDomain = {
-//      step() match {
-//        case trampoline: Trampoline[OtherDomain] =>
-//          trampoline.apply(failureHandler)
-//        case last =>
-//          last.apply(failureHandler)
-//      }
-//    }
-//  }
+
+  abstract class Trampoline[OtherDomain] extends ExceptionHandling[OtherDomain] {
+    def step(): ExceptionHandling[OtherDomain]
+
+    @tailrec
+    private def last(): ExceptionHandling[OtherDomain] = {
+      step() match {
+        case trampoline: Trampoline[OtherDomain] =>
+          trampoline.last()
+        case notTrampoline =>
+          notTrampoline
+      }
+    }
+
+    final def apply(failureHandler: Throwable => OtherDomain): OtherDomain = {
+      catchJvmException(last(), failureHandler)
+    }
+  }
+
+  implicit def stackSafeShiftExceptionHandlingDsl[Domain, Value]: StackSafeShiftDsl[ExceptionHandling[Domain], Value] =
+    new StackSafeShiftDsl[ExceptionHandling[Domain], Value] {
+      def interpret(instruction: Shift[ExceptionHandling[Domain], Value],
+                    handler: Value => ExceptionHandling[Domain]): ExceptionHandling[Domain] = {
+        new Trampoline[Domain] {
+          def step(): ExceptionHandling[Domain] = instruction.continuation(handler)
+        }
+      }
+    }
 
   def success[Domain](finalResult: Domain) = new ExceptionHandling[Domain] {
     def apply(failureHandler: Throwable => Domain): Domain = finalResult
