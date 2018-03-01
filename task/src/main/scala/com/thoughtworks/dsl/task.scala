@@ -50,19 +50,6 @@ object task {
     @inline
     def delay[A](f: () => A): Task[A] = { continue =>
       continue(f())
-//      new ExceptionHandling[Unit] {
-//        def apply(failureHandler: Throwable => Unit): Unit = {
-//          continue {
-//            try {
-//              f()
-//            } catch {
-//              case e:Throwable =>
-//                return failureHandler(e)
-//            }
-//          }(failureHandler)
-//        }
-//      }
-
     }
 
     @inline
