@@ -85,7 +85,7 @@ final class BangNotation(override val global: Global) extends Plugin {
 
   }
 
-  trait BangNotation extends AnalyzerPlugin {
+  trait BangNotationTransformer extends AnalyzerPlugin {
 
     private def cpsAttachment(tree: Tree)(continue: Tree => Tree): Tree = {
       tree.attachments.get[CpsAttachment] match {
@@ -244,7 +244,7 @@ final class BangNotation(override val global: Global) extends Plugin {
             val ifResultName = currentUnit.freshTermName("ifResult")
 
             q"""
-            @${definitions.ScalaInlineClass} val $endIfName = { ($ifResultName: $tpe) => 
+            @${definitions.ScalaInlineClass} val $endIfName = { ($ifResultName: $tpe) =>
               ${continue(q"$ifResultName")}
             }
             ${cpsAttachment(cond) { condValue =>
@@ -296,7 +296,7 @@ final class BangNotation(override val global: Global) extends Plugin {
             )= {
               _root_.com.thoughtworks.dsl.instructions.Scope(continuation).cpsApply(continue)
             }
-                        
+
             $scopeApplyName { ($tryResultName: _root_.scala.util.Try[$tpe]) => ${{
               cpsAttachment(finalizer) { finalizerValue =>
                 q"""
@@ -415,7 +415,7 @@ final class BangNotation(override val global: Global) extends Plugin {
   val name: String = "BangNotation"
 
   override def init(options: List[String], error: String => Unit): Boolean = {
-    global.analyzer.addAnalyzerPlugin(new Deactable with TreeResetter with BangNotation)
+    global.analyzer.addAnalyzerPlugin(new Deactable with TreeResetter with BangNotationTransformer)
     true
   }
 
