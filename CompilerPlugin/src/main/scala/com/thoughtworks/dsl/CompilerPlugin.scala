@@ -285,22 +285,27 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
           case Try(block, catches, finalizer) =>
             val finalizerName = currentUnit.freshTermName("finalizer")
             val tryResultName = currentUnit.freshTermName("tryResult")
-            val continueName = currentUnit.freshTermName("continue")
+            val scopeApplyName = currentUnit.freshTermName("scopeApply")
             val unhandledExceptionName = currentUnit.freshTermName("unhandledException")
-            val asCatcherName = currentUnit.freshTermName("asCatcher")
 
             q"""
-            @${definitions.ScalaInlineClass} val $finalizerName = { ($tryResultName: _root_.scala.util.Try[$tpe]) => ${{
+            @${definitions.ScalaInlineClass} def $scopeApplyName[Domain](continue: _root_.scala.util.Try[$tpe] => Domain)(
+            continuation: (_root_.scala.util.Try[$tpe] => Domain) => Domain)(
+            implicit scopeDsl: _root_.com.thoughtworks.dsl.Dsl[_root_.com.thoughtworks.dsl.instructions.Scope[Domain,_root_.scala.util.Try[$tpe]],Domain,_root_.scala.util.Try[$tpe]]
+            )= {
+              _root_.com.thoughtworks.dsl.instructions.Scope(continuation).cpsApply(continue)
+            }
+                        
+            $scopeApplyName { ($tryResultName: _root_.scala.util.Try[$tpe]) => ${{
               cpsAttachment(finalizer) { finalizerValue =>
                 q"""
                   ..${notPure(finalizerValue)}
                   ${continue(q"$tryResultName.get")}
                 """
               }
-            }}}
-
-            _root_.com.thoughtworks.dsl.instructions.Catch {
-              case ..${{
+            }}} { ($finalizerName: ${TypeTree()}) =>
+              _root_.com.thoughtworks.dsl.instructions.Catch {
+                case ..${{
               catches.map { caseDef =>
                 atPos(caseDef.pos) {
                   treeCopy.CaseDef(
@@ -314,15 +319,16 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                 }
               }
             }}
-              case $unhandledExceptionName: _root_.scala.Throwable =>
-                $finalizerName(_root_.scala.util.Failure($unhandledExceptionName))
-            }.cpsApply { $continueName: ${TypeTree()} => ${{
+                case $unhandledExceptionName: _root_.scala.Throwable =>
+                  $finalizerName(_root_.scala.util.Failure($unhandledExceptionName))
+              }.cpsApply { _: _root_.scala.Unit => ${{
               cpsAttachment(block) { blockValue =>
                 q"""
-                $continueName(${q"$finalizerName(_root_.scala.util.Success($blockValue))"})
-                """
+                  ${q"$finalizerName(_root_.scala.util.Success($blockValue))"}
+                  """
               }
             }}}
+            }
             """
           case Assign(lhs, rhs) =>
             cpsAttachment(rhs) { rhsValue =>

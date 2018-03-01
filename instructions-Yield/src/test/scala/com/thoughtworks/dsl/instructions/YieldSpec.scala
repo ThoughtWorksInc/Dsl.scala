@@ -196,4 +196,13 @@ class YieldSpec extends FreeSpec with Matchers {
     a[NonLocalReturnControl[Stream[Int]]] should be thrownBy generator.last
   }
 
+  "partial function" in {
+    Seq.empty[Any].map {
+      case i: Int =>
+        !Yield(100)
+        Stream(42)
+    }
+
+  }
+
 }

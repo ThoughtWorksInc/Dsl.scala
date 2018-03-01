@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import scala.annotation.{Annotation, StaticAnnotation, TypeConstraint, compileTimeOnly}
+import scala.annotation._
 
 /** The domain-specific interpreter for `Instruction` in `Domain`,
   * which is a dependent type type class that registers an asynchronous callback function,
@@ -17,6 +17,20 @@ trait Dsl[-Instruction, Domain, +Value] {
 }
 
 object Dsl {
+
+  trait Trampoline1[A, R] extends Function1[A, R] {
+    def step(): A => R
+
+    @tailrec
+    final def apply(a: A): R = {
+      step() match {
+        case trampoline: Trampoline1[A, R] =>
+          trampoline(a)
+        case last =>
+          last(a)
+      }
+    }
+  }
 
   implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
       implicit restDsl: Dsl[Instruction, Domain, InstructionValue])

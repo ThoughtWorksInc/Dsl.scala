@@ -28,7 +28,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
   })
 
-  "try" in taskToFuture(Task.reset {
+  "try" in taskToFuture(_ {
     class MyException extends Exception
     val task1: Task[Int] = Task.reset {
       throw new MyException
@@ -57,7 +57,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       throw new MyException
     }
 
-    val task2 = Task.reset {
+    val task2: Task[String] = _ {
       try {
         "no exception"
       } catch {
@@ -67,13 +67,13 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       !task1
     }
 
-    task2 { s =>
+    task2.onComplete({ s =>
       logs += s
       throw new AssertionError()
-    } { e =>
+    }, { e =>
       e should be(a[MyException])
       logs += "uncaught MyException"
-    }
+    })
     logs should be(ArrayBuffer("MyException", "uncaught MyException"))
   }
 }

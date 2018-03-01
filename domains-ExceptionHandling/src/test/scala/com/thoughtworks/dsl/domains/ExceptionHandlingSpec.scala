@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl.domains
 
-import com.thoughtworks.dsl.instructions.Yield
+import com.thoughtworks.dsl.instructions.{Catch, Scope, Shift, Yield}
 import org.scalatest.{FreeSpec, Matchers}
 
 /**
@@ -57,26 +57,59 @@ final class ExceptionHandlingSpec extends FreeSpec with Matchers {
       } should be(Seq(3))
     }
 
-    "issue 2" in {
-      def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
-        !Yield(1)
-        try {} catch {
-          case e: ArithmeticException =>
-            !Yield(2)
-        }
-        !Yield(3)
-        0 / 0
-        "OK"
+
+  "simple catch" in {
+
+    object MyException extends Exception
+    def generator: (Int => ExceptionHandling[Stream[String]]) => ExceptionHandling[Stream[String]] = { continue =>
+      !Yield("before catch")
+
+      !Catch { e: Throwable =>
+        e should be(MyException)
+        !Yield("catch")
+        continue(42)
       }
-
-      continuation { result: String =>
-        ExceptionHandling.failure(new AssertionError())
-      }.apply { e =>
-        e should be(a[ArithmeticException])
-        Stream.empty
-      } should be(Stream(1, 3))
-
+      !Yield("after catch")
+      continue(43)
     }
+
+    object MyException2 extends Exception
+
+    def generator2: ExceptionHandling[Stream[String]] = {
+
+      import ExceptionHandling._
+      val i = !Scope(generator)
+      !Yield(i.toString)
+      i should be(43)
+      ExceptionHandling.failure(MyException)
+    }
+
+    generator2 { e =>
+      e should be(MyException)
+
+      Stream("end")
+    } should be(Stream("before catch", "after catch", "43", "end"))
+  }
+
+  "issue 2" in {
+    def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = { continue =>
+      !Yield(1)
+      try {} catch {
+        case e: ArithmeticException =>
+          !Yield(2)
+      }
+      !Yield(3)
+      ExceptionHandling.failure(new ArithmeticException)
+    }
+
+    continuation { result: String =>
+      ExceptionHandling.failure(new AssertionError())
+    }.apply { e =>
+      e should be(a[ArithmeticException])
+      Stream.empty
+    } should be(Stream(1, 3))
+
+  }
 
     "empty try" in {
       def continuation: AsyncFunction[ExceptionHandling[Stream[Int]], String] = _ {
