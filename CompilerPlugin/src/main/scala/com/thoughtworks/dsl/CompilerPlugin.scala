@@ -465,6 +465,11 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             treeCopy.DefDef(tree, mods, name, tparams, transformValDefss(vparamss), tpt, annotateAsReset(rhs))
           case valDef: ValDef if valDef.mods.hasDefault =>
             transformRootValDef(valDef)
+          case Match(EmptyTree, cases) =>
+            treeCopy.Match(tree, EmptyTree, cases.mapConserve {
+              case caseDef @ CaseDef(pat, guard, body) =>
+                treeCopy.CaseDef(caseDef, pat, guard, annotateAsReset(body))
+            })
           case q"${Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
             annotateArgsAsReset(tree)
           case q"super.${termNames.CONSTRUCTOR}(...$argss)" =>
@@ -517,6 +522,8 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
                 .hasAnnotationNamed(definitions.TailrecClass.name) =>
             rhs.updateAttachment(Reset)
             vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
+          case Match(EmptyTree, cases) =>
+            cases.foreach(_.body.updateAttachment(Reset))
           case q"${fun @ Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
             argss.foreach(_.foreach(_.updateAttachment(Reset)))
           case q"${fun @ q"super.${termNames.CONSTRUCTOR}"}(...$argss)" =>
