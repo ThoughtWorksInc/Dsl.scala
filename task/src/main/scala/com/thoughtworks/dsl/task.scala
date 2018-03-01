@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.Dsl.reset
+import com.thoughtworks.dsl.Dsl.{Trampoline1, reset}
 import com.thoughtworks.dsl.domains.ExceptionHandling
 import com.thoughtworks.dsl.instructions.{Each, Shift}
 
@@ -15,21 +15,21 @@ import scala.util.control.NonFatal
   */
 object task {
 
-  trait Trampoline1[A, R] extends Function1[A, R] {
-    def step(): A => R
+  type Task[+A] = (A => ExceptionHandling[Unit]) => ExceptionHandling[Unit]
 
-    @tailrec
-    final def apply(a: A): R = {
-      step() match {
-        case trampoline: Trampoline1[A, R] =>
-          trampoline(a)
-        case last =>
-          last(a)
-      }
+  implicit final class TaskOps[+A](task: Task[A]) {
+    def onComplete(successHandler: A => Unit, failureHandler: Throwable => Unit): Unit = {
+      (try {
+        task { a =>
+          successHandler(a)
+          ExceptionHandling.success()
+        }
+      } catch {
+        case e: Throwable =>
+          return failureHandler(e)
+      }).apply(failureHandler)
     }
   }
-
-  type Task[+A] = (A => ExceptionHandling[Unit]) => ExceptionHandling[Unit]
 
   object Task {
 
@@ -49,18 +49,19 @@ object task {
 
     @inline
     def delay[A](f: () => A): Task[A] = { continue =>
-      new ExceptionHandling[Unit] {
-        def apply(failureHandler: Throwable => Unit): Unit = {
-          continue {
-            try {
-              f()
-            } catch {
-              case NonFatal(e) =>
-                return failureHandler(e)
-            }
-          }(failureHandler)
-        }
-      }
+      continue(f())
+//      new ExceptionHandling[Unit] {
+//        def apply(failureHandler: Throwable => Unit): Unit = {
+//          continue {
+//            try {
+//              f()
+//            } catch {
+//              case e:Throwable =>
+//                return failureHandler(e)
+//            }
+//          }(failureHandler)
+//        }
+//      }
 
     }
 

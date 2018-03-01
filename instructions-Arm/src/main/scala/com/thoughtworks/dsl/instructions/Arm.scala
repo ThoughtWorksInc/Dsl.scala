@@ -3,7 +3,9 @@ package com.thoughtworks.dsl.instructions
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Instruction
 import resource.Resource
+
 import scala.language.implicitConversions
+import scala.util.Try
 
 /**
   * @author 杨博 (Yang Bo)
@@ -19,8 +21,8 @@ object Arm {
   }
 
   implicit def armDsl[Domain, R, A](
-      implicit dsl: com.thoughtworks.dsl.Dsl[com.thoughtworks.dsl.instructions.Catch[Domain], Domain, Domain => Domain])
-    : Dsl[Arm[R], ((A => Domain) => Domain), R] =
+      implicit scopeDsl: Dsl[Scope[Domain, Try[A]], Domain, Try[A]],
+      catchDsl: Dsl[Catch[Domain], Domain, Unit]): Dsl[Arm[R], ((A => Domain) => Domain), R] =
     new Dsl[Arm[R], ((A => Domain) => Domain), R] {
       def interpret(arm: Arm[R], inUse: R => ((A => Domain) => Domain)): ((A => Domain) => Domain) = {
         val Arm(resourceFactory, resource) = arm
