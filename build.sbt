@@ -1,5 +1,6 @@
-lazy val CompilerPlugin =
-  project.dependsOn(Dsl % Test, Dsl % Provided)
+lazy val `compilerplugins-BangNotation` = project.dependsOn(Dsl % Test, Dsl % Provided)
+
+lazy val `compilerplugins-ResetEverywhere` = project.dependsOn(Dsl % Test, Dsl % Provided)
 
 lazy val Dsl = project
 
@@ -73,8 +74,11 @@ Seq[ProjectReference](
   `instructions-Arm`,
   `instructions-AutoClose`,
   LocalProject("task")
-).map { testingProject =>
-  scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in CompilerPlugin in Compile).value}"""
+).flatMap { testingProject =>
+  Seq(
+    scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+    scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+  )
 }
 
 crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.4")
@@ -84,7 +88,7 @@ lazy val unidoc =
     .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
     .settings(
       unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := {
-        inAggregates(LocalRootProject) -- inProjects(CompilerPlugin)
+        inAggregates(LocalRootProject) -- inProjects(`compilerplugins-BangNotation`)
       },
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
       scalacOptions += "-Xexperimental",

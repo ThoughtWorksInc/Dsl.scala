@@ -1,4 +1,5 @@
 package com.thoughtworks.dsl
+package compilerplugins
 
 import com.thoughtworks.dsl.Dsl.{ResetAnnotation, nonTypeConstraintReset, shift}
 
@@ -10,7 +11,7 @@ import scala.tools.nsc.{Global, Mode, Phase}
 /**
   * @author 杨博 (Yang Bo)
   */
-final class CompilerPlugin(override val global: Global) extends Plugin {
+final class BangNotation(override val global: Global) extends Plugin {
   import global._
   import global.analyzer._
 
@@ -84,7 +85,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
 
   }
 
-  trait CpsTransformer extends AnalyzerPlugin {
+  trait BangNotationTransformer extends AnalyzerPlugin {
 
     private def cpsAttachment(tree: Tree)(continue: Tree => Tree): Tree = {
       tree.attachments.get[CpsAttachment] match {
@@ -243,7 +244,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             val ifResultName = currentUnit.freshTermName("ifResult")
 
             q"""
-            @${definitions.ScalaInlineClass} val $endIfName = { ($ifResultName: $tpe) => 
+            @${definitions.ScalaInlineClass} val $endIfName = { ($ifResultName: $tpe) =>
               ${continue(q"$ifResultName")}
             }
             ${cpsAttachment(cond) { condValue =>
@@ -295,7 +296,7 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
             )= {
               _root_.com.thoughtworks.dsl.instructions.Scope(continuation).cpsApply(continue)
             }
-                        
+
             $scopeApplyName { ($tryResultName: _root_.scala.util.Try[$tpe]) => ${{
               cpsAttachment(finalizer) { finalizerValue =>
                 q"""
@@ -411,161 +412,16 @@ final class CompilerPlugin(override val global: Global) extends Plugin {
 
   }
 
-  val name: String = "dsl"
-
-  final class ResetAnnotationCreator extends PluginComponent with Transform {
-
-    val global: CompilerPlugin.this.global.type = CompilerPlugin.this.global
-    val phaseName: String = "resetmarker"
-    val runsAfter = "parser" :: Nil
-    override val runsBefore = "namer" :: Nil
-
-    protected def newTransformer(unit: CompilationUnit): Transformer = new Transformer {
-
-      private def annotateAsReset(tree: Tree) = {
-        Annotated(q"new $nonTypeConstraintResetSymbol()", transform(tree))
-      }
-
-      private def transformRootValDef(tree: ValDef) = {
-        val ValDef(mods, name, tpt, rhs) = tree
-        treeCopy.ValDef(tree, mods, name, tpt, annotateAsReset(rhs))
-      }
-
-      override def transformTemplate(tree: Template): Template = {
-        val Template(parents, self, body) = tree
-        treeCopy.Template(
-          tree,
-          parents,
-          self,
-          body.mapConserve {
-            case valDef: ValDef if !valDef.mods.isParamAccessor =>
-              transformRootValDef(valDef)
-            case initializer: TermTree =>
-              annotateAsReset(initializer)
-            case stat =>
-              transform(stat)
-          }
-        )
-      }
-
-      private def annotateArgsAsReset(tree: Tree): Tree = {
-        tree match {
-          case tree: Apply =>
-            treeCopy.Apply(tree, annotateArgsAsReset(tree.fun), tree.args.mapConserve(annotateAsReset))
-          case fun =>
-            fun
-        }
-      }
-
-      override def transform(tree: global.Tree): global.Tree = {
-        tree match {
-          case tree: TypeTree =>
-            tree
-          case Typed(expr, tpt) =>
-            treeCopy.Typed(tree, transform(expr), tpt)
-          case Function(vparams, body) =>
-            treeCopy.Function(tree, vparams, annotateAsReset(body))
-          case DefDef(mods, name, tparams, vparamss, tpt, rhs)
-              if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
-                .hasAnnotationNamed(definitions.TailrecClass.name) =>
-            treeCopy.DefDef(tree, mods, name, tparams, transformValDefss(vparamss), tpt, annotateAsReset(rhs))
-          case valDef: ValDef if valDef.mods.hasDefault =>
-            transformRootValDef(valDef)
-          case Match(EmptyTree, cases) =>
-            treeCopy.Match(tree, EmptyTree, cases.mapConserve {
-              case caseDef @ CaseDef(pat, guard, body) =>
-                treeCopy.CaseDef(caseDef, pat, guard, annotateAsReset(body))
-            })
-          case q"${Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
-            annotateArgsAsReset(tree)
-          case q"super.${termNames.CONSTRUCTOR}(...$argss)" =>
-            annotateArgsAsReset(tree)
-          case _ =>
-            super.transform(tree)
-        }
-      }
-    }
-  }
-
-  override val optionsHelp = Some(
-    """This DSL plug-in accept only one flag `-P:dsl:macro-annotation-workaround`, which make this plug-in work in macro annotation generated code.""")
+  val name: String = "BangNotation"
 
   override def init(options: List[String], error: String => Unit): Boolean = {
-    options match {
-      case Nil =>
-        global.analyzer.addAnalyzerPlugin(new Deactable with TreeResetter with CpsTransformer)
-      case List("macro-annotation-workaround") =>
-        global.analyzer.addAnalyzerPlugin(
-          new Deactable with TreeResetter with CpsTransformer with ResetAttachmentConverter with ResetAttachmentCreator)
-      case _ =>
-        error(this.optionsHelp.get)
-    }
+    global.analyzer.addAnalyzerPlugin(new Deactable with TreeResetter with BangNotationTransformer)
     true
   }
 
   val description: String =
     "A compiler plugin that converts native imperative syntax to monadic expressions or continuation-passing style expressions"
 
-  val components: List[PluginComponent] = {
-    if (options.contains("macro-annotation-workaround")) {
-      Nil
-    } else {
-      List(new ResetAnnotationCreator)
-    }
-  }
-
-  trait ResetAttachmentCreator extends ResetAttachmentConverter {
-    override def pluginsPt(pt0: Type, typer: Typer, tree: Tree, mode: Mode): Type = {
-      val pt = super.pluginsPt(pt0: Type, typer: Typer, tree: Tree, mode: Mode)
-      if (mode.inExprMode) {
-        tree match {
-          case function: Function =>
-            // FIXME: the Reset attachment will be discarded when the body tree is replaced
-            // (e.g. the body tree is a `+=` call, which will be replaced to an Assign tree
-            function.body.updateAttachment(Reset)
-          case DefDef(mods, name, tparams, vparamss, tpt, rhs)
-              if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
-                .hasAnnotationNamed(definitions.TailrecClass.name) =>
-            rhs.updateAttachment(Reset)
-            vparamss.foreach(_.foreach { _.rhs.updateAttachment(Reset) })
-          case Match(EmptyTree, cases) =>
-            cases.foreach(_.body.updateAttachment(Reset))
-          case q"${fun @ Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
-            argss.foreach(_.foreach(_.updateAttachment(Reset)))
-          case q"${fun @ q"super.${termNames.CONSTRUCTOR}"}(...$argss)" =>
-            argss.foreach(_.foreach(_.updateAttachment(Reset)))
-          case implDef: ImplDef =>
-            implDef.impl.body.foreach {
-              case valDef: ValDef if !valDef.mods.isParamAccessor =>
-                valDef.rhs.updateAttachment(Reset)
-              case termTree: TermTree =>
-                termTree.updateAttachment(Reset)
-              case _ =>
-            }
-          case _ =>
-        }
-      }
-      pt
-    }
-  }
-
-  /** A [[AnalyzerPlugin]] that converts [[Reset]] attachments to [[com.thoughtworks.dsl.Dsl.nonTypeConstraintReset generatedReset]] annotations */
-  trait ResetAttachmentConverter extends AnalyzerPlugin {
-    object Reset
-    override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
-      val tpe = super.pluginsTyped(tpe0, typer, tree, mode, pt)
-      tree.attachments.get[Reset.type] match {
-        case None =>
-          tpe
-        case Some(_) =>
-          tpe.withAnnotations(List(Annotation(deactAnalyzerPlugins {
-            typer.context.withMode(ContextMode.NOmode) {
-              typer.typed(q"new $nonTypeConstraintResetSymbol()", Mode.EXPRmode)
-            }
-          })))
-      }
-    }
-
-  }
+  val components = Nil
 
 }
