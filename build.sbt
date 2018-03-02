@@ -11,7 +11,7 @@ lazy val `domains-ExceptionHandling` =
   project.dependsOn(`instructions-Hang`,
                     `instructions-Scope`,
                     `instructions-Catch`,
-                    `instructions-Shift` % Test,
+                    `instructions-Shift`,
                     `instructions-Yield` % Test)
 
 lazy val `instructions-Fork` =
