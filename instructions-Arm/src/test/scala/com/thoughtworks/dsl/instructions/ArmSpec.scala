@@ -20,6 +20,7 @@ class ArmSpec extends FreeSpec with Matchers {
 
         def raii: Scope[ExceptionHandling[Stream[Int]]] = noop {
           ExceptionHandling.success {
+
             !Yield(1)
             isOpen should be(false)
             val a = !Arm {

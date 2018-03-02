@@ -4,6 +4,7 @@ import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Instruction
 
 import scala.language.implicitConversions
+import scala.util.Try
 
 /**
   * @author 杨博 (Yang Bo)
@@ -18,8 +19,8 @@ object AutoClose {
       implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): AutoClose[R] = new AutoClose(r _)
 
   implicit def autoCloseDsl[Domain, R <: AutoCloseable, A](
-      implicit dsl: com.thoughtworks.dsl.Dsl[com.thoughtworks.dsl.instructions.Catch[Domain], Domain, Domain => Domain])
-    : Dsl[AutoClose[R], ((A => Domain) => Domain), R] =
+      implicit scopeDsl: Dsl[Scope[Domain, Try[A]], Domain, Try[A]],
+      catchDsl: Dsl[Catch[Domain], Domain, Unit]): Dsl[AutoClose[R], ((A => Domain) => Domain), R] =
     new Dsl[AutoClose[R], ((A => Domain) => Domain), R] {
       def interpret(autoClose: AutoClose[R], inUse: R => ((A => Domain) => Domain)): ((A => Domain) => Domain) = _ {
         val r = autoClose.open()

@@ -8,36 +8,41 @@ import scala.language.implicitConversions
 import scalaz.{Bind, Monad, MonadError, MonadTrans}
 
 import scala.util.control.Exception.Catcher
-import scala.util.control.NonFatal
+import scala.util.control.{ControlThrowable, NonFatal}
 
 /**
   * @author 杨博 (Yang Bo)
+  * @note [[ScalazBind]] is not an [[AnyVal]] due to [[https://github.com/scala/bug/issues/10595]].
   */
-final case class ScalazBind[F[_], A](fa: F[A]) extends AnyVal with Instruction[ScalazBind[F, A], A]
+final case class ScalazBind[F[_], A](fa: F[A]) extends Instruction[ScalazBind[F, A], A]
 
 object ScalazBind {
 
-  implicit def scalazCatchDsl[F[_], A](
-      implicit monadError: MonadError[F, Throwable]): Dsl[Catch[F[A]], F[A], F[A] => F[A]] =
-    new Dsl[Catch[F[A]], F[A], F[A] => F[A]] {
-      def interpret(instruction: Catch[F[A]], continuation: (F[A] => F[A]) => F[A]): F[A] = {
-        def exceptionHandler(e: Throwable): F[A] = {
-          try {
-            instruction.onFailure(e)
-          } catch {
-            case NonFatal(rethrown) =>
-              monadError.raiseError(rethrown)
-          }
+  implicit def scalazScopeDsl[F[_], A, B](implicit monadError: MonadError[F, Throwable]): Dsl[Scope[F[B], A], F[B], A] =
+    new Dsl[Scope[F[B], A], F[B], A] {
+      def interpret(instruction: Scope[F[B], A], handler: A => F[B]): F[B] = {
+        val continuation: (A => F[B]) => F[B] = instruction.continuation
+        final case class BreakScope(a: A) extends ControlThrowable
+        monadError.handleError(continuation { a =>
+          monadError.raiseError(BreakScope(a))
+        }) {
+          case BreakScope(a) =>
+            handler(a)
+          case e: Throwable =>
+            monadError.raiseError(e)
         }
+      }
+    }
 
-        try {
-          continuation { fa: F[A] =>
-            monadError.handleError(fa)(exceptionHandler)
-          }
+  implicit def scalazCatchDsl[F[_], A](implicit monadError: MonadError[F, Throwable]): Dsl[Catch[F[A]], F[A], Unit] =
+    new Dsl[Catch[F[A]], F[A], Unit] {
+      def interpret(instruction: Catch[F[A]], continuation: Unit => F[A]): F[A] = {
+        monadError.handleError(try {
+          continuation(())
         } catch {
-          case NonFatal(e) =>
-            exceptionHandler(e)
-        }
+          case e: Throwable =>
+            monadError.raiseError[A](e)
+        })(instruction.onFailure)
       }
     }
 
@@ -51,7 +56,7 @@ object ScalazBind {
           }
         }
       } catch {
-        case NonFatal(e) =>
+        case e: Throwable =>
           catcher.applyOrElse(e, monadError.raiseError)
       }
     }
@@ -68,9 +73,6 @@ object ScalazBind {
 
       def lift(fa: H[A]): F[G, A] = monadTrans.liftM(rest.lift(fa))(rest.monad)
 
-      def interpret(instruction: ScalazBind[H, A], handler: A => F[G, B]): F[G, B] = {
-        monad.bind(lift(instruction.fa))(handler)
-      }
     }
 
   implicit def scalazMonadTransformerDsl0[F[_[_], _], G[_], A, B](
@@ -81,9 +83,6 @@ object ScalazBind {
 
       def lift(fa: G[A]): F[G, A] = monadTrans.liftM(fa)
 
-      def interpret(instruction: ScalazBind[G, A], handler: A => F[G, B]): F[G, B] = {
-        monad.bind(lift(instruction.fa))(handler)
-      }
     }
 
   implicit def scalazBindDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[ScalazBind[F, A], F[B], A] =
@@ -98,12 +97,10 @@ object ScalazBind {
 
     def lift(fa: F[A]): G[A]
 
-    // We cannot define `interpret` here due to [[https://github.com/scala/bug/issues/10595]].
-    /*
-    def interpret(instruction: ScalazBind[F, A], handler: A => G[B]): G[B] = {
+    final def interpret(instruction: ScalazBind[F, A], handler: A => G[B]): G[B] = {
       monad.bind(lift(instruction.fa))(handler)
     }
-   */
+
   }
 
 }

@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.Dsl.reset
+import com.thoughtworks.dsl.Dsl.{Trampoline1, reset}
 import com.thoughtworks.dsl.domains.ExceptionHandling
 import com.thoughtworks.dsl.instructions.{Each, Shift}
 
@@ -8,27 +8,28 @@ import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
+import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
   */
 object task {
 
-  trait Trampoline1[A, R] extends Function1[A, R] {
-    def step(): A => R
+  type Task[+A] = (A => ExceptionHandling[Unit]) => ExceptionHandling[Unit]
 
-    @tailrec
-    final def apply(a: A): R = {
-      step() match {
-        case trampoline: Trampoline1[A, R] =>
-          trampoline(a)
-        case last =>
-          last(a)
-      }
+  implicit final class TaskOps[+A](task: Task[A]) {
+    def onComplete(successHandler: A => Unit, failureHandler: Throwable => Unit): Unit = {
+      (try {
+        task { a =>
+          successHandler(a)
+          ExceptionHandling.success()
+        }
+      } catch {
+        case e: Throwable =>
+          return failureHandler(e)
+      }).apply(failureHandler)
     }
   }
-
-  type Task[+A] = (A => ExceptionHandling[Unit]) => ExceptionHandling[Unit]
 
   object Task {
 
@@ -47,17 +48,17 @@ object task {
     def now[A](a: A): Task[A] = _(a)
 
     @inline
-    def delay[A](f: () => A): Task[A] = _(f())
+    def delay[A](f: () => A): Task[A] = { continue =>
+      continue(f())
+    }
 
     @inline
-    def reset[A](a: A): Task[A] @reset = Task.now(a)
+    implicit def reset[A](a: => A): Task[A] @reset = delay(a _)
 
   }
 
   implicit def await[Domain, Value](continuation: (Value => Domain) => Domain): Shift[Domain, Value] =
     Shift(continuation)
-
-  implicit def reset[A](a: A): Task[A] @reset = Task.now(a)
 
   def taskToFuture[A](task: Task[A]): Future[A] = {
     val promise = Promise[A]()
