@@ -58,6 +58,18 @@ lazy val `instructions-Arm` =
                     `instructions-Yield` % Test,
                     `domains-ExceptionHandling` % Test)
 
+lazy val `package` = project.dependsOn(
+  `instructions-Shift`,
+  `instructions-CatsFlatMap`,
+  `instructions-Each`,
+  `instructions-ScalazBind`,
+  `instructions-Yield`,
+  `domains-ExceptionHandling`,
+  `compilerplugins-BangNotation`,
+  `compilerplugins-ResetEverywhere`,
+  Dsl
+)
+
 organization in ThisBuild := "com.thoughtworks.dsl"
 
 Seq[ProjectReference](
@@ -88,7 +100,7 @@ lazy val unidoc =
     .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
     .settings(
       unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := {
-        inAggregates(LocalRootProject) -- inProjects(`compilerplugins-BangNotation`)
+        inAggregates(LocalRootProject)
       },
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
       scalacOptions += "-Xexperimental",

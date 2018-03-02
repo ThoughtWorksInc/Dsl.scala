@@ -8,7 +8,16 @@ import scala.tools.nsc.transform.Transform
 import scala.tools.nsc.typechecker.ContextMode
 import scala.tools.nsc.{Global, Mode, Phase}
 
-/**
+/** The Scala compiler plug-in to convert ordinary Scala control flows to continuation-passing style,
+  * which will then be interpreted by [[Dsl]].
+  *
+  * = Usage =
+  *
+  * `<pre>
+  * // In your build.sbt
+  * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")
+  * </pre>`
+  *
   * @author 杨博 (Yang Bo)
   */
 final class BangNotation(override val global: Global) extends Plugin {
