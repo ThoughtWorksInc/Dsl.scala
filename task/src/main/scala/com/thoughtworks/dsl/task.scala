@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 
 import com.thoughtworks.dsl.Dsl.{Trampoline1, reset}
-import com.thoughtworks.dsl.domains.ExceptionHandling
+import com.thoughtworks.dsl.domains.Raii
 import com.thoughtworks.dsl.instructions.{Each, Shift}
 
 import scala.annotation.tailrec
@@ -15,19 +15,19 @@ import scala.util.control.NonFatal
   */
 object task {
 
-  type Task[+A] = (A => ExceptionHandling[Unit]) => ExceptionHandling[Unit]
+  type Task[+A] = (A => Raii[Unit]) => Raii[Unit]
 
   implicit final class TaskOps[+A](task: Task[A]) {
     def onComplete(successHandler: A => Unit, failureHandler: Throwable => Unit): Unit = {
       (try {
         task { a =>
           successHandler(a)
-          ExceptionHandling.success()
+          Raii.success()
         }
       } catch {
         case e: Throwable =>
           return failureHandler(e)
-      }).apply(failureHandler)
+      }).onFailure(failureHandler)
     }
   }
 
@@ -39,8 +39,8 @@ object task {
     }
 
     def suspend[A](stepTask: () => Task[A]): Task[A] = {
-      new Trampoline1[(A => ExceptionHandling[Unit]), ExceptionHandling[Unit]] {
-        def step(): (A => ExceptionHandling[Unit]) => ExceptionHandling[Unit] = stepTask()
+      new Trampoline1[(A => Raii[Unit]), Raii[Unit]] {
+        def step(): (A => Raii[Unit]) => Raii[Unit] = stepTask()
       }
     }
 
@@ -64,8 +64,8 @@ object task {
     val promise = Promise[A]()
     task { a: A =>
       promise.success(a)
-      ExceptionHandling.success(())
-    } { e: Throwable =>
+      Raii.success(())
+    }.onFailure { e: Throwable =>
       promise.failure(e)
     }
     promise.future
