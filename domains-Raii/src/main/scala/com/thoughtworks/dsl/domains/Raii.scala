@@ -229,11 +229,6 @@ object Raii {
       (canBuildFrom() += element).result()
     }
 
-    def suspend[A](stepTask: () => Task[A]): Task[A] = {
-      new Trampoline1[(A => Raii[Unit]), Raii[Unit]] {
-        def step(): (A => Raii[Unit]) => Raii[Unit] = stepTask()
-      }
-    }
 
     @inline
     def now[A](a: A): Task[A] = _(a)
