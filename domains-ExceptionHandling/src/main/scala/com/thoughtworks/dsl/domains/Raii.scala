@@ -2,10 +2,12 @@ package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Continuation
+import com.thoughtworks.dsl.domains.Raii.{Trampoline, catchJvmException}
 import com.thoughtworks.dsl.domains.Raii.{ExitScope, Throwing}
 import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
 import com.thoughtworks.dsl.instructions.{Catch, Scope, Shift}
 
+import scala.annotation.tailrec
 import scala.util.{Success, Try}
 import scala.util.control.NonFatal
 
@@ -54,6 +56,24 @@ object Raii {
           }
         }
       )
+    }
+  }
+
+  abstract class Trampoline[Domain] extends Raii[Domain] {
+    def step(): Raii[Domain]
+
+    @tailrec
+    private def last(): Raii[Domain] = {
+      step() match {
+        case trampoline: Trampoline[Domain] =>
+          trampoline.last()
+        case notTrampoline =>
+          notTrampoline
+      }
+    }
+
+    final def apply(continue: Raii[Domain] => Domain): Domain = {
+      catchJvmException(last(), continue)
     }
   }
 
@@ -145,13 +165,13 @@ object Raii {
     }
   }
 
-  implicit def liftRaiiDsl[Instruction, OtherDomain, A](
-      implicit restDsl: Dsl[Instruction, OtherDomain, A]
-  ): Dsl[Instruction, Raii[OtherDomain], A] =
-    new Dsl[Instruction, Raii[OtherDomain], A] {
-      def interpret(instruction: Instruction, successHandler: A => Raii[OtherDomain]): Raii[OtherDomain] =
-        new Raii[OtherDomain] {
-          def apply(continue: Raii[OtherDomain] => OtherDomain): OtherDomain = {
+  implicit def liftRaiiDsl[Instruction, Domain, A](
+      implicit restDsl: Dsl[Instruction, Domain, A]
+  ): Dsl[Instruction, Raii[Domain], A] =
+    new Dsl[Instruction, Raii[Domain], A] {
+      def interpret(instruction: Instruction, successHandler: A => Raii[Domain]): Raii[Domain] =
+        new Raii[Domain] {
+          def apply(continue: Raii[Domain] => Domain): Domain = {
             restDsl.interpret(instruction, { a =>
               continue(try {
                 successHandler(a)
@@ -165,9 +185,9 @@ object Raii {
 
     }
 
-  @inline def catchJvmException[OtherDomain](eh: => Raii[OtherDomain],
-                                             failureHandler: Raii[OtherDomain] => OtherDomain): OtherDomain = {
-    val protectedRaii: Raii[OtherDomain] = try {
+  @inline def catchJvmException[Domain](eh: => Raii[Domain],
+                                             failureHandler: Raii[Domain] => Domain): Domain = {
+    val protectedRaii: Raii[Domain] = try {
       eh
     } catch {
       case NonFatal(e) =>
@@ -176,4 +196,13 @@ object Raii {
     protectedRaii.apply(failureHandler)
   }
 
+  implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Raii[Domain], Value] =
+    new StackSafeShiftDsl[Raii[Domain], Value] {
+      def interpret(instruction: Shift[Raii[Domain], Value],
+                    handler: Value => Raii[Domain]): Raii[Domain] = {
+        new Trampoline[Domain] {
+          def step(): Raii[Domain] = instruction.continuation(handler)
+        }
+      }
+    }
 }
