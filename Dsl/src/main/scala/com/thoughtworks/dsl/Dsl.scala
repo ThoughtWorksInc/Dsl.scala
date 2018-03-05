@@ -24,7 +24,25 @@ trait Dsl[-Instruction, Domain, +Value] {
 
 }
 
-object Dsl {
+private[dsl] trait Low {
+
+  implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
+      implicit restDsl: Dsl[Instruction, Domain, InstructionValue])
+    : Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
+    new Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] {
+      def interpret(
+          instruction: Instruction,
+          handler: InstructionValue => (FinalResult => Domain) => Domain): (FinalResult => Domain) => Domain = {
+        (continue: FinalResult => Domain) =>
+          restDsl.interpret(instruction, { a =>
+            handler(a)(continue)
+          })
+      }
+    }
+  }
+}
+
+object Dsl extends Low {
 
   type Continuation[R, +A] = (A => R) => R
 
@@ -38,21 +56,6 @@ object Dsl {
           trampoline(a)
         case last =>
           last(a)
-      }
-    }
-  }
-
-  implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
-      implicit restDsl: Dsl[Instruction, Domain, InstructionValue])
-    : Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
-    new Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] {
-      def interpret(
-          instruction: Instruction,
-          handler: InstructionValue => (FinalResult => Domain) => Domain): (FinalResult => Domain) => Domain = {
-        (continue: FinalResult => Domain) =>
-          restDsl.interpret(instruction, { a =>
-            handler(a)(continue)
-          })
       }
     }
   }

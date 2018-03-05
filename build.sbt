@@ -5,12 +5,15 @@ lazy val `compilerplugins-ResetEverywhere` = project.dependsOn(Dsl % Test, Dsl %
 lazy val Dsl = project
 
 lazy val `domains-Raii` =
-  project.dependsOn(`instructions-Hang`,
-                    `instructions-Scope`,
-                    `instructions-Catch`,
-                    `instructions-Shift`,
-                    `instructions-Fork` % Test,
-                    `instructions-Yield` % Test)
+  project.dependsOn(
+    `instructions-Hang`,
+    `instructions-Scope`,
+    `instructions-Catch`,
+    `instructions-Shift`,
+    `instructions-AutoClose`,
+    `instructions-Fork` % Test,
+    `instructions-Yield` % Test
+  )
 
 lazy val `instructions-Fork` =
   project.dependsOn(Dsl,
@@ -50,9 +53,7 @@ lazy val `instructions-CatsFlatMap` =
                     `instructions-Yield` % Test)
 
 lazy val `instructions-Arm` =
-  project.dependsOn(`instructions-Catch`,
-                    `instructions-Scope`,
-                    `instructions-Shift`,
+  project.dependsOn(`instructions-AutoClose`,
                     `instructions-Yield` % Test,
                     `domains-Raii` % Test)
 

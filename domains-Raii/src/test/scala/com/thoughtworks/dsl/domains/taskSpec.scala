@@ -3,7 +3,7 @@ package com.thoughtworks.dsl.domains
 import com.thoughtworks.dsl.Dsl.reset
 import org.scalatest.{Assertion, AsyncFreeSpec, Matchers}
 import Raii.{Task, taskToFuture}
-import com.thoughtworks.dsl.instructions.{Each, Fork}
+import com.thoughtworks.dsl.instructions.{AutoClose, Each, Fork}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -78,4 +78,36 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     })
     logs should be(ArrayBuffer("MyException", "uncaught MyException"))
   }
+
+  "autoClose" in {
+    val logs = ArrayBuffer.empty[Int]
+
+    val task = taskToFuture[Unit] {
+      _ {
+        logs += 0
+        try {
+
+          logs += 1
+
+          !AutoClose(new AutoCloseable {
+            logs += 2
+            def close(): Unit = {
+              logs += 3
+            }
+          })
+
+          logs += 4
+
+        } finally {}
+        logs += 5
+
+      }
+    }
+
+    task.map { _ =>
+      logs should be(ArrayBuffer(0, 1, 2, 4, 3, 5))
+    }
+
+  }
+
 }

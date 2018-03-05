@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.Dsl.{Continuation, Trampoline1, reset}
 import com.thoughtworks.dsl.domains.Raii.{Trampoline, catchJvmException}
 import com.thoughtworks.dsl.domains.Raii.{ExitScope, Throwing}
 import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
-import com.thoughtworks.dsl.instructions.{Catch, Scope, Shift}
+import com.thoughtworks.dsl.instructions.{AutoClose, Catch, Scope, Shift}
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
@@ -24,8 +24,8 @@ trait Raii[Domain] extends Continuation[Domain, Raii[Domain]] {
         raii match {
           case Throwing(e) =>
             failureHandler(e)
-          case exitScope: ExitScope[Domain] =>
-            throw new IllegalStateException("unmatched scope")
+//          case exitScope: ExitScope[Domain] =>
+//            exitScopethis()
           case _ =>
             raii(this)
         }
@@ -51,8 +51,8 @@ object Raii {
             raii match {
               case Throwing(e) =>
                 handler(scala.util.Failure(e))
-              case exitScope: ExitScope[Domain] =>
-                throw new IllegalStateException("unmatched scope")
+//              case exitScope: ExitScope[Domain] =>
+//                this(exitScope)
               case _ =>
                 raii(this)
             }
@@ -103,8 +103,11 @@ object Raii {
     override def toString(): String = "Throwing"
   }
 
-  def success[Domain](domain: Domain): Raii[Domain] = new Hang[Domain] {
-    def onSuccess(): Domain = domain
+  def success[Domain](domain: Domain): Raii[Domain] = new ExitScope[Domain] {
+    def apply(continue: Raii[Domain] => Domain): Domain =
+      continue(new Hang[Domain] {
+        def onSuccess(): Domain = domain
+      })
   }
 
   def failure[Domain](throwable: Throwable): Raii[Domain] = Throwing[Domain](throwable)
@@ -138,19 +141,19 @@ object Raii {
       }
     }
 
-  implicit def catchDsl[Domain](implicit shiftDsl: Dsl[Shift[Domain, Raii[Domain]], Domain, Raii[Domain]])
+  implicit def raiiCatchDsl[Domain](implicit shiftDsl: Dsl[Shift[Domain, Raii[Domain]], Domain, Raii[Domain]])
     : Dsl[Catch[Raii[Domain]], Raii[Domain], Unit] = {
     new Dsl[Catch[Raii[Domain]], Raii[Domain], Unit] {
       def interpret(instruction: Catch[Raii[Domain]], body: Unit => Raii[Domain]): Raii[Domain] = {
         val Catch(catcher) = instruction
         new Raii[Domain] {
-          def apply(continue: Raii[Domain] => Domain): Domain = {
+          def apply(outerScope: Raii[Domain] => Domain): Domain = {
             val runScope = new (Raii[Domain] => Domain) {
               def apply(raii: Raii[Domain]) = raii match {
                 case Throwing(e) =>
-                  continue(catcher(e))
+                  outerScope(catcher(e))
                 case exitScope: ExitScope[Domain] =>
-                  continue(exitScope)
+                  outerScope(exitScope)
                 case raii =>
                   shiftDsl.interpret(Shift(raii), this)
               }
@@ -159,7 +162,7 @@ object Raii {
               body(())
             } catch {
               case NonFatal(e) =>
-                return continue(catcher(e))
+                return outerScope(catcher(e))
             }
             runScope(raii)
           }
@@ -167,6 +170,36 @@ object Raii {
       }
     }
   }
+
+  implicit def raiiAutoCloseDsl[Domain, R <: AutoCloseable](
+      implicit shiftDsl: Dsl[Shift[Domain, Raii[Domain]], Domain, Raii[Domain]]): Dsl[AutoClose[R], Raii[Domain], R] =
+    new Dsl[AutoClose[R], Raii[Domain], R] {
+      def interpret(instruction: AutoClose[R], body: R => Raii[Domain]): Raii[Domain] = {
+        val AutoClose(open) = instruction
+        new Raii[Domain] {
+          def apply(outerScope: Raii[Domain] => Domain): Domain = {
+            val r = open()
+            val raii = try {
+              body(r)
+            } catch {
+              case NonFatal(e) =>
+                r.close()
+                return outerScope(failure(e))
+            }
+            val runScope = new (Raii[Domain] => Domain) {
+              def apply(raii: Raii[Domain]) = raii match {
+                case exitScope: ExitScope[Domain] =>
+                  r.close()
+                  outerScope(exitScope)
+                case raii =>
+                  shiftDsl.interpret(Shift(raii), this)
+              }
+            }
+            runScope(raii)
+          }
+        }
+      }
+    }
 
   implicit def liftRaiiDsl[Instruction, Domain, A](
       implicit restDsl: Dsl[Instruction, Domain, A]
@@ -228,8 +261,6 @@ object Raii {
         implicit canBuildFrom: CanBuildFrom[Nothing, Element, That]): Task[That] @reset = now {
       (canBuildFrom() += element).result()
     }
-
-
     @inline
     def now[A](a: A): Task[A] = _(a)
 

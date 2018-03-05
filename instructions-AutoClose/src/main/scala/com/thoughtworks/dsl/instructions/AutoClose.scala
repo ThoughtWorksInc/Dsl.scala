@@ -13,23 +13,9 @@ final case class AutoClose[R <: AutoCloseable](open: () => R) extends AnyVal wit
 
 object AutoClose {
 
-  implicit def implicitAutoClose[R <: AutoCloseable](r: => R): AutoClose[R] = AutoClose[R](r)
+  implicit def implicitAutoClose[R <: AutoCloseable](r: => R): AutoClose[R] = AutoClose[R](r _)
 
   def apply[R <: AutoCloseable](r: => R)(
       implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): AutoClose[R] = new AutoClose(r _)
-
-  implicit def autoCloseDsl[Domain, R <: AutoCloseable, A](
-      implicit scopeDsl: Dsl[Scope[Domain, Try[A]], Domain, Try[A]],
-      catchDsl: Dsl[Catch[Domain], Domain, Unit]): Dsl[AutoClose[R], ((A => Domain) => Domain), R] =
-    new Dsl[AutoClose[R], ((A => Domain) => Domain), R] {
-      def interpret(autoClose: AutoClose[R], inUse: R => ((A => Domain) => Domain)): ((A => Domain) => Domain) = _ {
-        val r = autoClose.open()
-        try {
-          !Shift(inUse(r))
-        } finally {
-          r.close()
-        }
-      }
-    }
 
 }
