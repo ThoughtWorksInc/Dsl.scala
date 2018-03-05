@@ -27,8 +27,8 @@ trait Dsl[-Instruction, Domain, +Value] {
 private[dsl] trait Low {
 
   implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
-      implicit restDsl: Dsl[Instruction, Domain, InstructionValue])
-    : Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
+      implicit restDsl: Dsl[Instruction, Domain, InstructionValue]
+  ): Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
     new Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] {
       def interpret(
           instruction: Instruction,
@@ -45,6 +45,7 @@ private[dsl] trait Low {
 object Dsl extends Low {
 
   type Continuation[R, +A] = (A => R) => R
+  type !![R, +A] = Continuation[R, A]
 
   trait Trampoline1[A, R] extends Function1[A, R] {
     def step(): A => R

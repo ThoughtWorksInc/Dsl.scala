@@ -1,259 +1,150 @@
-package com.thoughtworks.dsl.domains
-
-import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{Continuation, Trampoline1, reset}
-import com.thoughtworks.dsl.domains.Raii.{Trampoline, catchJvmException}
-import com.thoughtworks.dsl.domains.Raii.{ExitScope, Throwing}
-import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
-import com.thoughtworks.dsl.instructions.{AutoClose, Catch, Scope, Shift}
+package com.thoughtworks.dsl
+package domains
+import com.thoughtworks.dsl.Dsl.{!!, Trampoline1, reset}
+import com.thoughtworks.dsl.instructions._
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{Future, Promise}
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 import scala.language.implicitConversions
+import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
 
 /**
   * @author 杨博 (Yang Bo)
   */
-trait Raii[Domain] extends Continuation[Domain, Raii[Domain]] {
-  final def onFailure(failureHandler: Throwable => Domain): Domain = {
-    this(new (Raii[Domain] => Domain) {
-      def apply(raii: Raii[Domain]): Domain = {
-        raii match {
-          case Throwing(e) =>
-            failureHandler(e)
-//          case exitScope: ExitScope[Domain] =>
-//            exitScopethis()
-          case _ =>
-            raii(this)
-        }
-      }
-    })
-  }
-}
+sealed trait Raii
 
 object Raii {
 
-  implicit final class RaiiContinuationOps[Domain, A](task: Continuation[Raii[Domain], A]) {
-    def onComplete(handler: Try[A] => Domain): Domain = {
-      catchJvmException(
-        task { a =>
-          new Hang[Domain] {
-            def onSuccess(): Domain = {
-              handler(Success(a))
-            }
-          }
-        },
-        new (Raii[Domain] => Domain) {
-          def apply(raii: Raii[Domain]): Domain = {
-            raii match {
-              case Throwing(e) =>
-                handler(scala.util.Failure(e))
-//              case exitScope: ExitScope[Domain] =>
-//                this(exitScope)
-              case _ =>
-                raii(this)
-            }
-          }
-        }
-      )
+  final case class RaiiFailure(throwable: Throwable) extends Raii
+  trait RaiiSuccess[Domain] extends Raii {
+    def continue(): Domain
+  }
+
+  @inline private def catchJvmException[Domain](eh: => Domain !! Raii)(failureHandler: Raii => Domain): Domain = {
+    val protectedRaii: Domain !! Raii = try {
+      eh
+    } catch {
+      case NonFatal(e) =>
+        return failureHandler(RaiiFailure(e))
     }
+    protectedRaii.apply(failureHandler)
   }
 
-  abstract class Trampoline[Domain] extends Raii[Domain] {
-    def step(): Raii[Domain]
-
-    @tailrec
-    private def last(): Raii[Domain] = {
-      step() match {
-        case trampoline: Trampoline[Domain] =>
-          trampoline.last()
-        case notTrampoline =>
-          notTrampoline
-      }
-    }
-
-    final def apply(continue: Raii[Domain] => Domain): Domain = {
-      catchJvmException(last(), continue)
-    }
-  }
-
-  trait ExitScope[Domain] extends Raii[Domain] {
-    override def toString(): String = "ExitScope"
-  }
-
-  trait Hang[Domain] extends Raii[Domain] {
-    def onSuccess(): Domain
-
-    def apply(continue: Raii[Domain] => Domain): Domain = {
-      onSuccess()
-    }
-
-    override def toString(): String = "Hang"
-
-  }
-
-  final case class Throwing[Domain](throwable: Throwable) extends ExitScope[Domain] {
-    override def apply(continue: Raii[Domain] => Domain): Domain = {
-      continue(this)
-    }
-
-    override def toString(): String = "Throwing"
-  }
-
-  def success[Domain](domain: Domain): Raii[Domain] = new ExitScope[Domain] {
-    def apply(continue: Raii[Domain] => Domain): Domain =
-      continue(new Hang[Domain] {
-        def onSuccess(): Domain = domain
-      })
-  }
-
-  def failure[Domain](throwable: Throwable): Raii[Domain] = Throwing[Domain](throwable)
-
-  implicit def scopeDsl[Domain, A](implicit shiftDsl: Dsl[Shift[Domain, Raii[Domain]], Domain, Raii[Domain]])
-    : Dsl[Scope[Raii[Domain], A], Raii[Domain], A] =
-    new Dsl[Scope[Raii[Domain], A], Raii[Domain], A] {
-      def interpret(scope: Scope[Raii[Domain], A], handler: A => Raii[Domain]): Raii[Domain] = {
-        new Raii[Domain] {
-          def apply(outerScope: Raii[Domain] => Domain): Domain = {
-            val runScope = new (Raii[Domain] => Domain) {
-              def apply(raii: Raii[Domain]) = raii match {
-                case exitScope: ExitScope[Domain] =>
-                  exitScope(outerScope)
-                case raii =>
-                  shiftDsl.interpret(Shift(raii), this)
-              }
-            }
-
-            runScope(scope.continuation { a =>
-              new ExitScope[Domain] {
-                def apply(endScope: Raii[Domain] => Domain): Domain = {
-                  catchJvmException(handler(a), endScope)
-                }
-              }
+  implicit def scopeDsl[Domain, A]: Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] = {
+    new Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] {
+      def interpret(instruction: Scope[Domain !! Raii, A], handler: A => Domain !! Raii): Domain !! Raii = {
+        (outerScope: Raii => Domain) =>
+          catchJvmException(instruction.continuation { a: A => (scopeHandler: Raii => Domain) =>
+            scopeHandler(new RaiiSuccess[Domain] {
+              def continue(): Domain = catchJvmException(handler(a))(outerScope)
             })
-
+          }) {
+            case throwing: RaiiFailure =>
+              outerScope(throwing)
+            case breaking: RaiiSuccess[Domain] @unchecked =>
+              breaking.continue()
           }
-        }
 
       }
     }
+  }
 
-  implicit def raiiCatchDsl[Domain](implicit shiftDsl: Dsl[Shift[Domain, Raii[Domain]], Domain, Raii[Domain]])
-    : Dsl[Catch[Raii[Domain]], Raii[Domain], Unit] = {
-    new Dsl[Catch[Raii[Domain]], Raii[Domain], Unit] {
-      def interpret(instruction: Catch[Raii[Domain]], body: Unit => Raii[Domain]): Raii[Domain] = {
-        val Catch(catcher) = instruction
-        new Raii[Domain] {
-          def apply(outerScope: Raii[Domain] => Domain): Domain = {
-            val runScope = new (Raii[Domain] => Domain) {
-              def apply(raii: Raii[Domain]) = raii match {
-                case Throwing(e) =>
-                  outerScope(catcher(e))
-                case exitScope: ExitScope[Domain] =>
-                  outerScope(exitScope)
-                case raii =>
-                  shiftDsl.interpret(Shift(raii), this)
-              }
-            }
-            val raii = try {
-              body(())
-            } catch {
-              case NonFatal(e) =>
-                return outerScope(catcher(e))
-            }
-            runScope(raii)
+  implicit def raiiCatchDsl[Domain]: Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] = {
+    new Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] {
+      def interpret(instruction: Catch[Domain !! Raii], handler: Unit => Domain !! Raii): Domain !! Raii = {
+        (outerScope: Raii => Domain) =>
+          catchJvmException(handler(())) {
+            case RaiiFailure(e) =>
+              catchJvmException(instruction.onFailure(e))(outerScope)
+            case breaking =>
+              outerScope(breaking)
           }
+
+      }
+    }
+  }
+
+  implicit final class RaiiContinuationOps[Domain, A](task: Domain !! Raii !! A) {
+    def toFuture(implicit hangDsl: Dsl[Hang[Domain], Domain, Domain]): Future[A] = {
+      val promise = Promise[A]()
+      onComplete { tryResult =>
+        promise.complete(tryResult)
+        hangDsl.interpret(Hang[Domain], identity)
+      }
+      promise.future
+    }
+
+    def onComplete(handler: Try[A] => Domain): Domain = {
+      task { a =>
+        new (Domain !! Raii) {
+          def apply(outerScope: Raii => Domain): Domain = outerScope(
+            new RaiiSuccess[Domain] {
+              def continue(): Domain = handler(Success(a))
+            }
+          )
         }
+      } {
+        case RaiiFailure(e) =>
+          handler(Failure(e))
+        case returning: RaiiSuccess[Domain] @unchecked =>
+          returning.continue()
       }
     }
   }
 
   implicit def raiiAutoCloseDsl[Domain, R <: AutoCloseable](
-      implicit shiftDsl: Dsl[Shift[Domain, Raii[Domain]], Domain, Raii[Domain]]): Dsl[AutoClose[R], Raii[Domain], R] =
-    new Dsl[AutoClose[R], Raii[Domain], R] {
-      def interpret(instruction: AutoClose[R], body: R => Raii[Domain]): Raii[Domain] = {
+      implicit shiftDsl: Dsl[Shift[Domain, Domain !! Raii], Domain, Domain !! Raii])
+    : Dsl[AutoClose[R], Domain !! Raii, R] =
+    new Dsl[AutoClose[R], Domain !! Raii, R] {
+      def interpret(instruction: AutoClose[R], body: R => Domain !! Raii): Domain !! Raii = {
         val AutoClose(open) = instruction
-        new Raii[Domain] {
-          def apply(outerScope: Raii[Domain] => Domain): Domain = {
-            val r = open()
-            val raii = try {
-              body(r)
+        val r = open()
+        (outerScope: Raii => Domain) =>
+          catchJvmException {
+            body(r)
+          } { raii2: Raii =>
+            outerScope(try {
+              r.close()
+              raii2
             } catch {
               case NonFatal(e) =>
-                r.close()
-                return outerScope(failure(e))
-            }
-            val runScope = new (Raii[Domain] => Domain) {
-              def apply(raii: Raii[Domain]) = raii match {
-                case exitScope: ExitScope[Domain] =>
-                  r.close()
-                  outerScope(exitScope)
-                case raii =>
-                  shiftDsl.interpret(Shift(raii), this)
-              }
-            }
-            runScope(raii)
+                RaiiFailure(e)
+            })
           }
-        }
       }
     }
 
   implicit def liftRaiiDsl[Instruction, Domain, A](
       implicit restDsl: Dsl[Instruction, Domain, A]
-  ): Dsl[Instruction, Raii[Domain], A] =
-    new Dsl[Instruction, Raii[Domain], A] {
-      def interpret(instruction: Instruction, successHandler: A => Raii[Domain]): Raii[Domain] =
-        new Raii[Domain] {
-          def apply(continue: Raii[Domain] => Domain): Domain = {
-            restDsl.interpret(instruction, { a =>
-              continue(try {
-                successHandler(a)
-              } catch {
-                case NonFatal(e) =>
-                  Throwing(e)
-              })
-            })
+  ): Dsl[Instruction, Domain !! Raii, A] =
+    new Dsl[Instruction, Domain !! Raii, A] {
+      def interpret(instruction: Instruction, successHandler: A => Domain !! Raii): Domain !! Raii = {
+        (continue: Raii => Domain) =>
+          restDsl.interpret(instruction, { a =>
+            catchJvmException(successHandler(a))(continue)
+          })
+      }
+
+    }
+
+  // TODO: Trampoline
+  implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Raii, Value] =
+    new StackSafeShiftDsl[Domain !! Raii, Value] {
+      def interpret(instruction: Shift[Domain !! Raii, Value], handler: Value => Domain !! Raii): Domain !! Raii = {
+        catchJvmException(
+          instruction.continuation { value: Value =>
+            catchJvmException(
+              handler(value)
+            )
           }
-        }
-
-    }
-
-  @inline def catchJvmException[Domain](eh: => Raii[Domain], failureHandler: Raii[Domain] => Domain): Domain = {
-    val protectedRaii: Raii[Domain] = try {
-      eh
-    } catch {
-      case NonFatal(e) =>
-        return failureHandler(Throwing(e))
-    }
-    protectedRaii.apply(failureHandler)
-  }
-
-  implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Raii[Domain], Value] =
-    new StackSafeShiftDsl[Raii[Domain], Value] {
-      def interpret(instruction: Shift[Raii[Domain], Value], handler: Value => Raii[Domain]): Raii[Domain] = {
-        new Trampoline[Domain] {
-          def step(): Raii[Domain] = instruction.continuation(handler)
-        }
+        )
       }
     }
 
-  type Task[+A] = (A => Raii[Unit]) => Raii[Unit]
-
-  implicit final class TaskOps[+A](task: Task[A]) {
-    def onComplete(successHandler: A => Unit, failureHandler: Throwable => Unit): Unit = {
-      (try {
-        task { a =>
-          Raii.success(successHandler(a))
-        }
-      } catch {
-        case e: Throwable =>
-          return failureHandler(e)
-      }).onFailure(failureHandler)
-    }
-  }
+  type Task[+A] = Unit !! Raii !! A
 
   object Task {
 
@@ -276,16 +167,5 @@ object Raii {
 
   implicit def await[Domain, Value](continuation: (Value => Domain) => Domain): Shift[Domain, Value] =
     Shift(continuation)
-
-  def taskToFuture[A](task: Task[A]): Future[A] = {
-    val promise = Promise[A]()
-    task { a: A =>
-      promise.success(a)
-      Raii.success(())
-    }.onFailure { e: Throwable =>
-      promise.failure(e)
-    }
-    promise.future
-  }
 
 }

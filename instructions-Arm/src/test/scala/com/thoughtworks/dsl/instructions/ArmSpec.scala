@@ -1,25 +1,43 @@
 package com.thoughtworks.dsl.instructions
 
+import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.domains.Raii
+import com.thoughtworks.dsl.domains.Raii.{RaiiFailure, RaiiSuccess}
 import org.scalatest.{FreeSpec, Matchers}
 
 /**
   * @author 杨博 (Yang Bo)
   */
 class ArmSpec extends FreeSpec with Matchers {
+  private def successContinuation[Domain](domain: Domain): Domain !! Raii = _ {
+    new RaiiSuccess[Domain] {
+      def continue(): Domain = domain
+    }
+  }
+
+  private implicit final class OnFailureOps[Domain](raiiContinuation: Domain !! Raii) {
+    def onFailure(failureHandler: Throwable => Domain): Domain = {
+      raiiContinuation {
+        case RaiiFailure(e) =>
+          failureHandler(e)
+        case returning: RaiiSuccess[Domain] @unchecked =>
+          returning.continue()
+      }
+    }
+  }
 
   "AutoCloseable" - {
 
-    type Scope[A] = (A => A) => A
-    def noop[A](a: A): Scope[A] = _(a)
+    type Reset[A] = A !! A
+    def noop[A](a: A): Reset[A] = _(a)
 
     "scope" - {
 
       "arm" in {
         var isOpen = false
 
-        def raii: Scope[Raii[Stream[Int]]] = noop {
-          Raii.success {
+        def raii: Reset[Stream[Int] !! Raii] = noop {
+          successContinuation {
 
             !Yield(1)
             isOpen should be(false)
