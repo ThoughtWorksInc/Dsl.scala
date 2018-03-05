@@ -35,16 +35,18 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     }
 
     val task2 = Task.reset {
-      try {
+      val v = try {
         !task1
         "no exception"
       } catch {
         case myException: MyException =>
           "my exception"
       }
+
+      s"try: $v"
     }
 
-    !task2 should be("my exception")
+    !task2 should be("try: my exception")
   })
 
   "empty try" in {
