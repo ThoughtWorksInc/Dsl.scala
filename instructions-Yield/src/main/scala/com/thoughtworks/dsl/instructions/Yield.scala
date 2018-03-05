@@ -6,7 +6,7 @@ import scala.language.implicitConversions
 
 /**
   * @author 杨博 (Yang Bo)
-  * @example This `Yield` instruction must be put inside a function that returns `Stream[Element]` or `ExceptionHandling[Stream[Element]]`,
+  * @example This `Yield` instruction must be put inside a function that returns `Stream[Element]` or `Raii[Stream[Element]]`,
   *          or it will not compile.
   *
   *          {{{

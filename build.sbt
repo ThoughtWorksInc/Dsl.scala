@@ -4,14 +4,12 @@ lazy val `compilerplugins-ResetEverywhere` = project.dependsOn(Dsl % Test, Dsl %
 
 lazy val Dsl = project
 
-lazy val task =
-  project.dependsOn(`instructions-Fork`, `domains-ExceptionHandling`, `instructions-Arm`)
-
-lazy val `domains-ExceptionHandling` =
+lazy val `domains-Raii` =
   project.dependsOn(`instructions-Hang`,
                     `instructions-Scope`,
                     `instructions-Catch`,
                     `instructions-Shift`,
+                    `instructions-Fork` % Test,
                     `instructions-Yield` % Test)
 
 lazy val `instructions-Fork` =
@@ -56,7 +54,7 @@ lazy val `instructions-Arm` =
                     `instructions-Scope`,
                     `instructions-Shift`,
                     `instructions-Yield` % Test,
-                    `domains-ExceptionHandling` % Test)
+                    `domains-Raii` % Test)
 
 lazy val `package` = project.dependsOn(
   `instructions-Shift`,
@@ -64,7 +62,7 @@ lazy val `package` = project.dependsOn(
   `instructions-Each`,
   `instructions-ScalazBind`,
   `instructions-Yield`,
-  `domains-ExceptionHandling`,
+  `domains-Raii`,
   `compilerplugins-BangNotation`,
   `compilerplugins-ResetEverywhere`,
   Dsl
@@ -82,10 +80,9 @@ Seq[ProjectReference](
   `instructions-Each`,
   `instructions-ScalazBind`,
   `instructions-Yield`,
-  `domains-ExceptionHandling`,
+  `domains-Raii`,
   `instructions-Arm`,
-  `instructions-AutoClose`,
-  LocalProject("task")
+  `instructions-AutoClose`
 ).flatMap { testingProject =>
   Seq(
     scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",

@@ -1,8 +1,8 @@
-package com.thoughtworks.dsl
+package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl.reset
 import org.scalatest.{Assertion, AsyncFreeSpec, Matchers}
-import task._
+import Raii.{Task, taskToFuture}
 import com.thoughtworks.dsl.instructions.{Each, Fork}
 
 import scala.collection.mutable.ArrayBuffer

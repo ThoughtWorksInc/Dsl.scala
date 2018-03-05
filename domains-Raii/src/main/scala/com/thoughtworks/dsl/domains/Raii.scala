@@ -1,15 +1,18 @@
 package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Continuation
+import com.thoughtworks.dsl.Dsl.{Continuation, Trampoline1, reset}
 import com.thoughtworks.dsl.domains.Raii.{Trampoline, catchJvmException}
 import com.thoughtworks.dsl.domains.Raii.{ExitScope, Throwing}
 import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
 import com.thoughtworks.dsl.instructions.{Catch, Scope, Shift}
 
 import scala.annotation.tailrec
+import scala.collection.generic.CanBuildFrom
+import scala.concurrent.{Future, Promise}
 import scala.util.{Success, Try}
 import scala.util.control.NonFatal
+import scala.language.implicitConversions
 
 /**
   * @author 杨博 (Yang Bo)
@@ -185,8 +188,7 @@ object Raii {
 
     }
 
-  @inline def catchJvmException[Domain](eh: => Raii[Domain],
-                                             failureHandler: Raii[Domain] => Domain): Domain = {
+  @inline def catchJvmException[Domain](eh: => Raii[Domain], failureHandler: Raii[Domain] => Domain): Domain = {
     val protectedRaii: Raii[Domain] = try {
       eh
     } catch {
@@ -198,11 +200,66 @@ object Raii {
 
   implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Raii[Domain], Value] =
     new StackSafeShiftDsl[Raii[Domain], Value] {
-      def interpret(instruction: Shift[Raii[Domain], Value],
-                    handler: Value => Raii[Domain]): Raii[Domain] = {
+      def interpret(instruction: Shift[Raii[Domain], Value], handler: Value => Raii[Domain]): Raii[Domain] = {
         new Trampoline[Domain] {
           def step(): Raii[Domain] = instruction.continuation(handler)
         }
       }
     }
+
+  type Task[+A] = (A => Raii[Unit]) => Raii[Unit]
+
+  implicit final class TaskOps[+A](task: Task[A]) {
+    def onComplete(successHandler: A => Unit, failureHandler: Throwable => Unit): Unit = {
+      (try {
+        task { a =>
+          Raii.success(successHandler(a))
+        }
+      } catch {
+        case e: Throwable =>
+          return failureHandler(e)
+      }).onFailure(failureHandler)
+    }
+  }
+
+  object Task {
+
+    def join[Element, That](element: Element)(
+        implicit canBuildFrom: CanBuildFrom[Nothing, Element, That]): Task[That] @reset = now {
+      (canBuildFrom() += element).result()
+    }
+
+    def suspend[A](stepTask: () => Task[A]): Task[A] = {
+      new Trampoline1[(A => Raii[Unit]), Raii[Unit]] {
+        def step(): (A => Raii[Unit]) => Raii[Unit] = stepTask()
+      }
+    }
+
+    @inline
+    def now[A](a: A): Task[A] = _(a)
+
+    @inline
+    def delay[A](f: () => A): Task[A] = { continue =>
+      continue(f())
+    }
+
+    @inline
+    implicit def reset[A](a: => A): Task[A] @reset = delay(a _)
+
+  }
+
+  implicit def await[Domain, Value](continuation: (Value => Domain) => Domain): Shift[Domain, Value] =
+    Shift(continuation)
+
+  def taskToFuture[A](task: Task[A]): Future[A] = {
+    val promise = Promise[A]()
+    task { a: A =>
+      promise.success(a)
+      Raii.success(())
+    }.onFailure { e: Throwable =>
+      promise.failure(e)
+    }
+    promise.future
+  }
+
 }

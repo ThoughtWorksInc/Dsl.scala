@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl.instructions
 
-import com.thoughtworks.dsl.domains.ExceptionHandling
+import com.thoughtworks.dsl.domains.Raii
 import org.scalatest.{FreeSpec, Matchers}
 
 /**
@@ -18,8 +18,8 @@ class ArmSpec extends FreeSpec with Matchers {
       "arm" in {
         var isOpen = false
 
-        def raii: Scope[ExceptionHandling[Stream[Int]]] = noop {
-          ExceptionHandling.success {
+        def raii: Scope[Raii[Stream[Int]]] = noop {
+          Raii.success {
 
             !Yield(1)
             isOpen should be(false)
@@ -44,7 +44,7 @@ class ArmSpec extends FreeSpec with Matchers {
         isOpen should be(false)
 
         val myException = new Exception
-        val stream = raii(identity) { e =>
+        val stream = raii(identity).onFailure { e =>
           throw e
         }
 
