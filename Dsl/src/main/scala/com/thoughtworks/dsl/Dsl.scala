@@ -26,6 +26,8 @@ trait Dsl[-Instruction, Domain, +Value] {
 
 object Dsl {
 
+  type Continuation[R, +A] = (A => R) => R
+
   trait Trampoline1[A, R] extends Function1[A, R] {
     def step(): A => R
 
