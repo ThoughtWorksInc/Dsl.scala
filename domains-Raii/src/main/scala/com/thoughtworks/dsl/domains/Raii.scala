@@ -18,7 +18,7 @@ import scala.language.implicitConversions
   * @author 杨博 (Yang Bo)
   */
 trait Raii[Domain] extends Continuation[Domain, Raii[Domain]] {
-  def onFailure(failureHandler: Throwable => Domain): Domain = {
+  final def onFailure(failureHandler: Throwable => Domain): Domain = {
     this(new (Raii[Domain] => Domain) {
       def apply(raii: Raii[Domain]): Domain = {
         raii match {
