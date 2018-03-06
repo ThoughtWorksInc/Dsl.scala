@@ -48,20 +48,6 @@ object Dsl extends Low {
   type Continuation[R, +A] = (A => R) => R
   type !![R, +A] = Continuation[R, A]
 
-  trait Trampoline1[A, R] extends Function1[A, R] {
-    def step(): A => R
-
-    @tailrec
-    final def apply(a: A): R = {
-      step() match {
-        case trampoline: Trampoline1[A, R] =>
-          trampoline(a)
-        case last =>
-          last(a)
-      }
-    }
-  }
-
   private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
   private[dsl] final class nonTypeConstraintReset extends ResetAnnotation with StaticAnnotation
 

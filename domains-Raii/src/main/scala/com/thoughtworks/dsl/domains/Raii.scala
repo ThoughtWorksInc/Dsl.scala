@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package domains
-import com.thoughtworks.dsl.Dsl.{!!, Trampoline1, reset}
+import com.thoughtworks.dsl.Dsl.{!!, reset}
 import com.thoughtworks.dsl.instructions._
 
 import scala.annotation.tailrec
@@ -130,17 +130,30 @@ object Raii {
 
     }
 
-  // TODO: Trampoline
+  trait TrampolineContinuation[Domain] extends (Domain !! Raii) {
+    def step(): Domain !! Raii
+
+    @tailrec
+    private def last(): Domain !! Raii = {
+      step() match {
+        case trampoline: TrampolineContinuation[Domain] =>
+          trampoline.last()
+        case notTrampoline =>
+          notTrampoline
+      }
+    }
+
+    def apply(raiiHandler: Raii => Domain): Domain = {
+      catchJvmException(last())(raiiHandler)
+    }
+  }
+
   implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Raii, Value] =
     new StackSafeShiftDsl[Domain !! Raii, Value] {
       def interpret(instruction: Shift[Domain !! Raii, Value], handler: Value => Domain !! Raii): Domain !! Raii = {
-        catchJvmException(
-          instruction.continuation { value: Value =>
-            catchJvmException(
-              handler(value)
-            )
-          }
-        )
+        new TrampolineContinuation[Domain] {
+          def step() = instruction.continuation(handler)
+        }
       }
     }
 

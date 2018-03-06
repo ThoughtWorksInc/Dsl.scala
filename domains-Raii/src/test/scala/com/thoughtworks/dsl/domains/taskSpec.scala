@@ -56,7 +56,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     class MyException extends Exception {
       logs += "MyException"
     }
-    val task1: Task[String] = Task.reset {
+    val task1: Task[String] = _ {
       throw new MyException
     }
 
