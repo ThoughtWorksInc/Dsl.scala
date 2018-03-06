@@ -1,5 +1,6 @@
 package com.thoughtworks.dsl.instructions
 
+import com.thoughtworks.dsl.Dsl.!!
 import org.scalatest.{FreeSpec, Matchers}
 
 import scala.annotation.tailrec
@@ -9,7 +10,6 @@ import scala.runtime.NonLocalReturnControl
   * @author 杨博 (Yang Bo)
   */
 class YieldSpec extends FreeSpec with Matchers {
-  type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
   {
     !Yield("naked")
@@ -141,7 +141,7 @@ class YieldSpec extends FreeSpec with Matchers {
 
   "Given a continuation that uses Yield" - {
 
-    def yield4243: AsyncFunction[Stream[Int], Unit] = _ {
+    def yield4243: Stream[Int] !! Unit = _ {
       !Yield(42)
       !Yield(43)
     }

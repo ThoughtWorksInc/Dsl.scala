@@ -1,13 +1,14 @@
 package com.thoughtworks.dsl.instructions
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Instruction
+import com.thoughtworks.dsl.Dsl.{!!, Instruction}
+
 import scala.language.implicitConversions
 
 /**
   * @author 杨博 (Yang Bo)
   */
-final case class Shift[Domain, Value](continuation: (Value => Domain) => Domain)
+final case class Shift[Domain, Value](continuation: Domain !! Value)
     extends AnyVal
     with Instruction[Shift[Domain, Value], Value]
 
@@ -23,7 +24,7 @@ private[instructions] trait LowPriorityShift {
 object Shift extends LowPriorityShift {
   trait StackSafeShiftDsl[Domain, Value] extends Dsl[Shift[Domain, Value], Domain, Value]
 
-  implicit def implicitShift[Domain, Value](fa: (Value => Domain) => Domain): Shift[Domain, Value] =
+  implicit def implicitShift[Domain, Value](fa: Domain !! Value): Shift[Domain, Value] =
     Shift[Domain, Value](fa)
 
   @inline

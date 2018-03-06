@@ -1,5 +1,7 @@
 package com.thoughtworks.dsl
 
+import com.thoughtworks.dsl.Dsl.!!
+
 import scala.annotation._
 
 /** The domain-specific interpreter for `Instruction` in `Domain`,
@@ -28,11 +30,10 @@ private[dsl] trait Low {
 
   implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
       implicit restDsl: Dsl[Instruction, Domain, InstructionValue]
-  ): Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
-    new Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] {
-      def interpret(
-          instruction: Instruction,
-          handler: InstructionValue => (FinalResult => Domain) => Domain): (FinalResult => Domain) => Domain = {
+  ): Dsl[Instruction, Domain !! FinalResult, InstructionValue] = {
+    new Dsl[Instruction, Domain !! FinalResult, InstructionValue] {
+      def interpret(instruction: Instruction,
+                    handler: InstructionValue => Domain !! FinalResult): Domain !! FinalResult = {
         (continue: FinalResult => Domain) =>
           restDsl.interpret(instruction, { a =>
             handler(a)(continue)

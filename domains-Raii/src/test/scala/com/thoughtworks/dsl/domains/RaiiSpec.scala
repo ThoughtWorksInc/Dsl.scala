@@ -34,8 +34,6 @@ final class RaiiSpec extends FreeSpec with Matchers {
     RaiiFailure(throwable)
   }
 
-  type AsyncFunction[Domain, +A] = (A => Domain) => Domain
-
   "Given a continuation that throws an exception" - {
     object MyException extends Exception
 
@@ -66,7 +64,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
   }
   "try/catch" - {
     "yield and catch" in {
-      def continuation: AsyncFunction[Stream[Int] !! Raii, String] = _ {
+      def continuation: Stream[Int] !! Raii !! String = _ {
         val tryResult = try {
           0 / 0
         } catch {
@@ -87,7 +85,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
     "simple catch" in {
 
       object MyException extends Exception
-      def generator: (Int => Stream[String] !! Raii) => Stream[String] !! Raii = { continue =>
+      def generator: Stream[String] !! Raii !! Int = { continue =>
         !Yield("before catch")
 
         !Catch { e: Throwable =>
@@ -117,7 +115,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
     }
 
     "issue 2" in {
-      def continuation: AsyncFunction[Stream[Int] !! Raii, String] = { continue =>
+      def continuation: Stream[Int] !! Raii !! String = { continue =>
         !Yield(1)
         try {} catch {
           case e: ArithmeticException =>
@@ -137,7 +135,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
     }
 
     "empty try" in {
-      def continuation: AsyncFunction[Stream[Int] !! Raii, String] = _ {
+      def continuation: Stream[Int] !! Raii !! String = _ {
         val tryResult = try {
           0 / 0
           !Yield(-1)
@@ -152,7 +150,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
       } should be(Seq())
     }
     "rethrow" in {
-      def continuation: AsyncFunction[Stream[Int] !! Raii, String] = _ {
+      def continuation: Stream[Int] !! Raii !! String = _ {
         val tryResult = try {
           0 / 0
         } catch {
@@ -171,7 +169,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
     }
 
     "complex" in {
-      def continuation: AsyncFunction[Stream[Int] !! Raii, String] = _ {
+      def continuation: Stream[Int] !! Raii !! String = _ {
         !Yield(0)
         val tryResult = try {
           !Yield(1)

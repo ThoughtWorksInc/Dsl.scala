@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl.instructions
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Instruction
+import com.thoughtworks.dsl.Dsl.{!!, Instruction}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
@@ -13,20 +13,19 @@ final case class Catch[Domain](onFailure: Throwable => Domain) extends AnyVal wi
 
 object Catch {
 
-  implicit def catchContinuationDsl[Domain, Value](implicit restCatchDsl: Dsl[Catch[Domain], Domain, Unit])
-    : Dsl[Catch[(Value => Domain) => Domain], (Value => Domain) => Domain, Unit] =
-    new Dsl[Catch[(Value => Domain) => Domain], (Value => Domain) => Domain, Unit] {
+  implicit def catchContinuationDsl[Domain, Value](
+      implicit restCatchDsl: Dsl[Catch[Domain], Domain, Unit]): Dsl[Catch[Domain !! Value], Domain !! Value, Unit] =
+    new Dsl[Catch[Domain !! Value], Domain !! Value, Unit] {
 
-      def interpret(
-          instruction: Catch[(Value => Domain) => Domain],
-          block: Unit => (Value => Domain) => Domain): (Value => Domain) => Domain = { (continue: Value => Domain) =>
-        restCatchDsl.interpret(
-          Catch[Domain] { e =>
-            instruction.onFailure(e)(continue)
-          }, { _: Unit =>
-            block(())(continue)
-          }
-        )
+      def interpret(instruction: Catch[Domain !! Value], block: Unit => Domain !! Value): Domain !! Value = {
+        (continue: Value => Domain) =>
+          restCatchDsl.interpret(
+            Catch[Domain] { e =>
+              instruction.onFailure(e)(continue)
+            }, { _: Unit =>
+              block(())(continue)
+            }
+          )
       }
     }
 

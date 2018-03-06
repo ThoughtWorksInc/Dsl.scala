@@ -1,5 +1,6 @@
 package com.thoughtworks.dsl.instructions
 
+import com.thoughtworks.dsl.Dsl.!!
 import org.scalatest.{FreeSpec, Matchers}
 import scalaz.OptionT
 import scalaz.concurrent.Task
@@ -25,11 +26,9 @@ class ScalazBindSpec extends FreeSpec with Matchers {
     task.unsafePerformSync should be(42)
   }
 
-  type AsyncFunction[Domain, +A] = (A => Domain) => Domain
-
   "Given a continuation that uses Yield and ScalazBind expressions" - {
 
-    def asyncFunction: AsyncFunction[Stream[String], Unit] = _ {
+    def asyncFunction: Stream[String] !! Unit = _ {
       !Yield("Entering asyncFunction")
       val subThreadId = !ScalazBind(Stream(0, 1))
       !Yield(s"Fork sub-thread $subThreadId")
