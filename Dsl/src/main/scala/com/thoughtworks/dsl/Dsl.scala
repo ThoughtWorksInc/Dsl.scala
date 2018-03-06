@@ -45,7 +45,7 @@ private[dsl] trait LowPriorityDsl {
 
 object Dsl extends LowPriorityDsl {
 
-  type Continuation[R, +A] = ((A => R @reset) => R @reset) @reset
+  type Continuation[R, +A] = ((A => R @reset) => R @reset)
   type !![R, +A] = Continuation[R, A]
 
   private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
@@ -69,11 +69,11 @@ object Dsl extends LowPriorityDsl {
   trait Instruction[Self, Value] extends Any { this: Self =>
 
     @shift
-//    @compileTimeOnly(
-//      """This method requires the following compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")`""")
+    @compileTimeOnly(
+      """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")` and must only be called inside a method or function whose return type is annotated as `@reset`.""")
     final def unary_! : Value = {
       throw new IllegalAccessException(
-        "This method must only be called inside a method or function whose return type is annotated as `@reset`."
+        """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")` and must only be called inside a method or function whose return type is annotated as `@reset`."""
       )
     }
 
