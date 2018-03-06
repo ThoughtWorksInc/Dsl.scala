@@ -178,6 +178,11 @@ object Raii {
 
   }
 
+  /** Implicit converts from a task to a [[instructions.Shift]].
+    *
+    * @note This implicit conversion enables the [[Dsl.Instruction#unary_$bang !-notation]]
+    *       for continuation-passing style functions in [[Raii]] domain.
+    */
   implicit def await[Domain, Value](continuation: Domain !! Raii !! Value): Shift[Domain !! Raii, Value] =
     Shift(continuation)
 

@@ -57,6 +57,7 @@ lazy val `package` = project.dependsOn(
   `instructions-Each`,
   `instructions-ScalazBind`,
   `instructions-Yield`,
+  `instructions-Fork`,
   `domains-Raii`,
   `compilerplugins-BangNotation`,
   `compilerplugins-ResetEverywhere`,
@@ -75,6 +76,7 @@ Seq[ProjectReference](
   `instructions-Each`,
   `instructions-ScalazBind`,
   `instructions-Yield`,
+  LocalProject("package"),
   `domains-Raii`,
   `instructions-AutoClose`
 ).flatMap { testingProject =>

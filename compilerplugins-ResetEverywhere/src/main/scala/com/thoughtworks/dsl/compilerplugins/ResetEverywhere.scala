@@ -32,7 +32,7 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
 
   val name: String = "ResetEverywhere"
 
-  final class ResetAnnotationCreator extends PluginComponent with Transform {
+  private final class ResetAnnotationCreator extends PluginComponent with Transform {
 
     val global: ResetEverywhere.this.global.type = ResetEverywhere.this.global
     val phaseName: String = "ResetAnnotationCreator"

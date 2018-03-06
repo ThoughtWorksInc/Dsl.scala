@@ -15,3 +15,9 @@ libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.5"
 libraryDependencies += "com.thoughtworks.binding" %% "binding" % "11.0.1"
 
 libraryDependencies += "com.thoughtworks.each" %% "each" % "3.3.1"
+
+libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0"
+
+libraryDependencies += "io.monix" %% "monix" % "2.3.3"
+
+exampleSuperTypes += "org.scalatest.Inside"

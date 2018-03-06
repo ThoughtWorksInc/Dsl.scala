@@ -15,7 +15,7 @@ import scala.tools.nsc.{Global, Mode, Phase}
   *
   * `<pre>
   * // In your build.sbt
-  * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")
+  * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")
   * </pre>`
   *
   * @author 杨博 (Yang Bo)
@@ -42,14 +42,14 @@ final class BangNotation(override val global: Global) extends Plugin {
   private val resetAnnotationSymbol = symbolOf[ResetAnnotation]
   private val shiftSymbol = symbolOf[shift]
 
-  trait Deactable extends AnalyzerPlugin {
+  private trait Deactable extends AnalyzerPlugin {
     override def isActive(): Boolean = {
       active && phase.id < currentRun.picklerPhase.id
     }
   }
 
   /** An [[AnalyzerPlugin]] that replaces trees annatated as [[ResetAnnotation]] to its cps transformed trees */
-  trait TreeResetter extends AnalyzerPlugin {
+  private trait TreeResetter extends AnalyzerPlugin {
     override def canAdaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Boolean = {
       super.canAdaptAnnotations(tree, typer, mode, pt) || {
         mode.inExprMode && tree.tpe.hasAnnotation(resetAnnotationSymbol) && tree.hasAttachment[CpsAttachment]
@@ -94,7 +94,7 @@ final class BangNotation(override val global: Global) extends Plugin {
 
   }
 
-  trait BangNotationTransformer extends AnalyzerPlugin {
+  private trait BangNotationTransformer extends AnalyzerPlugin {
 
     private def cpsAttachment(tree: Tree)(continue: Tree => Tree): Tree = {
       tree.attachments.get[CpsAttachment] match {
