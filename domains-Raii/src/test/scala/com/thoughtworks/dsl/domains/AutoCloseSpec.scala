@@ -1,15 +1,18 @@
-package com.thoughtworks.dsl.instructions
+package com.thoughtworks.dsl.domains
 
-import com.thoughtworks.dsl.Dsl.!!
+import com.thoughtworks.dsl.Dsl.{!!, reset}
 import com.thoughtworks.dsl.domains.Raii
 import com.thoughtworks.dsl.domains.Raii.{RaiiFailure, RaiiSuccess}
-import org.scalatest.{FreeSpec, Matchers}
+import com.thoughtworks.dsl.instructions.{AutoClose, Yield}
+import org.scalatest.{Assertion, FreeSpec, Matchers}
+
+import scala.util.{Failure, Success}
 
 /**
   * @author 杨博 (Yang Bo)
   */
-class ArmSpec extends FreeSpec with Matchers {
-  private def successContinuation[Domain](domain: Domain): Domain !! Raii = _ {
+class AutoCloseSpec extends FreeSpec with Matchers {
+  private def successContinuation[Domain](domain: Domain): (Domain !! Raii) = _ {
     new RaiiSuccess[Domain] {
       def continue(): Domain = domain
     }
@@ -36,34 +39,34 @@ class ArmSpec extends FreeSpec with Matchers {
       "arm" in {
         var isOpen = false
 
-        def raii: Reset[Stream[Int] !! Raii] = noop {
-          successContinuation {
+        def raii: Stream[Int] !! Raii !! Assertion = _ {
+          !Yield(1)
+          isOpen should be(false)
+          val a = !AutoClose {
+            !Yield(2)
+            new AutoCloseable {
+              isOpen should be(false)
+              isOpen = true
 
-            !Yield(1)
-            isOpen should be(false)
-            val a = !Arm {
-              !Yield(2)
-              new AutoCloseable {
-                isOpen should be(false)
-                isOpen = true
-
-                def close(): Unit = {
-                  isOpen should be(true)
-                  isOpen = false
-                }
+              def close(): Unit = {
+                isOpen should be(true)
+                isOpen = false
               }
             }
-            !Yield(3)
-            isOpen should be(true)
-            Stream.empty
           }
+          !Yield(3)
+          isOpen should be(true)
         }
 
         isOpen should be(false)
 
         val myException = new Exception
-        val stream = raii(identity).onFailure { e =>
-          throw e
+
+        val stream = raii.onComplete {
+          case Failure(e) =>
+            throw e
+          case Success(s) =>
+            Stream.empty
         }
 
         stream should be(Stream(1, 2, 3))
