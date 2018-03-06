@@ -12,7 +12,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
 
 /**
   * @author 杨博 (Yang Bo)
-  * @note [[ScalazBind]] is not an [[AnyVal]] due to [[https://github.com/scala/bug/issues/10595]].
+  * @note [[ScalazBind]] is not an [[scala.AnyVal]] due to [[https://github.com/scala/bug/issues/10595]].
   */
 final case class ScalazBind[F[_], A](fa: F[A]) extends Instruction[ScalazBind[F, A], A]
 

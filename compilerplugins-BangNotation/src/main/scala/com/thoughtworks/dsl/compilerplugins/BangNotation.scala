@@ -15,7 +15,7 @@ import scala.tools.nsc.{Global, Mode, Phase}
   *
   * `<pre>
   * // In your build.sbt
-  * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")
+  * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")
   * </pre>`
   *
   * @author 杨博 (Yang Bo)

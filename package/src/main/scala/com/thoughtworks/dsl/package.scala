@@ -120,7 +120,7 @@ package com.thoughtworks
   * We also provide adapters to all the above kind of DSLs.
   * Instead of switching different DSL between different function,
   * DSL users can use different DSLs together in one function,
-  * by simply adding [[CompilerPlugin our Scala compiler plug-in]].
+  * by simply adding [[com.thoughtworks.dsl.compilerplugins.BangNotation our Scala compiler plug-in]].
   *
   * @example TODO: the usage of all built-in instructions together
   *
