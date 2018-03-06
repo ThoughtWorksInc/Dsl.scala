@@ -178,7 +178,7 @@ object Raii {
 
   }
 
-  implicit def await[Domain, Value](continuation: Domain !! Value): Shift[Domain, Value] =
+  implicit def await[Domain, Value](continuation: Domain !! Raii !! Value): Shift[Domain !! Raii, Value] =
     Shift(continuation)
 
 }
