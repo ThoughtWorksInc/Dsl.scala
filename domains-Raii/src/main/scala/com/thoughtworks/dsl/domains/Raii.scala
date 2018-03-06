@@ -169,9 +169,7 @@ object Raii {
     def now[A](a: A): Task[A] = _(a)
 
     @inline
-    def delay[A](f: () => A): Task[A] = { continue =>
-      continue(f())
-    }
+    def delay[A](f: () => A): Task[A] = _(f())
 
     @inline
     implicit def reset[A](a: => A): Task[A] @reset = delay(a _)

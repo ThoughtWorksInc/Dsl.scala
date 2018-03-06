@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl.domains
 
-import com.thoughtworks.dsl.Dsl.{!!, reset}
-import com.thoughtworks.dsl.domains.Raii
+import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.domains.Raii.{RaiiFailure, RaiiSuccess}
 import com.thoughtworks.dsl.instructions.{AutoClose, Yield}
 import org.scalatest.{Assertion, FreeSpec, Matchers}
