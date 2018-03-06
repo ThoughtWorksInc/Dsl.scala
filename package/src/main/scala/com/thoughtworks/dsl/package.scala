@@ -18,10 +18,10 @@ package com.thoughtworks
   *
   * = Introduction =
   *
+  * == Reinventing control flow in DSL ==
+  *
   * Embedded DSLs usually consist of a set of domain-specific instructions,
   * which can be embedded in the their hosting languages.
-  *
-  * == Reinventing control flow in DSL ==
   *
   * Ideally, a domain-specific instruction should be an optional extension,
   * which can be present everywhere in the ordinary control flow of the hosting language.
@@ -122,10 +122,11 @@ package com.thoughtworks
   * DSL users can use different DSLs together in one function,
   * by simply adding [[com.thoughtworks.dsl.compilerplugins.BangNotation our Scala compiler plug-in]].
   *
-  * @example Suppose you want to create a [[https://en.wikipedia.org/wiki/Xorshift Xorshift]] random number generators.
+  * @example Suppose you want to create an [[https://en.wikipedia.org/wiki/Xorshift Xorshift]] random number generator.
   *
   *          The generated numbers should be stored in a lazily evaluated infinite [[scala.collection.immutable.Stream Stream]],
-  *          which can be implemented as a recursive function that produce the next random number in each iteration.
+  *          which can be implemented as a recursive function that produce the next random number in each iteration,
+  *          with the help of our built-in domain-specific instruction [[com.thoughtworks.dsl.instructions.Yield Yield]].
   *
   *          {{{
   *          import com.thoughtworks.dsl.Dsl.reset
@@ -146,10 +147,11 @@ package com.thoughtworks
   *          myGenerator(2) should be(2101636938)
   *          }}}
   *
-  *          [[com.thoughtworks.dsl.instructions.Yield Yield]] is a domain-specific instruction to produce a value
+  *          [[com.thoughtworks.dsl.instructions.Yield Yield]] is an instruction to produce a value
   *          for a lazily evaluated [[scala.collection.immutable.Stream Stream]].
   *          That is to say, [[scala.collection.immutable.Stream Stream]] is the domain
-  *          where the DSL [[com.thoughtworks.dsl.instructions.Yield Yield]] can be used.
+  *          where the DSL [[com.thoughtworks.dsl.instructions.Yield Yield]] can be used,
+  *          which was interpreted like the `yield` keyword in C#, JavaScript or Python.
   *
   *          Note that the body of `xorshiftRandomGenerator` is annotated as `@reset`,
   *          which enables the !-notation in the code block.
@@ -187,9 +189,9 @@ package com.thoughtworks
   *          Since the function produces both a [[scala.util.parsing.json.JSONType JSONType]]
   *          and a [[scala.collection.immutable.Stream Stream]] of logs,
   *          the return type is now `Stream[String] !! JSONType`,
-  *          where [[com.thoughtworks.dsl.Dsl.!! !!]] is
-  *          an alias of continuation function `(FileOutputStream => Stream[String]) => Stream[String]`,
-  *          which can be invoked in continuation-passing style.
+  *          where [[com.thoughtworks.dsl.Dsl.$bang$bang !!]] is
+  *          an alias of continuation-passing style function marked as `@reset`,
+  *          which enables the !-notation automatically.
   *
   *          {{{
   *          val logs = parseAndLog(""" { "key": "value" } """, JSONArray(Nil)) { json =>
@@ -202,9 +204,81 @@ package com.thoughtworks
   *                                "done"))
   *          }}}
   *
+  *          <hr/>
   *
+  *          [[com.thoughtworks.dsl.Dsl.$bang$bang !!]], or [[com.thoughtworks.dsl.Dsl.Continuation Continuation]],
+  *          is the preferred approach to enable multiple domains in one function.
   *
+  *          [[com.thoughtworks.dsl.domains.Raii Raii]] is a domain that supports many useful instructions:
+  *           - [[com.thoughtworks.dsl.instructions.AutoClose AutoClose]] for resource management.
+  *           - [[com.thoughtworks.dsl.instructions.Shift Shift]] for asynchronous programming.
+  *           - [[com.thoughtworks.dsl.instructions.Fork Fork]] for creating multiple tasks in parallel.
   *
+  *          For example, you can create a function that
+  *          lazily read each line of a [[java.io.BufferedReader BufferedReader]] to a [[Stream]],
+  *          automatically close the [[java.io.BufferedReader BufferedReader]] after reading the last line,
+  *          and finally return the total number of lines.
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.domains.Raii
+  *          import com.thoughtworks.dsl.instructions.AutoClose
+  *
+  *          def readerToStream(createReader: => BufferedReader): Stream[String] !! Raii !! Int = _ {
+  *            val reader = !AutoClose(createReader)
+  *
+  *            def loop(lineNumber: Int): Stream[String] !! Raii !! Int = _ {
+  *              reader.readLine() match {
+  *                case null =>
+  *                  lineNumber
+  *                case line =>
+  *                  !Yield(line)
+  *                  !loop(lineNumber + 1)
+  *              }
+  *            }
+  *
+  *            !loop(0)
+  *          }
+  *          }}}
+  *
+  *          `!loop(0)` is a shortcut of `!Shift(loop(0))`,
+  *          because there is [[com.thoughtworks.dsl.domains.Raii#await an implicit conversion]]
+  *          from `Stream[String] !! Raii !! Int` to [[com.thoughtworks.dsl.instructions.Shift Shift]] instruction,
+  *          which is similar to the `await` keyword in JavaScript, Python or C#.
+  *
+  *          A type like `A !! B !! C` means a domain-specific value of type `C` in the domain of `A` and `B`.
+  *          When `B` is [[com.thoughtworks.dsl.domains.Raii Raii]],
+  *          a [[com.thoughtworks.dsl.domains.Raii.RaiiContinuationOps#onComplete]] method is available,
+  *          which can be used to register a callback function that handles the result of `Try[C]`.
+  *
+  *          {{{
+  *          import scala.util.Success
+  *
+  *          var isClosed = false
+  *
+  *          val stream = readerToStream(
+  *            new BufferedReader(new StringReader("line1\nline2\nline3")) {
+  *              override def close() = {
+  *                isClosed = true
+  *              }
+  *            }
+  *          ).onComplete { result =>
+  *            inside(result) {
+  *              case Success(totalNumber) =>
+  *                totalNumber should be(3)
+  *            }
+  *
+  *            Stream.empty
+  *          }
+  *
+  *          isClosed should be(false)
+  *          stream should be(Stream("line1", "line2", "line3"))
+  *          isClosed should be(true)
+  *          }}}
+  *
+  *          When you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
+  *          you can use `Unit !! Raii !! A` or the alias [[com.thoughtworks.dsl.domains.Raii.Task]],
+  *          as a higher-performance replacement of
+  *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
   *
   * @see [[Dsl]] for the guideline to create your custom DSL.

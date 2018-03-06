@@ -57,6 +57,7 @@ lazy val `package` = project.dependsOn(
   `instructions-Each`,
   `instructions-ScalazBind`,
   `instructions-Yield`,
+  `instructions-Fork`,
   `domains-Raii`,
   `compilerplugins-BangNotation`,
   `compilerplugins-ResetEverywhere`,
