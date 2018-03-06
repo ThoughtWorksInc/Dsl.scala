@@ -26,7 +26,7 @@ trait Dsl[-Instruction, Domain, +Value] {
 
 }
 
-private[dsl] trait Low {
+private[dsl] trait LowPriorityDsl {
 
   implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
       implicit restDsl: Dsl[Instruction, Domain, InstructionValue]
@@ -43,7 +43,7 @@ private[dsl] trait Low {
   }
 }
 
-object Dsl extends Low {
+object Dsl extends LowPriorityDsl {
 
   type Continuation[R, +A] = (A => R) => R
   type !![R, +A] = Continuation[R, A]
