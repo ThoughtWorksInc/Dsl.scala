@@ -42,7 +42,7 @@ object ScalazBind {
         } catch {
           case e: Throwable =>
             monadError.raiseError[A](e)
-        })(instruction.onFailure)
+        })(instruction.failureHandler)
       }
     }
 

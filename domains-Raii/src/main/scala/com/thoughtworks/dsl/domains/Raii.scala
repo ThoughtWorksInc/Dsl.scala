@@ -58,7 +58,7 @@ object Raii {
         (outerScope: Raii => Domain) =>
           catchJvmException(handler(())) {
             case RaiiFailure(e) =>
-              catchJvmException(instruction.onFailure(e))(outerScope)
+              catchJvmException(instruction.failureHandler(e))(outerScope)
             case breaking =>
               outerScope(breaking)
           }

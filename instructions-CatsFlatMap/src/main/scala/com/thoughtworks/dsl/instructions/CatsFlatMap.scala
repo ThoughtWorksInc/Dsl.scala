@@ -39,7 +39,7 @@ object CatsFlatMap {
       def interpret(instruction: Catch[F[A]], continuation: (F[A] => F[A]) => F[A]): F[A] = {
         def exceptionHandler(e: Throwable): F[A] = {
           try {
-            instruction.onFailure(e)
+            instruction.failureHandler(e)
           } catch {
             case NonFatal(rethrown) =>
               monadError.raiseError(rethrown)

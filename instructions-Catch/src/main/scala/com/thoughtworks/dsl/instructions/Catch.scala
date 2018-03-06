@@ -9,7 +9,7 @@ import scala.util.control.NonFatal
 /**
   * @author 杨博 (Yang Bo)
   */
-final case class Catch[Domain](onFailure: Throwable => Domain) extends AnyVal with Instruction[Catch[Domain], Unit]
+final case class Catch[Domain](failureHandler: Throwable => Domain) extends AnyVal with Instruction[Catch[Domain], Unit]
 
 object Catch {
 
@@ -21,7 +21,7 @@ object Catch {
         (continue: Value => Domain) =>
           restCatchDsl.interpret(
             Catch[Domain] { e =>
-              instruction.onFailure(e)(continue)
+              instruction.failureHandler(e)(continue)
             }, { _: Unit =>
               block(())(continue)
             }
