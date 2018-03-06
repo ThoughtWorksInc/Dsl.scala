@@ -9,11 +9,12 @@ import com.thoughtworks.dsl.Dsl.{!!, Instruction}
 import scala.collection.{GenTraversableOnce, mutable}
 import scala.collection.generic.CanBuildFrom
 import scala.util.Try
-import scala.util.control.NonFatal
+import scala.language.implicitConversions
 
 final case class Fork[Element](elements: Traversable[Element]) extends AnyVal with Instruction[Fork[Element], Element]
 
 object Fork {
+  implicit def implicitFork[Element](elements: Traversable[Element]): Fork[Element] = Fork[Element](elements)
 
   final case class MultipleException(throwableSet: Set[Throwable])
       extends RuntimeException("Multiple exceptions found") {
