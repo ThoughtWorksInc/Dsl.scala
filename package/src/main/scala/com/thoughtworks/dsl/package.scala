@@ -122,7 +122,90 @@ package com.thoughtworks
   * DSL users can use different DSLs together in one function,
   * by simply adding [[com.thoughtworks.dsl.compilerplugins.BangNotation our Scala compiler plug-in]].
   *
-  * @example TODO: the usage of all built-in instructions together
+  * @example Suppose you want to create a [[https://en.wikipedia.org/wiki/Xorshift Xorshift]] random number generators.
+  *
+  *          The generated numbers should be stored in a lazily evaluated infinite [[scala.collection.immutable.Stream Stream]],
+  *          which can be implemented as a recursive function that produce the next random number in each iteration.
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.Dsl.reset
+  *          import com.thoughtworks.dsl.instructions.Yield
+  *
+  *          def xorshiftRandomGenerator(seed: Int): Stream[Int] = {
+  *            val tmp1 = seed ^ (seed << 13)
+  *            val tmp2 = tmp1 ^ (tmp1 >>> 17)
+  *            val tmp3 = tmp2 ^ (tmp2 << 5)
+  *            !Yield(tmp3)
+  *            xorshiftRandomGenerator(tmp3)
+  *          }: @reset
+  *
+  *          val myGenerator = xorshiftRandomGenerator(seed = 123)
+  *
+  *          myGenerator(0) should be(31682556)
+  *          myGenerator(1) should be(-276305998)
+  *          myGenerator(2) should be(2101636938)
+  *          }}}
+  *
+  *          [[com.thoughtworks.dsl.instructions.Yield Yield]] is a domain-specific instruction to produce a value
+  *          for a lazily evaluated [[scala.collection.immutable.Stream Stream]].
+  *          That is to say, [[scala.collection.immutable.Stream Stream]] is the domain
+  *          where the DSL [[com.thoughtworks.dsl.instructions.Yield Yield]] can be used.
+  *
+  *          Note that the body of `xorshiftRandomGenerator` is annotated as `@reset`,
+  *          which enables the !-notation in the code block.
+  *
+  *          Alternatively, you can also use the
+  *          [[com.thoughtworks.dsl.compilerplugins.ResetEverywhere ResetEverywhere]] compiler plug-in,
+  *          which enable !-notation for every methods and functions.
+  *
+  *          <hr/>
+  *
+  *          [[com.thoughtworks.dsl.instructions.Yield Yield]] and [[scala.collection.immutable.Stream Stream]]
+  *          can be also used for logging.
+  *
+  *          Suppose you have a function to parse an JSON file,
+  *          you can append log records to a [[scala.collection.immutable.Stream Stream]] during parsing.
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.Dsl.!!
+  *          import java.io._
+  *          import scala.util.parsing.json._
+  *
+  *          def parseAndLog(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
+  *            !Yield(s"I am going to parse the JSON text $jsonContent...")
+  *            JSON.parseRaw(jsonContent) match {
+  *              case Some(json) =>
+  *                !Yield(s"Succeeded to parse $jsonContent")
+  *                json
+  *              case None =>
+  *                !Yield(s"Failed to parse $jsonContent")
+  *                defaultValue
+  *            }
+  *          }
+  *          }}}
+  *
+  *          Since the function produces both a [[scala.util.parsing.json.JSONType JSONType]]
+  *          and a [[scala.collection.immutable.Stream Stream]] of logs,
+  *          the return type is now `Stream[String] !! JSONType`,
+  *          where [[com.thoughtworks.dsl.Dsl.!! !!]] is
+  *          an alias of continuation function `(FileOutputStream => Stream[String]) => Stream[String]`,
+  *          which can be invoked in continuation-passing style.
+  *
+  *          {{{
+  *          val logs = parseAndLog(""" { "key": "value" } """, JSONArray(Nil)) { json =>
+  *            json should be(JSONObject(Map("key" -> "value")))
+  *            Stream("done")
+  *          }
+  *
+  *          logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
+  *                                "Succeeded to parse  { \"key\": \"value\" } ",
+  *                                "done"))
+  *          }}}
+  *
+  *
+  *
+  *
+  *
   *
   * @see [[Dsl]] for the guideline to create your custom DSL.
   *

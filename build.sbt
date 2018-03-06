@@ -75,6 +75,7 @@ Seq[ProjectReference](
   `instructions-Each`,
   `instructions-ScalazBind`,
   `instructions-Yield`,
+  LocalProject("package"),
   `domains-Raii`,
   `instructions-AutoClose`
 ).flatMap { testingProject =>
