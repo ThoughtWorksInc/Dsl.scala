@@ -71,7 +71,11 @@ object Dsl extends Low {
     @shift
 //    @compileTimeOnly(
 //      """This method requires the following compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")`""")
-    final def unary_! : Value = sys.error("Calls to this method should have been translated to `cpsApply`.")
+    final def unary_! : Value = {
+      throw new IllegalAccessException(
+        "This method must only be called inside a method or function whose return type is annotated as `@reset`."
+      )
+    }
 
     final def cpsApply[Domain](handler: Value => Domain)(implicit dsl: Dsl[Self, Domain, Value]): Domain = {
       dsl.interpret(this, handler)
