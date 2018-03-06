@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl.domains
 
-import com.thoughtworks.dsl.Dsl.!!
+import com.thoughtworks.dsl.Dsl.{!!, reset}
 import com.thoughtworks.dsl.domains.Raii.{RaiiFailure, RaiiSuccess}
 import com.thoughtworks.dsl.instructions.{Catch, Scope, Yield}
 import org.scalatest.{FreeSpec, Matchers}
@@ -24,13 +24,13 @@ final class RaiiSpec extends FreeSpec with Matchers {
   /**
     * Exit the current scope then hang up
     */
-  def successContinuation[Domain](domain: Domain): Domain !! Raii = _ {
+  def successContinuation[Domain](domain: Domain): (Domain !! Raii) @reset = _ {
     new RaiiSuccess[Domain] {
       def continue(): Domain = domain
     }
   }
 
-  def failureContinuation[Domain](throwable: Throwable): Domain !! Raii = _ {
+  def failureContinuation[Domain](throwable: Throwable): (Domain !! Raii) @reset = _ {
     RaiiFailure(throwable)
   }
 

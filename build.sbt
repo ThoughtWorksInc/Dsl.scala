@@ -27,8 +27,7 @@ lazy val `instructions-Hang` = project.dependsOn(Dsl)
 
 lazy val `instructions-Shift` = project.dependsOn(Dsl)
 
-lazy val `instructions-AutoClose` =
-  project.dependsOn(`instructions-Catch`, `instructions-Scope`, `instructions-Shift`)
+lazy val `instructions-AutoClose` = project.dependsOn(Dsl)
 
 lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift`, `instructions-Yield` % Test)
 
@@ -51,11 +50,6 @@ lazy val `instructions-CatsFlatMap` =
                     `instructions-Catch`,
                     `instructions-Shift` % Test,
                     `instructions-Yield` % Test)
-
-lazy val `instructions-Arm` =
-  project.dependsOn(`instructions-AutoClose`,
-                    `instructions-Yield` % Test,
-                    `domains-Raii` % Test)
 
 lazy val `package` = project.dependsOn(
   `instructions-Shift`,
@@ -82,7 +76,6 @@ Seq[ProjectReference](
   `instructions-ScalazBind`,
   `instructions-Yield`,
   `domains-Raii`,
-  `instructions-Arm`,
   `instructions-AutoClose`
 ).flatMap { testingProject =>
   Seq(
