@@ -29,7 +29,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
   }.toFuture
 
-  "try" in ((_: Assertion => Unit !! Raii) {
+  "try" in Task.reset {
     class MyException extends Exception
     val task1: Task[Int] = Task.reset {
       throw new MyException
@@ -48,7 +48,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     }
 
     !task2 should be("try: my exception")
-  }).toFuture
+  }.toFuture
 
   "empty try" in {
     val logs = ArrayBuffer.empty[String]

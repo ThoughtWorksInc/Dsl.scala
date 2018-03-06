@@ -31,9 +31,6 @@ class AutoCloseSpec extends FreeSpec with Matchers {
 
   "AutoCloseable" - {
 
-    type Reset[A] = A !! A
-    def noop[A](a: A): Reset[A] = _(a)
-
     "scope" - {
 
       "arm" in {
