@@ -130,7 +130,7 @@ object Raii {
 
     }
 
-  trait TrampolineContinuation[Domain] extends (Domain !! Raii) {
+  abstract class TrampolineContinuation[Domain] extends (Domain !! Raii) {
     def step(): Domain !! Raii
 
     @tailrec
