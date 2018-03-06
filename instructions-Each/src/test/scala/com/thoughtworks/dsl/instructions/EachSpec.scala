@@ -1,13 +1,12 @@
 package com.thoughtworks.dsl.instructions
 
 import org.scalatest.{FreeSpec, Matchers}
-import com.thoughtworks.dsl.Dsl.reset
+import com.thoughtworks.dsl.Dsl.{!!, reset}
 
 /**
   * @author 杨博 (Yang Bo)
   */
 class EachSpec extends FreeSpec with Matchers {
-  type AsyncFunction[Domain, +A] = (A => Domain) => Domain
 
   "reset helper" - {
     def resetReturnValue[A](a: A): A @reset = a
@@ -178,7 +177,7 @@ class EachSpec extends FreeSpec with Matchers {
 
   "Given a continuation that uses Yield and Each expressions" - {
 
-    def asyncFunction: AsyncFunction[Stream[String], Unit] = _ {
+    def asyncFunction: Stream[String] !! Unit = _ {
       !Yield("Entering asyncFunction")
       val subThreadId: Int = !Each(Seq(0, 1))
       !Yield(s"Fork sub-thread $subThreadId")

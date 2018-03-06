@@ -1,5 +1,7 @@
 package com.thoughtworks.dsl
 
+import com.thoughtworks.dsl.Dsl.!!
+
 import scala.annotation._
 
 /** The domain-specific interpreter for `Instruction` in `Domain`,
@@ -24,29 +26,14 @@ trait Dsl[-Instruction, Domain, +Value] {
 
 }
 
-object Dsl {
-
-  trait Trampoline1[A, R] extends Function1[A, R] {
-    def step(): A => R
-
-    @tailrec
-    final def apply(a: A): R = {
-      step() match {
-        case trampoline: Trampoline1[A, R] =>
-          trampoline(a)
-        case last =>
-          last(a)
-      }
-    }
-  }
+private[dsl] trait LowPriorityDsl {
 
   implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
-      implicit restDsl: Dsl[Instruction, Domain, InstructionValue])
-    : Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] = {
-    new Dsl[Instruction, (FinalResult => Domain) => Domain, InstructionValue] {
-      def interpret(
-          instruction: Instruction,
-          handler: InstructionValue => (FinalResult => Domain) => Domain): (FinalResult => Domain) => Domain = {
+      implicit restDsl: Dsl[Instruction, Domain, InstructionValue]
+  ): Dsl[Instruction, Domain !! FinalResult, InstructionValue] = {
+    new Dsl[Instruction, Domain !! FinalResult, InstructionValue] {
+      def interpret(instruction: Instruction,
+                    handler: InstructionValue => Domain !! FinalResult): Domain !! FinalResult = {
         (continue: FinalResult => Domain) =>
           restDsl.interpret(instruction, { a =>
             handler(a)(continue)
@@ -54,6 +41,12 @@ object Dsl {
       }
     }
   }
+}
+
+object Dsl extends LowPriorityDsl {
+
+  type Continuation[R, +A] = (A => R) => R
+  type !![R, +A] = Continuation[R, A]
 
   private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
   private[dsl] final class nonTypeConstraintReset extends ResetAnnotation with StaticAnnotation
@@ -78,7 +71,11 @@ object Dsl {
     @shift
 //    @compileTimeOnly(
 //      """This method requires the following compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")`""")
-    final def unary_! : Value = sys.error("Calls to this method should have been translated to `cpsApply`.")
+    final def unary_! : Value = {
+      throw new IllegalAccessException(
+        "This method must only be called inside a method or function whose return type is annotated as `@reset`."
+      )
+    }
 
     final def cpsApply[Domain](handler: Value => Domain)(implicit dsl: Dsl[Self, Domain, Value]): Domain = {
       dsl.interpret(this, handler)
