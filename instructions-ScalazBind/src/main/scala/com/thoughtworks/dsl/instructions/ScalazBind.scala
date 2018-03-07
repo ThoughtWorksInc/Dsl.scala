@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.Dsl.Instruction
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
-import scalaz.{Bind, Monad, MonadError, MonadTrans}
+import scalaz.{Bind, Monad, MonadError, MonadTrans, Unapply}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.{ControlThrowable, NonFatal}
@@ -16,9 +16,19 @@ import scala.util.control.{ControlThrowable, NonFatal}
   */
 final case class ScalazBind[F[_], A](fa: F[A]) extends Instruction[ScalazBind[F, A], A]
 
-object ScalazBind {
+private[instructions] trait LowPriorityScalazBind0 { this: ScalazBind.type =>
 
-  implicit def scalazScopeDsl[F[_], A, B](implicit monadError: MonadError[F, Throwable]): Dsl[Scope[F[B], A], F[B], A] =
+  implicit def scalazCatchDslUnapply[FA](implicit unapply: Unapply[MonadThrowable, FA]): Dsl[Catch[FA], FA, Unit] = {
+    unapply.leibniz.flip.subst[λ[FA => Dsl[Catch[FA], FA, Unit]]](scalazCatchDsl[unapply.M, unapply.A](unapply.TC))
+  }
+
+}
+
+object ScalazBind extends LowPriorityScalazBind0 {
+
+  protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
+
+  implicit def scalazScopeDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): Dsl[Scope[F[B], A], F[B], A] =
     new Dsl[Scope[F[B], A], F[B], A] {
       def interpret(instruction: Scope[F[B], A], handler: A => F[B]): F[B] = {
         val continuation: (A => F[B]) => F[B] = instruction.continuation
@@ -34,7 +44,7 @@ object ScalazBind {
       }
     }
 
-  implicit def scalazCatchDsl[F[_], A](implicit monadError: MonadError[F, Throwable]): Dsl[Catch[F[A]], F[A], Unit] =
+  implicit def scalazCatchDsl[F[_], A](implicit monadError: MonadThrowable[F]): Dsl[Catch[F[A]], F[A], Unit] =
     new Dsl[Catch[F[A]], F[A], Unit] {
       def interpret(instruction: Catch[F[A]], continuation: Unit => F[A]): F[A] = {
         monadError.handleError(try {
@@ -47,7 +57,7 @@ object ScalazBind {
     }
 
   implicit final class ScalazMonadErrorCatchOps[F[_], A](catcher: Catcher[F[A]])(
-      implicit monadError: MonadError[F, Throwable]) {
+      implicit monadError: MonadThrowable[F]) {
     def cpsCatch(continuation: (F[A] => F[A]) => F[A]): F[A] = {
       try {
         continuation { fa: F[A] =>
