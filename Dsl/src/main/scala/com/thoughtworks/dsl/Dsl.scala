@@ -45,7 +45,7 @@ private[dsl] trait LowPriorityDsl {
 
 object Dsl extends LowPriorityDsl {
 
-  type Continuation[R, +A] = ((A => R @reset) => R @reset)
+  type Continuation[R, +A] = (A => R @reset) => R
   type !![R, +A] = Continuation[R, A]
 
   private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
