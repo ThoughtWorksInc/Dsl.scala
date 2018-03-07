@@ -154,11 +154,11 @@ package com.thoughtworks
   *          which was interpreted like the `yield` keyword in C#, JavaScript or Python.
   *
   *          Note that the body of `xorshiftRandomGenerator` is annotated as `@reset`,
-  *          which enables the !-notation in the code block.
+  *          which enables the [[Dsl.Instruction#unary_$bang !-notation]] in the code block.
   *
   *          Alternatively, you can also use the
   *          [[com.thoughtworks.dsl.compilerplugins.ResetEverywhere ResetEverywhere]] compiler plug-in,
-  *          which enable !-notation for every methods and functions.
+  *          which enable [[Dsl.Instruction#unary_$bang !-notation]] for every methods and functions.
   *
   *          <hr/>
   *
@@ -191,7 +191,7 @@ package com.thoughtworks
   *          the return type is now `Stream[String] !! JSONType`,
   *          where [[com.thoughtworks.dsl.Dsl.$bang$bang !!]] is
   *          an alias of continuation-passing style function marked as `@reset`,
-  *          which enables the !-notation automatically.
+  *          which enables the [[Dsl.Instruction#unary_$bang !-notation]] automatically.
   *
   *          {{{
   *          val logs = parseAndLog(""" { "key": "value" } """, JSONArray(Nil)) { json =>
@@ -275,13 +275,14 @@ package com.thoughtworks
   *          isClosed should be(true)
   *          }}}
   *
-  *          When you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
+  *          If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
   *          you can use `Unit !! Raii !! A` or the alias [[com.thoughtworks.dsl.domains.Raii.Task]],
   *          as a higher-performance replacement of
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
-  *
   * @see [[Dsl]] for the guideline to create your custom DSL.
+  * @see [[instructions.ScalazBind]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[scalaz]].
+  * @see [[instructions.CatsFlatMap]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[cats]].
   *
   *
   */

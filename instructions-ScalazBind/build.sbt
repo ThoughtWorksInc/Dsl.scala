@@ -1,3 +1,7 @@
+enablePlugins(Example)
+
+exampleSuperTypes += "org.scalatest.Inside"
+
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.15"
 
 libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.15" % Test
@@ -14,3 +18,5 @@ scalacOptions in Compile ++= {
 }
 
 scalacOptions in Test += "-Ypartial-unification"
+
+libraryDependencies += "com.thoughtworks.tryt" %% "invariant" % "2.0.3" % Test
