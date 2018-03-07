@@ -2,6 +2,7 @@ package com.thoughtworks.dsl.instructions
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Instruction
+import scalaz.Leibniz.===
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
@@ -10,9 +11,116 @@ import scalaz.{Bind, Monad, MonadError, MonadTrans}
 import scala.util.control.Exception.Catcher
 import scala.util.control.{ControlThrowable, NonFatal}
 
-/**
+/** This [[ScalazBind]] enables [[Dsl.Instruction#unary_$bang !-notation]] for types
+  * that support [[scalaz.Bind]], [[scalaz.MonadError]] and [[scalaz.MonadTrans]].
+  *
+  * @example [[scalaz.Free.Trampoline Trampoline]] is a monadic data type that performs tail call optimization.
+  *          It can be built from a `@reset` code block within some [[Dsl.Instruction#unary_$bang !-notation]],
+  *          similar to the [[com.thoughtworks.each.Monadic.EachOps#each each]] method in
+  *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
+  *
+  *          {{{
+  *          import scalaz.Trampoline
+  *          import scalaz.Free.Trampoline
+  *          import com.thoughtworks.dsl.instructions.ScalazBind._
+  *          import com.thoughtworks.dsl.Dsl.reset
+  *
+  *          val trampoline3 = Trampoline.done(3)
+  *
+  *          def dslSquare = Trampoline.delay {
+  *            s"This string is produced by a trampoline: ${!trampoline3 * !trampoline3}"
+  *          }: @reset
+  *
+  *          dslSquare.run should be("This string is produced by a trampoline: 9")
+  *          }}}
+  *
+  *          `!trampoline3` is a shortcut of `!ScalazBind(trampoline3)`,
+  *          which will be converted to `flatMap` calls by our DSL interpreter.
+  *          Thus, the method `dslSquare` is equivalent to the following code in [[scalaz.syntax]]:
+  *
+  *          {{{
+  *
+  *          def scalazSyntaxSquare = trampoline3.flatMap { tmp1 =>
+  *            import scalaz.syntax.bind._
+  *            trampoline3.flatMap { tmp2 =>
+  *              Trampoline.delay {
+  *                s"This string is produced by a trampoline: ${tmp1 * tmp2}"
+  *              }
+  *            }
+  *          }
+  *
+  *          scalazSyntaxSquare.run should be("This string is produced by a trampoline: 9")
+  *          }}}
+  *
+  *          <hr/>
+  *
+  *          A `@reset` code block can contain `try` / `catch` / `finally`
+  *          if the monadic data type supports [[scalaz.MonadError]].
+  *
+  *          [[https://github.com/ThoughtWorksInc/tryt.scala tryt.scala]] is a monad transformer that provides
+  *          [[scalaz.MonadError]],
+  *          therefore `try` / `catch` / `finally` expressions can be used inside a `@reset` code block
+  *          whose return type is `TryT[Trampoline, ?]`.
+  *
+  *          {{{
+  *          import com.thoughtworks.tryt.invariant.TryT, TryT._
+  *          import scala.util.{Try, Success}
+  *          type TryTTransfomredTrampoline[A] = TryT[Trampoline, A]
+  *
+  *          val trampolineSuccess0: TryTTransfomredTrampoline[Int] = TryT(Trampoline.done(Try(0)))
+  *
+  *          def dslTryCatch: TryTTransfomredTrampoline[String] = TryT(Trampoline.delay(Try {
+  *            try {
+  *              s"Division result: ${!trampoline3 / !trampolineSuccess0}"
+  *            } catch {
+  *              case e: ArithmeticException =>
+  *                s"Cannot divide ${!trampoline3} by ${!trampolineSuccess0}"
+  *            }
+  *          })): @reset
+  *
+  *          inside(dslTryCatch) {
+  *            case TryT(trampoline) =>
+  *              trampoline.run should be(Success("Cannot divide 3 by 0"))
+  *          }
+  *          }}}
+  *
+  *          Note that [[Dsl.Instruction#unary_$bang !-notation]] can be used on
+  *          both `trampoline3` and `trampolineSuccess0` even when they are different types,
+  *          i.e. `trampoline3` is a vanilla [[scalaz.Free.Trampoline Trampoline]],
+  *          while `trampolineSuccess0` is a [[com.thoughtworks.tryt.invariant.TryT TryT]]-transfomred
+  *          [[scalaz.Free.Trampoline Trampoline]].
+  *          It is possible because the interpreters of this [[ScalazBind]] instruction invoke
+  *          [[scalaz.MonadTrans.liftM]] automatically.
+  *
+  *          The above `dslTryCatch` method is equivalent to the following code in [[scalaz.syntax]]:
+  *
+  *          {{{
+  *          def scalazSyntaxTryCatch: TryTTransfomredTrampoline[String] = {
+  *            import scalaz.syntax.monadError._
+  *            trampoline3.liftM[TryT].flatMap { tmp0 =>
+  *              trampolineSuccess0.flatMap { tmp1 =>
+  *                 TryT(Trampoline.delay(Try(s"Division result: ${tmp0 / tmp1}")))
+  *              }
+  *            }.handleError {
+  *              case e: ArithmeticException =>
+  *                trampoline3.liftM[TryT].flatMap { tmp2 =>
+  *                  trampolineSuccess0.flatMap { tmp3 =>
+  *                     TryT(Trampoline.delay(Try(s"Cannot divide ${tmp2} by ${tmp3}")))
+  *                  }
+  *                }
+  *              case e =>
+  *                e.raiseError[TryTTransfomredTrampoline, String]
+  *            }
+  *          }
+  *
+  *          inside(scalazSyntaxTryCatch) {
+  *            case TryT(trampoline) =>
+  *              trampoline.run should be(Success("Cannot divide 3 by 0"))
+  *          }
+  *          }}}
+  *
   * @author 杨博 (Yang Bo)
-  * @note [[ScalazBind]] is not an [[scala.AnyVal]] due to [[https://github.com/scala/bug/issues/10595]].
+  * @todo [[ScalazBind]] should be a [[scala.AnyVal]] after [[https://github.com/scala/bug/issues/10595]] is resolved.
   */
 final case class ScalazBind[F[_], A](fa: F[A]) extends Instruction[ScalazBind[F, A], A]
 

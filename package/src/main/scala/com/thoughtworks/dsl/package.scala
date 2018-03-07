@@ -280,62 +280,9 @@ package com.thoughtworks
   *          as a higher-performance replacement of
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
-  *          <hr/>
-  *
-  *          [[Dsl.Instruction#unary_$bang !-notation]] can be used for types
-  *          that support [[scalaz.Bind]] or [[cats.FlatMap]] as well.
-  *
-  *          {{{
-  *          import scalaz.Need
-  *
-  *          val need3 = Need(3)
-  *
-  *          val needSquare = Need {
-  *            import com.thoughtworks.dsl.instructions.ScalazBind.implicitScalazBind
-  *            !need3 * !need3
-  *          }: @reset
-  *
-  *          needSquare.value should be(9)
-  *          }}}
-  *
-  *          {{{
-  *          import cats.Eval
-  *
-  *          val eval3 = Eval.now(3)
-  *
-  *          val laterSquare = Eval.later {
-  *            import com.thoughtworks.dsl.instructions.CatsFlatMap.implicitCatsFlatMap
-  *            !eval3 * !eval3
-  *          }: @reset
-  *
-  *          laterSquare.value should be(9)
-  *          }}}
-  *
-  *          When using [[Dsl.Instruction#unary_$bang !-notation]] with [[scalaz.Bind]] or [[cats.FlatMap]],
-  *          it is similar to the `each` method in
-  *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
-  *
   * @see [[Dsl]] for the guideline to create your custom DSL.
+  * @see [[instructions.ScalazBind]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[scalaz]].
+  * @see [[instructions.CatsFlatMap]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[cats]].
   *
   *
   */
