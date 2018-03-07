@@ -147,16 +147,16 @@ final class BangNotation(override val global: Global) extends Plugin {
       val bodyName = currentUnit.freshTermName("body")
       val endWhileName = currentUnit.freshTermName("endWhile")
       q"""
-      @${definitions.ScalaInlineClass} def $whileName[$domainName]($endWhileName: () => $domainName)(
-        $bodyName: (() => $domainName) => $domainName,
+      @${definitions.ScalaInlineClass} def $whileName[$domainName]($endWhileName: => $domainName)(
+        $bodyName: (=> $domainName) => $domainName,
         $conditionName: (_root_.scala.Boolean => $domainName) => $domainName): $domainName = {
         $conditionName { $conditionValueName: ${TypeTree()} =>
           if ($conditionValueName) {
-            $bodyName { () =>
+            $bodyName {
               $whileName[$domainName]($endWhileName)($bodyName, $conditionName)
             }
           } else {
-            $endWhileName()
+            $endWhileName
           }
         }
       }
@@ -171,15 +171,15 @@ final class BangNotation(override val global: Global) extends Plugin {
       val bodyName = currentUnit.freshTermName("body")
       val endDoWhileName = currentUnit.freshTermName("endDoWhile")
       q"""
-      @${definitions.ScalaInlineClass} def $doWhileName[$domainName]($endDoWhileName: () => $domainName)(
-        $bodyName: (() => $domainName) => $domainName,
+      @${definitions.ScalaInlineClass} def $doWhileName[$domainName]($endDoWhileName: => $domainName)(
+        $bodyName: (=> $domainName) => $domainName,
         $conditionName: (_root_.scala.Boolean => $domainName) => $domainName): $domainName = {
-        $bodyName { () =>
+        $bodyName {
           $conditionName { $conditionValueName: ${TypeTree()} =>
             if ($conditionValueName) {
               $doWhileName[$domainName]($endDoWhileName)($bodyName, $conditionName)
             } else {
-              $endDoWhileName()
+              $endDoWhileName
             }
           }
         }
@@ -195,6 +195,20 @@ final class BangNotation(override val global: Global) extends Plugin {
       }
     }
 
+    private def toFunction1(continue: Tree => Tree, parameterTypes: Type) = {
+      val parameterName = currentUnit.freshTermName("a")
+      val id = q"$parameterName"
+      continue(id) match {
+        case q"${f: Ident}.apply(${`id`})" =>
+          f
+        case transformed =>
+          q"""
+          { ($parameterName: $parameterTypes) =>
+            ${transformed}
+          }
+          """
+      }
+    }
     override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
       val tpe = super.pluginsTyped(tpe0, typer, tree, mode, pt)
 
@@ -250,19 +264,15 @@ final class BangNotation(override val global: Global) extends Plugin {
             loop(stats)
           case If(cond, thenp, elsep) =>
             val endIfName = currentUnit.freshTermName("endIf")
-            val ifResultName = currentUnit.freshTermName("ifResult")
-
             q"""
-            @${definitions.ScalaInlineClass} val $endIfName = { ($ifResultName: $tpe) =>
-              ${continue(q"$ifResultName")}
-            }
+            @${definitions.ScalaInlineClass} val $endIfName = ${toFunction1(continue, tpe)}
             ${cpsAttachment(cond) { condValue =>
               atPos(tree.pos) {
                 q"""
                 if ($condValue) ${cpsAttachment(thenp) { result =>
-                  q"$endIfName($result)"
+                  q"$endIfName.apply($result)"
                 }} else ${cpsAttachment(elsep) { result =>
-                  q"$endIfName($result)"
+                  q"$endIfName.apply($result)"
                 }}
                 """
               }
@@ -270,11 +280,8 @@ final class BangNotation(override val global: Global) extends Plugin {
             """
           case Match(selector, cases) =>
             val endMatchName = currentUnit.freshTermName("endMatch")
-            val matchResultName = currentUnit.freshTermName("matchResult")
-            val endMatchBody = continue(q"$matchResultName")
-
             q"""
-            @${definitions.ScalaInlineClass} def $endMatchName($matchResultName: $tpe) = $endMatchBody
+            @${definitions.ScalaInlineClass} val $endMatchName = ${toFunction1(continue, tpe)}
             ${cpsAttachment(selector) { selectorValue =>
               atPos(tree.pos) {
                 Match(
@@ -282,7 +289,7 @@ final class BangNotation(override val global: Global) extends Plugin {
                   cases.map {
                     case caseDef @ CaseDef(pat, guard, body) =>
                       treeCopy.CaseDef(caseDef, pat, guard, cpsAttachment(body) { bodyValue =>
-                        q"$endMatchName($bodyValue)"
+                        q"$endMatchName.apply($bodyValue)"
                       })
                   }
                 )
@@ -323,18 +330,18 @@ final class BangNotation(override val global: Global) extends Plugin {
                     caseDef.pat,
                     caseDef.guard,
                     cpsAttachment(caseDef.body) { bodyValue =>
-                      q"$finalizerName(_root_.scala.util.Success($bodyValue))"
+                      q"$finalizerName.apply(_root_.scala.util.Success($bodyValue))"
                     }
                   )
                 }
               }
             }}
                 case $unhandledExceptionName: _root_.scala.Throwable =>
-                  $finalizerName(_root_.scala.util.Failure($unhandledExceptionName))
+                  $finalizerName.apply(_root_.scala.util.Failure($unhandledExceptionName))
               }.cpsApply { _: _root_.scala.Unit => ${{
               cpsAttachment(block) { blockValue =>
                 q"""
-                  ${q"$finalizerName(_root_.scala.util.Success($blockValue))"}
+                  ${q"$finalizerName.apply(_root_.scala.util.Success($blockValue))"}
                   """
               }
             }}}
@@ -350,16 +357,16 @@ final class BangNotation(override val global: Global) extends Plugin {
             val conditionHandlerName = currentUnit.freshTermName("conditionHandler")
             q"""
             $whileDef
-            $whileName({ () =>
+            $whileName({
               ${continue(q"()")}
             })({ $continueName: ${TypeTree()} => ${cpsAttachment(body) { bodyValue =>
               q"""
                 ..${notPure(bodyValue)}
-                $continueName()
+                $continueName
               """
             }}},
             { $conditionHandlerName: ${TypeTree()} => ${cpsAttachment(condition) { conditionValue =>
-              q"$conditionHandlerName($conditionValue)"
+              q"$conditionHandlerName.apply($conditionValue)"
             }}})
             """
           case q"do $body while($condition)" =>
@@ -369,16 +376,16 @@ final class BangNotation(override val global: Global) extends Plugin {
             q"""
             $doWhileDef
 
-            $doWhileName({ () =>
+            $doWhileName({
               ${continue(q"()")}
             })({ $continueName: ${TypeTree()} => ${cpsAttachment(body) { bodyValue =>
               q"""
                 ..${notPure(bodyValue)}
-                $continueName()
+                $continueName
               """
             }}},
             { $conditionHandlerName: ${TypeTree()} => ${cpsAttachment(condition) { conditionValue =>
-              q"$conditionHandlerName($conditionValue)"
+              q"$conditionHandlerName.apply($conditionValue)"
             }}})
             """
           case Throw(expr) =>
@@ -403,9 +410,7 @@ final class BangNotation(override val global: Global) extends Plugin {
             cpsAttachment(shiftOps) { shiftOpsValue =>
               atPos(tree.pos) {
                 q"""
-                $shiftOpsValue.cpsApply { $aName: $tpe =>
-                  ${continue(q"$aName")}
-                }
+                $shiftOpsValue.cpsApply(${toFunction1(continue, tpe)})
               """
               }
             }
