@@ -37,25 +37,29 @@ lazy val `instructions-Each` = project.dependsOn(Dsl, `instructions-Shift` % Tes
 
 lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Shift` % Test)
 
-lazy val `instructions-ScalazBind` =
+lazy val `instructions-Monadic` = project.dependsOn(Dsl)
+
+lazy val `domains-scalaz` =
   project.dependsOn(Dsl,
                     `instructions-Scope`,
                     `instructions-Catch`,
+                    `instructions-Monadic`,
                     `instructions-Shift` % Test,
                     `instructions-Yield` % Test)
 
-lazy val `instructions-CatsFlatMap` =
+lazy val `domains-cats` =
   project.dependsOn(Dsl,
                     `instructions-Scope`,
                     `instructions-Catch`,
+                    `instructions-Monadic`,
                     `instructions-Shift` % Test,
                     `instructions-Yield` % Test)
 
 lazy val `package` = project.dependsOn(
   `instructions-Shift`,
-  `instructions-CatsFlatMap`,
+  `domains-cats`,
   `instructions-Each`,
-  `instructions-ScalazBind`,
+  `domains-scalaz`,
   `instructions-Yield`,
   `instructions-Fork`,
   `domains-Raii`,
@@ -72,9 +76,9 @@ Seq[ProjectReference](
   `instructions-Hang`,
   `instructions-Scope`,
   `instructions-Shift`,
-  `instructions-CatsFlatMap`,
+  `domains-cats`,
   `instructions-Each`,
-  `instructions-ScalazBind`,
+  `domains-scalaz`,
   `instructions-Yield`,
   LocalProject("package"),
   `domains-Raii`,
