@@ -2,9 +2,9 @@ enablePlugins(Example)
 
 exampleSuperTypes += "org.scalatest.Inside"
 
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.15"
+libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.20"
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.15" % Test
+libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.20" % Test
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
 
