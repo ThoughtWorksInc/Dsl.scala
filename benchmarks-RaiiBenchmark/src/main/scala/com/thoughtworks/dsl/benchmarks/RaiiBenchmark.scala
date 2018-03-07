@@ -11,6 +11,20 @@ import scala.concurrent.SyncVar
 class RaiiBenchmark {
 
   @Benchmark
+  def raiiStack(): Unit = {
+    def stacked(n: Long): domains.Raii.Task[Long] = _ {
+      if (n > 0) {
+        !stacked(n - 1) + n
+      } else {
+        0
+      }
+    }
+
+    val result = stacked(1000L).blockingAwait()
+    assert(result == 500500L)
+  }
+
+  @Benchmark
   def raiiPingPong(): Unit = {
 
     def ping(n: Long, accumulator: Long = 0L): domains.Raii.Task[Long] = _ {
@@ -37,7 +51,7 @@ class RaiiBenchmark {
   }
 
   @Benchmark
-  def monixPingPong(): Unit = {
+  def monixSuspendPingPong(): Unit = {
     def ping(n: Long, accumulator: Long = 0L): monix.eval.Task[Long] = {
       if (n > 0) {
         monix.eval.Task.suspend(
