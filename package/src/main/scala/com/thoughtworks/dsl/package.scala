@@ -281,8 +281,8 @@ package com.thoughtworks
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
   * @see [[Dsl]] for the guideline to create your custom DSL.
-  * @see [[instructions.ScalazBind]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[scalaz]].
-  * @see [[instructions.CatsFlatMap]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[cats]].
+  * @see [[domains.scalaz]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[scalaz]].
+  * @see [[domains.cats]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[cats]].
   *
   *
   */
