@@ -42,7 +42,11 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
     protected def newTransformer(unit: CompilationUnit): Transformer = new Transformer {
 
       private def annotateAsReset(tree: Tree) = {
-        Annotated(q"new $nonTypeConstraintResetSymbol()", transform(tree))
+        if (tree.isEmpty) {
+          tree
+        } else {
+          Annotated(q"new $nonTypeConstraintResetSymbol()", transform(tree))
+        }
       }
 
       private def transformRootValDef(tree: ValDef) = {
