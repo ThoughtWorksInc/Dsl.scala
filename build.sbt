@@ -99,7 +99,7 @@ lazy val unidoc =
       unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := {
         inAggregates(LocalRootProject)
       },
-      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
+      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
       scalacOptions += "-Xexperimental",
       scalacOptions += "-Ypartial-unification"
     )
