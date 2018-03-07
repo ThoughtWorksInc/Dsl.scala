@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.instructions._
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{Future, Promise, SyncVar}
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 import scala.language.implicitConversions
@@ -93,6 +93,16 @@ object Raii {
           returning.continue()
       }
     }
+
+    def blockingAwait()(implicit hangDsl: Dsl[Hang[Domain], Domain, Domain]): A = {
+      val syncVar = new SyncVar[Try[A]]
+      onComplete { result =>
+        syncVar.put(result)
+        hangDsl.interpret(Hang[Domain], identity)
+      }
+      syncVar.take.get
+    }
+
   }
 
   implicit def raiiAutoCloseDsl[Domain, R <: AutoCloseable](
@@ -134,7 +144,8 @@ object Raii {
     def step(): Domain !! Raii
 
     @tailrec
-    private def last(): Domain !! Raii = {
+    @inline
+    private final def last(): Domain !! Raii = {
       step() match {
         case trampoline: TrampolineContinuation[Domain] =>
           trampoline.last()
@@ -150,7 +161,8 @@ object Raii {
 
   implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Raii, Value] =
     new StackSafeShiftDsl[Domain !! Raii, Value] {
-      def interpret(instruction: Shift[Domain !! Raii, Value], handler: Value => Domain !! Raii): Domain !! Raii = {
+      @inline def interpret(instruction: Shift[Domain !! Raii, Value],
+                            handler: Value => Domain !! Raii): Domain !! Raii = {
         new TrampolineContinuation[Domain] {
           def step() = instruction.continuation(handler)
         }
