@@ -55,7 +55,7 @@ lazy val `domains-cats` =
                     `instructions-Shift` % Test,
                     `instructions-Yield` % Test)
 
-lazy val `benchmarks-RaiiBenchmark` = project.dependsOn(`domains-Raii`)
+lazy val `benchmarks-RaiiBenchmark` = project.dependsOn(`domains-Raii`, `instructions-Yield`)
 
 lazy val `package` = project.dependsOn(
   `instructions-Shift`,
