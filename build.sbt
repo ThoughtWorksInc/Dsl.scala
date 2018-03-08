@@ -55,7 +55,7 @@ lazy val `domains-cats` =
                     `instructions-Shift` % Test,
                     `instructions-Yield` % Test)
 
-lazy val `benchmarks-RaiiBenchmark` = project.dependsOn(`domains-Raii`, `instructions-Yield`)
+lazy val `benchmarks-TaskBenchmark` = project.dependsOn(`domains-Raii`, `instructions-Yield`)
 
 lazy val `package` = project.dependsOn(
   `instructions-Shift`,
@@ -85,7 +85,7 @@ Seq[ProjectReference](
   LocalProject("package"),
   `domains-Raii`,
   `instructions-AutoClose`,
-  `benchmarks-RaiiBenchmark`
+  `benchmarks-TaskBenchmark`
 ).flatMap { testingProject =>
   Seq(
     scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
