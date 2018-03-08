@@ -199,10 +199,10 @@ object Raii {
     def delay[A](f: () => A): Task[A] = _(f())
 
     @inline
-    def execute[A](f: () => A)(implicit executionContext: ExecutionContext): Task[A] = { continue => raiiHandler =>
+    def switchExecutionContext(executionContext: ExecutionContext): Task[Unit] = { continue => raiiHandler =>
       executionContext.execute(new Runnable {
         def run(): Unit = {
-          catchJvmException(continue(f()))(raiiHandler).result
+          catchJvmException(continue(()))(raiiHandler).result
         }
       })
       TailCalls.done(())
