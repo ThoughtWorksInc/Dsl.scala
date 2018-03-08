@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.instructions._
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
-import scala.concurrent.{Future, Promise, SyncVar}
+import scala.concurrent.{ExecutionContext, Future, Promise, SyncVar}
 import scala.util.{Failure, Success, Try}
 import scala.util.control.{NonFatal, TailCalls}
 import scala.language.implicitConversions
@@ -197,6 +197,16 @@ object Raii {
 
     @inline
     def delay[A](f: () => A): Task[A] = _(f())
+
+    @inline
+    def execute[A](f: () => A)(implicit executionContext: ExecutionContext): Task[A] = { continue => raiiHandler =>
+      executionContext.execute(new Runnable {
+        def run(): Unit = {
+          catchJvmException(continue(f()))(raiiHandler).result
+        }
+      })
+      TailCalls.done(())
+    }
 
     @inline
     implicit def reset[A](a: => A): Task[A] @reset = delay(a _)
