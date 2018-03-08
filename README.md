@@ -1,6 +1,6 @@
 # Dsl.scala
 [![Build Status](https://travis-ci.org/ThoughtWorksInc/Dsl.scala.svg?branch=master)](https://travis-ci.org/ThoughtWorksInc/Dsl.scala)
-[![Latest version](https://index.scala-lang.org/thoughtworksinc/dsl.scala/dsl/latest.svg)](https://index.scala-lang.org/thoughtworksinc/dsl.scala/dsl)
+[![Latest version](https://index.scala-lang.org/thoughtworksinc/dsl.scala/dsl/latest.svg)](https://index.scala-lang.org/thoughtworksinc/dsl.scala)
 [![Scaladoc](https://javadoc.io/badge/com.thoughtworks.dsl/dsl_2.12.svg?label=scaladoc)](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html)
 
 **Dsl.scala** is a framework to create embedded **D**omain-**S**pecific **L**anguages in Scala.
@@ -67,4 +67,4 @@ The call to `xorshiftRandomGenerator` does not throw a `StackOverflowError` beca
 ## Links
 
 * Check the [Scaladoc](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html) to find examples about using or creating DSLs.
-* See [MVNRepository](http://mvnrepository.com/artifact/com.thoughtworks.dsl?sort=newest) or [Scaladex](https://index.scala-lang.org/thoughtworksinc/dsl.scala/dsl) for the settings of each built-in DSLs for your build tools.
+* See [MVNRepository](http://mvnrepository.com/artifact/com.thoughtworks.dsl?sort=newest) or [Scaladex](https://index.scala-lang.org/thoughtworksinc/dsl.scala) for the settings of each built-in DSLs for your build tools.
