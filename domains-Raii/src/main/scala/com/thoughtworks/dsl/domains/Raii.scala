@@ -5,11 +5,13 @@ import com.thoughtworks.dsl.instructions._
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
-import scala.concurrent.{Future, Promise, SyncVar}
+import scala.concurrent.{ExecutionContext, Future, Promise, SyncVar}
 import scala.util.{Failure, Success, Try}
-import scala.util.control.NonFatal
+import scala.util.control.{NonFatal, TailCalls}
 import scala.language.implicitConversions
 import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
+
+import scala.util.control.TailCalls.TailRec
 
 /**
   * @author 杨博 (Yang Bo)
@@ -23,17 +25,20 @@ object Raii {
     def continue(): Domain
   }
 
-  @inline private def catchJvmException[Domain](eh: => Domain !! Raii)(failureHandler: Raii => Domain): Domain = {
+  @inline
+  private def catchJvmException[Domain](eh: => Domain !! Raii)(raiiHandler: Raii => Domain)(
+      implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Domain = {
     val protectedRaii: Domain !! Raii = try {
       eh
     } catch {
       case NonFatal(e) =>
-        return failureHandler(RaiiFailure(e))
+        return raiiHandler(RaiiFailure(e))
     }
-    protectedRaii.apply(failureHandler)
+    shiftDsl.interpret(protectedRaii, raiiHandler)
   }
 
-  implicit def scopeDsl[Domain, A]: Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] = {
+  implicit def scopeDsl[Domain, A](
+      implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] = {
     new Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] {
       def interpret(instruction: Scope[Domain !! Raii, A], handler: A => Domain !! Raii): Domain !! Raii = {
         (outerScope: Raii => Domain) =>
@@ -52,7 +57,8 @@ object Raii {
     }
   }
 
-  implicit def raiiCatchDsl[Domain]: Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] = {
+  implicit def raiiCatchDsl[Domain](
+      implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] = {
     new Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] {
       def interpret(instruction: Catch[Domain !! Raii], handler: Unit => Domain !! Raii): Domain !! Raii = {
         (outerScope: Raii => Domain) =>
@@ -68,16 +74,7 @@ object Raii {
   }
 
   implicit final class RaiiContinuationOps[Domain, A](task: Domain !! Raii !! A) {
-    def toFuture(implicit hangDsl: Dsl[Hang[Domain], Domain, Domain]): Future[A] = {
-      val promise = Promise[A]()
-      onComplete { tryResult =>
-        promise.complete(tryResult)
-        hangDsl.interpret(Hang[Domain], identity)
-      }
-      promise.future
-    }
-
-    def onComplete(handler: Try[A] => Domain): Domain = {
+    def run: Domain !! Try[A] = { handler =>
       task { a =>
         new (Domain !! Raii) {
           def apply(outerScope: Raii => Domain): Domain = outerScope(
@@ -94,20 +91,37 @@ object Raii {
       }
     }
 
-    def blockingAwait()(implicit hangDsl: Dsl[Hang[Domain], Domain, Domain]): A = {
+  }
+
+  implicit final class TaskOps[A](task: Task[A]) {
+
+    def onComplete: Unit !! Try[A] = { continue =>
+      task.run { result =>
+        TailCalls.done(continue(result))
+      }.result
+    }
+
+    def toFuture: Future[A] = {
+      val promise = Promise[A]()
+      task.run { tryResult =>
+        promise.complete(tryResult)
+        TailCalls.done(())
+      }.result
+      promise.future
+    }
+
+    def blockingAwait(): A = {
       val syncVar = new SyncVar[Try[A]]
-      onComplete { result =>
+      task.run { result =>
         syncVar.put(result)
-        hangDsl.interpret(Hang[Domain], identity)
-      }
+        TailCalls.done(())
+      }.result
       syncVar.take.get
     }
 
   }
-
   implicit def raiiAutoCloseDsl[Domain, R <: AutoCloseable](
-      implicit shiftDsl: Dsl[Shift[Domain, Domain !! Raii], Domain, Domain !! Raii])
-    : Dsl[AutoClose[R], Domain !! Raii, R] =
+      implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[AutoClose[R], Domain !! Raii, R] =
     new Dsl[AutoClose[R], Domain !! Raii, R] {
       def interpret(instruction: AutoClose[R], body: R => Domain !! Raii): Domain !! Raii = {
         val AutoClose(open) = instruction
@@ -128,7 +142,8 @@ object Raii {
     }
 
   implicit def liftRaiiDsl[Instruction, Domain, A](
-      implicit restDsl: Dsl[Instruction, Domain, A]
+      implicit restDsl: Dsl[Instruction, Domain, A],
+      shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]
   ): Dsl[Instruction, Domain !! Raii, A] =
     new Dsl[Instruction, Domain !! Raii, A] {
       def interpret(instruction: Instruction, successHandler: A => Domain !! Raii): Domain !! Raii = {
@@ -140,14 +155,15 @@ object Raii {
 
     }
 
-  abstract class TrampolineContinuation[Domain] extends (Domain !! Raii) {
-    def step(): Domain !! Raii
+  final case class TrampolineContinuation[Domain, Value](continuation: Domain !! Raii !! Value,
+                                                         handler: Value => Domain !! Raii)
+      extends (Domain !! Raii) {
 
     @tailrec
     @inline
-    private final def last(): Domain !! Raii = {
-      step() match {
-        case trampoline: TrampolineContinuation[Domain] =>
+    private def last(): Domain !! Raii = {
+      continuation(handler) match {
+        case trampoline: TrampolineContinuation[Domain, Value] =>
           trampoline.last()
         case notTrampoline =>
           notTrampoline
@@ -159,17 +175,16 @@ object Raii {
     }
   }
 
+  @inline
   implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Raii, Value] =
     new StackSafeShiftDsl[Domain !! Raii, Value] {
       @inline def interpret(instruction: Shift[Domain !! Raii, Value],
                             handler: Value => Domain !! Raii): Domain !! Raii = {
-        new TrampolineContinuation[Domain] {
-          def step() = instruction.continuation(handler)
-        }
+        TrampolineContinuation(instruction.continuation, handler)
       }
     }
 
-  type Task[+A] = Unit !! Raii !! A
+  type Task[+A] = TailRec[Unit] !! Raii !! A
 
   object Task {
 
@@ -182,6 +197,16 @@ object Raii {
 
     @inline
     def delay[A](f: () => A): Task[A] = _(f())
+
+    @inline
+    def execute[A](f: () => A)(implicit executionContext: ExecutionContext): Task[A] = { continue => raiiHandler =>
+      executionContext.execute(new Runnable {
+        def run(): Unit = {
+          catchJvmException(continue(f()))(raiiHandler).result
+        }
+      })
+      TailCalls.done(())
+    }
 
     @inline
     implicit def reset[A](a: => A): Task[A] @reset = delay(a _)

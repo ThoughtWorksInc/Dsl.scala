@@ -58,7 +58,7 @@ class AutoCloseSpec extends FreeSpec with Matchers {
 
         val myException = new Exception
 
-        val stream = raii.onComplete {
+        val stream = raii.run {
           case Failure(e) =>
             throw e
           case Success(s) =>

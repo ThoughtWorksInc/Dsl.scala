@@ -2,7 +2,10 @@ package com.thoughtworks.dsl.instructions
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Instruction
+
 import scala.language.implicitConversions
+import scala.util.control.TailCalls
+import scala.util.control.TailCalls.TailRec
 
 /**
   * @author 杨博 (Yang Bo)

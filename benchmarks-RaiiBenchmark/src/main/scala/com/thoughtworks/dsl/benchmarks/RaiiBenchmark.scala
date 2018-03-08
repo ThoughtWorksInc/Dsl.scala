@@ -53,19 +53,14 @@ class RaiiBenchmark {
 
   @Benchmark
   def raiiExceptionHandling(): Unit = {
-    type Task[+A] = Stream[Int] !! Raii !! A
-    val tasks: Seq[Task[Unit]] = (0 until totalLoops).map { i =>
-      val task: Task[Unit] = _ {
-        error(i)
-      }
-
-      task
+    def throwing(i: Int): domains.Raii.Task[Unit] = _ {
+      error(i)
     }
+    val tasks: Seq[domains.Raii.Task[Unit]] = (0 until totalLoops).map(throwing)
 
-    def loop(i: Int = 0, accumulator: Int = 0): Task[Int] = _ {
+    def loop(i: Int = 0, accumulator: Int = 0): domains.Raii.Task[Int] = _ {
       if (i < totalLoops) {
         val n = try {
-          !instructions.Yield(0)
           !tasks(i)
           i
         } catch {
@@ -77,11 +72,9 @@ class RaiiBenchmark {
         accumulator
       }
     }
-    loop().onComplete {
-      case Success(result) =>
-        assert(result == expectedResult)
-        Stream.empty
-    }.last
+
+    val result = loop().blockingAwait()
+    assert(result == expectedResult)
   }
 
   @Benchmark
