@@ -14,7 +14,7 @@ We also provide some built-in keywords, including:
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
  * The `Fork` keyword for duplicating current thread, similar to the `fork` system call in POSIX.
  * The `AutoClose` keyword to automatically close resources when exiting a scope, similar to the destructor feature in C++.
- * The `Monadic` keyword for creating monadic control flow, similar to the !-notation in Idris.
+ * The `Monadic` keyword for creating Scalaz or Cats monadic control flow, similar to the !-notation in Idris.
 
 All the above keywords can be used together with each others.
 
