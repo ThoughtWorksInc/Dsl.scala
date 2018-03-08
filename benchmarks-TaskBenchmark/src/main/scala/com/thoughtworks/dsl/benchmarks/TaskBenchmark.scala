@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package benchmarks
 
 import com.thoughtworks.dsl.Dsl.!!
-import com.thoughtworks.dsl.benchmarks.RaiiBenchmark.IntException
+import com.thoughtworks.dsl.benchmarks.TaskBenchmark.IntException
 import com.thoughtworks.dsl.domains.Raii
 
 import scala.util.{Success, Try}
@@ -13,14 +13,14 @@ import org.openjdk.jmh.annotations.{Benchmark, Param, Scope, State}
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, SyncVar}
 import scala.util.control.NoStackTrace
-object RaiiBenchmark {
+object TaskBenchmark {
   final class IntException(val n: Int) extends Exception with NoStackTrace
 }
 @State(Scope.Benchmark)
-class RaiiBenchmark {
+class TaskBenchmark {
 
   @Benchmark
-  def raiiStackedCall(): Unit = {
+  def dslStackedCall(): Unit = {
     def loop(i: Int = 0): domains.Raii.Task[Int] = _ {
       if (i < totalLoops) {
         !loop(i + 1) + i
@@ -34,7 +34,7 @@ class RaiiBenchmark {
   }
 
   @Benchmark
-  def raiiTailCall(): Unit = {
+  def dslTailCall(): Unit = {
     def loop(i: Int = 0, accumulator: Int = 0): domains.Raii.Task[Int] = _ {
       if (i < totalLoops) {
         !loop(i + 1, accumulator + i)
@@ -52,7 +52,7 @@ class RaiiBenchmark {
   }
 
   @Benchmark
-  def raiiExceptionHandling(): Unit = {
+  def dslExceptionHandling(): Unit = {
     def throwing(i: Int): domains.Raii.Task[Unit] = _ {
       error(i)
     }
@@ -78,7 +78,7 @@ class RaiiBenchmark {
   }
 
   @Benchmark
-  def raiiAsyncCall(): Unit = {
+  def dslAsyncCall(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     def loop(i: Int = 0, accumulator: Int = 0): domains.Raii.Task[Int] = _ {
       if (i < totalLoops) {
