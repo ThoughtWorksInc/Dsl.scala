@@ -121,6 +121,34 @@ class RaiiBenchmark {
   }
 
   @Benchmark
+  def monixExceptionHandling(): Unit = {
+    def throwing(i: Int): monix.eval.Task[Unit] = monix.eval.Task {
+      error(i)
+    }
+
+    val tasks: Seq[monix.eval.Task[Unit]] = (0 until totalLoops).map(throwing)
+
+    def loop(i: Int = 0, accumulator: Int = 0): monix.eval.Task[Int] = {
+      if (i < totalLoops) {
+        tasks(i)
+          .map(Function.const(i))
+          .onErrorRecover {
+            case e: IntException =>
+              e.n
+          }
+          .flatMap { n =>
+            loop(i + 1, accumulator + n)
+          }
+      } else {
+        monix.eval.Task(accumulator)
+      }
+    }
+
+    val result = blockingAwaitMonix(loop())
+    assert(result == expectedResult)
+  }
+
+  @Benchmark
   def monixTailCall(): Unit = {
     def loop(i: Int = 0, accumulator: Int = 0): monix.eval.Task[Int] = {
       if (i < totalLoops) {
