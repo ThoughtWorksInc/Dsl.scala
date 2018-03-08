@@ -23,17 +23,20 @@ object Raii {
     def continue(): Domain
   }
 
-  @inline private def catchJvmException[Domain](eh: => Domain !! Raii)(failureHandler: Raii => Domain): Domain = {
+  @inline
+  private def catchJvmException[Domain](eh: => Domain !! Raii)(raiiHandler: Raii => Domain)(
+      implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Domain = {
     val protectedRaii: Domain !! Raii = try {
       eh
     } catch {
       case NonFatal(e) =>
-        return failureHandler(RaiiFailure(e))
+        return raiiHandler(RaiiFailure(e))
     }
-    protectedRaii.apply(failureHandler)
+    shiftDsl.interpret(protectedRaii, raiiHandler)
   }
 
-  implicit def scopeDsl[Domain, A]: Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] = {
+  implicit def scopeDsl[Domain, A](
+      implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] = {
     new Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] {
       def interpret(instruction: Scope[Domain !! Raii, A], handler: A => Domain !! Raii): Domain !! Raii = {
         (outerScope: Raii => Domain) =>
@@ -52,7 +55,8 @@ object Raii {
     }
   }
 
-  implicit def raiiCatchDsl[Domain]: Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] = {
+  implicit def raiiCatchDsl[Domain](
+      implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] = {
     new Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] {
       def interpret(instruction: Catch[Domain !! Raii], handler: Unit => Domain !! Raii): Domain !! Raii = {
         (outerScope: Raii => Domain) =>
@@ -106,8 +110,7 @@ object Raii {
   }
 
   implicit def raiiAutoCloseDsl[Domain, R <: AutoCloseable](
-      implicit shiftDsl: Dsl[Shift[Domain, Domain !! Raii], Domain, Domain !! Raii])
-    : Dsl[AutoClose[R], Domain !! Raii, R] =
+      implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[AutoClose[R], Domain !! Raii, R] =
     new Dsl[AutoClose[R], Domain !! Raii, R] {
       def interpret(instruction: AutoClose[R], body: R => Domain !! Raii): Domain !! Raii = {
         val AutoClose(open) = instruction
@@ -128,7 +131,8 @@ object Raii {
     }
 
   implicit def liftRaiiDsl[Instruction, Domain, A](
-      implicit restDsl: Dsl[Instruction, Domain, A]
+      implicit restDsl: Dsl[Instruction, Domain, A],
+      shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]
   ): Dsl[Instruction, Domain !! Raii, A] =
     new Dsl[Instruction, Domain !! Raii, A] {
       def interpret(instruction: Instruction, successHandler: A => Domain !! Raii): Domain !! Raii = {
@@ -140,14 +144,15 @@ object Raii {
 
     }
 
-  abstract class TrampolineContinuation[Domain] extends (Domain !! Raii) {
-    def step(): Domain !! Raii
+  final case class TrampolineContinuation[Domain, Value](continuation: Domain !! Raii !! Value,
+                                                         handler: Value => Domain !! Raii)
+      extends (Domain !! Raii) {
 
     @tailrec
     @inline
-    private final def last(): Domain !! Raii = {
-      step() match {
-        case trampoline: TrampolineContinuation[Domain] =>
+    private def last(): Domain !! Raii = {
+      continuation(handler) match {
+        case trampoline: TrampolineContinuation[Domain, Value] =>
           trampoline.last()
         case notTrampoline =>
           notTrampoline
@@ -159,13 +164,12 @@ object Raii {
     }
   }
 
+  @inline
   implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Raii, Value] =
     new StackSafeShiftDsl[Domain !! Raii, Value] {
       @inline def interpret(instruction: Shift[Domain !! Raii, Value],
                             handler: Value => Domain !! Raii): Domain !! Raii = {
-        new TrampolineContinuation[Domain] {
-          def step() = instruction.continuation(handler)
-        }
+        TrampolineContinuation(instruction.continuation, handler)
       }
     }
 
