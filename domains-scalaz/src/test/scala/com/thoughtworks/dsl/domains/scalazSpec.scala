@@ -6,7 +6,7 @@ import _root_.scalaz.OptionT
 import _root_.scalaz.concurrent.Task
 import _root_.scalaz.std.stream._
 import com.thoughtworks.dsl.domains.scalaz._
-import com.thoughtworks.dsl.instructions.{Monadic, Shift, Yield}
+import com.thoughtworks.dsl.keywords.{Monadic, Shift, Yield}
 
 /**
   * @author 杨博 (Yang Bo)
@@ -15,7 +15,7 @@ class scalazSpec extends FreeSpec with Matchers {
 
   "MonadError" in {
     def task: Task[Int] = Task.now {
-      import com.thoughtworks.dsl.instructions.Monadic._
+      import com.thoughtworks.dsl.keywords.Monadic._
       try {
         0 / 0
       } catch {

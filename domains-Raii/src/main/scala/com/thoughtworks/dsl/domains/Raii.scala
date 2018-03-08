@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 import com.thoughtworks.dsl.Dsl.{!!, reset}
-import com.thoughtworks.dsl.instructions._
+import com.thoughtworks.dsl.keywords._
 
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
@@ -9,7 +9,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise, SyncVar}
 import scala.util.{Failure, Success, Try}
 import scala.util.control.{NonFatal, TailCalls}
 import scala.language.implicitConversions
-import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
+import com.thoughtworks.dsl.keywords.Shift.StackSafeShiftDsl
 
 import scala.util.control.TailCalls.TailRec
 
@@ -40,9 +40,9 @@ object Raii {
   implicit def scopeDsl[Domain, A](
       implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] = {
     new Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] {
-      def interpret(instruction: Scope[Domain !! Raii, A], handler: A => Domain !! Raii): Domain !! Raii = {
+      def interpret(keyword: Scope[Domain !! Raii, A], handler: A => Domain !! Raii): Domain !! Raii = {
         (outerScope: Raii => Domain) =>
-          catchJvmException(instruction.continuation { a: A => (scopeHandler: Raii => Domain) =>
+          catchJvmException(keyword.continuation { a: A => (scopeHandler: Raii => Domain) =>
             scopeHandler(new RaiiSuccess[Domain] {
               def continue(): Domain = catchJvmException(handler(a))(outerScope)
             })
@@ -60,11 +60,11 @@ object Raii {
   implicit def raiiCatchDsl[Domain](
       implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] = {
     new Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] {
-      def interpret(instruction: Catch[Domain !! Raii], handler: Unit => Domain !! Raii): Domain !! Raii = {
+      def interpret(keyword: Catch[Domain !! Raii], handler: Unit => Domain !! Raii): Domain !! Raii = {
         (outerScope: Raii => Domain) =>
           catchJvmException(handler(())) {
             case RaiiFailure(e) =>
-              catchJvmException(instruction.failureHandler(e))(outerScope)
+              catchJvmException(keyword.failureHandler(e))(outerScope)
             case breaking =>
               outerScope(breaking)
           }
@@ -123,8 +123,8 @@ object Raii {
   implicit def raiiAutoCloseDsl[Domain, R <: AutoCloseable](
       implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[AutoClose[R], Domain !! Raii, R] =
     new Dsl[AutoClose[R], Domain !! Raii, R] {
-      def interpret(instruction: AutoClose[R], body: R => Domain !! Raii): Domain !! Raii = {
-        val AutoClose(open) = instruction
+      def interpret(keyword: AutoClose[R], body: R => Domain !! Raii): Domain !! Raii = {
+        val AutoClose(open) = keyword
         val r = open()
         (outerScope: Raii => Domain) =>
           catchJvmException {
@@ -141,14 +141,14 @@ object Raii {
       }
     }
 
-  implicit def liftRaiiDsl[Instruction, Domain, A](
-      implicit restDsl: Dsl[Instruction, Domain, A],
+  implicit def liftRaiiDsl[Keyword, Domain, A](
+      implicit restDsl: Dsl[Keyword, Domain, A],
       shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]
-  ): Dsl[Instruction, Domain !! Raii, A] =
-    new Dsl[Instruction, Domain !! Raii, A] {
-      def interpret(instruction: Instruction, successHandler: A => Domain !! Raii): Domain !! Raii = {
+  ): Dsl[Keyword, Domain !! Raii, A] =
+    new Dsl[Keyword, Domain !! Raii, A] {
+      def interpret(keyword: Keyword, successHandler: A => Domain !! Raii): Domain !! Raii = {
         (continue: Raii => Domain) =>
-          restDsl.interpret(instruction, { a =>
+          restDsl.interpret(keyword, { a =>
             catchJvmException(successHandler(a))(continue)
           })
       }
@@ -178,9 +178,9 @@ object Raii {
   @inline
   implicit def stackSafeShiftRaiiDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Raii, Value] =
     new StackSafeShiftDsl[Domain !! Raii, Value] {
-      @inline def interpret(instruction: Shift[Domain !! Raii, Value],
+      @inline def interpret(keyword: Shift[Domain !! Raii, Value],
                             handler: Value => Domain !! Raii): Domain !! Raii = {
-        TrampolineContinuation(instruction.continuation, handler)
+        TrampolineContinuation(keyword.continuation, handler)
       }
     }
 
@@ -213,9 +213,9 @@ object Raii {
 
   }
 
-  /** Implicit converts from a task to a [[instructions.Shift]].
+  /** Implicit converts from a task to a [[keywords.Shift]].
     *
-    * @note This implicit conversion enables the [[Dsl.Instruction#unary_$bang !-notation]]
+    * @note This implicit conversion enables the [[Dsl.Keyword#unary_$bang !-notation]]
     *       for continuation-passing style functions in [[Raii]] domain.
     */
   implicit def await[Domain, Value](continuation: Domain !! Raii !! Value): Shift[Domain !! Raii, Value] =

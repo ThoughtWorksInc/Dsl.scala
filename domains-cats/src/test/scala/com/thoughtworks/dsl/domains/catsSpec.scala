@@ -2,7 +2,7 @@ package com.thoughtworks.dsl.domains
 
 import org.scalatest.{FreeSpec, Matchers}
 import _root_.cats.instances.stream._
-import com.thoughtworks.dsl.instructions.{Monadic, Shift, Yield}
+import com.thoughtworks.dsl.keywords.{Monadic, Shift, Yield}
 import com.thoughtworks.dsl.domains.cats._
 
 /**

@@ -6,64 +6,64 @@ lazy val Dsl = project
 
 lazy val `domains-Raii` =
   project.dependsOn(
-    `instructions-Hang`,
-    `instructions-Scope`,
-    `instructions-Catch`,
-    `instructions-Shift`,
-    `instructions-AutoClose`,
-    `instructions-Fork` % Test,
-    `instructions-Yield` % Test
+    `keywords-Hang`,
+    `keywords-Scope`,
+    `keywords-Catch`,
+    `keywords-Shift`,
+    `keywords-AutoClose`,
+    `keywords-Fork` % Test,
+    `keywords-Yield` % Test
   )
 
-lazy val `instructions-Fork` =
+lazy val `keywords-Fork` =
   project.dependsOn(Dsl,
-                    `instructions-Scope`,
-                    `instructions-Shift`,
-                    `instructions-Catch`,
-                    `instructions-Hang`,
-                    `instructions-Each`)
+                    `keywords-Scope`,
+                    `keywords-Shift`,
+                    `keywords-Catch`,
+                    `keywords-Hang`,
+                    `keywords-Each`)
 
-lazy val `instructions-Hang` = project.dependsOn(Dsl)
+lazy val `keywords-Hang` = project.dependsOn(Dsl)
 
-lazy val `instructions-Shift` = project.dependsOn(Dsl)
+lazy val `keywords-Shift` = project.dependsOn(Dsl)
 
-lazy val `instructions-AutoClose` = project.dependsOn(Dsl)
+lazy val `keywords-AutoClose` = project.dependsOn(Dsl)
 
-lazy val `instructions-Catch` = project.dependsOn(Dsl, `instructions-Shift`, `instructions-Yield` % Test)
+lazy val `keywords-Catch` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
 
-lazy val `instructions-Scope` = project.dependsOn(Dsl, `instructions-Shift`, `instructions-Yield` % Test)
+lazy val `keywords-Scope` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
 
-lazy val `instructions-Each` = project.dependsOn(Dsl, `instructions-Shift` % Test, `instructions-Yield` % Test)
+lazy val `keywords-Each` = project.dependsOn(Dsl, `keywords-Shift` % Test, `keywords-Yield` % Test)
 
-lazy val `instructions-Yield` = project.dependsOn(Dsl, `instructions-Shift` % Test)
+lazy val `keywords-Yield` = project.dependsOn(Dsl, `keywords-Shift` % Test)
 
-lazy val `instructions-Monadic` = project.dependsOn(Dsl)
+lazy val `keywords-Monadic` = project.dependsOn(Dsl)
 
 lazy val `domains-scalaz` =
   project.dependsOn(Dsl,
-                    `instructions-Scope`,
-                    `instructions-Catch`,
-                    `instructions-Monadic`,
-                    `instructions-Shift` % Test,
-                    `instructions-Yield` % Test)
+                    `keywords-Scope`,
+                    `keywords-Catch`,
+                    `keywords-Monadic`,
+                    `keywords-Shift` % Test,
+                    `keywords-Yield` % Test)
 
 lazy val `domains-cats` =
   project.dependsOn(Dsl,
-                    `instructions-Scope`,
-                    `instructions-Catch`,
-                    `instructions-Monadic`,
-                    `instructions-Shift` % Test,
-                    `instructions-Yield` % Test)
+                    `keywords-Scope`,
+                    `keywords-Catch`,
+                    `keywords-Monadic`,
+                    `keywords-Shift` % Test,
+                    `keywords-Yield` % Test)
 
-lazy val `benchmarks-TaskBenchmark` = project.dependsOn(`domains-Raii`, `instructions-Yield`)
+lazy val `benchmarks-TaskBenchmark` = project.dependsOn(`domains-Raii`, `keywords-Yield`)
 
 lazy val `package` = project.dependsOn(
-  `instructions-Shift`,
+  `keywords-Shift`,
   `domains-cats`,
-  `instructions-Each`,
+  `keywords-Each`,
   `domains-scalaz`,
-  `instructions-Yield`,
-  `instructions-Fork`,
+  `keywords-Yield`,
+  `keywords-Fork`,
   `domains-Raii`,
   `compilerplugins-BangNotation`,
   `compilerplugins-ResetEverywhere`,
@@ -73,18 +73,18 @@ lazy val `package` = project.dependsOn(
 organization in ThisBuild := "com.thoughtworks.dsl"
 
 Seq[ProjectReference](
-  `instructions-Fork`,
-  `instructions-Catch`,
-  `instructions-Hang`,
-  `instructions-Scope`,
-  `instructions-Shift`,
+  `keywords-Fork`,
+  `keywords-Catch`,
+  `keywords-Hang`,
+  `keywords-Scope`,
+  `keywords-Shift`,
   `domains-cats`,
-  `instructions-Each`,
+  `keywords-Each`,
   `domains-scalaz`,
-  `instructions-Yield`,
+  `keywords-Yield`,
   LocalProject("package"),
   `domains-Raii`,
-  `instructions-AutoClose`,
+  `keywords-AutoClose`,
   `benchmarks-TaskBenchmark`
 ).flatMap { testingProject =>
   Seq(

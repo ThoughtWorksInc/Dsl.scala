@@ -6,38 +6,38 @@ import scala.annotation._
 import scala.util.control.TailCalls
 import scala.util.control.TailCalls.TailRec
 
-/** The domain-specific interpreter for `Instruction` in `Domain`,
+/** The domain-specific interpreter for `Keyword` in `Domain`,
   * which is a dependent type type class that registers an asynchronous callback function,
-  * to handle the `Value` inside `Instruction`.
+  * to handle the `Value` inside `Keyword`.
   *
-  * @tparam Value The value held inside `Instruction`.
+  * @tparam Value The value held inside `Keyword`.
   * @author 杨博 (Yang Bo)
   * @example Creating a collaborative DSL in [[https://github.com/ThoughtWorksInc/Dsl.scala Dsl.scala]] is easy.
   *          Only two steps are required:
   *
-  *           - Defining their domain-specific [[com.thoughtworks.dsl.Dsl.Instruction Instruction]].
-  *           - Implementing [[Dsl]] type class, which is a interpreter for an [[com.thoughtworks.dsl.Dsl.Instruction Instruction]].
+  *           - Defining their domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
+  *           - Implementing [[Dsl]] type class, which is a interpreter for an [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   *
   *          TODO: an example for creating a DSL
   */
-@implicitNotFound("Cannot interpret the DSL instruction ${Instruction} inside a function that returns ${Domain}.")
-trait Dsl[-Instruction, Domain, +Value] {
+@implicitNotFound("Cannot interpret the DSL keyword ${Keyword} inside a function that returns ${Domain}.")
+trait Dsl[-Keyword, Domain, +Value] {
 
-  /** Registers an asynchronous callback `handler` on `instruction`, to handle the `Value`. */
-  def interpret(instruction: Instruction, handler: Value => Domain): Domain
+  /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
+  def interpret(keyword: Keyword, handler: Value => Domain): Domain
 
 }
 
 private[dsl] trait LowPriorityDsl0 {
 
-  implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
-      implicit restDsl: Dsl[Instruction, Domain, InstructionValue]
-  ): Dsl[Instruction, Domain !! FinalResult, InstructionValue] = {
-    new Dsl[Instruction, Domain !! FinalResult, InstructionValue] {
-      def interpret(instruction: Instruction,
-                    handler: InstructionValue => Domain !! FinalResult): Domain !! FinalResult = {
+  implicit def continuationDsl[Keyword, Domain, FinalResult, KeywordValue](
+      implicit restDsl: Dsl[Keyword, Domain, KeywordValue]
+  ): Dsl[Keyword, Domain !! FinalResult, KeywordValue] = {
+    new Dsl[Keyword, Domain !! FinalResult, KeywordValue] {
+      def interpret(keyword: Keyword,
+                    handler: KeywordValue => Domain !! FinalResult): Domain !! FinalResult = {
         (continue: FinalResult => Domain) =>
-          restDsl.interpret(instruction, { a =>
+          restDsl.interpret(keyword, { a =>
             handler(a)(continue)
           })
       }
@@ -47,11 +47,11 @@ private[dsl] trait LowPriorityDsl0 {
 
 object Dsl extends LowPriorityDsl0 {
 
-  implicit def liftTailRecDsl[Instruction, Domain, Value](
-      implicit restDsl: Dsl[Instruction, Domain, Value]): Dsl[Instruction, TailRec[Domain], Value] =
-    new Dsl[Instruction, TailRec[Domain], Value] {
-      def interpret(instruction: Instruction, handler: Value => TailRec[Domain]): TailRec[Domain] = TailCalls.done {
-        restDsl.interpret(instruction, { value =>
+  implicit def liftTailRecDsl[Keyword, Domain, Value](
+      implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] =
+    new Dsl[Keyword, TailRec[Domain], Value] {
+      def interpret(keyword: Keyword, handler: Value => TailRec[Domain]): TailRec[Domain] = TailCalls.done {
+        restDsl.interpret(keyword, { value =>
           handler(value).result
         })
       }
@@ -69,16 +69,16 @@ object Dsl extends LowPriorityDsl0 {
   /** An annotation to mark a method is a shift control operator. */
   final class shift extends StaticAnnotation
 
-  def apply[Instruction, Domain, Value](
-      implicit typeClass: Dsl[Instruction, Domain, Value]): Dsl[Instruction, Domain, Value] =
+  def apply[Keyword, Domain, Value](
+      implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
     typeClass
 
   /**
     *
     * @tparam Self the self type
-    * @see [[https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern Curiously recurring template pattern]] for the reason why we need `Instruction` type parameter
+    * @see [[https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern Curiously recurring template pattern]] for the reason why we need `Keyword` type parameter
     */
-  trait Instruction[Self, Value] extends Any { this: Self =>
+  trait Keyword[Self, Value] extends Any { this: Self =>
 
     @shift
     @compileTimeOnly(
