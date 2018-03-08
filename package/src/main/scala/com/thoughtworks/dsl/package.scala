@@ -1,6 +1,6 @@
 package com.thoughtworks
 
-/** This project, '''Dsl.scala''', is a framework to create embedded DSLs('''D'''omain-'''S'''pecific '''L'''anguages).
+/** This project, '''Dsl.scala''', is a framework to create embedded '''D'''omain-'''S'''pecific '''L'''anguages.
   *
   * DSLs written in '''Dsl.scala''' are collaborative with others DSLs and Scala control flows.
   * DSL users can create functions that contains interleaved DSLs implemented by different vendors,

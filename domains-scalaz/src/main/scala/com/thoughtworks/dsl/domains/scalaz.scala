@@ -23,7 +23,7 @@ private[domains] trait LowPriorityScalaz0 { this: scalaz.type =>
   * for [[keywords.Monadic]] and other keywords
   * in code blocks whose type support [[scalaz.Bind]], [[scalaz.MonadError]] and [[scalaz.MonadTrans]].
   *
-  * @example [[scalaz.Free.Trampoline Trampoline]] is a monadic data type that performs tail call optimization.
+  * @example [[scalaz.Free.Trampoline]] is a monadic data type that performs tail call optimization.
   *          It can be built from a `@reset` code block within some [[Dsl.Keyword#unary_$bang !-notation]],
   *          similar to the [[com.thoughtworks.each.Monadic.EachOps#each each]] method in
   *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
