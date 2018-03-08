@@ -11,7 +11,7 @@ import monix.execution.{Cancelable, Scheduler}
 import org.openjdk.jmh.annotations.{Benchmark, Param, Scope, State}
 
 import scala.annotation.tailrec
-import scala.concurrent.SyncVar
+import scala.concurrent.{ExecutionContext, SyncVar}
 import scala.util.control.NoStackTrace
 object RaiiBenchmark {
   final class IntException(val n: Int) extends Exception with NoStackTrace
@@ -79,17 +79,19 @@ class RaiiBenchmark {
 
   @Benchmark
   def raiiAsyncCall(): Unit = {
-    def loop(i: Int = 0, accumulator: Int = 0): domains.Raii.Task[Int] = { callback =>
+    import scala.concurrent.ExecutionContext.Implicits.global
+    def loop(i: Int = 0, accumulator: Int = 0): domains.Raii.Task[Int] = _ {
       if (i < totalLoops) {
-        loop(i + 1, accumulator + i).apply(callback)
+        !Task.switchExecutionContext(global)
+        !loop(i + 1, accumulator + i)
       } else {
-        Task.now(accumulator).apply(callback)
+        !Task.switchExecutionContext(global)
+        accumulator
       }
     }
 
     val result = loop().blockingAwait()
     assert(result == expectedResult)
-
   }
 
   private def blockingAwaitMonix[A](task: monix.eval.Task[A]): A = {
@@ -158,6 +160,12 @@ class RaiiBenchmark {
 
   }
 
+  private def blockingExecuteMonix[A](task: monix.eval.Task[A])(implicit executionContext: ExecutionContext): A = {
+    val syncVar = new SyncVar[Try[A]]
+    task.runOnComplete(syncVar.put)(Scheduler(executionContext))
+    syncVar.take.get
+  }
+
   @Benchmark
   def monixAsyncCall(): Unit = {
     def loop(i: Int = 0, accumulator: Int = 0): monix.eval.Task[Int] = monix.eval.Task.async[Int] {
@@ -168,8 +176,8 @@ class RaiiBenchmark {
           monix.eval.Task(accumulator).runAsync(callback)(scheduler)
         }
     }
-
-    val result = blockingAwaitMonix(loop())
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val result = blockingExecuteMonix(loop())
     assert(result == expectedResult)
 
   }
