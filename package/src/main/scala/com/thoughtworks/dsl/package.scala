@@ -247,7 +247,7 @@ package com.thoughtworks
   *
   *          A type like `A !! B !! C` means a domain-specific value of type `C` in the domain of `A` and `B`.
   *          When `B` is [[com.thoughtworks.dsl.domains.Raii Raii]],
-  *          a [[com.thoughtworks.dsl.domains.Raii.RaiiContinuationOps#onComplete]] method is available,
+  *          a [[com.thoughtworks.dsl.domains.Raii.RaiiContinuationOps#run]] method is available,
   *          which can be used to register a callback function that handles the result of `Try[C]`.
   *
   *          {{{
@@ -261,7 +261,7 @@ package com.thoughtworks
   *                isClosed = true
   *              }
   *            }
-  *          ).onComplete { result =>
+  *          ).run { result =>
   *            inside(result) {
   *              case Success(totalNumber) =>
   *                totalNumber should be(3)

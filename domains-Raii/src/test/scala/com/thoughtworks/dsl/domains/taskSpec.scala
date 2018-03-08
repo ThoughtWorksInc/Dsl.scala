@@ -6,6 +6,7 @@ import Raii.Task
 import com.thoughtworks.dsl.instructions.{AutoClose, Each, Fork}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.TailCalls
 import scala.util.{Failure, Success}
 
 /**
@@ -70,13 +71,14 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       !task1
     }
 
-    task2.onComplete {
+    task2.run {
       case Success(s) =>
         logs += s
         throw new AssertionError()
       case Failure(e) =>
         e should be(a[MyException])
         logs += "uncaught MyException"
+        TailCalls.done(())
     }
     logs should be(ArrayBuffer("MyException", "uncaught MyException"))
   }

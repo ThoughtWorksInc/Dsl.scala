@@ -3,6 +3,8 @@ package com.thoughtworks.dsl
 import com.thoughtworks.dsl.Dsl.!!
 
 import scala.annotation._
+import scala.util.control.TailCalls
+import scala.util.control.TailCalls.TailRec
 
 /** The domain-specific interpreter for `Instruction` in `Domain`,
   * which is a dependent type type class that registers an asynchronous callback function,
@@ -26,7 +28,7 @@ trait Dsl[-Instruction, Domain, +Value] {
 
 }
 
-private[dsl] trait LowPriorityDsl {
+private[dsl] trait LowPriorityDsl0 {
 
   implicit def continuationDsl[Instruction, Domain, FinalResult, InstructionValue](
       implicit restDsl: Dsl[Instruction, Domain, InstructionValue]
@@ -43,7 +45,17 @@ private[dsl] trait LowPriorityDsl {
   }
 }
 
-object Dsl extends LowPriorityDsl {
+object Dsl extends LowPriorityDsl0 {
+
+  implicit def liftTailRecDsl[Instruction, Domain, Value](
+      implicit restDsl: Dsl[Instruction, Domain, Value]): Dsl[Instruction, TailRec[Domain], Value] =
+    new Dsl[Instruction, TailRec[Domain], Value] {
+      def interpret(instruction: Instruction, handler: Value => TailRec[Domain]): TailRec[Domain] = TailCalls.done {
+        restDsl.interpret(instruction, { value =>
+          handler(value).result
+        })
+      }
+    }
 
   type Continuation[R, +A] = (A => R @reset) => R
   type !![R, +A] = Continuation[R, A]

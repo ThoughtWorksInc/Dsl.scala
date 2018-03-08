@@ -7,9 +7,11 @@ import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{Future, Promise, SyncVar}
 import scala.util.{Failure, Success, Try}
-import scala.util.control.NonFatal
+import scala.util.control.{NonFatal, TailCalls}
 import scala.language.implicitConversions
 import com.thoughtworks.dsl.instructions.Shift.StackSafeShiftDsl
+
+import scala.util.control.TailCalls.TailRec
 
 /**
   * @author 杨博 (Yang Bo)
@@ -72,16 +74,7 @@ object Raii {
   }
 
   implicit final class RaiiContinuationOps[Domain, A](task: Domain !! Raii !! A) {
-    def toFuture(implicit hangDsl: Dsl[Hang[Domain], Domain, Domain]): Future[A] = {
-      val promise = Promise[A]()
-      onComplete { tryResult =>
-        promise.complete(tryResult)
-        hangDsl.interpret(Hang[Domain], identity)
-      }
-      promise.future
-    }
-
-    def onComplete(handler: Try[A] => Domain): Domain = {
+    def run: Domain !! Try[A] = { handler =>
       task { a =>
         new (Domain !! Raii) {
           def apply(outerScope: Raii => Domain): Domain = outerScope(
@@ -98,17 +91,35 @@ object Raii {
       }
     }
 
-    def blockingAwait()(implicit hangDsl: Dsl[Hang[Domain], Domain, Domain]): A = {
+  }
+
+  implicit final class TaskOps[A](task: Task[A]) {
+
+    def onComplete: Unit !! Try[A] = { continue =>
+      task.run { result =>
+        TailCalls.done(continue(result))
+      }.result
+    }
+
+    def toFuture: Future[A] = {
+      val promise = Promise[A]()
+      task.run { tryResult =>
+        promise.complete(tryResult)
+        TailCalls.done(())
+      }.result
+      promise.future
+    }
+
+    def blockingAwait(): A = {
       val syncVar = new SyncVar[Try[A]]
-      onComplete { result =>
+      task.run { result =>
         syncVar.put(result)
-        hangDsl.interpret(Hang[Domain], identity)
-      }
+        TailCalls.done(())
+      }.result
       syncVar.take.get
     }
 
   }
-
   implicit def raiiAutoCloseDsl[Domain, R <: AutoCloseable](
       implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Dsl[AutoClose[R], Domain !! Raii, R] =
     new Dsl[AutoClose[R], Domain !! Raii, R] {
@@ -173,7 +184,7 @@ object Raii {
       }
     }
 
-  type Task[+A] = Unit !! Raii !! A
+  type Task[+A] = TailRec[Unit] !! Raii !! A
 
   object Task {
 
