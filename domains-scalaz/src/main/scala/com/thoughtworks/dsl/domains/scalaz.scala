@@ -1,12 +1,12 @@
 package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Instruction
+import com.thoughtworks.dsl.Dsl.Keyword
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
 import _root_.scalaz.{Bind, Monad, MonadError, MonadTrans, Unapply}
-import com.thoughtworks.dsl.instructions.{Catch, Monadic, Scope}
+import com.thoughtworks.dsl.keywords.{Catch, Monadic, Scope}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.{ControlThrowable, NonFatal}
@@ -19,19 +19,19 @@ private[domains] trait LowPriorityScalaz0 { this: scalaz.type =>
 
 }
 
-/** Contains interpreters to enable [[Dsl.Instruction#unary_$bang !-notation]]
-  * for [[instructions.Monadic]] and other instructions
+/** Contains interpreters to enable [[Dsl.Keyword#unary_$bang !-notation]]
+  * for [[keywords.Monadic]] and other keywords
   * in code blocks whose type support [[scalaz.Bind]], [[scalaz.MonadError]] and [[scalaz.MonadTrans]].
   *
   * @example [[scalaz.Free.Trampoline Trampoline]] is a monadic data type that performs tail call optimization.
-  *          It can be built from a `@reset` code block within some [[Dsl.Instruction#unary_$bang !-notation]],
+  *          It can be built from a `@reset` code block within some [[Dsl.Keyword#unary_$bang !-notation]],
   *          similar to the [[com.thoughtworks.each.Monadic.EachOps#each each]] method in
   *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
   *
   *          {{{
   *          import scalaz.Trampoline
   *          import scalaz.Free.Trampoline
-  *          import com.thoughtworks.dsl.instructions.Monadic._
+  *          import com.thoughtworks.dsl.keywords.Monadic._
   *          import com.thoughtworks.dsl.domains.scalaz._
   *          import com.thoughtworks.dsl.Dsl.reset
   *
@@ -94,12 +94,12 @@ private[domains] trait LowPriorityScalaz0 { this: scalaz.type =>
   *          }
   *          }}}
   *
-  *          Note that [[Dsl.Instruction#unary_$bang !-notation]] can be used on
+  *          Note that [[Dsl.Keyword#unary_$bang !-notation]] can be used on
   *          both `trampoline3` and `trampolineSuccess0` even when they are different types,
   *          i.e. `trampoline3` is a vanilla [[scalaz.Free.Trampoline Trampoline]],
   *          while `trampolineSuccess0` is a [[com.thoughtworks.tryt.invariant.TryT TryT]]-transfomred
   *          [[scalaz.Free.Trampoline Trampoline]].
-  *          It is possible because the interpreters of this [[Monadic]] instruction invoke
+  *          It is possible because the interpreters of this [[Monadic]] keyword invoke
   *          [[scalaz.MonadTrans.liftM]] automatically.
   *
   *          The above `dslTryCatch` method is equivalent to the following code in [[scalaz.syntax]]:
@@ -138,8 +138,8 @@ object scalaz extends LowPriorityScalaz0 {
 
   implicit def scalazScopeDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): Dsl[Scope[F[B], A], F[B], A] =
     new Dsl[Scope[F[B], A], F[B], A] {
-      def interpret(instruction: Scope[F[B], A], handler: A => F[B]): F[B] = {
-        val continuation: (A => F[B]) => F[B] = instruction.continuation
+      def interpret(keyword: Scope[F[B], A], handler: A => F[B]): F[B] = {
+        val continuation: (A => F[B]) => F[B] = keyword.continuation
         final case class BreakScope(a: A) extends ControlThrowable
         monadError.handleError(continuation { a =>
           monadError.raiseError(BreakScope(a))
@@ -154,13 +154,13 @@ object scalaz extends LowPriorityScalaz0 {
 
   implicit def scalazCatchDsl[F[_], A](implicit monadError: MonadThrowable[F]): Dsl[Catch[F[A]], F[A], Unit] =
     new Dsl[Catch[F[A]], F[A], Unit] {
-      def interpret(instruction: Catch[F[A]], continuation: Unit => F[A]): F[A] = {
+      def interpret(keyword: Catch[F[A]], continuation: Unit => F[A]): F[A] = {
         monadError.handleError(try {
           continuation(())
         } catch {
           case e: Throwable =>
             monadError.raiseError[A](e)
-        })(instruction.failureHandler)
+        })(keyword.failureHandler)
       }
     }
 
@@ -203,8 +203,8 @@ object scalaz extends LowPriorityScalaz0 {
 
   implicit def scalazBindDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[Monadic[F, A], F[B], A] =
     new Dsl[Monadic[F, A], F[B], A] {
-      def interpret(instruction: Monadic[F, A], handler: A => F[B]): F[B] = {
-        bind.bind(instruction.fa)(handler)
+      def interpret(keyword: Monadic[F, A], handler: A => F[B]): F[B] = {
+        bind.bind(keyword.fa)(handler)
       }
     }
 
@@ -213,8 +213,8 @@ object scalaz extends LowPriorityScalaz0 {
 
     def lift(fa: F[A]): G[A]
 
-    final def interpret(instruction: Monadic[F, A], handler: A => G[B]): G[B] = {
-      monad.bind(lift(instruction.fa))(handler)
+    final def interpret(keyword: Monadic[F, A], handler: A => G[B]): G[B] = {
+      monad.bind(lift(keyword.fa))(handler)
     }
 
   }

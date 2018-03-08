@@ -2,7 +2,7 @@ package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.domains.Raii.{RaiiFailure, RaiiSuccess}
-import com.thoughtworks.dsl.instructions.{AutoClose, Yield}
+import com.thoughtworks.dsl.keywords.{AutoClose, Yield}
 import org.scalatest.{Assertion, FreeSpec, Matchers}
 
 import scala.util.{Failure, Success}

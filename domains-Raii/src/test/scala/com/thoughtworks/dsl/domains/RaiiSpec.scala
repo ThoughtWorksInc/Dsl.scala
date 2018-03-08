@@ -2,7 +2,7 @@ package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl.{!!, reset}
 import com.thoughtworks.dsl.domains.Raii.{RaiiFailure, RaiiSuccess}
-import com.thoughtworks.dsl.instructions.{Catch, Scope, Yield}
+import com.thoughtworks.dsl.keywords.{Catch, Scope, Yield}
 import org.scalatest.{FreeSpec, Matchers}
 
 /**

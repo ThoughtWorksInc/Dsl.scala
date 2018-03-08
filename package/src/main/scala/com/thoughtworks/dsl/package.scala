@@ -20,19 +20,19 @@ package com.thoughtworks
   *
   * == Reinventing control flow in DSL ==
   *
-  * Embedded DSLs usually consist of a set of domain-specific instructions,
+  * Embedded DSLs usually consist of a set of domain-specific keywords,
   * which can be embedded in the their hosting languages.
   *
-  * Ideally, a domain-specific instruction should be an optional extension,
+  * Ideally, a domain-specific keyword should be an optional extension,
   * which can be present everywhere in the ordinary control flow of the hosting language.
   * However, in practice, many of embedded DSLs badly interoperate with hosting language control flow.
   * Instead, they reinvent control flow in their own DSL.
   *
   * For example, the [[https://akka.io akka]] provides
   * [[https://doc.akka.io/docs/akka/2.5.10/fsm.html a DSL to create finite-state machines]],
-  * which consists of some domain-specific instructions like [[akka.actor.AbstractFSM#when when]],
+  * which consists of some domain-specific keywords like [[akka.actor.AbstractFSM#when when]],
   * [[akka.actor.AbstractFSM#goto goto]] and [[akka.actor.AbstractFSM#stay stay]].
-  * Unfortunately, you cannot embedded those instructions into your ordinary `if` / `while` / `try` control flows,
+  * Unfortunately, you cannot embedded those keywords into your ordinary `if` / `while` / `try` control flows,
   * because Akka's DSL is required to be split into small closures,
   * preventing ordinary control flows from crossing the boundary of those closures.
   *
@@ -102,7 +102,7 @@ package com.thoughtworks
   * based on `stateless-future`,
   * provides a special final result type for akka actors.
   * Unlike [[akka.actor.AbstractFSM]]'s inconsistent control flows, users can create complex finite-state machines
-  * from simple ordinary control flows along with `stateless-future-akka`'s domain-specific instruction `nextMessage`.
+  * from simple ordinary control flows along with `stateless-future-akka`'s domain-specific keyword `nextMessage`.
   *
   * == Collaborative DSLs ==
   *
@@ -126,11 +126,11 @@ package com.thoughtworks
   *
   *          The generated numbers should be stored in a lazily evaluated infinite [[scala.collection.immutable.Stream Stream]],
   *          which can be implemented as a recursive function that produce the next random number in each iteration,
-  *          with the help of our built-in domain-specific instruction [[com.thoughtworks.dsl.instructions.Yield Yield]].
+  *          with the help of our built-in domain-specific keyword [[com.thoughtworks.dsl.keywords.Yield Yield]].
   *
   *          {{{
   *          import com.thoughtworks.dsl.Dsl.reset
-  *          import com.thoughtworks.dsl.instructions.Yield
+  *          import com.thoughtworks.dsl.keywords.Yield
   *
   *          def xorshiftRandomGenerator(seed: Int): Stream[Int] = {
   *            val tmp1 = seed ^ (seed << 13)
@@ -147,22 +147,22 @@ package com.thoughtworks
   *          myGenerator(2) should be(2101636938)
   *          }}}
   *
-  *          [[com.thoughtworks.dsl.instructions.Yield Yield]] is an instruction to produce a value
+  *          [[com.thoughtworks.dsl.keywords.Yield Yield]] is an keyword to produce a value
   *          for a lazily evaluated [[scala.collection.immutable.Stream Stream]].
   *          That is to say, [[scala.collection.immutable.Stream Stream]] is the domain
-  *          where the DSL [[com.thoughtworks.dsl.instructions.Yield Yield]] can be used,
+  *          where the DSL [[com.thoughtworks.dsl.keywords.Yield Yield]] can be used,
   *          which was interpreted like the `yield` keyword in C#, JavaScript or Python.
   *
   *          Note that the body of `xorshiftRandomGenerator` is annotated as `@reset`,
-  *          which enables the [[Dsl.Instruction#unary_$bang !-notation]] in the code block.
+  *          which enables the [[Dsl.Keyword#unary_$bang !-notation]] in the code block.
   *
   *          Alternatively, you can also use the
   *          [[com.thoughtworks.dsl.compilerplugins.ResetEverywhere ResetEverywhere]] compiler plug-in,
-  *          which enable [[Dsl.Instruction#unary_$bang !-notation]] for every methods and functions.
+  *          which enable [[Dsl.Keyword#unary_$bang !-notation]] for every methods and functions.
   *
   *          <hr/>
   *
-  *          [[com.thoughtworks.dsl.instructions.Yield Yield]] and [[scala.collection.immutable.Stream Stream]]
+  *          [[com.thoughtworks.dsl.keywords.Yield Yield]] and [[scala.collection.immutable.Stream Stream]]
   *          can be also used for logging.
   *
   *          Suppose you have a function to parse an JSON file,
@@ -191,7 +191,7 @@ package com.thoughtworks
   *          the return type is now `Stream[String] !! JSONType`,
   *          where [[com.thoughtworks.dsl.Dsl.$bang$bang !!]] is
   *          an alias of continuation-passing style function marked as `@reset`,
-  *          which enables the [[Dsl.Instruction#unary_$bang !-notation]] automatically.
+  *          which enables the [[Dsl.Keyword#unary_$bang !-notation]] automatically.
   *
   *          {{{
   *          val logs = parseAndLog(""" { "key": "value" } """, JSONArray(Nil)) { json =>
@@ -209,10 +209,10 @@ package com.thoughtworks
   *          [[com.thoughtworks.dsl.Dsl.$bang$bang !!]], or [[com.thoughtworks.dsl.Dsl.Continuation Continuation]],
   *          is the preferred approach to enable multiple domains in one function.
   *
-  *          [[com.thoughtworks.dsl.domains.Raii Raii]] is a domain that supports many useful instructions:
-  *           - [[com.thoughtworks.dsl.instructions.AutoClose AutoClose]] for resource management.
-  *           - [[com.thoughtworks.dsl.instructions.Shift Shift]] for asynchronous programming.
-  *           - [[com.thoughtworks.dsl.instructions.Fork Fork]] for creating multiple tasks in parallel.
+  *          [[com.thoughtworks.dsl.domains.Raii Raii]] is a domain that supports many useful keywords:
+  *           - [[com.thoughtworks.dsl.keywords.AutoClose AutoClose]] for resource management.
+  *           - [[com.thoughtworks.dsl.keywords.Shift Shift]] for asynchronous programming.
+  *           - [[com.thoughtworks.dsl.keywords.Fork Fork]] for creating multiple tasks in parallel.
   *
   *          For example, you can create a function that
   *          lazily read each line of a [[java.io.BufferedReader BufferedReader]] to a [[Stream]],
@@ -221,7 +221,7 @@ package com.thoughtworks
   *
   *          {{{
   *          import com.thoughtworks.dsl.domains.Raii
-  *          import com.thoughtworks.dsl.instructions.AutoClose
+  *          import com.thoughtworks.dsl.keywords.AutoClose
   *
   *          def readerToStream(createReader: => BufferedReader): Stream[String] !! Raii !! Int = _ {
   *            val reader = !AutoClose(createReader)
@@ -242,7 +242,7 @@ package com.thoughtworks
   *
   *          `!loop(0)` is a shortcut of `!Shift(loop(0))`,
   *          because there is [[com.thoughtworks.dsl.domains.Raii#await an implicit conversion]]
-  *          from `Stream[String] !! Raii !! Int` to [[com.thoughtworks.dsl.instructions.Shift Shift]] instruction,
+  *          from `Stream[String] !! Raii !! Int` to [[com.thoughtworks.dsl.keywords.Shift Shift]] keyword,
   *          which is similar to the `await` keyword in JavaScript, Python or C#.
   *
   *          A type like `A !! B !! C` means a domain-specific value of type `C` in the domain of `A` and `B`.
@@ -281,8 +281,8 @@ package com.thoughtworks
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
   * @see [[Dsl]] for the guideline to create your custom DSL.
-  * @see [[domains.scalaz]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[scalaz]].
-  * @see [[domains.cats]] for using [[Dsl.Instruction#unary_$bang !-notation]] with [[cats]].
+  * @see [[domains.scalaz]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[scalaz]].
+  * @see [[domains.cats]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[cats]].
   *
   *
   */
@@ -290,9 +290,9 @@ package object dsl
 
 package dsl {
 
-  /** Contains built-in domain-specific [[com.thoughtworks.dsl.Dsl.Instruction Instruction]]s and their corresponding interpreters.
+  /** Contains built-in domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]]s and their corresponding interpreters.
     *
     *
     */
-  package object instructions
+  package object keywords
 }

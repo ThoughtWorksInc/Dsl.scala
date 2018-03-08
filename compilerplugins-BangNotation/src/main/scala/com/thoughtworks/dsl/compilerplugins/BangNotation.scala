@@ -308,9 +308,9 @@ final class BangNotation(override val global: Global) extends Plugin {
             q"""
             @${definitions.ScalaInlineClass} def $scopeApplyName[Domain](continue: _root_.scala.util.Try[$tpe] => Domain)(
             continuation: (_root_.scala.util.Try[$tpe] => Domain) => Domain)(
-            implicit scopeDsl: _root_.com.thoughtworks.dsl.Dsl[_root_.com.thoughtworks.dsl.instructions.Scope[Domain,_root_.scala.util.Try[$tpe]],Domain,_root_.scala.util.Try[$tpe]]
+            implicit scopeDsl: _root_.com.thoughtworks.dsl.Dsl[_root_.com.thoughtworks.dsl.keywords.Scope[Domain,_root_.scala.util.Try[$tpe]],Domain,_root_.scala.util.Try[$tpe]]
             )= {
-              _root_.com.thoughtworks.dsl.instructions.Scope(continuation).cpsApply(continue)
+              _root_.com.thoughtworks.dsl.keywords.Scope(continuation).cpsApply(continue)
             }
 
             $scopeApplyName { ($tryResultName: _root_.scala.util.Try[$tpe]) => ${{
@@ -321,7 +321,7 @@ final class BangNotation(override val global: Global) extends Plugin {
                 """
               }
             }}} { ($finalizerName: ${TypeTree()}) =>
-              _root_.com.thoughtworks.dsl.instructions.Catch {
+              _root_.com.thoughtworks.dsl.keywords.Catch {
                 case ..${{
               catches.map { caseDef =>
                 atPos(caseDef.pos) {

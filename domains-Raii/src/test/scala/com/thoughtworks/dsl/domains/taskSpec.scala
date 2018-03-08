@@ -3,7 +3,7 @@ package com.thoughtworks.dsl.domains
 import com.thoughtworks.dsl.Dsl.{!!, reset}
 import org.scalatest.{Assertion, AsyncFreeSpec, Matchers}
 import Raii.Task
-import com.thoughtworks.dsl.instructions.{AutoClose, Each, Fork}
+import com.thoughtworks.dsl.keywords.{AutoClose, Each, Fork}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.TailCalls
