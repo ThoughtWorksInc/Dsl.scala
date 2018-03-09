@@ -76,16 +76,17 @@ object Dsl extends LowPriorityDsl0 {
   /**
     *
     * @tparam Self the self type
-    * @see [[https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern Curiously recurring template pattern]] for the reason why we need `Keyword` type parameter
+    * @see [[https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern Curiously recurring template pattern]]
+    *      for the reason why we need the `Self` type parameter
     */
   trait Keyword[Self, Value] extends Any { this: Self =>
 
     @shift
     @compileTimeOnly(
-      """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")` and must only be called inside a method or function whose return type is annotated as `@reset`.""")
+      """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")` and must only be called inside a code block annotated as `@reset`.""")
     final def unary_! : Value = {
       throw new IllegalAccessException(
-        """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")` and must only be called inside a method or function whose return type is annotated as `@reset`."""
+        """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugin" % "latest.release")` and must only be called inside a code block annotated as `@reset`."""
       )
     }
 
