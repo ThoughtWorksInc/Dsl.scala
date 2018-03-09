@@ -66,5 +66,5 @@ The call to `xorshiftRandomGenerator` does not throw a `StackOverflowError` beca
 
 ## Links
 
-* Check the [Scaladoc](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html) to find examples about using or creating DSLs.
+* Check the [Documentation](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html) to find examples about using or creating DSLs.
 * See [MVNRepository](http://mvnrepository.com/artifact/com.thoughtworks.dsl?sort=newest) or [Scaladex](https://index.scala-lang.org/thoughtworksinc/dsl.scala) for the settings of each built-in DSLs for your build tools.
