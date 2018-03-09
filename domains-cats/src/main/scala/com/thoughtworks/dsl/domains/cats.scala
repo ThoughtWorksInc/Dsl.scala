@@ -103,7 +103,6 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          }}}
   *
   * @author 杨博 (Yang Bo)
-  * @todo [[Monadic]] should be a [[scala.AnyVal]] after [[https://github.com/scala/bug/issues/10595]] is resolved.
   */
 object cats {
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
