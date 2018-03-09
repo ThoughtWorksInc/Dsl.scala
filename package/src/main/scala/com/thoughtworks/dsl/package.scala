@@ -276,7 +276,7 @@ package com.thoughtworks
   *          }}}
   *
   *          If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
-  *          you can use `Unit !! Raii !! A` or the alias [[com.thoughtworks.dsl.domains.Raii.Task]],
+  *          you can use `TailRect[Unit] !! Raii !! A` or the alias [[com.thoughtworks.dsl.domains.Raii.Task]],
   *          as a higher-performance replacement of
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
