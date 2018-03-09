@@ -25,7 +25,7 @@ package com.thoughtworks
   *
   * Ideally, a domain-specific keyword should be an optional extension,
   * which can be present everywhere in the ordinary control flow of the hosting language.
-  * However, in practice, many of embedded DSLs badly interoperate with hosting language control flow.
+  * However, previous embedded DSLs usually badly interoperate with hosting language control flow.
   * Instead, they reinvent control flow in their own DSL.
   *
   * For example, the [[https://akka.io akka]] provides
