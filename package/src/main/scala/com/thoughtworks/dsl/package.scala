@@ -209,15 +209,10 @@ package com.thoughtworks
   *          [[com.thoughtworks.dsl.Dsl.$bang$bang !!]], or [[com.thoughtworks.dsl.Dsl.Continuation Continuation]],
   *          is the preferred approach to enable multiple domains in one function.
   *
-  *          [[com.thoughtworks.dsl.domains.Raii Raii]] is a domain that supports many useful keywords:
-  *           - [[com.thoughtworks.dsl.keywords.AutoClose AutoClose]] for resource management.
-  *           - [[com.thoughtworks.dsl.keywords.Shift Shift]] for asynchronous programming.
-  *           - [[com.thoughtworks.dsl.keywords.Fork Fork]] for creating multiple tasks in parallel.
-  *
   *          For example, you can create a function that
   *          lazily read each line of a [[java.io.BufferedReader BufferedReader]] to a [[Stream]],
   *          automatically close the [[java.io.BufferedReader BufferedReader]] after reading the last line,
-  *          and finally return the total number of lines.
+  *          and finally return the total number of lines in the `Stream[String] !! Raii !! Int` domain.
   *
   *          {{{
   *          import com.thoughtworks.dsl.domains.Raii
@@ -239,6 +234,11 @@ package com.thoughtworks
   *            !loop(0)
   *          }
   *          }}}
+  *
+  *          [[com.thoughtworks.dsl.domains.Raii Raii]] is a domain that supports many useful keywords:
+  *           - [[com.thoughtworks.dsl.keywords.AutoClose AutoClose]] for resource management.
+  *           - [[com.thoughtworks.dsl.keywords.Shift Shift]] for asynchronous programming.
+  *           - [[com.thoughtworks.dsl.keywords.Fork Fork]] for creating multiple tasks in parallel.
   *
   *          `!loop(0)` is a shortcut of `!Shift(loop(0))`,
   *          because there is [[com.thoughtworks.dsl.domains.Raii#await an implicit conversion]]
