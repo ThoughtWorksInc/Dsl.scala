@@ -218,8 +218,8 @@ package com.thoughtworks
   *          import com.thoughtworks.dsl.domains.Raii
   *          import com.thoughtworks.dsl.keywords.AutoClose
   *
-  *          def readerToStream(createReader: => BufferedReader): Stream[String] !! Raii !! Int = _ {
-  *            val reader = !AutoClose(createReader)
+  *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Raii !! Int = _ {
+  *            val reader = !AutoClose(createReader())
   *
   *            def loop(lineNumber: Int): Stream[String] !! Raii !! Int = _ {
   *              reader.readLine() match {
@@ -259,9 +259,10 @@ package com.thoughtworks
   *              override def close() = {
   *                isClosed = true
   *              }
+  *            }
   *          }
   *
-  *          val stream = readerToStream(createReader()).run { result =>
+  *          val stream = readerToStream(createReader _).run { result =>
   *            inside(result) {
   *              case Success(totalNumber) =>
   *                totalNumber should be(3)
