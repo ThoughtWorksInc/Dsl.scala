@@ -254,14 +254,14 @@ package com.thoughtworks
   *          import scala.util.Success
   *
   *          var isClosed = false
-  *
-  *          val stream = readerToStream(
+  *          def createReader() = {
   *            new BufferedReader(new StringReader("line1\nline2\nline3")) {
   *              override def close() = {
   *                isClosed = true
   *              }
-  *            }
-  *          ).run { result =>
+  *          }
+  *
+  *          val stream = readerToStream(createReader()).run { result =>
   *            inside(result) {
   *              case Success(totalNumber) =>
   *                totalNumber should be(3)
