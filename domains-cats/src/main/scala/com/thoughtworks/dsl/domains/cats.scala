@@ -60,7 +60,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          A `@reset` code block can contain `try` / `catch` / `finally`
   *          if the monadic data type supports [[cats.MonadError]].
   *
-  *          [[cats.effect.IO]] is a monadic data type that supports [[cats.MonadError]],
+  *          For example, [[cats.effect.IO]] is a monadic data type that supports [[cats.MonadError]],
   *          therefore `try` / `catch` / `finally` expressions can be used inside a `@reset` code block
   *          whose return type is [[cats.effect.IO]].
   *
