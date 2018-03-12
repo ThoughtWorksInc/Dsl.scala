@@ -50,7 +50,7 @@ def xorshiftRandomGenerator(seed: Int): Stream[Int] = {
 }
 ```
 
-Note that a keyword is a simply case class. You need a `!` prefix to the keyword to activate the DSL.
+Note that a keyword is a plain case class. You need a `!` prefix to the keyword to activate the DSL.
 
 It's done. We can test it in ScalaTest:
 
