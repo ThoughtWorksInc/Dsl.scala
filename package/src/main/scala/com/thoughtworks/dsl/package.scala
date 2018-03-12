@@ -259,6 +259,7 @@ package com.thoughtworks
   *              override def close() = {
   *                isClosed = true
   *              }
+  *            }
   *          }
   *
   *          val stream = readerToStream(createReader _).run { result =>
