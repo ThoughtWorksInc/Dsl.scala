@@ -33,8 +33,10 @@ private[keywords] trait LowPriorityScope0 extends LowPriorityScope1 { this: Scop
     new Dsl[Scope[Domain !! DomainValue, ScopeValue], Domain !! DomainValue, ScopeValue] {
 
       def interpret(keyword: Scope[Domain !! DomainValue, ScopeValue],
-                    handler: ScopeValue => Domain !! DomainValue): Domain !! DomainValue = {
-        restScopeDsl.interpret(Scope[Domain, DomainValue](keyword.continuation(handler)), _)
+                    handler: ScopeValue => Domain !! DomainValue): Domain !! DomainValue = { continue =>
+        restScopeDsl.interpret(Scope[Domain, DomainValue] { _ =>
+          keyword.continuation(handler)(continue)
+        }, continue)
       }
     }
 
@@ -45,23 +47,24 @@ object Scope extends LowPriorityScope0 {
   implicit def implicitScope[Domain, Value](continuation: Domain !! Value): Scope[Domain, Value] =
     Scope[Domain, Value](continuation)
 
-  implicit def throwableScopeDsl[Domain, ScopeValue]
+  implicit def throwableScopeDsl[Domain, ScopeValue](
+      implicit restScopeDsl: Dsl[Scope[Domain, Throwable], Domain, Throwable])
     : Dsl[Scope[Domain !! Throwable, ScopeValue], Domain !! Throwable, ScopeValue] =
     new Dsl[Scope[Domain !! Throwable, ScopeValue], Domain !! Throwable, ScopeValue] {
       def interpret(scope: Scope[Domain !! Throwable, ScopeValue],
                     rest: ScopeValue => Domain !! Throwable): Domain !! Throwable = { outerFailureHandler =>
         @inline
         def jvmCatch(block: => Domain !! Throwable)(failureHandler: Throwable => Domain): Domain = {
-          (try {
+          Scope[Domain, Throwable](try {
             block
           } catch {
             case NonFatal(e) =>
-              return failureHandler(e)
-          }).apply(failureHandler)
+              _(e)
+          }).cpsApply(failureHandler)
         }
 
         jvmCatch(scope.continuation { (scopeValue: ScopeValue) => (_: Throwable => Domain) =>
-          jvmCatch(rest(scopeValue))(outerFailureHandler)
+          rest(scopeValue)(outerFailureHandler)
         })(outerFailureHandler)
 
       }
