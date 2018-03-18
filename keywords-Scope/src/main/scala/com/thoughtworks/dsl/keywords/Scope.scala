@@ -13,7 +13,19 @@ final case class Scope[Domain, Value](continuation: Domain !! Value)
     extends AnyVal
     with Keyword[Scope[Domain, Value], Value]
 
-private[keywords] trait LowPriorityScope0 { this: Scope.type =>
+private[keywords] trait LowPriorityScope1 { this: Scope.type =>
+
+  implicit def fallbackScopeDsl[Domain, ScopeValue]: Dsl[Scope[Domain, ScopeValue], Domain, ScopeValue] =
+    new Dsl[Scope[Domain, ScopeValue], Domain, ScopeValue] {
+
+      def interpret(keyword: Scope[Domain, ScopeValue], handler: ScopeValue => Domain): Domain = {
+        keyword.continuation(handler)
+      }
+    }
+
+}
+
+private[keywords] trait LowPriorityScope0 extends LowPriorityScope1 { this: Scope.type =>
 
   implicit def scopeContinuationDsl[Domain, DomainValue, ScopeValue](
       implicit restScopeDsl: Dsl[Scope[Domain, DomainValue], Domain, DomainValue])
