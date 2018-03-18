@@ -1,6 +1,7 @@
 package com.thoughtworks.dsl.keywords
 
-import com.thoughtworks.dsl.Dsl.Keyword
+import com.thoughtworks.dsl.Dsl
+import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 
 import scala.language.implicitConversions
 
@@ -15,5 +16,22 @@ object AutoClose {
 
   def apply[R <: AutoCloseable](r: => R)(
       implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): AutoClose[R] = new AutoClose(r _)
+
+  implicit def autoCloseDsl[R <: AutoCloseable]: Dsl[AutoClose[R], AutoCloseable, R] =
+    new Dsl[AutoClose[R], AutoCloseable, R] {
+      def interpret(autoClose: AutoClose[R], handler: R => AutoCloseable): AutoCloseable = {
+        new AutoCloseable {
+          private val head = autoClose.open()
+          private lazy val tail = handler(head)
+          def close(): Unit = {
+            try {
+              tail.close()
+            } finally {
+              head.close()
+            }
+          }
+        }
+      }
+    }
 
 }
