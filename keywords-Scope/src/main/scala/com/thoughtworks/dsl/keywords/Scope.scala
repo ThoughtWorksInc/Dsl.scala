@@ -70,4 +70,18 @@ object Scope extends LowPriorityScope0 {
       }
     }
 
+  implicit def autoCloseableStreamScopeDsl[ScopeValue]
+    : Dsl[Scope[Stream[AutoCloseable], ScopeValue], Stream[AutoCloseable], ScopeValue] =
+    new Dsl[Scope[Stream[AutoCloseable], ScopeValue], Stream[AutoCloseable], ScopeValue] {
+      def interpret(keyword: Scope[Stream[AutoCloseable], ScopeValue],
+                    handler: ScopeValue => Stream[AutoCloseable]): Stream[AutoCloseable] = {
+
+        val stream = keyword.continuation { scopeValue =>
+          new Stream.Cons(new AutoCloseable { def close(): Unit = () }, handler(scopeValue))
+        }
+        stream.head.close()
+        stream.tail
+      }
+    }
+
 }

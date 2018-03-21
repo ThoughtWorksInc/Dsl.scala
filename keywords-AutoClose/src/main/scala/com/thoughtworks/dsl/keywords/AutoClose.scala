@@ -34,4 +34,24 @@ object AutoClose {
       }
     }
 
+  implicit def streamAutoCloseDsl[R <: AutoCloseable]: Dsl[AutoClose[R], Stream[AutoCloseable], R] =
+    new Dsl[AutoClose[R], Stream[AutoCloseable], R] {
+      def interpret(keyword: AutoClose[R], handler: R => Stream[AutoCloseable]): Stream[AutoCloseable] = {
+        val r = keyword.open()
+        val stream = handler(r)
+        val otherAutoCloseableInCurrentScope = stream.head
+
+        // Should use `updated`, once https://github.com/scala/bug/issues/10791 is resolved
+        new Stream.Cons(new AutoCloseable {
+          def close(): Unit = {
+            try {
+              otherAutoCloseableInCurrentScope.close()
+            } finally {
+              r.close()
+            }
+          }
+        }, stream.tail)
+      }
+    }
+
 }
