@@ -22,7 +22,7 @@ object AutoClose {
       def interpret(autoClose: AutoClose[R], handler: R => AutoCloseable): AutoCloseable = {
         new AutoCloseable {
           private val head = autoClose.open()
-          private lazy val tail = handler(head)
+          private val tail = handler(head)
           def close(): Unit = {
             try {
               tail.close()
