@@ -37,7 +37,7 @@ addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "la
 addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-reseteverywhere" % "latest.release")
 ```
 
-The random number generator which can be implemented as a recursive function that produce the next random number in each iteration.
+The random number generator can be implemented as a recursive function that produces the next random number in each iteration.
 
 ```scala
 import com.thoughtworks.dsl.instructions.Yield
