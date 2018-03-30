@@ -106,20 +106,20 @@ package com.thoughtworks
   *
   * == Collaborative DSLs ==
   *
-  * The above DSLs lack of the ability to collaborate with other DSLs.
-  * Each of the above DSLs can be exclusively enabled in a code block.
+  * All the above approaches lack of the ability to collaborate with other DSLs.
+  * Each of the above DSLs can be only exclusively enabled in a code block.
   * For example,
   * [[https://github.com/scala/scala-continuations scala-continuations]]
-  * enables calls to `@cps` method in `reset` blocks,
+  * enables calls to `@cps` method in [[scala.util.continuations.reset]] blocks,
   * and [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]]
-  * enables the magic `each` method for [[scalaz.Monad]] in `monadic` blocks.
-  * It is impossible to enable both DSL in one function.
+  * enables the magic `each` method for [[scalaz.Monad]] in [[com.thoughtworks.each.Monadic.monadic]] blocks.
+  * It is impossible to enable both DSLs in one function.
   *
   * This [[https://github.com/ThoughtWorksInc/Dsl.scala Dsl.scala]] project resolves this problem.
   *
-  * We also provide adapters to all the above kind of DSLs.
-  * Instead of switching different DSL between different function,
-  * DSL users can use different DSLs together in one function,
+  * We also provide adapters to all the above kinds of DSLs.
+  * Instead of switching different DSLs between different functions,
+  * DSL users can use multiple DSLs together in one function,
   * by simply adding [[com.thoughtworks.dsl.compilerplugins.BangNotation our Scala compiler plug-in]].
   *
   * @example Suppose you want to create an [[https://en.wikipedia.org/wiki/Xorshift Xorshift]] random number generator.
