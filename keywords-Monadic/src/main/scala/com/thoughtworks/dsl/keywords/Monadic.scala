@@ -13,5 +13,5 @@ import scala.language.implicitConversions
 final case class Monadic[F[*], A](fa: F[A]) extends Keyword[Monadic[F, A], A]
 
 object Monadic {
-  implicit def implicitFlatMap[F[*], A](fa: F[A]): Monadic[F, A] = Monadic(fa)
+  implicit def implicitMonadic[F[*], A](fa: F[A]): Monadic[F, A] = Monadic(fa)
 }
