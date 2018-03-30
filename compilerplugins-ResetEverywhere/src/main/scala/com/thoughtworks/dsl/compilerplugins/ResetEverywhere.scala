@@ -7,7 +7,15 @@ import scala.tools.nsc.transform.Transform
 import scala.tools.nsc.typechecker.ContextMode
 import scala.tools.nsc.{Global, Mode, Phase}
 
-/**
+/** A Scala compiler plug-in to enable [[Dsl.Keyword#unary_$bang !-notation]] for every methods and functions.
+  *
+  * Add the following setting in your `build.sbt` to enable this plug-in.
+  *
+  * `<pre>
+  * // build.sbt
+  * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-reseteverywhere" % "latest.release")
+  * </pre>`
+  *
   * @author 杨博 (Yang Bo)
   */
 final class ResetEverywhere(override val global: Global) extends Plugin {
