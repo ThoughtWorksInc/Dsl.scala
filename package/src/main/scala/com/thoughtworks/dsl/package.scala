@@ -170,7 +170,6 @@ package com.thoughtworks
   *
   *          {{{
   *          import com.thoughtworks.dsl.Dsl.!!
-  *          import java.io._
   *          import scala.util.parsing.json._
   *
   *          def parseAndLog(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
@@ -217,6 +216,7 @@ package com.thoughtworks
   *          {{{
   *          import com.thoughtworks.dsl.domains.Raii
   *          import com.thoughtworks.dsl.keywords.AutoClose
+  *          import java.io._
   *
   *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Raii !! Int = _ {
   *            val reader = !AutoClose(createReader())
