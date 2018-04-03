@@ -20,4 +20,5 @@ libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % 
 
 libraryDependencies += "io.monix" %% "monix" % "2.3.3"
 
-exampleSuperTypes += "org.scalatest.Inside"
+import scala.meta._
+exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
