@@ -34,8 +34,7 @@ private[dsl] trait LowPriorityDsl0 {
       implicit restDsl: Dsl[Keyword, Domain, KeywordValue]
   ): Dsl[Keyword, Domain !! FinalResult, KeywordValue] = {
     new Dsl[Keyword, Domain !! FinalResult, KeywordValue] {
-      def interpret(keyword: Keyword,
-                    handler: KeywordValue => Domain !! FinalResult): Domain !! FinalResult = {
+      def interpret(keyword: Keyword, handler: KeywordValue => Domain !! FinalResult): Domain !! FinalResult = {
         (continue: FinalResult => Domain) =>
           restDsl.interpret(keyword, { a =>
             handler(a)(continue)
@@ -58,7 +57,15 @@ object Dsl extends LowPriorityDsl0 {
     }
 
   type Continuation[R, +A] = (A => R @reset) => R
+
+  object Continuation {
+    import scala.language.implicitConversions
+    def now[R, A](a: A): (R !! A) @reset = _(a)
+    def delay[R, A](a: => A): (R !! A) @reset = _(a)
+  }
+
   type !![R, +A] = Continuation[R, A]
+  val !! = Continuation
 
   private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
   private[dsl] final class nonTypeConstraintReset extends ResetAnnotation with StaticAnnotation
@@ -69,8 +76,7 @@ object Dsl extends LowPriorityDsl0 {
   /** An annotation to mark a method is a shift control operator. */
   final class shift extends StaticAnnotation
 
-  def apply[Keyword, Domain, Value](
-      implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
+  def apply[Keyword, Domain, Value](implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
     typeClass
 
   /**
