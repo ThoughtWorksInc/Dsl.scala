@@ -160,19 +160,57 @@ package com.thoughtworks
   *          [[com.thoughtworks.dsl.compilerplugins.ResetEverywhere ResetEverywhere]] compiler plug-in,
   *          which enable [[Dsl.Keyword#unary_$bang !-notation]] for every methods and functions.
   *
-  *          <hr/>
   *
-  *          [[com.thoughtworks.dsl.keywords.Yield Yield]] and [[scala.collection.immutable.Stream Stream]]
+  * @example [[com.thoughtworks.dsl.keywords.Yield Yield]] and [[scala.collection.immutable.Stream Stream]]
   *          can be also used for logging.
   *
   *          Suppose you have a function to parse an JSON file,
   *          you can append log records to a [[scala.collection.immutable.Stream Stream]] during parsing.
   *
   *          {{{
+  *          import com.thoughtworks.dsl.keywords.Yield
   *          import com.thoughtworks.dsl.Dsl.!!
   *          import scala.util.parsing.json._
+  *          def parseAndLog1(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = { (callback: JSONType => Stream[String]) =>
+  *            !Yield(s"I am going to parse the JSON text $jsonContent...")
+  *            JSON.parseRaw(jsonContent) match {
+  *              case Some(json) =>
+  *                !Yield(s"Succeeded to parse $jsonContent")
+  *                callback(json)
+  *              case None =>
+  *                !Yield(s"Failed to parse $jsonContent")
+  *                callback(defaultValue)
+  *            }
+  *          }
+  *          }}}
   *
-  *          def parseAndLog(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
+  *          Since the function produces both a [[scala.util.parsing.json.JSONType JSONType]]
+  *          and a [[scala.collection.immutable.Stream Stream]] of logs,
+  *          the return type is now `Stream[String] !! JSONType`,
+  *          where [[com.thoughtworks.dsl.Dsl.$bang$bang !!]] is
+  *          `(JSONType => Stream[String]) => Stream[String]`,
+  *          an alias of continuation-passing style function,
+  *          indicating it produces both a [[scala.util.parsing.json.JSONType JSONType]] and a [[Stream]] of logs.
+  *
+  *          {{{
+  *          val logs = parseAndLog1(""" { "key": "value" } """, JSONArray(Nil)) { json =>
+  *            json should be(JSONObject(Map("key" -> "value")))
+  *            Stream("done")
+  *          }
+  *
+  *          logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
+  *                                "Succeeded to parse  { \"key\": \"value\" } ",
+  *                                "done"))
+  *          }}}
+  *
+  *
+  * @example The the closure in the previous example can be simplified with the help of Scala's placeholder syntax:
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.Yield
+  *          import com.thoughtworks.dsl.Dsl.!!
+  *          import scala.util.parsing.json._
+  *          def parseAndLog2(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
   *            !Yield(s"I am going to parse the JSON text $jsonContent...")
   *            JSON.parseRaw(jsonContent) match {
   *              case Some(json) =>
@@ -183,17 +221,8 @@ package com.thoughtworks
   *                defaultValue
   *            }
   *          }
-  *          }}}
   *
-  *          Since the function produces both a [[scala.util.parsing.json.JSONType JSONType]]
-  *          and a [[scala.collection.immutable.Stream Stream]] of logs,
-  *          the return type is now `Stream[String] !! JSONType`,
-  *          where [[com.thoughtworks.dsl.Dsl.$bang$bang !!]] is
-  *          an alias of continuation-passing style function marked as `@reset`,
-  *          which enables the [[Dsl.Keyword#unary_$bang !-notation]] automatically.
-  *
-  *          {{{
-  *          val logs = parseAndLog(""" { "key": "value" } """, JSONArray(Nil)) { json =>
+  *          val logs = parseAndLog2(""" { "key": "value" } """, JSONArray(Nil)) { json =>
   *            json should be(JSONObject(Map("key" -> "value")))
   *            Stream("done")
   *          }
@@ -203,9 +232,48 @@ package com.thoughtworks
   *                                "done"))
   *          }}}
   *
-  *          <hr/>
+  *          Note that `parseAndLog2` is equivelent to `parseAndLog1`.
+  *          The code block after underscore is still inside a function whose return type is `Stream[String]`.
   *
-  *          [[com.thoughtworks.dsl.Dsl.$bang$bang !!]], or [[com.thoughtworks.dsl.Dsl.Continuation Continuation]],
+  * @example Instead of manually create the continuation-passing style function,
+  *          you can also create the function from [[com.thoughtworks.dsl.Dsl.Continuation.delay delay]].
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.Yield
+  *          import com.thoughtworks.dsl.Dsl.!!, !!.delay
+  *          import scala.util.parsing.json._
+  *          def parseAndLog3(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = delay {
+  *            !Yield(s"I am going to parse the JSON text $jsonContent...")
+  *            JSON.parseRaw(jsonContent) match {
+  *              case Some(json) =>
+  *                !Yield(s"Succeeded to parse $jsonContent")
+  *                json
+  *              case None =>
+  *                !Yield(s"Failed to parse $jsonContent")
+  *                defaultValue
+  *            }
+  *          }
+  *
+  *          val logs = parseAndLog3(""" { "key": "value" } """, JSONArray(Nil)) { json =>
+  *            json should be(JSONObject(Map("key" -> "value")))
+  *            Stream("done")
+  *          }
+  *
+  *          logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
+  *                                "Succeeded to parse  { \"key\": \"value\" } ",
+  *                                "done"))
+  *          }}}
+  *
+  *          Unlike the `parseAndLog2` example, The code inside a `delay` block is not in an anonymous function.
+  *          Instead, they are directly inside `parseAndLog3`, whose return type is `Stream[String] !! JSONType`.
+  *
+  *          That is to say,
+  *          the domain of those [[com.thoughtworks.dsl.keywords.Yield Yield]] keywords in `parseAndLog3`
+  *          is not `Stream[String]` any more, the domain is `Stream[String] !! JSONType` now,
+  *          which supports more keywords, which you will learnt from the next examples,
+  *          than the `Stream[String]` domain.
+  *
+  * @example [[com.thoughtworks.dsl.Dsl.$bang$bang !!]], or [[com.thoughtworks.dsl.Dsl.Continuation Continuation]],
   *          is the preferred approach to enable multiple domains in one function.
   *
   *          For example, you can create a function that
@@ -215,7 +283,9 @@ package com.thoughtworks
   *
   *          {{{
   *          import com.thoughtworks.dsl.domains.Raii
+  *          import com.thoughtworks.dsl.Dsl.!!
   *          import com.thoughtworks.dsl.keywords.AutoClose
+  *          import com.thoughtworks.dsl.keywords.Yield
   *          import java.io._
   *
   *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Raii !! Int = _ {
