@@ -93,7 +93,7 @@ Seq[ProjectReference](
   )
 }
 
-crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.4")
+crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.5")
 
 lazy val unidoc =
   project
