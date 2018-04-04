@@ -20,7 +20,7 @@ import scala.util.control.TailCalls.TailRec
   *
   *          TODO: an example for creating a DSL
   */
-@implicitNotFound("Cannot interpret the DSL keyword ${Keyword} inside a function that returns ${Domain}.")
+@implicitNotFound("The keyword ${Keyword} is not supported inside a function that returns ${Domain}.")
 trait Dsl[-Keyword, Domain, +Value] {
 
   /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */

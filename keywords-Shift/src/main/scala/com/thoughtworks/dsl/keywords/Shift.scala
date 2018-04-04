@@ -46,4 +46,6 @@ object Shift extends LowPriorityShift0 {
       }
     }
   }
+
+//  TODO: StackSafeShift for `Domain !! Throwable`
 }

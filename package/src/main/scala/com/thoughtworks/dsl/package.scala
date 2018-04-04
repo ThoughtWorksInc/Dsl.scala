@@ -279,19 +279,19 @@ package com.thoughtworks
   *          For example, you can create a function that
   *          lazily read each line of a [[java.io.BufferedReader BufferedReader]] to a [[Stream]],
   *          automatically close the [[java.io.BufferedReader BufferedReader]] after reading the last line,
-  *          and finally return the total number of lines in the `Stream[String] !! Raii !! Int` domain.
+  *          and finally return the total number of lines in the `Stream[String] !! Throwable !! Int` domain.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.domains.Raii
-  *          import com.thoughtworks.dsl.Dsl.!!
+  *          import com.thoughtworks.dsl.Dsl.!!, !!.delay
   *          import com.thoughtworks.dsl.keywords.AutoClose
   *          import com.thoughtworks.dsl.keywords.Yield
+  *          import com.thoughtworks.dsl.keywords.Shift._
   *          import java.io._
   *
-  *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Raii !! Int = _ {
+  *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Throwable !! Int = delay {
   *            val reader = !AutoClose(createReader())
   *
-  *            def loop(lineNumber: Int): Stream[String] !! Raii !! Int = _ {
+  *            def loop(lineNumber: Int): Stream[String] !! Throwable !! Int = _ {
   *              reader.readLine() match {
   *                case null =>
   *                  lineNumber
@@ -305,20 +305,14 @@ package com.thoughtworks
   *          }
   *          }}}
   *
-  *          [[com.thoughtworks.dsl.domains.Raii Raii]] is a domain that supports many useful keywords:
-  *           - [[com.thoughtworks.dsl.keywords.AutoClose AutoClose]] for resource management.
-  *           - [[com.thoughtworks.dsl.keywords.Shift Shift]] for asynchronous programming.
-  *           - [[com.thoughtworks.dsl.keywords.Fork Fork]] for creating multiple tasks in parallel.
-  *
   *          `!loop(0)` is a shortcut of `!Shift(loop(0))`,
-  *          because there is [[com.thoughtworks.dsl.domains.Raii#await an implicit conversion]]
-  *          from `Stream[String] !! Raii !! Int` to [[com.thoughtworks.dsl.keywords.Shift Shift]] keyword,
+  *          because there is [[com.thoughtworks.dsl.keywords.Shift#implicitShift an implicit conversion]]
+  *          from `Stream[String] !! Throwable !! Int` to a [[com.thoughtworks.dsl.keywords.Shift Shift]] case class,
   *          which is similar to the `await` keyword in JavaScript, Python or C#.
   *
   *          A type like `A !! B !! C` means a domain-specific value of type `C` in the domain of `A` and `B`.
-  *          When `B` is [[com.thoughtworks.dsl.domains.Raii Raii]],
-  *          a [[com.thoughtworks.dsl.domains.Raii.RaiiContinuationOps#run]] method is available,
-  *          which can be used to register a callback function that handles the result of `Try[C]`.
+  *          When `B` is [[Throwable]], the [[com.thoughtworks.dsl.keywords.AutoClose AutoClose]]
+  *          is available, which will close a resource when exiting the current function.
   *
   *          {{{
   *          import scala.util.Success
@@ -332,13 +326,12 @@ package com.thoughtworks
   *            }
   *          }
   *
-  *          val stream = readerToStream(createReader _).run { result =>
-  *            inside(result) {
-  *              case Success(totalNumber) =>
-  *                totalNumber should be(3)
-  *            }
+  *          val stream = readerToStream(createReader _) { numberOfLines: Int =>
+  *            numberOfLines should be(3)
   *
-  *            Stream.empty
+  *            Function.const(Stream.empty)(_)
+  *          } { e: Throwable =>
+  *            throw new AssertionError("No exception should be thrown during readerToStream", e)
   *          }
   *
   *          isClosed should be(false)
@@ -347,7 +340,8 @@ package com.thoughtworks
   *          }}}
   *
   *          If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
-  *          you can use `TailRect[Unit] !! Raii !! A` or the alias [[com.thoughtworks.dsl.domains.Raii.Task]],
+  *          you can use `TailRect[Unit] !! Throwable !! A` as the return type,
+  *          which can be used as an asynchronous task that support RAII,
   *          as a higher-performance replacement of
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
