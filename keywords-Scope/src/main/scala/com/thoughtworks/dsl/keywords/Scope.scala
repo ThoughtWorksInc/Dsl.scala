@@ -13,19 +13,7 @@ final case class Scope[Domain, Value](continuation: Domain !! Value)
     extends AnyVal
     with Keyword[Scope[Domain, Value], Value]
 
-private[keywords] trait LowPriorityScope1 { this: Scope.type =>
-
-  implicit def fallbackScopeDsl[Domain, ScopeValue]: Dsl[Scope[Domain, ScopeValue], Domain, ScopeValue] =
-    new Dsl[Scope[Domain, ScopeValue], Domain, ScopeValue] {
-
-      def interpret(keyword: Scope[Domain, ScopeValue], handler: ScopeValue => Domain): Domain = {
-        keyword.continuation(handler)
-      }
-    }
-
-}
-
-private[keywords] trait LowPriorityScope0 extends LowPriorityScope1 { this: Scope.type =>
+private[keywords] trait LowPriorityScope0 { this: Scope.type =>
 
   implicit def scopeContinuationDsl[Domain, DomainValue, ScopeValue](
       implicit restScopeDsl: Dsl[Scope[Domain, DomainValue], Domain, DomainValue])
@@ -48,14 +36,14 @@ object Scope extends LowPriorityScope0 {
     Scope[Domain, Value](continuation)
 
   implicit def throwableScopeDsl[Domain, ScopeValue](
-      implicit restScopeDsl: Dsl[Scope[Domain, Throwable], Domain, Throwable])
+      implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable])
     : Dsl[Scope[Domain !! Throwable, ScopeValue], Domain !! Throwable, ScopeValue] =
     new Dsl[Scope[Domain !! Throwable, ScopeValue], Domain !! Throwable, ScopeValue] {
       def interpret(scope: Scope[Domain !! Throwable, ScopeValue],
                     rest: ScopeValue => Domain !! Throwable): Domain !! Throwable = { outerFailureHandler =>
         @inline
         def jvmCatch(block: => Domain !! Throwable)(failureHandler: Throwable => Domain): Domain = {
-          Scope[Domain, Throwable](try {
+          Shift[Domain, Throwable](try {
             block
           } catch {
             case NonFatal(e) =>
@@ -67,20 +55,6 @@ object Scope extends LowPriorityScope0 {
           rest(scopeValue)(outerFailureHandler)
         })(outerFailureHandler)
 
-      }
-    }
-
-  implicit def autoCloseableStreamScopeDsl[ScopeValue]
-    : Dsl[Scope[Stream[AutoCloseable], ScopeValue], Stream[AutoCloseable], ScopeValue] =
-    new Dsl[Scope[Stream[AutoCloseable], ScopeValue], Stream[AutoCloseable], ScopeValue] {
-      def interpret(keyword: Scope[Stream[AutoCloseable], ScopeValue],
-                    handler: ScopeValue => Stream[AutoCloseable]): Stream[AutoCloseable] = {
-
-        val stream = keyword.continuation { scopeValue =>
-          new Stream.Cons(new AutoCloseable { def close(): Unit = () }, handler(scopeValue))
-        }
-        stream.head.close()
-        stream.tail
       }
     }
 

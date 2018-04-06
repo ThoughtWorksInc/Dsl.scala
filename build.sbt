@@ -16,18 +16,13 @@ lazy val `domains-Raii` =
   )
 
 lazy val `keywords-Fork` =
-  project.dependsOn(Dsl,
-                    `keywords-Scope`,
-                    `keywords-Shift`,
-                    `keywords-Catch`,
-                    `keywords-Hang`,
-                    `keywords-Each`)
+  project.dependsOn(Dsl, `keywords-Scope`, `keywords-Shift`, `keywords-Catch`, `keywords-Hang`, `keywords-Each`)
 
 lazy val `keywords-Hang` = project.dependsOn(Dsl)
 
 lazy val `keywords-Shift` = project.dependsOn(Dsl)
 
-lazy val `keywords-AutoClose` = project.dependsOn(Dsl)
+lazy val `keywords-AutoClose` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Scope`)
 
 lazy val `keywords-Catch` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
 
