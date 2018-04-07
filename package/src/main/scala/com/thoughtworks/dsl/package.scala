@@ -331,7 +331,7 @@ package com.thoughtworks
   *
   *            Function.const(Stream.empty)(_)
   *          } { e: Throwable =>
-  *            throw new AssertionError("No exception should be thrown during readerToStream", e)
+  *            throw new AssertionError("Unexpected exception during readerToStream", e)
   *          }
   *
   *          isClosed should be(false)
@@ -339,11 +339,82 @@ package com.thoughtworks
   *          isClosed should be(true)
   *          }}}
   *
-  *          If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
+  * @example If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
   *          you can use `TailRect[Unit] !! Throwable !! A` as the return type,
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.Dsl.!!
+  *          import scala.util.control.TailCalls._
+  *          type Task[A] = TailRec[Unit] !! Throwable !! A
+  *          }}}
+  *
   *          which can be used as an asynchronous task that support RAII,
   *          as a higher-performance replacement of
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
+  *
+  *          There are some keywords [[com.thoughtworks.dsl.keywords.AsynchronousIo]]
+  *          to asynchronously perform Java NIO.2 IO operations.
+  *
+  *          You can implement an HTTP client from very simple code:
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords._
+  *          import com.thoughtworks.dsl.keywords.Shift.implicitShift
+  *          import com.thoughtworks.dsl.keywords.AsynchronousIo._
+  *          import java.io._
+  *          import java.net._
+  *          import java.nio._, channels._
+  *
+  *          def readAll(channel: AsynchronousByteChannel, destination: ByteBuffer): Task[Unit] = _ {
+  *            if (destination.remaining > 0) {
+  *              val numberOfBytesRead: Int = !Read(channel, destination)
+  *              numberOfBytesRead match {
+  *                case -1 =>
+  *                case _  => !readAll(channel, destination)
+  *              }
+  *            } else {
+  *              throw new IOException("The response is too big to read.")
+  *            }
+  *          }
+  *
+  *          def writeAll[Domain](channel: AsynchronousByteChannel, destination: ByteBuffer): Task[Unit] = _ {
+  *            while (destination.remaining > 0) {
+  *              !Write(channel, destination)
+  *            }
+  *          }
+  *
+  *          def httpClient(url: URL): Task[String] = _ {
+  *            val socket = AsynchronousSocketChannel.open()
+  *            try {
+  *              val port = if (url.getPort == -1) 80 else url.getPort
+  *              val address = new InetSocketAddress(url.getHost, port)
+  *              !AsynchronousIo.Connect(socket, address)
+  *              val request = ByteBuffer.wrap(s"GET ${url.getPath} HTTP/1.1\r\nHost:${url.getHost}\r\nConnection:Close\r\n\r\n".getBytes)
+  *              !writeAll(socket, request)
+  *              val response = ByteBuffer.allocate(100000)
+  *              !readAll(socket, response)
+  *              response.flip()
+  *              io.Codec.UTF8.decoder.decode(response).toString
+  *            } finally {
+  *              socket.close()
+  *            }
+  *          }
+  *          }}}
+  *
+  *          The usage of `Task` is similar to previous examples.
+  *          You can check the result or exception in asynchronous handlers,
+  *          and perform the actions inside a [[scala.util.control.TailCalls.TailRec TailRec]]
+  *          by calling [[scala.util.control.TailCalls.TailRec#result result]].
+  *
+  *          {{{
+  *          httpClient(new URL("http://deb.debian.org/")) { page =>
+  *            page should include("Welcome to deb.debian.org!")
+  *
+  *            Function.const(done(()))(_)
+  *          } { e =>
+  *            throw new AssertionError("Unexpected exception during downloading", e)
+  *          }.result
+  *          }}}
   *
   * @see [[Dsl]] for the guideline to create your custom DSL.
   * @see [[domains.scalaz]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[scalaz]].

@@ -22,7 +22,10 @@ private[keywords] trait LowPriorityShift1 {
       def interpret(shift: Shift[Domain, Value], mapper: Value => Domain): Domain =
         shift.continuation(mapper)
     }
+
 }
+
+
 private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
 
   @inline
@@ -39,13 +42,14 @@ object Shift extends LowPriorityShift0 {
   implicit def implicitShift[Domain, Value](fa: Domain !! Value): Shift[Domain, Value] =
     Shift[Domain, Value](fa)
 
-  implicit def tailRecShiftDsl[R, Value]: StackSafeShiftDsl[TailRec[R], Value] = new StackSafeShiftDsl[TailRec[R], Value] {
-    def interpret(keyword: Shift[TailRec[R], Value], handler: Value => TailRec[R]): TailRec[R] = {
-      keyword.continuation{ a =>
-        TailCalls.tailcall(handler(a))
+  implicit def tailRecShiftDsl[R, Value]: StackSafeShiftDsl[TailRec[R], Value] =
+    new StackSafeShiftDsl[TailRec[R], Value] {
+      def interpret(keyword: Shift[TailRec[R], Value], handler: Value => TailRec[R]): TailRec[R] = {
+        keyword.continuation { a =>
+          TailCalls.tailcall(handler(a))
+        }
       }
     }
-  }
 
 //  TODO: StackSafeShift for `Domain !! Throwable`
 }
