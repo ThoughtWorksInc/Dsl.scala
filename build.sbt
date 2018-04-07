@@ -20,6 +20,8 @@ lazy val `keywords-Fork` =
 
 lazy val `keywords-Hang` = project.dependsOn(Dsl)
 
+lazy val `keywords-AsynchronousIo` = project.dependsOn(`keywords-Shift`)
+
 lazy val `keywords-Shift` = project.dependsOn(Dsl)
 
 lazy val `keywords-AutoClose` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Scope`)
@@ -62,6 +64,7 @@ lazy val `package` = project.dependsOn(
   `domains-Raii`,
   `compilerplugins-BangNotation`,
   `compilerplugins-ResetEverywhere`,
+  `keywords-AsynchronousIo`,
   Dsl
 )
 
@@ -76,6 +79,7 @@ Seq[ProjectReference](
   `domains-cats`,
   `keywords-Each`,
   `domains-scalaz`,
+  `keywords-AsynchronousIo`,
   `keywords-Yield`,
   LocalProject("package"),
   `domains-Raii`,

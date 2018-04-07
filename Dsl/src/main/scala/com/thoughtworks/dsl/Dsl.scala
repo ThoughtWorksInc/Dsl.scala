@@ -56,6 +56,22 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
+  // TODO: Support any middle types other than Throwable
+  implicit def liftThrowableTailRecDsl[Keyword, Domain, Value](
+      implicit restDsl: Dsl[Keyword, Domain !! Throwable, Value]): Dsl[Keyword, TailRec[Domain] !! Throwable, Value] =
+    new Dsl[Keyword, TailRec[Domain] !! Throwable, Value] {
+      def interpret(keyword: Keyword, handler: Value => TailRec[Domain] !! Throwable): TailRec[Domain] !! Throwable = {
+        tailRecFailureHandler =>
+          TailCalls.done(restDsl.interpret(keyword, { value => failureHandler =>
+            handler(value) { e =>
+              TailCalls.done(failureHandler(e))
+            }.result
+          }) { e =>
+            tailRecFailureHandler(e).result
+          })
+      }
+    }
+
   type Continuation[R, +A] = (A => R @reset) => R
 
   object Continuation {
