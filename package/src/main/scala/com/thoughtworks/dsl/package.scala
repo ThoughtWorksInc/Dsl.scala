@@ -340,24 +340,18 @@ package com.thoughtworks
   *          }}}
   *
   * @example If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
-  *          you can use `TailRect[Unit] !! Throwable !! A` as the return type,
-  *
-  *          {{{
-  *          import com.thoughtworks.dsl.Dsl.!!
-  *          import scala.util.control.TailCalls._
-  *          type Task[A] = TailRec[Unit] !! Throwable !! A
-  *          }}}
-  *
+  *          you can use `TailRect[Unit] !! Throwable !! A`
+  *          or the alias [[com.thoughtworks.dsl.task.Task]] as the return type,
   *          which can be used as an asynchronous task that support RAII,
   *          as a higher-performance replacement of
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
-  *          There are some keywords [[com.thoughtworks.dsl.keywords.AsynchronousIo]]
-  *          to asynchronously perform Java NIO.2 IO operations.
-  *
-  *          You can implement an HTTP client from very simple code:
+  *          Also, there are some keywords in [[com.thoughtworks.dsl.keywords.AsynchronousIo]]
+  *          to asynchronously perform Java NIO.2 IO operations in a [[com.thoughtworks.dsl.task.Task]] domain.
+  *          For example, you can implement an HTTP client from those keywords.
   *
   *          {{{
+  *          import com.thoughtworks.dsl.task._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift.implicitShift
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo._
@@ -402,18 +396,37 @@ package com.thoughtworks
   *          }}}
   *
   *          The usage of `Task` is similar to previous examples.
-  *          You can check the result or exception in asynchronous handlers,
-  *          and perform the actions inside a [[scala.util.control.TailCalls.TailRec TailRec]]
-  *          by calling [[scala.util.control.TailCalls.TailRec#result result]].
+  *          You can check the result or exception in asynchronous handlers.
+  *
+  *          But we also provides [[com.thoughtworks.dsl.task.TaskOps#blockingAwait blockingAwait]] and some other utilities
+  *          in the implicit class [[com.thoughtworks.dsl.task.TaskOps]].
   *
   *          {{{
-  *          httpClient(new URL("http://deb.debian.org/")) { page =>
-  *            page should include("Welcome to deb.debian.org!")
+  *          val fileContent = httpClient(new URL("http://ftp.debian.org/debian/")).blockingAwait
+  *          fileContent should startWith("HTTP/1.1 200 OK")
+  *          }}}
   *
-  *            Function.const(done(()))(_)
-  *          } { e =>
-  *            throw new AssertionError("Unexpected exception during downloading", e)
-  *          }.result
+  *          Another useful keyword for asynchronous programming is [[com.thoughtworks.dsl.keywords.Fork Fork]],
+  *          which duplicate the current control flow, and the child control flows are executed in parallel,
+  *          similar to the POSIX `fork` system call.
+  *
+  *          [[com.thoughtworks.dsl.keywords.Fork Fork]] should be used inside
+  *          a [[com.thoughtworks.dsl.task.Task#join]] block, which collects the result of each forked control flow.
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.Fork
+  *          val Urls = Seq(
+  *            new URL("http://ftp.debian.org/debian/README.CD-manufacture"),
+  *            new URL("http://ftp.debian.org/debian/README")
+  *          )
+  *          def parallelTask: Task[Seq[String]] = Task.join {
+  *            val url = !Fork(Urls)
+  *            !httpClient(url)
+  *          }
+  *
+  *          val Seq(fileContent0, fileContent1) = parallelTask.blockingAwait
+  *          fileContent0 should startWith("HTTP/1.1 200 OK")
+  *          fileContent1 should startWith("HTTP/1.1 200 OK")
   *          }}}
   *
   * @see [[Dsl]] for the guideline to create your custom DSL.

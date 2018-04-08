@@ -16,6 +16,7 @@ import scala.util.control.TailCalls.TailRec
 /**
   * @author 杨博 (Yang Bo)
   */
+@deprecated(message = "This domain will be removed, in favor of `com.thoughtworks.dsl.task`", since = "1.0.0")
 sealed trait Raii
 
 object Raii {
