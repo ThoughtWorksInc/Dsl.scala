@@ -340,7 +340,7 @@ package com.thoughtworks
   *          }}}
   *
   * @example If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
-  *          you can use `TailRect[Unit] !! Throwable !! A`
+  *          you can use `TailRec[Unit] !! Throwable !! A`
   *          or the alias [[com.thoughtworks.dsl.task.Task]] as the return type,
   *          which can be used as an asynchronous task that support RAII,
   *          as a higher-performance replacement of
