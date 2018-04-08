@@ -429,38 +429,32 @@ package com.thoughtworks
   *          fileContent1 should startWith("HTTP/1.1 200 OK")
   *          }}}
   *
-  * @example The built-in [[com.thoughtworks.dsl.keywords.Monadic Monadic]] can be used as an adaptor
+  * @example The built-in [[com.thoughtworks.dsl.keywords.Monadic Monadic]] keyword can be used as an adaptor
   *          to [[scalaz.Monad]] and [[scalaz.MonadTrans]],
   *          to create monadic code from imperative syntax,
   *          similar to the !-notation in Idris.
   *
   *          For example, suppose you are creating a program that counts lines of code under a directory.
-  *          You want to store the result in a [[scalaz.EphemeralStream]] of line count of each file.
+  *          You want to store the result in a [[scala.collection.immutable.Stream Stream]] of line count of each file.
   *
   *          {{{
   *          import java.io.File
-  *          import scalaz._
-  *
-  *          type LineCountStream = OptionT[EphemeralStream, Int]
-  *          }}}
-  *
-  *          The list is an [[scalaz.OptionT]] because
-  *          each element in our `LineCountList` may be a [[scala.None None]],
-  *          when the file is not able be open due to permission issue or other IO problem.
-  *
-  *          {{{
-  *          import com.thoughtworks.dsl.keywords.Monadic, Monadic.implicitMonadic
+  *          import com.thoughtworks.dsl.keywords.Monadic
   *          import com.thoughtworks.dsl.domains.scalaz._
+  *          import scalaz.std.stream._
   *
-  *          def monadicCount(file: File): LineCountStream = OptionT.some {
+  *          def countMonadic(file: File): Stream[Int] = Stream {
   *            if (file.isDirectory) {
   *              file.listFiles() match {
   *                case null =>
   *                  // Unable to open `file`
-  *                  !OptionT.none[EphemeralStream, Int]
+  *                  !Monadic(Stream.empty[Int])
   *                case children =>
-  *                  val child: File = !EphemeralStream(children: _*)
-  *                  !monadicCount(child)
+  *                  // Import this implicit conversion to omit the Monadic keyword
+  *                  import com.thoughtworks.dsl.keywords.Monadic.implicitMonadic
+  *
+  *                  val child: File = !children.toStream
+  *                  !countMonadic(child)
   *              }
   *            } else {
   *              scala.io.Source.fromFile(file).getLines.size
@@ -468,16 +462,106 @@ package com.thoughtworks
   *          }
   *
   *
-  *          val countCurrentSourceFile = monadicCount(new File(sourcecode.File())).run
+  *          val countCurrentSourceFile = countMonadic(new File(sourcecode.File()))
   *
-  *          countCurrentSourceFile should have length 1
-  *          countCurrentSourceFile.headOption.get.get should be > 0
+  *          inside(countCurrentSourceFile) {
+  *            case Stream(lineCount) =>
+  *              lineCount should be > 0
+  *          }
+  *
+  *          }}}
+  *
+  * @example The previous code requires a `toStream` conversion on `children`,
+  *          because `children`'s type `Array[File]` does not fit the `F` type parameter in [[scalaz.Monad.bind]].
+  *
+  *          The conversion can be avoided if using [[scala.collection.generic.CanBuildFrom CanBuildFrom]] type class
+  *          instead of monads.
+  *
+  *          We provide a [[com.thoughtworks.dsl.keywords.Each Each]]
+  *          keyword to extract each element in a Scala collection.
+  *          The behavior is similar to monad, except the collection type can vary.
+  *
+  *          For example, you can extract each element from an [[scala.Array Array]],
+  *          even when the return type (or the domain) is a [[scala.collection.immutable.Stream Stream]].
+  *
+  *
+  *          {{{
+  *          import java.io.File
+  *          import com.thoughtworks.dsl.keywords.Monadic, Monadic.implicitMonadic
+  *          import com.thoughtworks.dsl.keywords.Each
+  *          import com.thoughtworks.dsl.domains.scalaz._
+  *          import scalaz.std.stream._
+  *
+  *          def countEach(file: File): Stream[Int] = Stream {
+  *            if (file.isDirectory) {
+  *              file.listFiles() match {
+  *                case null =>
+  *                  // Unable to open `file`
+  *                  !Stream.empty[Int]
+  *                case children =>
+  *                  val child: File = !Each(children)
+  *                  !countEach(child)
+  *              }
+  *            } else {
+  *              scala.io.Source.fromFile(file).getLines.size
+  *            }
+  *          }
+  *
+  *
+  *          val countCurrentSourceFile = countEach(new File(sourcecode.File()))
+  *
+  *          inside(countCurrentSourceFile) {
+  *            case Stream(lineCount) =>
+  *              lineCount should be > 0
+  *          }
+  *
+  *          }}}
+  *
+  *          Unlike Haskell's do-notation or Idris's !-notation,
+  *          Dsl.scala allows non-monadic keywords like [[com.thoughtworks.dsl.keywords.Each Each]] works along with
+  *          monads.
+  *
+  * @example Dsl.scala also supports [[scalaz.MonadTrans]].
+  *          
+  *          Considering the line counter implemented in previous example may be failed for some files,
+  *          due to permission issue or other IO problem,
+  *          you can use [[scalaz.OptionT]] monad transformer to mark those failed file as a [[scala.None None]].
+  *
+  *          {{{
+  *          import scalaz._
+  *          import java.io.File
+  *          import com.thoughtworks.dsl.keywords.Monadic, Monadic.implicitMonadic
+  *          import com.thoughtworks.dsl.domains.scalaz._
+  *          import scalaz.std.stream._
+  *
+  *          def countLift(file: File): OptionT[Stream, Int] = OptionT.some {
+  *            if (file.isDirectory) {
+  *              file.listFiles() match {
+  *                case null =>
+  *                  // Unable to open `file`
+  *                  !OptionT.none[Stream, Int]
+  *                case children =>
+  *                  val child: File = !Stream(children: _*)
+  *                  !countLift(child)
+  *              }
+  *            } else {
+  *              scala.io.Source.fromFile(file).getLines.size
+  *            }
+  *          }
+  *
+  *
+  *          val countCurrentSourceFile = countLift(new File(sourcecode.File())).run
+  *
+  *          inside(countCurrentSourceFile) {
+  *            case Stream(Some(lineCount)) =>
+  *              lineCount should be > 0
+  *          }
   *          }}}
   *
   *
   *          Note that our keywords are adaptive to the domain it belongs to.
-  *          Thus, instead of explicit `!Monadic(OptionT.optionTMonadTrans.liftM(EphemeralStream(children: _*)))`,
-  *          you can simply have `!EphemeralStream(children: _*)`.
+  *          Thus, instead of explicit `!Monadic(OptionT.optionTMonadTrans.liftM(Stream(children: _*)))`,
+  *          you can simply have `!Stream(children: _*)`.
   *          The implicit lifting feature looks like Idris's effect monads,
   *          though the mechanisms is different from `implicit lift` in Idris.
   *
