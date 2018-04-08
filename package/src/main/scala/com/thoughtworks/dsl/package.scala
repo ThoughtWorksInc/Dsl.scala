@@ -429,6 +429,58 @@ package com.thoughtworks
   *          fileContent1 should startWith("HTTP/1.1 200 OK")
   *          }}}
   *
+  * @example The built-in [[com.thoughtworks.dsl.keywords.Monadic Monadic]] can be used as an adaptor
+  *          to [[scalaz.Monad]] and [[scalaz.MonadTrans]],
+  *          to create monadic code from imperative syntax,
+  *          similar to the !-notation in Idris.
+  *
+  *          For example, suppose you are creating a program that counts lines of code under a directory.
+  *          You want to store the result in a [[scalaz.EphemeralStream]] of line count of each file.
+  *
+  *          {{{
+  *          import java.io.File
+  *          import scalaz._
+  *
+  *          type LineCountStream = OptionT[EphemeralStream, Int]
+  *          }}}
+  *
+  *          The list is an [[scalaz.OptionT]] because
+  *          each element in our `LineCountList` may be a [[scala.None None]],
+  *          when the file is not able be open due to permission issue or other IO problem.
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.Monadic, Monadic.implicitMonadic
+  *          import com.thoughtworks.dsl.domains.scalaz._
+  *
+  *          def monadicCount(file: File): LineCountStream = OptionT.some {
+  *            if (file.isDirectory) {
+  *              file.listFiles() match {
+  *                case null =>
+  *                  // Unable to open `file`
+  *                  !OptionT.none[EphemeralStream, Int]
+  *                case children =>
+  *                  val child: File = !EphemeralStream(children: _*)
+  *                  !monadicCount(child)
+  *              }
+  *            } else {
+  *              scala.io.Source.fromFile(file).getLines.size
+  *            }
+  *          }
+  *
+  *
+  *          val countCurrentSourceFile = monadicCount(new File(sourcecode.File())).run
+  *
+  *          countCurrentSourceFile should have length 1
+  *          countCurrentSourceFile.headOption.get.get should be > 0
+  *          }}}
+  *
+  *
+  *          Note that our keywords are adaptive to the domain it belongs to.
+  *          Thus, instead of explicit `!Monadic(OptionT.optionTMonadTrans.liftM(EphemeralStream(children: _*)))`,
+  *          you can simply have `!EphemeralStream(children: _*)`.
+  *          The implicit lifting feature looks like Idris's effect monads,
+  *          though the mechanisms is different from `implicit lift` in Idris.
+  *
   * @see [[Dsl]] for the guideline to create your custom DSL.
   * @see [[domains.scalaz]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[scalaz]].
   * @see [[domains.cats]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[cats]].
