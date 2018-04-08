@@ -75,7 +75,6 @@ object Dsl extends LowPriorityDsl0 {
   type Continuation[R, +A] = (A => R @reset) => R
 
   object Continuation {
-    import scala.language.implicitConversions
     def now[R, A](a: A): (R !! A) @reset = _(a)
     def delay[R, A](a: => A): (R !! A) @reset = _(a)
   }

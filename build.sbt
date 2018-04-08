@@ -4,6 +4,8 @@ lazy val `compilerplugins-ResetEverywhere` = project.dependsOn(Dsl % Test, Dsl %
 
 lazy val Dsl = project
 
+lazy val task = project.dependsOn(`keywords-Fork`)
+
 lazy val `domains-Raii` =
   project.dependsOn(
     `keywords-Hang`,
@@ -52,39 +54,41 @@ lazy val `domains-cats` =
                     `keywords-Shift` % Test,
                     `keywords-Yield` % Test)
 
-lazy val `benchmarks-TaskBenchmark` = project.dependsOn(`domains-Raii`, `keywords-Yield`)
+lazy val `benchmarks-TaskBenchmark` = project.dependsOn(task, `domains-Raii`, `keywords-Yield`)
 
 lazy val `package` = project.dependsOn(
-  `keywords-Shift`,
-  `domains-cats`,
-  `keywords-Each`,
-  `domains-scalaz`,
-  `keywords-Yield`,
-  `keywords-Fork`,
-  `domains-Raii`,
   `compilerplugins-BangNotation`,
   `compilerplugins-ResetEverywhere`,
+  `domains-cats`,
+  `domains-scalaz`,
+  `domains-Raii`,
+  `keywords-Shift`,
+  `keywords-Each`,
+  `keywords-Yield`,
+  `keywords-Fork`,
   `keywords-AsynchronousIo`,
+  LocalProject("task"),
   Dsl
 )
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
 Seq[ProjectReference](
+  `domains-cats`,
+  `domains-scalaz`,
+  `domains-Raii`,
   `keywords-Fork`,
   `keywords-Catch`,
   `keywords-Hang`,
   `keywords-Scope`,
   `keywords-Shift`,
-  `domains-cats`,
   `keywords-Each`,
-  `domains-scalaz`,
   `keywords-AsynchronousIo`,
   `keywords-Yield`,
-  LocalProject("package"),
-  `domains-Raii`,
   `keywords-AutoClose`,
-  `benchmarks-TaskBenchmark`
+  `benchmarks-TaskBenchmark`,
+  LocalProject("task"),
+  LocalProject("package")
 ).flatMap { testingProject =>
   Seq(
     scalacOptions in testingProject += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
