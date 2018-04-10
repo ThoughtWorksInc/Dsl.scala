@@ -1,4 +1,5 @@
-# Dsl.scala
+# Dsl.scala <a href="http://thoughtworks.com/"><img align="right" src="https://www.thoughtworks.com/imgs/tw-logo.png" title="ThoughtWorks" height="15"/></a>
+
 [![Build Status](https://travis-ci.org/ThoughtWorksInc/Dsl.scala.svg?branch=master)](https://travis-ci.org/ThoughtWorksInc/Dsl.scala)
 [![Latest version](https://index.scala-lang.org/thoughtworksinc/dsl.scala/dsl/latest.svg)](https://index.scala-lang.org/thoughtworksinc/dsl.scala)
 [![Scaladoc](https://javadoc.io/badge/com.thoughtworks.dsl/dsl_2.12.svg?label=scaladoc)](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html)
