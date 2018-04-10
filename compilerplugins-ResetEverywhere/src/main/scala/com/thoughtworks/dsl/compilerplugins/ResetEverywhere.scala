@@ -118,9 +118,6 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
     }
   }
 
-  override val optionsHelp = Some(
-    """This DSL plug-in accepts only one flag `-P:dsl:macro-annotation-workaround`, which make this plug-in work in macro annotation generated code.""")
-
   val description: String = "Add @reset annotation for every methods and functions automatically"
 
   val components: List[PluginComponent] = List(new ResetAnnotationCreator)
