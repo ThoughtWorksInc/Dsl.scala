@@ -1,4 +1,4 @@
-package com.thoughtworks.dsl.domains
+package com.thoughtworks.dsl
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.{Catch, Scope, Yield}
