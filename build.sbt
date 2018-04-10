@@ -4,7 +4,8 @@ lazy val `compilerplugins-ResetEverywhere` = project.dependsOn(Dsl % Test, Dsl %
 
 lazy val Dsl = project
 
-lazy val task = project.dependsOn(`keywords-Fork`)
+lazy val task =
+  project.dependsOn(`keywords-Shift`, `keywords-Fork` % Test, `keywords-AutoClose` % Test, `keywords-Yield` % Test)
 
 lazy val `domains-Raii` =
   project.dependsOn(
