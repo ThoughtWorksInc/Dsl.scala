@@ -3,7 +3,7 @@ package com.thoughtworks.dsl
 import com.thoughtworks.dsl.Dsl.!!
 
 import scala.annotation._
-import scala.util.control.TailCalls
+import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
 /** The domain-specific interpreter for `Keyword` in `Domain`,
@@ -28,16 +28,44 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 }
 
-private[dsl] trait LowPriorityDsl0 {
+private[dsl] trait LowPriorityDsl1 {
 
-  implicit def continuationDsl[Keyword, Domain, FinalResult, KeywordValue](
+  implicit def continuationDsl[Keyword, Domain, MiddleValue, KeywordValue](
       implicit restDsl: Dsl[Keyword, Domain, KeywordValue]
-  ): Dsl[Keyword, Domain !! FinalResult, KeywordValue] = {
-    new Dsl[Keyword, Domain !! FinalResult, KeywordValue] {
-      def interpret(keyword: Keyword, handler: KeywordValue => Domain !! FinalResult): Domain !! FinalResult = {
-        (continue: FinalResult => Domain) =>
+  ): Dsl[Keyword, Domain !! MiddleValue, KeywordValue] = {
+    new Dsl[Keyword, Domain !! MiddleValue, KeywordValue] {
+      def interpret(keyword: Keyword, handler: KeywordValue => Domain !! MiddleValue): Domain !! MiddleValue = {
+        (continue: MiddleValue => Domain) =>
           restDsl.interpret(keyword, { a =>
             handler(a)(continue)
+          })
+      }
+    }
+  }
+}
+
+private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
+
+  // FIXME: Shift[Domain, Throwable]
+  @inline
+  private def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain): Domain = {
+    val protectedContinuation: Domain !! Throwable = try {
+      eh
+    } catch {
+      case NonFatal(e) =>
+        return failureHandler(e)
+    }
+    protectedContinuation(failureHandler)
+  }
+
+  implicit def throwableContinuationDsl[Keyword, Domain, KeywordValue](
+      implicit restDsl: Dsl[Keyword, Domain, KeywordValue]
+  ): Dsl[Keyword, Domain !! Throwable, KeywordValue] = {
+    new Dsl[Keyword, Domain !! Throwable, KeywordValue] {
+      def interpret(keyword: Keyword, handler: KeywordValue => Domain !! Throwable): Domain !! Throwable = {
+        (continue: Throwable => Domain) =>
+          restDsl.interpret(keyword, { a =>
+            jvmCatch(handler(a))(continue)
           })
       }
     }
@@ -76,10 +104,13 @@ object Dsl extends LowPriorityDsl0 {
 
   object Continuation {
     @inline
-    def now[R, A](a: A): (R !! A) = _(a)
+    def now[R, A](a: A): R !! A = _(a)
 
     @inline
-    def delay[R, A](a: () => A): (R !! A) = _(a())
+    def empty[R, A](r: R): R !! A = Function.const(r)
+
+    @inline
+    def delay[R, A](a: () => A): R !! A = _(a())
 
     @inline
     def reset[R, A](a: => A): (R !! A) @reset = delay(a _)
