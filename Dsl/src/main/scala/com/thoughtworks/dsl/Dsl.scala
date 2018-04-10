@@ -75,8 +75,14 @@ object Dsl extends LowPriorityDsl0 {
   type Continuation[R, +A] = (A => R @reset) => R
 
   object Continuation {
-    def now[R, A](a: A): (R !! A) @reset = _(a)
-    def delay[R, A](a: => A): (R !! A) @reset = _(a)
+    @inline
+    def now[R, A](a: A): (R !! A) = _(a)
+
+    @inline
+    def delay[R, A](a: () => A): (R !! A) = _(a())
+
+    @inline
+    def reset[R, A](a: => A): (R !! A) @reset = delay(a _)
   }
 
   type !![R, +A] = Continuation[R, A]
