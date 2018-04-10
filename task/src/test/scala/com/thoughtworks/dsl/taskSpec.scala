@@ -1,4 +1,4 @@
-package com.thoughtworks.dsl.domains
+package com.thoughtworks.dsl
 
 import com.thoughtworks.dsl.Dsl.{!!, reset}
 import org.scalatest.{Assertion, AsyncFreeSpec, Matchers}
