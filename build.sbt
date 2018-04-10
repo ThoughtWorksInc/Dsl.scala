@@ -7,17 +7,6 @@ lazy val Dsl = project
 lazy val task =
   project.dependsOn(`keywords-Shift`, `keywords-Fork` % Test, `keywords-AutoClose` % Test, `keywords-Yield` % Test)
 
-lazy val `domains-Raii` =
-  project.dependsOn(
-    `keywords-Hang`,
-    `keywords-Scope`,
-    `keywords-Catch`,
-    `keywords-Shift`,
-    `keywords-AutoClose`,
-    `keywords-Fork` % Test,
-    `keywords-Yield` % Test
-  )
-
 lazy val `keywords-Fork` =
   project.dependsOn(Dsl, `keywords-Scope`, `keywords-Shift`, `keywords-Catch`, `keywords-Hang`, `keywords-Each`)
 
@@ -62,12 +51,12 @@ lazy val `package` = project.dependsOn(
   `compilerplugins-ResetEverywhere`,
   `domains-cats`,
   `domains-scalaz`,
-  `domains-Raii`,
   `keywords-Shift`,
   `keywords-Each`,
   `keywords-Yield`,
   `keywords-Fork`,
   `keywords-AsynchronousIo`,
+  `keywords-AutoClose`,
   LocalProject("task"),
   Dsl
 )
@@ -77,7 +66,6 @@ organization in ThisBuild := "com.thoughtworks.dsl"
 Seq[ProjectReference](
   `domains-cats`,
   `domains-scalaz`,
-  `domains-Raii`,
   `keywords-Fork`,
   `keywords-Catch`,
   `keywords-Hang`,
