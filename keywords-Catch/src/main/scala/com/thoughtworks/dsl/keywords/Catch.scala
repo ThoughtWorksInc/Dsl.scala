@@ -1,15 +1,17 @@
 package com.thoughtworks.dsl.keywords
 
+import com.thoughtworks.Extractor._
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.{!!, Continuation, Keyword}
 
 import scala.language.implicitConversions
+import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
   */
-final case class Catch[Domain](failureHandler: Throwable => Domain) extends AnyVal with Keyword[Catch[Domain], Unit]
+final case class Catch[Domain](failureHandler: Catcher[Domain]) extends AnyVal with Keyword[Catch[Domain], Unit]
 
 private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
 
@@ -20,8 +22,9 @@ private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
       def interpret(keyword: Catch[Domain !! Value], block: Unit => Domain !! Value): Domain !! Value = {
         (continue: Value => Domain) =>
           restCatchDsl.interpret(
-            Catch[Domain] { e =>
-              keyword.failureHandler(e)(continue)
+            Catch[Domain] {
+              case keyword.failureHandler.extract(combinedDomain) =>
+                combinedDomain(continue)
             }, { _: Unit =>
               block(())(continue)
             }
@@ -33,7 +36,7 @@ private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
 
 object Catch extends LowPriorityCatch0 {
 
-  implicit def implicitCatch[Domain](onFailure: Throwable => Domain): Catch[Domain] = Catch[Domain](onFailure)
+  implicit def implicitCatch[Domain](onFailure: Catcher[Domain]): Catch[Domain] = Catch[Domain](onFailure)
 
   implicit def throwableCatchDsl[Domain]: Dsl[Catch[Domain !! Throwable], Domain !! Throwable, Unit] =
     new Dsl[Catch[Domain !! Throwable], Domain !! Throwable, Unit] {
@@ -51,7 +54,8 @@ object Catch extends LowPriorityCatch0 {
           }
 
           jvmCatch(handler(())) { throwable =>
-            jvmCatch(keyword.failureHandler(throwable))(finalFailureHandler)
+            jvmCatch(keyword.failureHandler.applyOrElse(throwable, Continuation.now[Domain, Throwable]))(
+              finalFailureHandler)
           }
 
       }

@@ -159,7 +159,7 @@ object scalaz extends LowPriorityScalaz0 {
         } catch {
           case e: Throwable =>
             monadError.raiseError[A](e)
-        })(keyword.failureHandler)
+        })(keyword.failureHandler.orElse { case e => monadError.raiseError(e) })
       }
     }
 
