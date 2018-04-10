@@ -398,11 +398,13 @@ package com.thoughtworks
   *          The usage of `Task` is similar to previous examples.
   *          You can check the result or exception in asynchronous handlers.
   *
-  *          But we also provides [[com.thoughtworks.dsl.task.TaskOps#blockingAwait blockingAwait]] and some other utilities
-  *          in the implicit class [[com.thoughtworks.dsl.task.TaskOps]].
+  *          But we also provides [[com.thoughtworks.dsl.task.Task.blockingAwait blockingAwait]] and some other utilities
+  *          at [[com.thoughtworks.dsl.task.Task]].
   *
   *          {{{
-  *          val fileContent = httpClient(new URL("http://ftp.debian.org/debian/")).blockingAwait
+  *          import com.thoughtworks.dsl.task.Task.blockingAwait
+  *
+  *          val fileContent = blockingAwait(httpClient(new URL("http://ftp.debian.org/debian/")))
   *          fileContent should startWith("HTTP/1.1 200 OK")
   *          }}}
   *
@@ -424,7 +426,7 @@ package com.thoughtworks
   *            !httpClient(url)
   *          }
   *
-  *          val Seq(fileContent0, fileContent1) = parallelTask.blockingAwait
+  *          val Seq(fileContent0, fileContent1) = blockingAwait(parallelTask)
   *          fileContent0 should startWith("HTTP/1.1 200 OK")
   *          fileContent1 should startWith("HTTP/1.1 200 OK")
   *          }}}

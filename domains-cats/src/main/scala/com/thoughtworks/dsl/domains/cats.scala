@@ -130,7 +130,7 @@ object cats {
         } catch {
           case e: Throwable =>
             monadError.raiseError[A](e)
-        })(keyword.failureHandler)
+        })(keyword.failureHandler.orElse { case e => monadError.raiseError(e) })
       }
     }
 

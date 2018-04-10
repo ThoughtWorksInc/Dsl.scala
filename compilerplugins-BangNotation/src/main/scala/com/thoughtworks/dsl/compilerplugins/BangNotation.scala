@@ -306,18 +306,18 @@ final class BangNotation(override val global: Global) extends Plugin {
             val unhandledExceptionName = currentUnit.freshTermName("unhandledException")
 
             q"""
-            @${definitions.ScalaInlineClass} def $scopeApplyName[Domain](continue: _root_.scala.util.Try[$tpe] => Domain)(
-            continuation: (_root_.scala.util.Try[$tpe] => Domain) => Domain)(
-            implicit scopeDsl: _root_.com.thoughtworks.dsl.Dsl[_root_.com.thoughtworks.dsl.keywords.Scope[Domain,_root_.scala.util.Try[$tpe]],Domain,_root_.scala.util.Try[$tpe]]
+            @${definitions.ScalaInlineClass} def $scopeApplyName[Domain, Value](continue: Value => Domain)(
+            continuation: (Value => Domain) => Domain)(
+            implicit scopeDsl: _root_.com.thoughtworks.dsl.Dsl[_root_.com.thoughtworks.dsl.keywords.Scope[Domain, Value],Domain,Value]
             )= {
               _root_.com.thoughtworks.dsl.keywords.Scope(continuation).cpsApply(continue)
             }
 
-            $scopeApplyName { ($tryResultName: _root_.scala.util.Try[$tpe]) => ${{
+            $scopeApplyName { ($tryResultName: $tpe) => ${{
               cpsAttachment(finalizer) { finalizerValue =>
                 q"""
                   ..${notPure(finalizerValue)}
-                  ${continue(q"$tryResultName.get")}
+                  ${continue(q"$tryResultName")}
                 """
               }
             }}} { ($finalizerName: ${TypeTree()}) =>
@@ -330,18 +330,16 @@ final class BangNotation(override val global: Global) extends Plugin {
                     caseDef.pat,
                     caseDef.guard,
                     cpsAttachment(caseDef.body) { bodyValue =>
-                      q"$finalizerName.apply(_root_.scala.util.Success($bodyValue))"
+                      q"$finalizerName.apply($bodyValue)"
                     }
                   )
                 }
               }
             }}
-                case $unhandledExceptionName: _root_.scala.Throwable =>
-                  $finalizerName.apply(_root_.scala.util.Failure($unhandledExceptionName))
               }.cpsApply { _: _root_.scala.Unit => ${{
               cpsAttachment(block) { blockValue =>
                 q"""
-                  ${q"$finalizerName.apply(_root_.scala.util.Success($blockValue))"}
+                  ${q"$finalizerName.apply($blockValue)"}
                   """
               }
             }}}

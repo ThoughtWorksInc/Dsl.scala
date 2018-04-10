@@ -54,46 +54,36 @@ object task {
         implicit canBuildFrom: CanBuildFrom[Nothing, Element, That]): Task[That] @reset = now {
       (canBuildFrom() += element).result()
     }
-  }
 
-  implicit final class ThrowableContinuationOps[Domain, A](private[task] val task: Domain !! Throwable !! A)
-      extends AnyVal {
-    def run: Domain !! Try[A] = { handler =>
-      task { a => failureHandler =>
-        handler(Success(a))
-      } { e =>
-        handler(Failure(e))
-      }
+    def onComplete[A](task: Task[A])(continue: (Try[A] => Unit)) = {
+      Continuation
+        .toTryContinuation(task) { result =>
+          TailCalls.done(continue(result))
+        }
+        .result
     }
 
-  }
-
-  implicit final class TaskOps[A](private[task] val task: Task[A]) extends AnyVal {
-
-    def onComplete: Unit !! Try[A] = { continue =>
-      task.run { result =>
-        TailCalls.done(continue(result))
-      }.result
-    }
-
-    def toFuture: Future[A] = {
-      val promise = Promise[A]()
-      task.run { tryResult =>
-        promise.complete(tryResult)
-        TailCalls.done(())
-      }.result
-      promise.future
-    }
-
-    def blockingAwait(): A = {
+    def blockingAwait[A](task: Task[A]): A = {
       val syncVar = new SyncVar[Try[A]]
-      task.run { result =>
-        syncVar.put(result)
-        TailCalls.done(())
-      }.result
+      Continuation
+        .toTryContinuation(task) { result =>
+          syncVar.put(result)
+          TailCalls.done(())
+        }
+        .result
       syncVar.take.get
     }
 
+    def toFuture[A](task: Task[A]): Future[A] = {
+      val promise = Promise[A]()
+      Continuation
+        .toTryContinuation(task) { tryResult =>
+          promise.complete(tryResult)
+          TailCalls.done(())
+        }
+        .result
+      promise.future
+    }
   }
 
 }

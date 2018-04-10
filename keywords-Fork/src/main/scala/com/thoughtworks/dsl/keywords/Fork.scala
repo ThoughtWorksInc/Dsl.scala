@@ -60,7 +60,7 @@ object Fork {
       isTraversableOnce: That <:< TraversableOnce[ThatElement],
       canBuildFrom: CanBuildFrom[Nothing, ThatElement, That],
       hangDsl: Dsl[Hang[Unit], Domain, Unit],
-      scopeDsl: Dsl[Scope[Domain, Try[Unit]], Domain, Try[Unit]],
+      scopeDsl: Dsl[Scope[Domain, Unit], Domain, Unit],
       catchDsl: Dsl[Catch[Domain], Domain, Unit]
   ): Dsl[Fork[ThisElement], Domain !! That, ThisElement] =
     new Dsl[Fork[ThisElement], Domain !! That, ThisElement] {

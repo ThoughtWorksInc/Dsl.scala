@@ -29,7 +29,7 @@ class TaskBenchmark {
       }
     }
 
-    val result = loop().blockingAwait()
+    val result = Task.blockingAwait(loop())
     assert(result == expectedResult)
   }
 
@@ -43,7 +43,7 @@ class TaskBenchmark {
       }
     }
 
-    val result = loop().blockingAwait()
+    val result = Task.blockingAwait(loop())
     assert(result == expectedResult)
   }
 
@@ -73,7 +73,7 @@ class TaskBenchmark {
       }
     }
 
-    val result = loop().blockingAwait()
+    val result = Task.blockingAwait(loop())
     assert(result == expectedResult)
   }
 
@@ -90,7 +90,7 @@ class TaskBenchmark {
       }
     }
 
-    val result = loop().blockingAwait()
+    val result = Task.blockingAwait(loop())
     assert(result == expectedResult)
   }
 

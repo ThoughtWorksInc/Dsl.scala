@@ -8,3 +8,5 @@ scalacOptions in Compile ++= {
     case _      => Seq.empty
   }
 }
+
+libraryDependencies += "com.thoughtworks.extractor" %% "extractor" % "2.1.0"

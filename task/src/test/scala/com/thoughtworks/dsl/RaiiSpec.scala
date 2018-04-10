@@ -71,10 +71,11 @@ final class RaiiSpec extends FreeSpec with Matchers {
       def generator: Stream[String] !! Throwable !! Int = { continue =>
         !Yield("before catch")
 
-        !Catch { e: Throwable =>
-          e should be(MyException)
-          !Yield("catch")
-          continue(42)
+        !Catch {
+          case e: Throwable =>
+            e should be(MyException)
+            !Yield("catch")
+            continue(42)
         }
         !Yield("after catch")
         continue(43)
@@ -117,8 +118,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
 
     }
 
-    // FIXME:
-    "empty try" ignore {
+    "empty finally" in {
       def continuation: Stream[Int] !! Throwable !! String = _ {
         val tryResult = try {
           0 / 0

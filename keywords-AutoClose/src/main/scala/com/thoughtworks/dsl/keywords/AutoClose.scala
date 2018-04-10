@@ -40,7 +40,7 @@ object AutoClose extends LowPriorityAutoClose {
   implicit def throwableContinuationAutoCloseDsl[Domain, ScopeValue, R <: AutoCloseable](
       implicit shiftDsl: Dsl[Shift[Domain, ScopeValue], Domain, ScopeValue],
       catchDsl: Dsl[Catch[Domain], Domain, Unit],
-      scopeDsl: Dsl[Scope[Domain, Try[ScopeValue]], Domain, Try[ScopeValue]]
+      scopeDsl: Dsl[Scope[Domain, ScopeValue], Domain, ScopeValue]
   ): Dsl[AutoClose[R], Domain !! ScopeValue, R] =
     new Dsl[AutoClose[R], Domain !! ScopeValue, R] {
       def interpret(keyword: AutoClose[R], handler: R => Domain !! ScopeValue): Domain !! ScopeValue = _ {
