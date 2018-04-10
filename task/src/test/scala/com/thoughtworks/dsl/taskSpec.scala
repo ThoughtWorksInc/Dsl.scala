@@ -16,11 +16,11 @@ import scala.util.{Failure, Success}
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
-  "taskToFuture" in Task.reset {
+  "taskToFuture" in Task.toFuture(Task.reset {
     succeed
-  }.toFuture
+  })
 
-  "loop" in Task.reset {
+  "loop" in Task.toFuture(Task.reset {
 
     val task1: Task[Int] = Task.now(1)
 
@@ -30,9 +30,9 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
     !ts should be(1 until 11)
 
-  }.toFuture
+  })
 
-  "try" in Task.reset {
+  "try" in Task.toFuture(Task.reset {
     class MyException extends Exception
     val task1: Task[Int] = Task.reset {
       throw new MyException
@@ -51,7 +51,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     }
 
     !task2 should be("try: my exception")
-  }.toFuture
+  })
 
   "empty try" in {
     val logs = ArrayBuffer.empty[String]
@@ -73,80 +73,74 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       !task1
     }
 
-    task2.run {
+    Task.onComplete(task2) {
       case Success(s) =>
         logs += s
         throw new AssertionError()
       case Failure(e) =>
         e should be(a[MyException])
         logs += "uncaught MyException"
-        TailCalls.done(())
     }
     logs should be(ArrayBuffer("MyException", "uncaught MyException"))
   }
 
-  // FIXME:
-  "autoClose" ignore {
+  "autoClose" in {
     val logs = ArrayBuffer.empty[Int]
 
     val task: Task[Unit] = Task.reset {
-      try {
 
-        logs += 0
+      logs += 0
+
+      !AutoClose(new AutoCloseable {
+        logs += 10
+        def close(): Unit = {
+          logs += 20
+        }
+      })
+      !AutoClose(new AutoCloseable {
+        logs += 11
+        def close(): Unit = {
+          logs += 21
+        }
+      })
+      !AutoClose(new AutoCloseable {
+        logs += 12
+        def close(): Unit = {
+          logs += 22
+        }
+      })
+
+      !Task.reset {
+        logs += 3
 
         !AutoClose(new AutoCloseable {
-          logs += 1
+          logs += 40
           def close(): Unit = {
-            logs += 2
+            logs += 50
           }
         })
         !AutoClose(new AutoCloseable {
-          logs += 1
+          logs += 41
           def close(): Unit = {
-            logs += 2
+            logs += 51
           }
         })
         !AutoClose(new AutoCloseable {
-          logs += 1
+          logs += 42
           def close(): Unit = {
-            logs += 2
+            logs += 52
           }
         })
-        try {
-          try {
 
-            logs += 3
+        logs += 6
+      }
 
-            !AutoClose(new AutoCloseable {
-              logs += 4
-              def close(): Unit = {
-                logs += 5
-              }
-            })
-            !AutoClose(new AutoCloseable {
-              logs += 4
-              def close(): Unit = {
-                logs += 5
-              }
-            })
-            !AutoClose(new AutoCloseable {
-              logs += 4
-              def close(): Unit = {
-                logs += 5
-              }
-            })
+      logs += 7
 
-            logs += 6
-
-          } finally {}
-        } finally {}
-        logs += 7
-
-      } finally {}
     }
 
-    task.toFuture.map { _ =>
-      logs should be(ArrayBuffer(0, 1, 1, 1, 3, 4, 4, 4, 6, 5, 5, 5, 7, 2, 2, 2))
+    Task.toFuture(task).map { _ =>
+      logs should be(ArrayBuffer(0, 10, 11, 12, 3, 40, 41, 42, 6, 52, 51, 50, 7, 22, 21, 20))
     }
 
   }

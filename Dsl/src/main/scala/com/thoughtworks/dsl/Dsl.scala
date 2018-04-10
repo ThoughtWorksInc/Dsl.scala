@@ -3,6 +3,7 @@ package com.thoughtworks.dsl
 import com.thoughtworks.dsl.Dsl.!!
 
 import scala.annotation._
+import scala.util.{Failure, Success, Try}
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
@@ -114,6 +115,15 @@ object Dsl extends LowPriorityDsl0 {
 
     @inline
     def reset[R, A](a: => A): (R !! A) @reset = delay(a _)
+
+    def toTryContinuation[Domain, A](task: Domain !! Throwable !! A): Domain !! Try[A] = { handler =>
+      task { a => failureHandler =>
+        handler(Success(a))
+      } { e =>
+        handler(Failure(e))
+      }
+    }
+
   }
 
   type !![R, +A] = Continuation[R, A]

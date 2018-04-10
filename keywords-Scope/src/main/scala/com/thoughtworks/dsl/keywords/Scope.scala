@@ -21,10 +21,8 @@ private[keywords] trait LowPriorityScope0 { this: Scope.type =>
     new Dsl[Scope[Domain !! DomainValue, ScopeValue], Domain !! DomainValue, ScopeValue] {
 
       def interpret(keyword: Scope[Domain !! DomainValue, ScopeValue],
-                    handler: ScopeValue => Domain !! DomainValue): Domain !! DomainValue = { continue =>
-        restScopeDsl.interpret(Scope[Domain, DomainValue] { _ =>
-          keyword.continuation(handler)(continue)
-        }, continue)
+                    handler: ScopeValue => Domain !! DomainValue): Domain !! DomainValue = {
+        restScopeDsl.interpret(Scope(keyword.continuation(handler)), _)
       }
     }
 
