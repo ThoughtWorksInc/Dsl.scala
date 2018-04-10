@@ -55,7 +55,7 @@ lazy val `domains-cats` =
                     `keywords-Shift` % Test,
                     `keywords-Yield` % Test)
 
-lazy val `benchmarks-TaskBenchmark` = project.dependsOn(task, `domains-Raii`, `keywords-Yield`)
+lazy val `benchmarks-TaskBenchmark` = project.dependsOn(task, `keywords-Catch`, `keywords-Scope`)
 
 lazy val `package` = project.dependsOn(
   `compilerplugins-BangNotation`,

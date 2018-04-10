@@ -3,10 +3,10 @@ package benchmarks
 
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.benchmarks.TaskBenchmark.IntException
-import com.thoughtworks.dsl.domains.Raii
 
 import scala.util.{Success, Try}
-import com.thoughtworks.dsl.domains.Raii.Task
+import com.thoughtworks.dsl.task._
+import com.thoughtworks.dsl.keywords.Shift.implicitShift
 import monix.execution.{Cancelable, Scheduler}
 import org.openjdk.jmh.annotations.{Benchmark, Param, Scope, State}
 
@@ -21,7 +21,7 @@ class TaskBenchmark {
 
   @Benchmark
   def dslStackedCall(): Unit = {
-    def loop(i: Int = 0): domains.Raii.Task[Int] = _ {
+    def loop(i: Int = 0): task.Task[Int] = _ {
       if (i < totalLoops) {
         !loop(i + 1) + i
       } else {
@@ -35,7 +35,7 @@ class TaskBenchmark {
 
   @Benchmark
   def dslTailCall(): Unit = {
-    def loop(i: Int = 0, accumulator: Int = 0): domains.Raii.Task[Int] = _ {
+    def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
       if (i < totalLoops) {
         !loop(i + 1, accumulator + i)
       } else {
@@ -53,12 +53,12 @@ class TaskBenchmark {
 
   @Benchmark
   def dslExceptionHandling(): Unit = {
-    def throwing(i: Int): domains.Raii.Task[Unit] = _ {
+    def throwing(i: Int): task.Task[Unit] = _ {
       error(i)
     }
-    val tasks: Seq[domains.Raii.Task[Unit]] = (0 until totalLoops).map(throwing)
+    val tasks: Seq[task.Task[Unit]] = (0 until totalLoops).map(throwing)
 
-    def loop(i: Int = 0, accumulator: Int = 0): domains.Raii.Task[Int] = _ {
+    def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
       if (i < totalLoops) {
         val n = try {
           !tasks(i)
@@ -80,7 +80,7 @@ class TaskBenchmark {
   @Benchmark
   def dslAsyncCall(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    def loop(i: Int = 0, accumulator: Int = 0): domains.Raii.Task[Int] = _ {
+    def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
       if (i < totalLoops) {
         !Task.switchExecutionContext(global)
         !loop(i + 1, accumulator + i)
