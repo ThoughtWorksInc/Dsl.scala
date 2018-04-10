@@ -236,13 +236,13 @@ package com.thoughtworks
   *          The code block after underscore is still inside a function whose return type is `Stream[String]`.
   *
   * @example Instead of manually create the continuation-passing style function,
-  *          you can also create the function from [[com.thoughtworks.dsl.Dsl.Continuation.delay delay]].
+  *          you can also create the function from [[com.thoughtworks.dsl.Dsl.Continuation.reset reset]].
   *
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Yield
-  *          import com.thoughtworks.dsl.Dsl.!!, !!.delay
+  *          import com.thoughtworks.dsl.Dsl.!!, !!.reset
   *          import scala.util.parsing.json._
-  *          def parseAndLog3(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = delay {
+  *          def parseAndLog3(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = reset {
   *            !Yield(s"I am going to parse the JSON text $jsonContent...")
   *            JSON.parseRaw(jsonContent) match {
   *              case Some(json) =>
@@ -264,7 +264,7 @@ package com.thoughtworks
   *                                "done"))
   *          }}}
   *
-  *          Unlike the `parseAndLog2` example, The code inside a `delay` block is not in an anonymous function.
+  *          Unlike the `parseAndLog2` example, The code inside a `reset` block is not in an anonymous function.
   *          Instead, they are directly inside `parseAndLog3`, whose return type is `Stream[String] !! JSONType`.
   *
   *          That is to say,
@@ -282,13 +282,13 @@ package com.thoughtworks
   *          and finally return the total number of lines in the `Stream[String] !! Throwable !! Int` domain.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.Dsl.!!, !!.delay
+  *          import com.thoughtworks.dsl.Dsl.!!, !!.reset
   *          import com.thoughtworks.dsl.keywords.AutoClose
   *          import com.thoughtworks.dsl.keywords.Yield
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import java.io._
   *
-  *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Throwable !! Int = delay {
+  *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Throwable !! Int = reset {
   *            val reader = !AutoClose(createReader())
   *
   *            def loop(lineNumber: Int): Stream[String] !! Throwable !! Int = _ {

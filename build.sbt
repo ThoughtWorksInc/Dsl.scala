@@ -4,7 +4,8 @@ lazy val `compilerplugins-ResetEverywhere` = project.dependsOn(Dsl % Test, Dsl %
 
 lazy val Dsl = project
 
-lazy val task = project.dependsOn(`keywords-Fork`)
+lazy val task =
+  project.dependsOn(`keywords-Shift`, `keywords-Fork` % Test, `keywords-AutoClose` % Test, `keywords-Yield` % Test)
 
 lazy val `domains-Raii` =
   project.dependsOn(
@@ -54,7 +55,7 @@ lazy val `domains-cats` =
                     `keywords-Shift` % Test,
                     `keywords-Yield` % Test)
 
-lazy val `benchmarks-TaskBenchmark` = project.dependsOn(task, `domains-Raii`, `keywords-Yield`)
+lazy val `benchmarks-TaskBenchmark` = project.dependsOn(task, `keywords-Catch`, `keywords-Scope`)
 
 lazy val `package` = project.dependsOn(
   `compilerplugins-BangNotation`,

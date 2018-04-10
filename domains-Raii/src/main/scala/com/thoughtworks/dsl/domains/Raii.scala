@@ -27,7 +27,7 @@ object Raii {
   }
 
   @inline
-  private def catchJvmException[Domain](eh: => Domain !! Raii)(raiiHandler: Raii => Domain)(
+  private def jvmCatch[Domain](eh: => Domain !! Raii)(raiiHandler: Raii => Domain)(
       implicit shiftDsl: Dsl[Shift[Domain, Raii], Domain, Raii]): Domain = {
     val protectedRaii: Domain !! Raii = try {
       eh
@@ -43,9 +43,9 @@ object Raii {
     new Dsl[Scope[Domain !! Raii, A], Domain !! Raii, A] {
       def interpret(keyword: Scope[Domain !! Raii, A], handler: A => Domain !! Raii): Domain !! Raii = {
         (outerScope: Raii => Domain) =>
-          catchJvmException(keyword.continuation { a: A => (scopeHandler: Raii => Domain) =>
+          jvmCatch(keyword.continuation { a: A => (scopeHandler: Raii => Domain) =>
             scopeHandler(new RaiiSuccess[Domain] {
-              def continue(): Domain = catchJvmException(handler(a))(outerScope)
+              def continue(): Domain = jvmCatch(handler(a))(outerScope)
             })
           }) {
             case throwing: RaiiFailure =>
@@ -63,9 +63,9 @@ object Raii {
     new Dsl[Catch[Domain !! Raii], Domain !! Raii, Unit] {
       def interpret(keyword: Catch[Domain !! Raii], handler: Unit => Domain !! Raii): Domain !! Raii = {
         (outerScope: Raii => Domain) =>
-          catchJvmException(handler(())) {
+          jvmCatch(handler(())) {
             case RaiiFailure(e) =>
-              catchJvmException(keyword.failureHandler(e))(outerScope)
+              jvmCatch(keyword.failureHandler(e))(outerScope)
             case breaking =>
               outerScope(breaking)
           }
@@ -128,7 +128,7 @@ object Raii {
         val AutoClose(open) = keyword
         val r = open()
         (outerScope: Raii => Domain) =>
-          catchJvmException {
+          jvmCatch {
             body(r)
           } { raii2: Raii =>
             outerScope(try {
@@ -150,7 +150,7 @@ object Raii {
       def interpret(keyword: Keyword, successHandler: A => Domain !! Raii): Domain !! Raii = {
         (continue: Raii => Domain) =>
           restDsl.interpret(keyword, { a =>
-            catchJvmException(successHandler(a))(continue)
+            jvmCatch(successHandler(a))(continue)
           })
       }
 
@@ -172,7 +172,7 @@ object Raii {
     }
 
     def apply(raiiHandler: Raii => Domain): Domain = {
-      catchJvmException(last())(raiiHandler)
+      jvmCatch(last())(raiiHandler)
     }
   }
 
@@ -203,7 +203,7 @@ object Raii {
     def switchExecutionContext(executionContext: ExecutionContext): Task[Unit] = { continue => raiiHandler =>
       executionContext.execute(new Runnable {
         def run(): Unit = {
-          catchJvmException(continue(()))(raiiHandler).result
+          jvmCatch(continue(()))(raiiHandler).result
         }
       })
       TailCalls.done(())

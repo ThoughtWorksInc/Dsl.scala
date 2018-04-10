@@ -4,8 +4,9 @@ import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 import com.thoughtworks.dsl.keywords.Shift.StackSafeShiftDsl
 
+import scala.annotation.tailrec
 import scala.language.implicitConversions
-import scala.util.control.TailCalls
+import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
 /**
@@ -24,7 +25,6 @@ private[keywords] trait LowPriorityShift1 {
     }
 
 }
-
 
 private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
 
@@ -51,5 +51,45 @@ object Shift extends LowPriorityShift0 {
       }
     }
 
+  @inline
+  private def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain)(
+      implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
+    val protectedContinuation: Domain !! Throwable = try {
+      eh
+    } catch {
+      case NonFatal(e) =>
+        return failureHandler(e)
+    }
+    shiftDsl.interpret(protectedContinuation, failureHandler)
+  }
+
+  private[Shift] final case class TrampolineContinuation[Domain, Value](continuation: Domain !! Throwable !! Value,
+                                                                        handler: Value => Domain !! Throwable)
+      extends (Domain !! Throwable) {
+
+    @tailrec
+    @inline
+    private def last(): Domain !! Throwable = {
+      continuation(handler) match {
+        case trampoline: TrampolineContinuation[Domain, Value] =>
+          trampoline.last()
+        case notTrampoline =>
+          notTrampoline
+      }
+    }
+
+    def apply(raiiHandler: Throwable => Domain): Domain = {
+      jvmCatch(last())(raiiHandler)
+    }
+  }
+
+  @inline
+  implicit def stackSafeThrowableShiftDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Throwable, Value] =
+    new StackSafeShiftDsl[Domain !! Throwable, Value] {
+      @inline def interpret(keyword: Shift[Domain !! Throwable, Value],
+                            handler: Value => Domain !! Throwable): Domain !! Throwable = {
+        TrampolineContinuation(keyword.continuation, handler)
+      }
+    }
 //  TODO: StackSafeShift for `Domain !! Throwable`
 }
