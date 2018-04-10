@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
   */
 final case class Catch[Domain](failureHandler: Throwable => Domain) extends AnyVal with Keyword[Catch[Domain], Unit]
 
-private[keywords]trait LowPriorityCatch0 { this: Catch.type =>
+private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
 
   implicit def catchContinuationDsl[Domain, Value](
       implicit restCatchDsl: Dsl[Catch[Domain], Domain, Unit]): Dsl[Catch[Domain !! Value], Domain !! Value, Unit] =
@@ -41,12 +41,13 @@ object Catch extends LowPriorityCatch0 {
         finalFailureHandler =>
           @inline
           def jvmCatch(block: => Domain !! Throwable)(failureHandler: Throwable => Domain): Domain = {
-            (try {
+            val protectedBlock = try {
               block
             } catch {
               case NonFatal(e) =>
                 return failureHandler(e)
-            }).apply(failureHandler)
+            }
+            protectedBlock.apply(failureHandler)
           }
 
           jvmCatch(handler(())) { throwable =>
