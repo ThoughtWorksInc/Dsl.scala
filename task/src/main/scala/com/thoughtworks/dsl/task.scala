@@ -15,16 +15,17 @@ import scala.util.control.TailCalls.TailRec
 object task {
 
   @inline
-  private def catchJvmException[Domain](eh: => Domain !! Throwable)(raiiHandler: Throwable => Domain)(
+  private[dsl] def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain)(
       implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
-    val protectedRaii: Domain !! Throwable = try {
+    val protectedContinuation: Domain !! Throwable = try {
       eh
     } catch {
       case NonFatal(e) =>
-        return raiiHandler(e)
+        return failureHandler(e)
     }
-    shiftDsl.interpret(protectedRaii, raiiHandler)
+    shiftDsl.interpret(protectedContinuation, failureHandler)
   }
+
   type Task[+A] = TailRec[Unit] !! Throwable !! A
 
   object Task {
@@ -42,7 +43,7 @@ object task {
     def switchExecutionContext(executionContext: ExecutionContext): Task[Unit] = { continue => raiiHandler =>
       executionContext.execute(new Runnable {
         def run(): Unit = {
-          catchJvmException(continue(()))(raiiHandler).result
+          jvmCatch(continue(()))(raiiHandler).result
         }
       })
       TailCalls.done(())
