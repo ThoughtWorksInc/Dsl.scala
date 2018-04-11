@@ -36,28 +36,29 @@ private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
 
 object Catch extends LowPriorityCatch0 {
 
+  @inline
+  private def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain)(
+      implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
+    val protectedContinuation: Domain !! Throwable = try {
+      eh
+    } catch {
+      case NonFatal(e) =>
+        return failureHandler(e)
+    }
+    shiftDsl.interpret(protectedContinuation, failureHandler)
+  }
+
   implicit def implicitCatch[Domain](onFailure: Catcher[Domain]): Catch[Domain] = Catch[Domain](onFailure)
 
-  implicit def throwableCatchDsl[Domain]: Dsl[Catch[Domain !! Throwable], Domain !! Throwable, Unit] =
+  implicit def throwableCatchDsl[Domain](implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable])
+    : Dsl[Catch[Domain !! Throwable], Domain !! Throwable, Unit] =
     new Dsl[Catch[Domain !! Throwable], Domain !! Throwable, Unit] {
       def interpret(keyword: Catch[Domain !! Throwable], handler: Unit => Domain !! Throwable): Domain !! Throwable = {
         finalFailureHandler =>
-          @inline
-          def jvmCatch(block: => Domain !! Throwable)(failureHandler: Throwable => Domain): Domain = {
-            val protectedBlock = try {
-              block
-            } catch {
-              case NonFatal(e) =>
-                return failureHandler(e)
-            }
-            protectedBlock.apply(failureHandler)
-          }
-
           jvmCatch(handler(())) { throwable =>
             jvmCatch(keyword.failureHandler.applyOrElse(throwable, Continuation.now[Domain, Throwable]))(
               finalFailureHandler)
           }
-
       }
     }
 
