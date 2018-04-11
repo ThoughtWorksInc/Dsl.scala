@@ -31,12 +31,12 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 private[dsl] trait LowPriorityDsl1 {
 
-  implicit def continuationDsl[Keyword, Domain, MiddleValue, KeywordValue](
-      implicit restDsl: Dsl[Keyword, Domain, KeywordValue]
-  ): Dsl[Keyword, Domain !! MiddleValue, KeywordValue] = {
-    new Dsl[Keyword, Domain !! MiddleValue, KeywordValue] {
-      def interpret(keyword: Keyword, handler: KeywordValue => Domain !! MiddleValue): Domain !! MiddleValue = {
-        (continue: MiddleValue => Domain) =>
+  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
+      implicit restDsl: Dsl[Keyword, LeftDomain, Value]
+  ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
+    new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
+      def interpret(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
+        (continue: RightDomain => LeftDomain) =>
           restDsl.interpret(keyword, { a =>
             handler(a)(continue)
           })
@@ -47,16 +47,16 @@ private[dsl] trait LowPriorityDsl1 {
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
-  implicit def throwableContinuationDsl[Keyword, Domain, Value](
-      implicit restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, Domain !! Throwable, Value] = {
-    new Dsl[Keyword, Domain !! Throwable, Value] {
-      def interpret(keyword: Keyword, handler: Value => Domain !! Throwable): Domain !! Throwable = {
-        (continue: Throwable => Domain) =>
+  implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](
+      implicit restDsl: Dsl[Keyword, LeftDomain, Value]
+  ): Dsl[Keyword, LeftDomain !! Throwable, Value] = {
+    new Dsl[Keyword, LeftDomain !! Throwable, Value] {
+      def interpret(keyword: Keyword, handler: Value => LeftDomain !! Throwable): LeftDomain !! Throwable = {
+        (continue: Throwable => LeftDomain) =>
           restDsl.interpret(
             keyword,
-            new (Value => Domain) {
-              def apply(value: Value): Domain = {
+            new (Value => LeftDomain) {
+              def apply(value: Value): LeftDomain = {
                 val protectedContinuation = try {
                   handler(value)
                 } catch {
@@ -85,11 +85,12 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-  // TODO: Support any middle types other than Throwable
-  implicit def liftThrowableTailRecDsl[Keyword, Domain, Value](
-      implicit restDsl: Dsl[Keyword, Domain !! Throwable, Value]): Dsl[Keyword, TailRec[Domain] !! Throwable, Value] =
-    new Dsl[Keyword, TailRec[Domain] !! Throwable, Value] {
-      def interpret(keyword: Keyword, handler: Value => TailRec[Domain] !! Throwable): TailRec[Domain] !! Throwable = {
+  implicit def liftThrowableTailRecDsl[Keyword, LeftDomain, Value](
+      implicit restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value])
+    : Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
+    new Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] {
+      def interpret(keyword: Keyword,
+                    handler: Value => TailRec[LeftDomain] !! Throwable): TailRec[LeftDomain] !! Throwable = {
         tailRecFailureHandler =>
           TailCalls.done(restDsl.interpret(keyword, { value => failureHandler =>
             handler(value) { e =>
@@ -116,7 +117,7 @@ object Dsl extends LowPriorityDsl0 {
     @inline
     def reset[R, A](a: => A): (R !! A) @reset = delay(a _)
 
-    def toTryContinuation[Domain, A](task: Domain !! Throwable !! A): Domain !! Try[A] = { handler =>
+    def toTryContinuation[LeftDomain, Value](task: LeftDomain !! Throwable !! Value): LeftDomain !! Try[Value] = { handler =>
       task { a => failureHandler =>
         handler(Success(a))
       } { e =>

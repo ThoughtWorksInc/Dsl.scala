@@ -51,23 +51,24 @@ object Shift extends LowPriorityShift0 {
       }
     }
 
-  private[Shift] final case class TrampolineContinuation[Domain, Value](continuation: Domain !! Throwable !! Value,
-                                                                        handler: Value => Domain !! Throwable)
-      extends (Domain !! Throwable) {
+  private[Shift] final case class TrampolineContinuation[LeftDomain, Value](
+      continuation: LeftDomain !! Throwable !! Value,
+      handler: Value => LeftDomain !! Throwable)
+      extends (LeftDomain !! Throwable) {
 
     @tailrec
     @inline
-    private def last(): Domain !! Throwable = {
+    private def last(): LeftDomain !! Throwable = {
       continuation(handler) match {
-        case trampoline: TrampolineContinuation[Domain, Value] =>
+        case trampoline: TrampolineContinuation[LeftDomain, Value] =>
           trampoline.last()
         case notTrampoline =>
           notTrampoline
       }
     }
 
-    def apply(raiiHandler: Throwable => Domain): Domain = {
-      val protectedContinuation: Domain !! Throwable = try {
+    def apply(raiiHandler: Throwable => LeftDomain): LeftDomain = {
+      val protectedContinuation: LeftDomain !! Throwable = try {
         last()
       } catch {
         case NonFatal(e) =>
@@ -78,13 +79,13 @@ object Shift extends LowPriorityShift0 {
   }
 
   @inline
-  implicit def stackSafeThrowableShiftDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Throwable, Value] =
-    new StackSafeShiftDsl[Domain !! Throwable, Value] {
+  implicit def stackSafeThrowableShiftDsl[LeftDomain, Value]: StackSafeShiftDsl[LeftDomain !! Throwable, Value] =
+    new StackSafeShiftDsl[LeftDomain !! Throwable, Value] {
       @inline
-      def interpret(keyword: Shift[Domain !! Throwable, Value],
-                    handler: Value => Domain !! Throwable): Domain !! Throwable = {
+      def interpret(keyword: Shift[LeftDomain !! Throwable, Value],
+                    handler: Value => LeftDomain !! Throwable): LeftDomain !! Throwable = {
         TrampolineContinuation(keyword.continuation, handler)
       }
     }
-//  TODO: StackSafeShift for `Domain !! Throwable`
+//  TODO: StackSafeShift for `LeftDomain !! Throwable`
 }
