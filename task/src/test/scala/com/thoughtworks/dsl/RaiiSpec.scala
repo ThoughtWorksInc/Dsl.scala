@@ -1,14 +1,28 @@
 package com.thoughtworks.dsl
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
-import com.thoughtworks.dsl.keywords.{Catch, Scope, Yield}
+import com.thoughtworks.dsl.keywords.{Catch, Shift, Yield}
 import org.scalatest.{FreeSpec, Matchers}
 import com.thoughtworks.dsl.task._
+
+import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
   */
 final class RaiiSpec extends FreeSpec with Matchers {
+
+  @inline
+  private def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain)(
+      implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
+    val protectedContinuation: Domain !! Throwable = try {
+      eh
+    } catch {
+      case NonFatal(e) =>
+        return failureHandler(e)
+    }
+    shiftDsl.interpret(protectedContinuation, failureHandler)
+  }
 
   /**
     * Exit the current scope then hang up
@@ -69,23 +83,22 @@ final class RaiiSpec extends FreeSpec with Matchers {
 
       object MyException extends Exception
       def generator: Stream[String] !! Throwable !! Int = { continue =>
-        !Yield("before catch")
-
-        !Catch {
+        try {
+          !Yield("before catch")
+          continue(43)
+        } catch {
           case e: Throwable =>
             e should be(MyException)
             !Yield("catch")
             continue(42)
         }
-        !Yield("after catch")
-        continue(43)
       }
 
       object MyException2 extends Exception
 
       def generator2: Stream[String] !! Throwable = {
         import Throwable._
-        val i = !Scope(generator)
+        val i = !Shift(generator)
         !Yield(i.toString)
         i should be(43)
         failureContinuation(MyException)
@@ -95,7 +108,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
         e should be(MyException)
 
         Stream("end")
-      } should be(Stream("before catch", "after catch", "43", "end"))
+      } should be(Stream("before catch", "43", "end"))
     }
 
     "issue 2" in {

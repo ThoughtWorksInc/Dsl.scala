@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.keywords.Catch.CatchDsl
 
 import scala.collection.{GenTraversableOnce, mutable}
 import scala.collection.generic.CanBuildFrom
@@ -60,8 +61,7 @@ object Fork {
       isTraversableOnce: That <:< TraversableOnce[ThatElement],
       canBuildFrom: CanBuildFrom[Nothing, ThatElement, That],
       hangDsl: Dsl[Hang[Unit], Domain, Unit],
-      scopeDsl: Dsl[Scope[Domain, Unit], Domain, Unit],
-      catchDsl: Dsl[Catch[Domain], Domain, Unit]
+      catch2Dsl: CatchDsl[Domain, Domain, Unit]
   ): Dsl[Fork[ThisElement], Domain !! That, ThisElement] =
     new Dsl[Fork[ThisElement], Domain !! That, ThisElement] {
       def interpret(fork: Fork[ThisElement], mapper: ThisElement => Domain !! That): Domain !! That = _ {

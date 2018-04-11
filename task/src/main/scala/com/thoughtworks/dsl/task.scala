@@ -14,18 +14,6 @@ import scala.util.control.TailCalls.TailRec
   */
 object task {
 
-  @inline
-  private[dsl] def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain)(
-      implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
-    val protectedContinuation: Domain !! Throwable = try {
-      eh
-    } catch {
-      case NonFatal(e) =>
-        return failureHandler(e)
-    }
-    shiftDsl.interpret(protectedContinuation, failureHandler)
-  }
-
   type Task[+A] = TailRec[Unit] !! Throwable !! A
 
   object Task {
@@ -42,9 +30,20 @@ object task {
     @inline
     def switchExecutionContext(executionContext: ExecutionContext): Task[Unit] = { continue => raiiHandler =>
       executionContext.execute(new Runnable {
-        def run(): Unit = {
-          jvmCatch(continue(()))(raiiHandler).result
+        private def stackSafeRun(): TailRec[Unit] = {
+
+          val protectedContinuation = try {
+            continue(())
+          } catch {
+            case NonFatal(e) =>
+              return raiiHandler(e)
+          }
+          Shift(protectedContinuation).cpsApply(raiiHandler)
         }
+
+        @noinline
+        def run(): Unit = stackSafeRun().result
+
       })
       TailCalls.done(())
     }

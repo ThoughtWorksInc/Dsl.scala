@@ -1,23 +1,17 @@
 package com.thoughtworks.dsl.domains
 
+import com.thoughtworks.Extractor._
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Keyword
+import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
 import _root_.scalaz.{Bind, Monad, MonadError, MonadTrans, Unapply}
-import com.thoughtworks.dsl.keywords.{Catch, Monadic, Scope}
+import com.thoughtworks.dsl.keywords.Catch.CatchDsl
+import com.thoughtworks.dsl.keywords.{Catch, Monadic}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.{ControlThrowable, NonFatal}
-
-private[domains] trait LowPriorityScalaz0 { this: scalaz.type =>
-
-  implicit def scalazCatchDslUnapply[FA](implicit unapply: Unapply[MonadThrowable, FA]): Dsl[Catch[FA], FA, Unit] = {
-    unapply.leibniz.flip.subst[λ[FA => Dsl[Catch[FA], FA, Unit]]](scalazCatchDsl[unapply.M, unapply.A](unapply.TC))
-  }
-
-}
 
 /** Contains interpreters to enable [[Dsl.Keyword#unary_$bang !-notation]]
   * for [[keywords.Monadic]] and other keywords
@@ -131,53 +125,24 @@ private[domains] trait LowPriorityScalaz0 { this: scalaz.type =>
   *
   * @author 杨博 (Yang Bo)
   */
-object scalaz extends LowPriorityScalaz0 {
+object scalaz {
 
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
-  implicit def scalazScopeDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): Dsl[Scope[F[B], A], F[B], A] =
-    new Dsl[Scope[F[B], A], F[B], A] {
-      def interpret(keyword: Scope[F[B], A], handler: A => F[B]): F[B] = {
-        val continuation: (A => F[B]) => F[B] = keyword.continuation
-        final case class BreakScope(a: A) extends ControlThrowable
-        monadError.handleError(continuation { a =>
-          monadError.raiseError(BreakScope(a))
-        }) {
-          case BreakScope(a) =>
-            handler(a)
-          case e: Throwable =>
-            monadError.raiseError(e)
-        }
-      }
-    }
-
-  implicit def scalazCatchDsl[F[_], A](implicit monadError: MonadThrowable[F]): Dsl[Catch[F[A]], F[A], Unit] =
-    new Dsl[Catch[F[A]], F[A], Unit] {
-      def interpret(keyword: Catch[F[A]], continuation: Unit => F[A]): F[A] = {
-        monadError.handleError(try {
-          continuation(())
-        } catch {
-          case e: Throwable =>
+  implicit def scalazCatchDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): CatchDsl[F[A], F[B], A] =
+    new CatchDsl[F[A], F[B], A] {
+      def tryCatch(block: F[A] !! A, catcher: Catcher[F[A] !! A], handler: A => F[B]): F[B] = {
+        import _root_.scalaz.syntax.all._
+        val fa = monadError.bind(monadError.pure(block))(_(monadError.pure(_)))
+        val protectedFa = monadError.handleError(fa) {
+          case catcher.extract(recovered) =>
+            recovered(monadError.pure(_))
+          case e =>
             monadError.raiseError[A](e)
-        })(keyword.catcher.orElse { case e => monadError.raiseError(e) })
-      }
-    }
-
-  implicit final class ScalazMonadErrorCatchOps[F[_], A](catcher: Catcher[F[A]])(
-      implicit monadError: MonadThrowable[F]) {
-    def cpsCatch(continuation: (F[A] => F[A]) => F[A]): F[A] = {
-      try {
-        continuation { fa: F[A] =>
-          monadError.handleError(fa) { e =>
-            catcher.applyOrElse(e, monadError.raiseError)
-          }
         }
-      } catch {
-        case e: Throwable =>
-          catcher.applyOrElse(e, monadError.raiseError)
+        monadError.bind(protectedFa)(handler)
       }
     }
-  }
 
   implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](
       implicit monadTrans: MonadTrans[F],

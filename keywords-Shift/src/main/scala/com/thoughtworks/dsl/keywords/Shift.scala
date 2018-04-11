@@ -51,18 +51,6 @@ object Shift extends LowPriorityShift0 {
       }
     }
 
-  @inline
-  private def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain)(
-      implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
-    val protectedContinuation: Domain !! Throwable = try {
-      eh
-    } catch {
-      case NonFatal(e) =>
-        return failureHandler(e)
-    }
-    shiftDsl.interpret(protectedContinuation, failureHandler)
-  }
-
   private[Shift] final case class TrampolineContinuation[Domain, Value](continuation: Domain !! Throwable !! Value,
                                                                         handler: Value => Domain !! Throwable)
       extends (Domain !! Throwable) {
@@ -79,15 +67,22 @@ object Shift extends LowPriorityShift0 {
     }
 
     def apply(raiiHandler: Throwable => Domain): Domain = {
-      jvmCatch(last())(raiiHandler)
+      val protectedContinuation: Domain !! Throwable = try {
+        last()
+      } catch {
+        case NonFatal(e) =>
+          return raiiHandler(e)
+      }
+      protectedContinuation(raiiHandler)
     }
   }
 
   @inline
   implicit def stackSafeThrowableShiftDsl[Domain, Value]: StackSafeShiftDsl[Domain !! Throwable, Value] =
     new StackSafeShiftDsl[Domain !! Throwable, Value] {
-      @inline def interpret(keyword: Shift[Domain !! Throwable, Value],
-                            handler: Value => Domain !! Throwable): Domain !! Throwable = {
+      @inline
+      def interpret(keyword: Shift[Domain !! Throwable, Value],
+                    handler: Value => Domain !! Throwable): Domain !! Throwable = {
         TrampolineContinuation(keyword.continuation, handler)
       }
     }
