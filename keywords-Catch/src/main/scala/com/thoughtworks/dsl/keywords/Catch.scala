@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
 /**
   * @author 杨博 (Yang Bo)
   */
-final case class Catch[Domain](failureHandler: Catcher[Domain]) extends AnyVal with Keyword[Catch[Domain], Unit]
+final case class Catch[Domain](catcher: Catcher[Domain]) extends AnyVal with Keyword[Catch[Domain], Unit]
 
 private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
 
@@ -23,7 +23,7 @@ private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
         (continue: Value => Domain) =>
           restCatchDsl.interpret(
             Catch[Domain] {
-              case keyword.failureHandler.extract(combinedDomain) =>
+              case keyword.catcher.extract(combinedDomain) =>
                 combinedDomain(continue)
             }, { _: Unit =>
               block(())(continue)
@@ -48,7 +48,7 @@ object Catch extends LowPriorityCatch0 {
     shiftDsl.interpret(protectedContinuation, failureHandler)
   }
 
-  implicit def implicitCatch[Domain](onFailure: Catcher[Domain]): Catch[Domain] = Catch[Domain](onFailure)
+  implicit def implicitCatch[Domain](catcher: Catcher[Domain]): Catch[Domain] = Catch[Domain](catcher)
 
   implicit def throwableCatchDsl[Domain](implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable])
     : Dsl[Catch[Domain !! Throwable], Domain !! Throwable, Unit] =
@@ -56,7 +56,7 @@ object Catch extends LowPriorityCatch0 {
       def interpret(keyword: Catch[Domain !! Throwable], handler: Unit => Domain !! Throwable): Domain !! Throwable = {
         finalFailureHandler =>
           jvmCatch(handler(())) { throwable =>
-            jvmCatch(keyword.failureHandler.applyOrElse(throwable, Continuation.now[Domain, Throwable]))(
+            jvmCatch(keyword.catcher.applyOrElse(throwable, Continuation.now[Domain, Throwable]))(
               finalFailureHandler)
           }
       }
