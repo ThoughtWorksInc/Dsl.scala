@@ -47,27 +47,27 @@ private[dsl] trait LowPriorityDsl1 {
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
-  // FIXME: Shift[Domain, Throwable]
-  @inline
-  private def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain): Domain = {
-    val protectedContinuation: Domain !! Throwable = try {
-      eh
-    } catch {
-      case NonFatal(e) =>
-        return failureHandler(e)
-    }
-    protectedContinuation(failureHandler)
-  }
-
-  implicit def throwableContinuationDsl[Keyword, Domain, KeywordValue](
-      implicit restDsl: Dsl[Keyword, Domain, KeywordValue]
-  ): Dsl[Keyword, Domain !! Throwable, KeywordValue] = {
-    new Dsl[Keyword, Domain !! Throwable, KeywordValue] {
-      def interpret(keyword: Keyword, handler: KeywordValue => Domain !! Throwable): Domain !! Throwable = {
+  implicit def throwableContinuationDsl[Keyword, Domain, Value](
+      implicit restDsl: Dsl[Keyword, Domain, Value]
+  ): Dsl[Keyword, Domain !! Throwable, Value] = {
+    new Dsl[Keyword, Domain !! Throwable, Value] {
+      def interpret(keyword: Keyword, handler: Value => Domain !! Throwable): Domain !! Throwable = {
         (continue: Throwable => Domain) =>
-          restDsl.interpret(keyword, { a =>
-            jvmCatch(handler(a))(continue)
-          })
+          restDsl.interpret(
+            keyword,
+            new (Value => Domain) {
+              def apply(value: Value): Domain = {
+                val protectedContinuation = try {
+                  handler(value)
+                } catch {
+                  case NonFatal(e) =>
+                    return continue(e)
+                }
+                // FIXME: Shift[Domain, Throwable]
+                protectedContinuation(continue)
+              }
+            }
+          )
       }
     }
   }
