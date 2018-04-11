@@ -182,7 +182,7 @@ class TaskBenchmark {
 
   }
 
-  @volatile var totalLoops = 10000
+  @volatile var totalLoops = 1000
 
   val expectedResult = (0 until totalLoops).sum
 

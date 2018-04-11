@@ -16,3 +16,5 @@ lazy val secret = project.settings(publishArtifact := false).in {
     .close()
   secretDirectory
 }
+
+optimization in ThisBuild := true

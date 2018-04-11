@@ -301,49 +301,36 @@ final class BangNotation(override val global: Global) extends Plugin {
             EmptyTree
           case Try(block, catches, finalizer) =>
             val finalizerName = currentUnit.freshTermName("finalizer")
-            val tryResultName = currentUnit.freshTermName("tryResult")
-            val scopeApplyName = currentUnit.freshTermName("scopeApply")
-            val unhandledExceptionName = currentUnit.freshTermName("unhandledException")
+            val resultName = currentUnit.freshTermName("result")
 
             q"""
-            @${definitions.ScalaInlineClass} def $scopeApplyName[Domain, Value](continue: Value => Domain)(
-            continuation: (Value => Domain) => Domain)(
-            implicit scopeDsl: _root_.com.thoughtworks.dsl.Dsl[_root_.com.thoughtworks.dsl.keywords.Scope[Domain, Value],Domain,Value]
-            )= {
-              _root_.com.thoughtworks.dsl.keywords.Scope(continuation).cpsApply(continue)
-            }
-
-            $scopeApplyName { ($tryResultName: $tpe) => ${{
+            _root_.com.thoughtworks.dsl.keywords.Catch.tryCatch { ($resultName: $tpe) => ${{
               cpsAttachment(finalizer) { finalizerValue =>
                 q"""
                   ..${notPure(finalizerValue)}
-                  ${continue(q"$tryResultName")}
+                  ${continue(q"$resultName")}
                 """
               }
-            }}} { ($finalizerName: ${TypeTree()}) =>
-              _root_.com.thoughtworks.dsl.keywords.Catch {
-                case ..${{
-              catches.map { caseDef =>
-                atPos(caseDef.pos) {
-                  treeCopy.CaseDef(
-                    caseDef,
-                    caseDef.pat,
-                    caseDef.guard,
+            }}}.apply(
+              { $finalizerName: ${TypeTree()} => ${cpsAttachment(block) { blockValue =>
+              q"$finalizerName.apply($blockValue)"
+            }}},
+              {
+                case ..${catches.map { caseDef =>
+              atPos(caseDef.pos) {
+                treeCopy.CaseDef(
+                  caseDef,
+                  caseDef.pat,
+                  caseDef.guard,
+                  q"""{ $finalizerName: ${TypeTree()} => ${{
                     cpsAttachment(caseDef.body) { bodyValue =>
                       q"$finalizerName.apply($bodyValue)"
                     }
-                  )
-                }
-              }
-            }}
-              }.cpsApply { _: _root_.scala.Unit => ${{
-              cpsAttachment(block) { blockValue =>
-                q"""
-                  ${q"$finalizerName.apply($blockValue)"}
-                  """
+                  }}}"""
+                )
               }
             }}}
-            }
+            )
             """
           case Assign(lhs, rhs) =>
             cpsAttachment(rhs) { rhsValue =>

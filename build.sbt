@@ -8,7 +8,7 @@ lazy val task =
   project.dependsOn(`keywords-Shift`, `keywords-Fork` % Test, `keywords-AutoClose` % Test, `keywords-Yield` % Test)
 
 lazy val `keywords-Fork` =
-  project.dependsOn(Dsl, `keywords-Scope`, `keywords-Shift`, `keywords-Catch`, `keywords-Hang`, `keywords-Each`)
+  project.dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Hang`, `keywords-Each`)
 
 lazy val `keywords-Hang` = project.dependsOn(Dsl)
 
@@ -16,11 +16,9 @@ lazy val `keywords-AsynchronousIo` = project.dependsOn(`keywords-Shift`)
 
 lazy val `keywords-Shift` = project.dependsOn(Dsl)
 
-lazy val `keywords-AutoClose` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Scope`)
+lazy val `keywords-AutoClose` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`)
 
 lazy val `keywords-Catch` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
-
-lazy val `keywords-Scope` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
 
 lazy val `keywords-Each` = project.dependsOn(Dsl, `keywords-Shift` % Test, `keywords-Yield` % Test)
 
@@ -29,22 +27,12 @@ lazy val `keywords-Yield` = project.dependsOn(Dsl, `keywords-Shift` % Test)
 lazy val `keywords-Monadic` = project.dependsOn(Dsl)
 
 lazy val `domains-scalaz` =
-  project.dependsOn(Dsl,
-                    `keywords-Scope`,
-                    `keywords-Catch`,
-                    `keywords-Monadic`,
-                    `keywords-Shift` % Test,
-                    `keywords-Yield` % Test)
+  project.dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Shift` % Test, `keywords-Yield` % Test)
 
 lazy val `domains-cats` =
-  project.dependsOn(Dsl,
-                    `keywords-Scope`,
-                    `keywords-Catch`,
-                    `keywords-Monadic`,
-                    `keywords-Shift` % Test,
-                    `keywords-Yield` % Test)
+  project.dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Shift` % Test, `keywords-Yield` % Test)
 
-lazy val `benchmarks-TaskBenchmark` = project.dependsOn(task, `keywords-Catch`, `keywords-Scope`)
+lazy val `benchmarks-TaskBenchmark` = project.dependsOn(task, `keywords-Catch`)
 
 lazy val `package` = project.dependsOn(
   `compilerplugins-BangNotation`,
@@ -69,7 +57,6 @@ Seq[ProjectReference](
   `keywords-Fork`,
   `keywords-Catch`,
   `keywords-Hang`,
-  `keywords-Scope`,
   `keywords-Shift`,
   `keywords-Each`,
   `keywords-AsynchronousIo`,

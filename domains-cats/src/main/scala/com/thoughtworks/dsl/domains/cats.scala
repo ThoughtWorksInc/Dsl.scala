@@ -3,9 +3,11 @@ package domains
 
 import _root_.cats.FlatMap
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Keyword
+import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 import _root_.cats.MonadError
-import com.thoughtworks.dsl.keywords.{Catch, Monadic, Scope}
+import com.thoughtworks.Extractor._
+import com.thoughtworks.dsl.keywords.Catch.CatchDsl
+import com.thoughtworks.dsl.keywords.{Catch, Monadic}
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
@@ -106,31 +108,17 @@ import scala.util.control.{ControlThrowable, NonFatal}
 object cats {
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
-  implicit def catsScopeDsl[F[_], A, B](implicit monadError: MonadError[F, Throwable]): Dsl[Scope[F[B], A], F[B], A] =
-    new Dsl[Scope[F[B], A], F[B], A] {
-      def interpret(keyword: Scope[F[B], A], handler: A => F[B]): F[B] = {
-        val continuation: (A => F[B]) => F[B] = keyword.continuation
-        final case class BreakScope(a: A) extends ControlThrowable
-        monadError.handleErrorWith(continuation { a =>
-          monadError.raiseError(BreakScope(a))
-        }) {
-          case BreakScope(a) =>
-            handler(a)
-          case e: Throwable =>
-            monadError.raiseError(e)
-        }
-      }
-    }
-
-  implicit def catsCatchDsl[F[_], A](implicit monadError: MonadThrowable[F]): Dsl[Catch[F[A]], F[A], Unit] =
-    new Dsl[Catch[F[A]], F[A], Unit] {
-      def interpret(keyword: Catch[F[A]], continuation: Unit => F[A]): F[A] = {
-        monadError.handleErrorWith(try {
-          continuation(())
-        } catch {
-          case e: Throwable =>
+  implicit def catsCatchDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): CatchDsl[F[A], F[B], A] =
+    new CatchDsl[F[A], F[B], A] {
+      def tryCatch(block: F[A] !! A, catcher: Catcher[F[A] !! A], handler: A => F[B]): F[B] = {
+        val fa = monadError.flatMap(monadError.pure(block))(_(monadError.pure(_)))
+        val protectedFa = monadError.handleErrorWith(fa) {
+          case catcher.extract(recovered) =>
+            recovered(monadError.pure(_))
+          case e =>
             monadError.raiseError[A](e)
-        })(keyword.catcher.orElse { case e => monadError.raiseError(e) })
+        }
+        monadError.flatMap(protectedFa)(handler)
       }
     }
 
