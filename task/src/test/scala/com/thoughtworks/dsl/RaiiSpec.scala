@@ -27,9 +27,9 @@ final class RaiiSpec extends FreeSpec with Matchers {
   /**
     * Exit the current scope then hang up
     */
-  def successContinuation[Domain](domain: Domain): (Domain !! Throwable) @reset = Continuation.empty(domain)
+  def successContinuation[LeftDomain](domain: LeftDomain): (LeftDomain !! Throwable) @reset = Continuation.empty(domain)
 
-  def failureContinuation[Domain](throwable: Throwable): (Domain !! Throwable) @reset = Continuation.now(throwable)
+  def failureContinuation[LeftDomain](throwable: Throwable): (LeftDomain !! Throwable) @reset = Continuation.now(throwable)
 
   "Given a continuation that throws an exception" - {
     object MyException extends Exception

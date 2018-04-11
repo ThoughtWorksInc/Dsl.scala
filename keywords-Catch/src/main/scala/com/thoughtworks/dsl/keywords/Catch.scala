@@ -58,17 +58,17 @@ object Catch extends LowPriorityCatch0 {
       catch2Dsl.tryCatch(block, catcher, finalizer)
   }
 
-  implicit def throwableCatchDsl[Domain, Value](implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable])
-    : CatchDsl[Domain !! Throwable, Domain !! Throwable, Value] =
-    new CatchDsl[Domain !! Throwable, Domain !! Throwable, Value] {
+  implicit def throwableCatchDsl[LeftDomain, Value](implicit shiftDsl: Dsl[Shift[LeftDomain, Throwable], LeftDomain, Throwable])
+    : CatchDsl[LeftDomain !! Throwable, LeftDomain !! Throwable, Value] =
+    new CatchDsl[LeftDomain !! Throwable, LeftDomain !! Throwable, Value] {
       @inline
-      def tryCatch(block: Domain !! Throwable !! Value,
-                   catcher: Catcher[Domain !! Throwable !! Value],
-                   handler: Value => Domain !! Throwable): Domain !! Throwable = {
-        new (Domain !! Throwable) {
-          def apply(outerFailureHandler: Throwable => Domain): Domain = {
+      def tryCatch(block: LeftDomain !! Throwable !! Value,
+                   catcher: Catcher[LeftDomain !! Throwable !! Value],
+                   handler: Value => LeftDomain !! Throwable): LeftDomain !! Throwable = {
+        new (LeftDomain !! Throwable) {
+          def apply(outerFailureHandler: Throwable => LeftDomain): LeftDomain = {
 
-            def recover(e: Throwable): Domain = {
+            def recover(e: Throwable): LeftDomain = {
               e match {
                 case catcher.extract(recovered) =>
                   val outerContinuation = try {

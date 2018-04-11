@@ -55,17 +55,18 @@ object Fork {
 
   }
 
-  implicit def forkContinuationDsl[ThisElement, Domain, ThatElement, That](
-      implicit eachDsl: Dsl[Each[ThisElement], Domain, ThisElement],
-      booleanEachDsl: Dsl[Each[Boolean], Domain, Boolean],
-      isTraversableOnce: That <:< TraversableOnce[ThatElement],
-      canBuildFrom: CanBuildFrom[Nothing, ThatElement, That],
-      hangDsl: Dsl[Hang[Unit], Domain, Unit],
-      catch2Dsl: CatchDsl[Domain, Domain, Unit]
-  ): Dsl[Fork[ThisElement], Domain !! That, ThisElement] =
-    new Dsl[Fork[ThisElement], Domain !! That, ThisElement] {
-      def interpret(fork: Fork[ThisElement], mapper: ThisElement => Domain !! That): Domain !! That = _ {
-        val builder: mutable.Builder[ThatElement, That] = canBuildFrom()
+  implicit def forkContinuationDsl[NarrowElement, LeftDomain, WidenElement, RightDomain](
+      implicit eachDsl: Dsl[Each[NarrowElement], LeftDomain, NarrowElement],
+      booleanEachDsl: Dsl[Each[Boolean], LeftDomain, Boolean],
+      isTraversableOnce: RightDomain <:< TraversableOnce[WidenElement],
+      canBuildFrom: CanBuildFrom[Nothing, WidenElement, RightDomain],
+      hangDsl: Dsl[Hang[Unit], LeftDomain, Unit],
+      catch2Dsl: CatchDsl[LeftDomain, LeftDomain, Unit]
+  ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] =
+    new Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] {
+      def interpret(fork: Fork[NarrowElement],
+                    mapper: NarrowElement => LeftDomain !! RightDomain): LeftDomain !! RightDomain = _ {
+        val builder: mutable.Builder[WidenElement, RightDomain] = canBuildFrom()
         val exceptionBuilder = Set.newBuilder[Throwable]
         val counter = new AtomicInteger(1)
         if (!Each(Seq(true, false))) {
