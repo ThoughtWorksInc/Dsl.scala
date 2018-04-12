@@ -1,5 +1,7 @@
 package com.thoughtworks.dsl
 
+import java.util.concurrent.{ExecutorService, Executors}
+
 import com.thoughtworks.dsl.Dsl.!!
 
 import scala.util.{Success, Try}
@@ -72,6 +74,21 @@ object benchmarks {
       val result = blockingAwaitMonix(loop())
       assert(result == expectedResult)
     }
+
+    @Benchmark
+    def scalaz(): Unit = {
+
+      def loop(i: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
+        if (i < totalLoops) {
+          loop(i + 1).map(_ + i)
+        } else {
+          _root_.scalaz.concurrent.Task(0)
+        }
+      }
+
+      val result = loop().unsafePerformSync
+      assert(result == expectedResult)
+    }
   }
 
   @Threads(value = Threads.MAX)
@@ -111,6 +128,22 @@ object benchmarks {
       val result = blockingAwaitMonix(loop())
       assert(result == expectedResult)
 
+    }
+
+    @Benchmark
+    def scalaz(): Unit = {
+      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
+        if (i < totalLoops) {
+          _root_.scalaz.concurrent.Task.suspend(
+            loop(i + 1, accumulator + i)
+          )
+        } else {
+          _root_.scalaz.concurrent.Task(accumulator)
+        }
+      }
+
+      val result = loop().unsafePerformSync
+      assert(result == expectedResult)
     }
 
   }
@@ -180,6 +213,34 @@ object benchmarks {
       val result = blockingAwaitMonix(loop())
       assert(result == expectedResult)
     }
+    @Benchmark
+    def scalaz(): Unit = {
+      def throwing(i: Int): _root_.scalaz.concurrent.Task[Unit] = _root_.scalaz.concurrent.Task {
+        error(i)
+      }
+
+      val tasks: Seq[_root_.scalaz.concurrent.Task[Unit]] = (0 until totalLoops).map(throwing)
+
+      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
+        if (i < totalLoops) {
+          tasks(i)
+            .map(Function.const(i))
+            .handle {
+              case e: IntException =>
+                e.n
+            }
+            .flatMap { n =>
+              loop(i + 1, accumulator + n)
+            }
+        } else {
+          _root_.scalaz.concurrent.Task(accumulator)
+        }
+      }
+
+      val result = loop().unsafePerformSync
+      assert(result == expectedResult)
+    }
+
   }
   @Threads(value = Threads.MAX)
   class MultiThreadExceptionHandling extends AsyncTask
@@ -188,15 +249,24 @@ object benchmarks {
   class SingleThreadExceptionHandling extends AsyncTask
 
   abstract class AsyncTask extends BenchmarkState {
+
+    @Param(Array("newWorkStealingPool", "newCachedThreadPool"))
+    var threadPoolMethodName: String = _
+
+    lazy val threadPool = {
+      scala.concurrent.ExecutionContext.fromExecutorService(
+        classOf[Executors].getMethod(threadPoolMethodName).invoke(null).asInstanceOf[ExecutorService]
+      )
+    }
+
     @Benchmark
     def dsl(): Unit = {
-      import scala.concurrent.ExecutionContext.Implicits.global
       def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
         if (i < totalLoops) {
-          !Task.switchExecutionContext(global)
+          !Task.switchExecutionContext(threadPool)
           !loop(i + 1, accumulator + i)
         } else {
-          !Task.switchExecutionContext(global)
+          !Task.switchExecutionContext(threadPool)
           accumulator
         }
       }
@@ -214,8 +284,22 @@ object benchmarks {
             _root_.monix.eval.Task(accumulator).runAsync(callback)(scheduler)
           }
       }
-      import scala.concurrent.ExecutionContext.Implicits.global
-      val result = blockingExecuteMonix(loop())
+      val result = blockingExecuteMonix(loop())(threadPool)
+      assert(result == expectedResult)
+    }
+    @Benchmark
+    def scalaz(): Unit = {
+      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] =
+        _root_.scalaz.concurrent.Task.async[Int] { callback =>
+          if (i < totalLoops) {
+            _root_.scalaz.concurrent.Task.fork(loop(i + 1, accumulator + i))(threadPool).unsafePerformAsync(callback)
+          } else {
+            _root_.scalaz.concurrent.Task
+              .fork(_root_.scalaz.concurrent.Task(accumulator))(threadPool)
+              .unsafePerformAsync(callback)
+          }
+        }
+      val result = loop().unsafePerformSync
       assert(result == expectedResult)
     }
   }

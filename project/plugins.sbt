@@ -1,4 +1,4 @@
-addSbtPlugin("com.thoughtworks.sbt-best-practice" % "sbt-best-practice" % "3.4.0")
+addSbtPlugin("com.thoughtworks.sbt-best-practice" % "sbt-best-practice" % "4.0.1")
 
 addSbtPlugin("com.thoughtworks.example" % "sbt-example" % "4.1.1")
 
