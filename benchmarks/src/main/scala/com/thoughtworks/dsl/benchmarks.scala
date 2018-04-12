@@ -90,13 +90,27 @@ object benchmarks {
       val result = loop().unsafePerformSync
       assert(result == expectedResult)
     }
+
+    @Benchmark
+    def cats(): Unit = {
+      def loop(i: Int = 0): _root_.cats.effect.IO[Int] = {
+        if (i < totalLoops) {
+          loop(i + 1).map(_ + i)
+        } else {
+          _root_.cats.effect.IO.pure(0)
+        }
+      }
+      val result = loop().unsafeRunSync()
+      assert(result == expectedResult)
+    }
+
   }
 
   @Threads(value = Threads.MAX)
-  class MultiThreadNonTailRecursion extends AsyncTask
+  class MultiThreadNonTailRecursion extends NonTailRecursion
 
   @Threads(value = 1)
-  class SingleThreadNonTailRecursion extends AsyncTask
+  class SingleThreadNonTailRecursion extends NonTailRecursion
 
   abstract class TailRecursion extends BenchmarkState {
 
@@ -147,13 +161,29 @@ object benchmarks {
       assert(result == expectedResult)
     }
 
+    @Benchmark
+    def cats(): Unit = {
+      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
+        if (i < totalLoops) {
+          _root_.cats.effect.IO.suspend(
+            loop(i + 1, accumulator + i)
+          )
+        } else {
+          _root_.cats.effect.IO.pure(accumulator)
+        }
+      }
+
+      val result = loop().unsafeRunSync()
+      assert(result == expectedResult)
+    }
+
   }
 
   @Threads(value = Threads.MAX)
-  class MultiThreadTailCall extends AsyncTask
+  class MultiThreadTailRecursion extends TailRecursion
 
   @Threads(value = 1)
-  class SingleThreadTailCall extends AsyncTask
+  class SingleThreadTailRecursion extends TailRecursion
 
   abstract class ExceptionHandling extends BenchmarkState {
 
@@ -189,7 +219,7 @@ object benchmarks {
 
     @Benchmark
     def monix(): Unit = {
-      def throwing(i: Int): _root_.monix.eval.Task[Unit] = _root_.monix.eval.Task {
+      def throwing(i: Int): _root_.monix.eval.Task[Unit] = _root_.monix.eval.Task.delay {
         error(i)
       }
 
@@ -216,7 +246,7 @@ object benchmarks {
     }
     @Benchmark
     def scalaz(): Unit = {
-      def throwing(i: Int): _root_.scalaz.concurrent.Task[Unit] = _root_.scalaz.concurrent.Task {
+      def throwing(i: Int): _root_.scalaz.concurrent.Task[Unit] = _root_.scalaz.concurrent.Task.delay {
         error(i)
       }
 
@@ -241,13 +271,41 @@ object benchmarks {
       val result = loop().unsafePerformSync
       assert(result == expectedResult)
     }
+    @Benchmark
+    def cats(): Unit = {
+      def throwing(i: Int): _root_.cats.effect.IO[Unit] = _root_.cats.effect.IO {
+        error(i)
+      }
+
+      val tasks: Seq[_root_.cats.effect.IO[Unit]] = (0 until totalLoops).map(throwing)
+
+      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
+        if (i < totalLoops) {
+          import _root_.cats.syntax.all._
+          tasks(i)
+            .map(Function.const(i))
+            .handleError {
+              case e: IntException =>
+                e.n
+            }
+            .flatMap { n =>
+              loop(i + 1, accumulator + n)
+            }
+        } else {
+          _root_.cats.effect.IO.pure(accumulator)
+        }
+      }
+
+      val result = loop().unsafeRunSync
+      assert(result == expectedResult)
+    }
 
   }
   @Threads(value = Threads.MAX)
-  class MultiThreadExceptionHandling extends AsyncTask
+  class MultiThreadExceptionHandling extends ExceptionHandling
 
   @Threads(value = 1)
-  class SingleThreadExceptionHandling extends AsyncTask
+  class SingleThreadExceptionHandling extends ExceptionHandling
 
   abstract class AsyncTask extends BenchmarkState {
 
@@ -258,6 +316,11 @@ object benchmarks {
       scala.concurrent.ExecutionContext.fromExecutorService(
         classOf[Executors].getMethod(threadPoolMethodName).invoke(null).asInstanceOf[ExecutorService]
       )
+    }
+
+    @TearDown
+    def tearDown() = {
+      threadPool.shutdown()
     }
 
     @Benchmark
@@ -288,6 +351,7 @@ object benchmarks {
       val result = blockingExecuteMonix(loop())(threadPool)
       assert(result == expectedResult)
     }
+
     @Benchmark
     def scalaz(): Unit = {
       def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] =
@@ -305,26 +369,41 @@ object benchmarks {
     }
 
     @Benchmark
-    def scalaConcurrentFuture(): Unit = {
-      def async[A](register: (Try[A] => Unit) => Unit) = {
-        val promise = Promise[A]
-        register(promise.complete)
-        promise.future
-      }
-
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scala.concurrent.Future[Int] = {
-        val promise = Promise[Int]
-
-        async[Int] { callback =>
+    def cats(): Unit = {
+      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] =
+        _root_.cats.effect.IO.async[Int] { callback =>
           if (i < totalLoops) {
-            loop(i + 1, accumulator + i).onComplete(callback)(threadPool)
+            _root_.cats.effect.IO
+              .shift(threadPool)
+              .flatMap { _: Unit =>
+                loop(i + 1, accumulator + i)
+              }
+              .unsafeRunAsync(callback)
           } else {
-            _root_.scala.concurrent.Future(accumulator)(threadPool).onComplete(callback)(threadPool)
+            _root_.cats.effect.IO
+              .shift(threadPool)
+              .map { _: Unit =>
+                accumulator
+              }
+              .unsafeRunAsync(callback)
           }
         }
+      val result = loop().unsafeRunSync()
+      assert(result == expectedResult)
+    }
 
-        promise.future
-
+    @Benchmark
+    def scalaConcurrentFuture(): Unit = {
+      def loop(i: Int = 0, accumulator: Int = 0): _root_.scala.concurrent.Future[Int] = {
+        if (i < totalLoops) {
+          _root_.scala.concurrent
+            .Future(())(threadPool)
+            .flatMap { _: Unit =>
+              loop(i + 1, accumulator + i)
+            }(threadPool)
+        } else {
+          _root_.scala.concurrent.Future(accumulator)(threadPool)
+        }
       }
       val result = Await.result(loop(), Duration.Inf)
       assert(result == expectedResult)

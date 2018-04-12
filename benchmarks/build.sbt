@@ -23,3 +23,5 @@ libraryDependencies += "com.thoughtworks.each" %% "each" % "3.3.1"
 libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0"
 
 libraryDependencies += "io.monix" %% "monix" % "2.3.3"
+
+libraryDependencies += "org.typelevel" %% "cats-effect" % "0.10"
