@@ -11,7 +11,8 @@ import monix.execution.{Cancelable, Scheduler}
 import org.openjdk.jmh.annotations._
 
 import scala.annotation.tailrec
-import scala.concurrent.{ExecutionContext, SyncVar}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Promise, SyncVar}
 import scala.util.control.NoStackTrace
 
 object benchmarks {
@@ -300,6 +301,32 @@ object benchmarks {
           }
         }
       val result = loop().unsafePerformSync
+      assert(result == expectedResult)
+    }
+
+    @Benchmark
+    def scalaConcurrentFuture(): Unit = {
+      def async[A](register: (Try[A] => Unit) => Unit) = {
+        val promise = Promise[A]
+        register(promise.complete)
+        promise.future
+      }
+
+      def loop(i: Int = 0, accumulator: Int = 0): _root_.scala.concurrent.Future[Int] = {
+        val promise = Promise[Int]
+
+        async[Int] { callback =>
+          if (i < totalLoops) {
+            loop(i + 1, accumulator + i).onComplete(callback)(threadPool)
+          } else {
+            _root_.scala.concurrent.Future(accumulator)(threadPool).onComplete(callback)(threadPool)
+          }
+        }
+
+        promise.future
+
+      }
+      val result = Await.result(loop(), Duration.Inf)
       assert(result == expectedResult)
     }
   }
