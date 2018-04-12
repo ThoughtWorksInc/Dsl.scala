@@ -49,7 +49,7 @@ object benchmarks {
 
     @Benchmark
     def dsl(): Unit = {
-      def loop(i: Int = 0): task.Task[Int] = _ {
+      @inline def loop(i: Int = 0): task.Task[Int] = _ {
         if (i < totalLoops) {
           !loop(i + 1) + i
         } else {
@@ -64,7 +64,7 @@ object benchmarks {
     @Benchmark
     def monix(): Unit = {
 
-      def loop(i: Int = 0): _root_.monix.eval.Task[Int] = {
+      @inline def loop(i: Int = 0): _root_.monix.eval.Task[Int] = {
         if (i < totalLoops) {
           loop(i + 1).map(_ + i)
         } else {
@@ -79,7 +79,7 @@ object benchmarks {
     @Benchmark
     def scalaz(): Unit = {
 
-      def loop(i: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
+      @inline def loop(i: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
         if (i < totalLoops) {
           loop(i + 1).map(_ + i)
         } else {
@@ -93,7 +93,7 @@ object benchmarks {
 
     @Benchmark
     def cats(): Unit = {
-      def loop(i: Int = 0): _root_.cats.effect.IO[Int] = {
+      @inline def loop(i: Int = 0): _root_.cats.effect.IO[Int] = {
         if (i < totalLoops) {
           loop(i + 1).map(_ + i)
         } else {
@@ -116,7 +116,7 @@ object benchmarks {
 
     @Benchmark
     def dsl(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
         if (i < totalLoops) {
           !loop(i + 1, accumulator + i)
         } else {
@@ -130,7 +130,7 @@ object benchmarks {
 
     @Benchmark
     def monix(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = {
         if (i < totalLoops) {
           _root_.monix.eval.Task.suspend(
             loop(i + 1, accumulator + i)
@@ -147,7 +147,7 @@ object benchmarks {
 
     @Benchmark
     def scalaz(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
         if (i < totalLoops) {
           _root_.scalaz.concurrent.Task.suspend(
             loop(i + 1, accumulator + i)
@@ -163,7 +163,7 @@ object benchmarks {
 
     @Benchmark
     def cats(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
         if (i < totalLoops) {
           _root_.cats.effect.IO.suspend(
             loop(i + 1, accumulator + i)
@@ -198,7 +198,7 @@ object benchmarks {
       }
       val tasks: Seq[task.Task[Unit]] = (0 until totalLoops).map(throwing)
 
-      def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
         if (i < totalLoops) {
           val n = try {
             !tasks(i)
@@ -225,7 +225,7 @@ object benchmarks {
 
       val tasks: Seq[_root_.monix.eval.Task[Unit]] = (0 until totalLoops).map(throwing)
 
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = {
         if (i < totalLoops) {
           tasks(i)
             .map(Function.const(i))
@@ -252,7 +252,7 @@ object benchmarks {
 
       val tasks: Seq[_root_.scalaz.concurrent.Task[Unit]] = (0 until totalLoops).map(throwing)
 
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
         if (i < totalLoops) {
           tasks(i)
             .map(Function.const(i))
@@ -279,7 +279,7 @@ object benchmarks {
 
       val tasks: Seq[_root_.cats.effect.IO[Unit]] = (0 until totalLoops).map(throwing)
 
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
         if (i < totalLoops) {
           import _root_.cats.syntax.all._
           tasks(i)
@@ -325,7 +325,7 @@ object benchmarks {
 
     @Benchmark
     def dsl(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
         if (i < totalLoops) {
           !Task.switchExecutionContext(threadPool)
           !loop(i + 1, accumulator + i)
@@ -340,61 +340,57 @@ object benchmarks {
     }
     @Benchmark
     def monix(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = _root_.monix.eval.Task.async[Int] {
-        (scheduler, callback) =>
-          if (i < totalLoops) {
-            loop(i + 1, accumulator + i).runAsync(callback)(scheduler)
-          } else {
-            _root_.monix.eval.Task(accumulator).runAsync(callback)(scheduler)
-          }
+
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = {
+        if (i < totalLoops) {
+          // suspend is required to avoid stack overflow
+          _root_.monix.eval.Task.fork(_root_.monix.eval.Task.suspend(loop(i + 1, accumulator + i)))
+        } else {
+          _root_.monix.eval.Task.fork(_root_.monix.eval.Task(accumulator))
+        }
       }
+
       val result = blockingExecuteMonix(loop())(threadPool)
       assert(result == expectedResult)
     }
 
     @Benchmark
     def scalaz(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] =
-        _root_.scalaz.concurrent.Task.async[Int] { callback =>
-          if (i < totalLoops) {
-            _root_.scalaz.concurrent.Task.fork(loop(i + 1, accumulator + i))(threadPool).unsafePerformAsync(callback)
-          } else {
-            _root_.scalaz.concurrent.Task
-              .fork(_root_.scalaz.concurrent.Task(accumulator))(threadPool)
-              .unsafePerformAsync(callback)
-          }
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
+        if (i < totalLoops) {
+          _root_.scalaz.concurrent.Task.fork(loop(i + 1, accumulator + i))
+        } else {
+          _root_.scalaz.concurrent.Task(accumulator)(threadPool)
         }
+      }
       val result = loop().unsafePerformSync
       assert(result == expectedResult)
     }
 
     @Benchmark
     def cats(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] =
-        _root_.cats.effect.IO.async[Int] { callback =>
-          if (i < totalLoops) {
-            _root_.cats.effect.IO
-              .shift(threadPool)
-              .flatMap { _: Unit =>
-                loop(i + 1, accumulator + i)
-              }
-              .unsafeRunAsync(callback)
-          } else {
-            _root_.cats.effect.IO
-              .shift(threadPool)
-              .map { _: Unit =>
-                accumulator
-              }
-              .unsafeRunAsync(callback)
-          }
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
+        if (i < totalLoops) {
+          _root_.cats.effect.IO
+            .shift(threadPool)
+            .flatMap { _: Unit =>
+              loop(i + 1, accumulator + i)
+            }
+        } else {
+          _root_.cats.effect.IO
+            .shift(threadPool)
+            .map { _: Unit =>
+              accumulator
+            }
         }
+      }
       val result = loop().unsafeRunSync()
       assert(result == expectedResult)
     }
 
     @Benchmark
     def scalaConcurrentFuture(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scala.concurrent.Future[Int] = {
+      @inline def loop(i: Int = 0, accumulator: Int = 0): _root_.scala.concurrent.Future[Int] = {
         if (i < totalLoops) {
           _root_.scala.concurrent
             .Future(())(threadPool)
