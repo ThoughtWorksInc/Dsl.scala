@@ -17,7 +17,7 @@ object Each {
   implicit def implicitEach[Element](elements: Traversable[Element]): Each[Element] = Each[Element](elements)
 
   implicit def eachDsl[Element, Domain, DomainElement](
-      implicit thatIsTraversableOnce: (Element => Domain) <:< (Element => GenTraversableOnce[DomainElement]),
+      implicit thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),
       bf: CanBuildFrom[Nothing, DomainElement, Domain]
   ): Dsl[Each[Element], Domain, Element] =
     new Dsl[Each[Element], Domain, Element] {
@@ -26,6 +26,7 @@ object Each {
       }
     }
 
+  @deprecated(message = "This is dangerous. Don't use it.", since = "1.0.0-RC5")
   implicit def foreachDsl[Element]: Dsl[Each[Element], Unit, Element] =
     new Dsl[Each[Element], Unit, Element] {
       def interpret(keyword: Each[Element], handler: Element => Unit): Unit = {
@@ -34,24 +35,27 @@ object Each {
     }
 
   implicit def continuationEachDsl[Element, LeftDomain, RightDomain, DomainElement](
-      implicit rightDomainIsTraversableOnce: RightDomain <:< TraversableOnce[DomainElement],
+      implicit rightDomainIsTraversableOnce: (Element => LeftDomain !! RightDomain) => (
+          Element => LeftDomain !! TraversableOnce[DomainElement]),
       bf: CanBuildFrom[Nothing, DomainElement, RightDomain],
       shiftDsl: Dsl[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
   ): Dsl[Each[Element], LeftDomain !! RightDomain, Element] = {
     new Dsl[Each[Element], LeftDomain !! RightDomain, Element] {
       def interpret(keyword: Each[Element],
-                    handler: Element => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
+                    handler0: Element => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
         val i = keyword.elements.toIterator
         val builder = bf()
-        def loop(): LeftDomain !! RightDomain = _ {
+        val handler = rightDomainIsTraversableOnce(handler0)
+        @inline
+        def loop(continue: RightDomain => LeftDomain): LeftDomain = {
           if (i.hasNext) {
             builder ++= !handler(i.next())
-            !loop()
+            loop(continue)
           } else {
-            builder.result()
+            continue(builder.result())
           }
         }
-        loop()
+        loop
       }
     }
   }
