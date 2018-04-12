@@ -159,6 +159,7 @@ object Dsl extends LowPriorityDsl0 {
       )
     }
 
+    @inline
     final def cpsApply[Domain](handler: Value => Domain)(implicit dsl: Dsl[Self, Domain, Value]): Domain = {
       dsl.interpret(this, handler)
     }
