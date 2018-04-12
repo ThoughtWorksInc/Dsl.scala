@@ -117,12 +117,13 @@ object Dsl extends LowPriorityDsl0 {
     @inline
     def reset[R, A](a: => A): (R !! A) @reset = delay(a _)
 
-    def toTryContinuation[LeftDomain, Value](task: LeftDomain !! Throwable !! Value): LeftDomain !! Try[Value] = { handler =>
-      task { a => failureHandler =>
-        handler(Success(a))
-      } { e =>
-        handler(Failure(e))
-      }
+    def toTryContinuation[LeftDomain, Value](task: LeftDomain !! Throwable !! Value): LeftDomain !! Try[Value] = {
+      handler =>
+        task { a => failureHandler =>
+          handler(Success(a))
+        } { e =>
+          handler(Failure(e))
+        }
     }
 
   }
@@ -159,6 +160,7 @@ object Dsl extends LowPriorityDsl0 {
       )
     }
 
+    @inline
     final def cpsApply[Domain](handler: Value => Domain)(implicit dsl: Dsl[Self, Domain, Value]): Domain = {
       dsl.interpret(this, handler)
     }

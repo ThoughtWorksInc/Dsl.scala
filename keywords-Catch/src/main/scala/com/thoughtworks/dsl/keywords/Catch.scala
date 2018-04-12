@@ -58,7 +58,8 @@ object Catch extends LowPriorityCatch0 {
       catch2Dsl.tryCatch(block, catcher, finalizer)
   }
 
-  implicit def throwableCatchDsl[LeftDomain, Value](implicit shiftDsl: Dsl[Shift[LeftDomain, Throwable], LeftDomain, Throwable])
+  implicit def throwableCatchDsl[LeftDomain, Value](
+      implicit shiftDsl: Dsl[Shift[LeftDomain, Throwable], LeftDomain, Throwable])
     : CatchDsl[LeftDomain !! Throwable, LeftDomain !! Throwable, Value] =
     new CatchDsl[LeftDomain !! Throwable, LeftDomain !! Throwable, Value] {
       @inline
@@ -84,15 +85,24 @@ object Catch extends LowPriorityCatch0 {
             }
 
             val protectedContinuation = try {
-              block { value => _ =>
-                handler(value)(outerFailureHandler)
+              block { value =>
+                new (LeftDomain !! Throwable) {
+                  def apply(ignored: Throwable => LeftDomain): LeftDomain = {
+                    val rest = try {
+                      handler(value)
+                    } catch {
+                      case NonFatal(e) =>
+                        return outerFailureHandler(e)
+                    }
+                    rest(outerFailureHandler)
+                  }
+                }
               }
             } catch {
               case NonFatal(e) =>
                 return recover(e)
             }
             shiftDsl.interpret(protectedContinuation, recover)
-
           }
 
         }
