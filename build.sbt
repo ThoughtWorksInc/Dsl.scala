@@ -32,7 +32,7 @@ lazy val `domains-scalaz` =
 lazy val `domains-cats` =
   project.dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Shift` % Test, `keywords-Yield` % Test)
 
-lazy val `benchmarks-TaskBenchmark` = project.dependsOn(task, `keywords-Catch`)
+lazy val benchmarks = project.dependsOn(task, `keywords-Catch`)
 
 lazy val `package` = project.dependsOn(
   `compilerplugins-BangNotation`,
@@ -62,7 +62,7 @@ Seq[ProjectReference](
   `keywords-AsynchronousIo`,
   `keywords-Yield`,
   `keywords-AutoClose`,
-  `benchmarks-TaskBenchmark`,
+  benchmarks,
   LocalProject("task"),
   LocalProject("package")
 ).flatMap { testingProject =>
