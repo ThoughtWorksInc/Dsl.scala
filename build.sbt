@@ -32,7 +32,7 @@ lazy val `domains-scalaz` =
 lazy val `domains-cats` =
   project.dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Shift` % Test, `keywords-Yield` % Test)
 
-lazy val benchmarks = project.dependsOn(task, `keywords-Catch`)
+lazy val benchmarks = project.dependsOn(task, `keywords-Catch`, `keywords-Fork`)
 
 lazy val `package` = project.dependsOn(
   `compilerplugins-BangNotation`,
