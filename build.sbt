@@ -20,7 +20,7 @@ lazy val `keywords-AutoClose` = project.dependsOn(Dsl, `keywords-Shift`, `keywor
 
 lazy val `keywords-Catch` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
 
-lazy val `keywords-Each` = project.dependsOn(Dsl, `keywords-Shift` % Test, `keywords-Yield` % Test)
+lazy val `keywords-Each` = project.dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
 
 lazy val `keywords-Yield` = project.dependsOn(Dsl, `keywords-Shift` % Test)
 
