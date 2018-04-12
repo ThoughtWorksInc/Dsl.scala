@@ -1,12 +1,12 @@
 package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Keyword
+import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 
 import scala.collection.GenTraversableOnce
 import scala.collection.generic.CanBuildFrom
-
 import scala.language.implicitConversions
+import Shift.implicitShift
 
 /**
   * @author 杨博 (Yang Bo)
@@ -16,12 +16,12 @@ object Each {
 
   implicit def implicitEach[Element](elements: Traversable[Element]): Each[Element] = Each[Element](elements)
 
-  implicit def eachDsl[Element, That, B](
-      implicit thatIsTraversableOnce: (Element => That) <:< (Element => GenTraversableOnce[B]),
-      bf: CanBuildFrom[Nothing, B, That]
-  ): Dsl[Each[Element], That, Element] =
-    new Dsl[Each[Element], That, Element] {
-      def interpret(keyword: Each[Element], handler: Element => That): That = {
+  implicit def eachDsl[Element, Domain, DomainElement](
+      implicit thatIsTraversableOnce: (Element => Domain) <:< (Element => GenTraversableOnce[DomainElement]),
+      bf: CanBuildFrom[Nothing, DomainElement, Domain]
+  ): Dsl[Each[Element], Domain, Element] =
+    new Dsl[Each[Element], Domain, Element] {
+      def interpret(keyword: Each[Element], handler: Element => Domain): Domain = {
         keyword.elements.flatMap(handler)(collection.breakOut(bf))
       }
     }
@@ -32,5 +32,28 @@ object Each {
         keyword.elements.foreach(handler)
       }
     }
+
+  implicit def continuationEachDsl[Element, LeftDomain, RightDomain, DomainElement](
+      implicit rightDomainIsTraversableOnce: RightDomain <:< TraversableOnce[DomainElement],
+      bf: CanBuildFrom[Nothing, DomainElement, RightDomain],
+      shiftDsl: Dsl[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
+  ): Dsl[Each[Element], LeftDomain !! RightDomain, Element] = {
+    new Dsl[Each[Element], LeftDomain !! RightDomain, Element] {
+      def interpret(keyword: Each[Element],
+                    handler: Element => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
+        val i = keyword.elements.toIterator
+        val builder = bf()
+        def loop(): LeftDomain !! RightDomain = _ {
+          if (i.hasNext) {
+            builder ++= !handler(i.next())
+            !loop()
+          } else {
+            builder.result()
+          }
+        }
+        loop()
+      }
+    }
+  }
 
 }
