@@ -67,7 +67,7 @@ object benchmarks {
         if (i < totalLoops) {
           loop(i + 1).map(_ + i)
         } else {
-          _root_.monix.eval.Task(0)
+          _root_.monix.eval.Task.now(0)
         }
       }
 
@@ -82,7 +82,7 @@ object benchmarks {
         if (i < totalLoops) {
           loop(i + 1).map(_ + i)
         } else {
-          _root_.scalaz.concurrent.Task(0)
+          _root_.scalaz.concurrent.Task.now(0)
         }
       }
 
@@ -121,7 +121,7 @@ object benchmarks {
             loop(i + 1, accumulator + i)
           )
         } else {
-          _root_.monix.eval.Task(accumulator)
+          _root_.monix.eval.Task.now(accumulator)
         }
       }
 
@@ -138,7 +138,7 @@ object benchmarks {
             loop(i + 1, accumulator + i)
           )
         } else {
-          _root_.scalaz.concurrent.Task(accumulator)
+          _root_.scalaz.concurrent.Task.now(accumulator)
         }
       }
 
@@ -206,7 +206,7 @@ object benchmarks {
               loop(i + 1, accumulator + n)
             }
         } else {
-          _root_.monix.eval.Task(accumulator)
+          _root_.monix.eval.Task.now(accumulator)
         }
       }
 
@@ -233,7 +233,7 @@ object benchmarks {
               loop(i + 1, accumulator + n)
             }
         } else {
-          _root_.scalaz.concurrent.Task(accumulator)
+          _root_.scalaz.concurrent.Task.now(accumulator)
         }
       }
 
