@@ -39,7 +39,7 @@ object benchmarks {
   @JmhFork(value = 1)
   abstract class BenchmarkState {
 
-    @Param(Array("100", "1000", "10000"))
+    @Param(Array("100"))
     var totalLoops: Int = _
 
   }
