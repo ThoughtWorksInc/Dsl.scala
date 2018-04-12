@@ -27,18 +27,37 @@ object task {
     @inline
     def reset[A](a: => A): Task[A] @reset = delay(a _)
 
+    /** Returns a task that does nothing but let the succeeding tasks run on `executionContext`
+      *
+      * @example All the code after a `!switchExecutionContext` should be executed on `executionContext`
+      *          {{{
+      *          import com.thoughtworks.dsl.task.Task
+      *          import org.scalatest.Assertion
+      *          import scala.concurrent.ExecutionContext
+      *          import com.thoughtworks.dsl.keywords.Shift.implicitShift
+      *          def myTask: Task[Assertion] = _ {
+      *            val originalThread = Thread.currentThread
+      *            !Task.switchExecutionContext(ExecutionContext.global)
+      *            Thread.currentThread should not be originalThread
+      *          }
+      *
+      *          Task.toFuture(myTask)
+      *
+      *          }}}
+      */
     @inline
-    def switchExecutionContext(executionContext: ExecutionContext): Task[Unit] = { continue => raiiHandler =>
+    def switchExecutionContext(executionContext: ExecutionContext): Task[Unit] = { continue => failureHandler =>
       executionContext.execute(new Runnable {
-        private def stackSafeRun(): TailRec[Unit] = {
 
+        @inline
+        private def stackSafeRun(): TailRec[Unit] = {
           val protectedContinuation = try {
             continue(())
           } catch {
             case NonFatal(e) =>
-              return raiiHandler(e)
+              return failureHandler(e)
           }
-          Shift(protectedContinuation).cpsApply(raiiHandler)
+          protectedContinuation(failureHandler)
         }
 
         @noinline
