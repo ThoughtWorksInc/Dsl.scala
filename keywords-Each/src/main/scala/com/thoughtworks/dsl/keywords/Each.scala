@@ -38,7 +38,7 @@ object Each {
       implicit rightDomainIsTraversableOnce: (Element => LeftDomain !! RightDomain) => (
           Element => LeftDomain !! TraversableOnce[DomainElement]),
       bf: CanBuildFrom[Nothing, DomainElement, RightDomain],
-      shiftDsl: Dsl[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
+      shiftDsl: Dsl[Shift[LeftDomain, TraversableOnce[DomainElement]], LeftDomain, TraversableOnce[DomainElement]]
   ): Dsl[Each[Element], LeftDomain !! RightDomain, Element] = {
     new Dsl[Each[Element], LeftDomain !! RightDomain, Element] {
       def interpret(keyword: Each[Element],
