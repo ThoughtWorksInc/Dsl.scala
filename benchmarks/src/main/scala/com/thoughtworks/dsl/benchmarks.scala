@@ -6,7 +6,6 @@ import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.keywords.{Each, Shift}
 
 import scala.util.{Success, Try}
-import com.thoughtworks.dsl.task.{Task, _}
 import com.thoughtworks.dsl.keywords.Shift.implicitShift
 import monix.execution.{Cancelable, Scheduler}
 import org.openjdk.jmh.annotations.{Fork => JmhFork, _}
@@ -36,15 +35,20 @@ object benchmarks {
   @State(Scope.Benchmark)
   @Warmup(iterations = 5)
   @Measurement(iterations = 5)
-  @JmhFork(value = 1)
-  abstract class BenchmarkState {
+  @JmhFork(value = 1, jvmArgsAppend = Array("-XX:+EliminateAllocations", "-XX:+DoEscapeAnalysis"))
+  abstract class BenchmarkState
 
-    @Param(Array("100"))
-    var totalLoops: Int = _
+  abstract class SumState extends BenchmarkState {
+
+    @Param(Array("1000"))
+    var listSize: Int = _
 
   }
 
-  abstract class FlatTraverse extends BenchmarkState {
+  abstract class AsynchronousCartesianProduct extends BenchmarkState {
+
+    @Param(Array("100"))
+    var listSize: Int = _
 
     implicit lazy val threadPool = {
       ExecutionContext.fromExecutorService(Executors.newWorkStealingPool())
@@ -57,28 +61,20 @@ object benchmarks {
 
     @Benchmark
     def dsl() = {
-      import task.Task
+      import com.thoughtworks.dsl.task._
 
       def cellTask(x: Int, y: Int): Task[List[Int]] = _ {
         !Task.switchExecutionContext(threadPool)
-        if (math.abs(x - y) < 5) {
-          List(x, y)
-        } else {
-          List.empty
-        }
+        List(x, y)
       }
 
       def listTask: Task[List[Int]] = {
-        val x = !Each(0 until totalLoops)
-        val y = !Each(0 until totalLoops)
+        val x = !Each(0 until listSize)
+        val y = !Each(0 until listSize)
         cellTask(x, y)
       }
 
-      def sumTask: Task[Int] = _ {
-        (!listTask).sum
-      }
-
-      Task.blockingAwait(sumTask)
+      Task.blockingAwait(listTask)
     }
 
     @Benchmark
@@ -87,26 +83,20 @@ object benchmarks {
 
       def cellTask(x: Int, y: Int): Task[List[Int]] =
         Task.fork(Task.delay {
-          if (math.abs(x - y) < 5) {
-            List(x, y)
-          } else {
-            List.empty
-          }
+          List(x, y)
         })
 
       def listTask: Task[List[Int]] =
         Task
           .sequence {
             (for {
-              x <- 0 until totalLoops
-              y <- 0 until totalLoops
+              x <- 0 until listSize
+              y <- 0 until listSize
             } yield cellTask(x, y))(collection.breakOut(List.canBuildFrom))
           }
           .map(_.flatten)
 
-      def sumTask = listTask.map(_.sum)
-
-      blockingExecuteMonix(sumTask)(threadPool)
+      blockingExecuteMonix(listTask)(threadPool)
     }
 
     @Benchmark
@@ -117,26 +107,20 @@ object benchmarks {
 
       def cellTask(x: Int, y: Int): IO[List[Int]] = {
         IO.shift(threadPool).map { _: Unit =>
-          if (math.abs(x - y) < 5) {
-            List(x, y)
-          } else {
-            List.empty
-          }
+          List(x, y)
         }
       }
 
       def listTask: IO[List[Int]] = {
-        (0 until totalLoops).toList.flatTraverse { x =>
-          (0 until totalLoops).toList.flatTraverse { y =>
+        (0 until listSize).toList.flatTraverse { x =>
+          (0 until listSize).toList.flatTraverse { y =>
             cellTask(x, y)
           }
         }
 
       }
 
-      def sumTask = listTask.map(_.sum)
-
-      sumTask.unsafeRunSync
+      listTask.unsafeRunSync
     }
 
     @Benchmark
@@ -147,30 +131,24 @@ object benchmarks {
 
       def cellTask(x: Int, y: Int): Task[List[Int]] =
         Task {
-          if (math.abs(x - y) < 5) {
-            List(x, y)
-          } else {
-            List.empty
-          }
+          List(x, y)
         }
 
       def listTask: Task[List[Int]] = {
-        (0 until totalLoops).toList.traverseM { x =>
-          (0 until totalLoops).toList.traverseM { y =>
+        (0 until listSize).toList.traverseM { x =>
+          (0 until listSize).toList.traverseM { y =>
             cellTask(x, y)
           }
         }
 
       }
 
-      def sumTask = listTask.map(_.sum)
-
-      sumTask.unsafePerformSync
+      listTask.unsafePerformSync
     }
 
     @Benchmark
-    def scalaConcurrentFuture(): Unit = {
-      import scala.concurrent.Future
+    def scala(): Unit = {
+      import _root_.scala.concurrent.Future
 
       def cellTask(x: Int, y: Int): Future[List[Int]] =
         Future {
@@ -185,81 +163,139 @@ object benchmarks {
         Future
           .sequence {
             (for {
-              x <- 0 until totalLoops
-              y <- 0 until totalLoops
+              x <- 0 until listSize
+              y <- 0 until listSize
             } yield cellTask(x, y))(collection.breakOut(List.canBuildFrom))
           }
           .map(_.flatten)
 
-      def sumTask = listTask.map(_.sum)
-
-      Await.result(sumTask, Duration.Inf)
+      Await.result(listTask, Duration.Inf)
 
     }
   }
 
   @Threads(value = Threads.MAX)
-  class MultiThreadFlatTraverse extends FlatTraverse
+  class MultiThreadAsynchronousCartesianProduct extends AsynchronousCartesianProduct
 
   @Threads(value = 1)
-  class SingleThreadFlatTraverse extends FlatTraverse
+  class SingleThreadAsynchronousCartesianProduct extends AsynchronousCartesianProduct
 
-  abstract class NonTailRecursion extends BenchmarkState {
+  abstract class NonTailRecursion extends SumState {
 
     @Benchmark
     def dsl(): Unit = {
-      def loop(i: Int = 0): task.Task[Int] = _ {
-        if (i < totalLoops) {
-          !loop(i + 1) + 1
-        } else {
-          0
+      import com.thoughtworks.dsl.task._
+
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(_(1))
+      }
+
+      def loop(tasks: List[Task[Int]]): Task[Int] = _ {
+        tasks match {
+          case head :: tail =>
+            !head + !loop(tail)
+          case Nil =>
+            0
         }
       }
-      val result = Task.blockingAwait(loop())
-      assert(result == totalLoops)
+      val result = Task.blockingAwait(loop(tasks))
+      assert(result == listSize)
     }
 
     @Benchmark
     def monix(): Unit = {
+      import _root_.monix.eval.Task
 
-      def loop(i: Int = 0): _root_.monix.eval.Task[Int] = {
-        if (i < totalLoops) {
-          loop(i + 1).map(_ + 1)
-        } else {
-          _root_.monix.eval.Task.now(0)
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(Task.eval(1))
+      }
+
+      def loop(tasks: List[Task[Int]]): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              accumulator <- loop(tail)
+            } yield i + accumulator
+          case Nil =>
+            Task(0)
         }
       }
 
-      val result = blockingAwaitMonix(loop())
-      assert(result == totalLoops)
+      val result = blockingAwaitMonix(loop(tasks))
+      assert(result == listSize)
     }
 
     @Benchmark
     def scalaz(): Unit = {
+      import _root_.scalaz.concurrent.Task
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(Task.delay(1))
+      }
 
-      def loop(i: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
-        if (i < totalLoops) {
-          loop(i + 1).map(_ + 1)
-        } else {
-          _root_.scalaz.concurrent.Task.now(0)
+      def loop(tasks: List[Task[Int]]): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              accumulator <- loop(tail)
+            } yield i + accumulator
+          case Nil =>
+            Task(0)
         }
       }
 
-      val result = loop().unsafePerformSync
-      assert(result == totalLoops)
+      val result = loop(tasks).unsafePerformSync
+      assert(result == listSize)
     }
 
     @Benchmark
     def cats(): Unit = {
-      def loop(i: Int = 0): _root_.cats.effect.IO[Int] = {
-        if (i < totalLoops) {
-          loop(i + 1).map(_ + 1)
-        } else {
-          _root_.cats.effect.IO.pure(0)
+      import _root_.cats.effect.IO
+
+      val tasks: List[IO[Int]] = {
+        List.fill(listSize)(IO(1))
+      }
+
+      def loop(tasks: List[IO[Int]]): IO[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              accumulator <- loop(tail)
+            } yield i + accumulator
+          case Nil =>
+            IO.pure(0)
         }
       }
-      val result = loop().unsafeRunSync()
-      assert(result == totalLoops)
+
+      val result = loop(tasks).unsafeRunSync()
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def scala(): Unit = {
+      import _root_.scala.util.control.TailCalls, TailCalls.TailRec
+      val tasks: List[TailRec[Int]] = {
+        List.fill(listSize)(for {
+          _ <- TailCalls.done(())
+        } yield 1)
+      }
+
+      def loop(tasks: List[TailRec[Int]]): TailRec[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              accumulator <- loop(tail)
+            } yield i + accumulator
+          case Nil =>
+            TailCalls.done(0)
+        }
+      }
+
+      val result = loop(tasks).result
+      assert(result == listSize)
     }
 
   }
@@ -270,69 +306,116 @@ object benchmarks {
   @Threads(value = 1)
   class SingleThreadNonTailRecursion extends NonTailRecursion
 
-  abstract class TailRecursion extends BenchmarkState {
+  abstract class TailRecursion extends SumState {
 
     @Benchmark
     def dsl(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
-        if (i < totalLoops) {
-          !loop(i + 1, accumulator + 1)
-        } else {
-          accumulator
+      import com.thoughtworks.dsl.task._
+
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(_(1))
+      }
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = _ {
+        tasks match {
+          case head :: tail =>
+            !loop(tail, !head + accumulator)
+          case Nil =>
+            accumulator
         }
       }
 
-      val result = Task.blockingAwait(loop())
-      assert(result == totalLoops)
-    }
-
-    @Benchmark
-    def monix(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = {
-        if (i < totalLoops) {
-          _root_.monix.eval.Task.suspend(
-            loop(i + 1, accumulator + 1)
-          )
-        } else {
-          _root_.monix.eval.Task.now(accumulator)
-        }
-      }
-
-      val result = blockingAwaitMonix(loop())
-      assert(result == totalLoops)
-
-    }
-
-    @Benchmark
-    def scalaz(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
-        if (i < totalLoops) {
-          _root_.scalaz.concurrent.Task.suspend(
-            loop(i + 1, accumulator + 1)
-          )
-        } else {
-          _root_.scalaz.concurrent.Task.now(accumulator)
-        }
-      }
-
-      val result = loop().unsafePerformSync
-      assert(result == totalLoops)
+      val result = Task.blockingAwait(loop(tasks))
+      assert(result == listSize)
     }
 
     @Benchmark
     def cats(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
-        if (i < totalLoops) {
-          _root_.cats.effect.IO.suspend(
-            loop(i + 1, accumulator + 1)
-          )
-        } else {
-          _root_.cats.effect.IO.pure(accumulator)
+      import _root_.cats.effect.IO
+      val tasks = {
+        List.fill(listSize)(IO(1))
+      }
+      def loop(tasks: List[IO[Int]], accumulator: Int = 0): IO[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            IO.pure(accumulator)
         }
       }
 
-      val result = loop().unsafeRunSync()
-      assert(result == totalLoops)
+      val result = loop(tasks).unsafeRunSync()
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def monix(): Unit = {
+      import _root_.monix.eval.Task
+
+      val tasks = List.fill(listSize)(Task.eval(1))
+
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            Task.now(accumulator)
+        }
+      }
+
+      val result = blockingAwaitMonix(loop(tasks))
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def scalaz(): Unit = {
+      import _root_.scalaz.concurrent.Task
+      val tasks = List.fill(listSize)(Task.delay(1))
+
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            Task.now(accumulator)
+        }
+      }
+
+      val result = loop(tasks).unsafePerformSync
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def scala(): Unit = {
+      import _root_.scala.util.control.TailCalls, TailCalls.TailRec
+      val tasks: List[TailRec[Int]] = {
+        List.fill(listSize)(for {
+          _ <- TailCalls.done(())
+        } yield 1)
+      }
+
+      def loop(tasks: List[TailRec[Int]], accumulator: Int = 0): TailRec[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            TailCalls.done(accumulator)
+        }
+      }
+
+      val result = loop(tasks).result
+      assert(result == listSize)
     }
 
   }
@@ -343,127 +426,149 @@ object benchmarks {
   @Threads(value = 1)
   class SingleThreadTailRecursion extends TailRecursion
 
-  abstract class ExceptionHandling extends BenchmarkState {
+  abstract class ExceptionHandling extends SumState {
 
-    private def error(i: Int): Unit = {
+    private def error(i: Int): Int = {
       throw new IntException(i)
     }
 
     @Benchmark
     def dsl(): Unit = {
-      def throwing(i: Int): task.Task[Unit] = _ {
-        error(i)
-      }
-      val tasks: Seq[task.Task[Unit]] = (0 until totalLoops).map { _ =>
-        throwing(1)
+      import com.thoughtworks.dsl.task._
+
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(_(error(1)))
       }
 
-      def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
-        if (i < totalLoops) {
-          val n = try {
-            !tasks(i)
-            i
-          } catch {
-            case e: IntException =>
-              e.n
-          }
-          !loop(i + 1, accumulator + n)
-        } else {
-          accumulator
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = _ {
+        tasks match {
+          case head :: tail =>
+            val i = try {
+              !head
+            } catch {
+              case e: IntException =>
+                e.n
+            }
+            !loop(tail, i + accumulator)
+          case Nil =>
+            accumulator
         }
       }
 
-      val result = Task.blockingAwait(loop())
-      assert(result == totalLoops)
+      val result = Task.blockingAwait(loop(tasks))
+      assert(result == listSize)
     }
 
     @Benchmark
     def monix(): Unit = {
-      def throwing(i: Int): _root_.monix.eval.Task[Unit] = _root_.monix.eval.Task.delay {
-        error(i)
-      }
+      import _root_.monix.eval.Task
 
-      val tasks: Seq[_root_.monix.eval.Task[Unit]] = (0 until totalLoops).map { _ =>
-        throwing(1)
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(Task.eval(error(1)))
       }
-
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = {
-        if (i < totalLoops) {
-          tasks(i)
-            .map(Function.const(i))
-            .onErrorRecover {
-              case e: IntException =>
-                e.n
-            }
-            .flatMap { n =>
-              loop(i + 1, accumulator + n)
-            }
-        } else {
-          _root_.monix.eval.Task.now(accumulator)
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head.onErrorRecover {
+                case e: IntException =>
+                  e.n
+              }
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            Task.now(accumulator)
         }
       }
-
-      val result = blockingAwaitMonix(loop())
-      assert(result == totalLoops)
+      val result = blockingAwaitMonix(loop(tasks))
+      assert(result == listSize)
     }
+
     @Benchmark
     def scalaz(): Unit = {
-      def throwing(i: Int): _root_.scalaz.concurrent.Task[Unit] = _root_.scalaz.concurrent.Task.delay {
-        error(i)
-      }
+      import _root_.scalaz.concurrent.Task
 
-      val tasks: Seq[_root_.scalaz.concurrent.Task[Unit]] = (0 until totalLoops).map { _ =>
-        throwing(1)
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(Task.delay(error(1)))
       }
-
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
-        if (i < totalLoops) {
-          tasks(i)
-            .map(Function.const(i))
-            .handle {
-              case e: IntException =>
-                e.n
-            }
-            .flatMap { n =>
-              loop(i + 1, accumulator + n)
-            }
-        } else {
-          _root_.scalaz.concurrent.Task.now(accumulator)
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head.handle {
+                case e: IntException =>
+                  e.n
+              }
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            Task.now(accumulator)
         }
       }
+      val result = loop(tasks).unsafePerformSync
+      assert(result == listSize)
 
-      val result = loop().unsafePerformSync
-      assert(result == totalLoops)
     }
+
     @Benchmark
     def cats(): Unit = {
-      def throwing(i: Int): _root_.cats.effect.IO[Unit] = _root_.cats.effect.IO {
-        error(i)
+      import _root_.cats.effect.IO
+
+      val tasks: List[IO[Int]] = {
+        List.fill(listSize)(IO(error(1)))
+      }
+      def loop(tasks: List[IO[Int]], accumulator: Int = 0): IO[Int] = {
+        tasks match {
+          case head :: tail =>
+            import _root_.cats.syntax.all._
+            for {
+              i <- head.handleError {
+                case e: IntException =>
+                  e.n
+              }
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            IO.pure(accumulator)
+        }
+      }
+      val result = loop(tasks).unsafeRunSync()
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def scala(): Unit = {
+      import _root_.scala.util.control.TailCalls, TailCalls.TailRec
+      val tasks: List[TailRec[Int]] = {
+        List.fill(listSize)(TailCalls.done(()).map(Function.const(error(1))))
       }
 
-      val tasks: Seq[_root_.cats.effect.IO[Unit]] = (0 until totalLoops).map { _ =>
-        throwing(1)
-      }
-
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
-        if (i < totalLoops) {
-          import _root_.cats.syntax.all._
-          tasks(i)
-            .map(Function.const(i))
-            .handleError {
-              case e: IntException =>
-                e.n
-            }
-            .flatMap { n =>
-              loop(i + 1, accumulator + n)
-            }
-        } else {
-          _root_.cats.effect.IO.pure(accumulator)
+      def loop(tasks: List[TailRec[Int]], accumulator: Int = 0): TailRec[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- {
+                for {
+                  _ <- TailCalls.done(())
+                } yield {
+                  try {
+                    head.result
+                  } catch {
+                    case e: IntException =>
+                      e.n
+                  }
+                }
+              }
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            TailCalls.done(accumulator)
         }
       }
 
-      val result = loop().unsafeRunSync
-      assert(result == totalLoops)
+      val result = loop(tasks).result
+      assert(result == listSize)
+
     }
 
   }
@@ -473,9 +578,9 @@ object benchmarks {
   @Threads(value = 1)
   class SingleThreadExceptionHandling extends ExceptionHandling
 
-  abstract class AsyncTask extends BenchmarkState {
+  abstract class Asynchronous extends SumState {
 
-    lazy val threadPool = {
+    implicit private lazy val threadPool = {
       ExecutionContext.fromExecutorService(Executors.newWorkStealingPool())
     }
 
@@ -486,91 +591,126 @@ object benchmarks {
 
     @Benchmark
     def dsl(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
-        if (i < totalLoops) {
+      import com.thoughtworks.dsl.task._
+
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(_ {
           !Task.switchExecutionContext(threadPool)
-          !loop(i + 1, accumulator + 1)
-        } else {
-          !Task.switchExecutionContext(threadPool)
-          accumulator
+          1
+        })
+      }
+
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = _ {
+        tasks match {
+          case head :: tail =>
+            !loop(tail, !head + accumulator)
+          case Nil =>
+            accumulator
         }
       }
 
-      val result = Task.blockingAwait(loop())
-      assert(result == totalLoops)
-    }
-    @Benchmark
-    def monix(): Unit = {
-
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.monix.eval.Task[Int] = {
-        if (i < totalLoops) {
-          // suspend is required to avoid stack overflow
-          _root_.monix.eval.Task.fork(_root_.monix.eval.Task.suspend(loop(i + 1, accumulator + 1)))
-        } else {
-          _root_.monix.eval.Task.fork(_root_.monix.eval.Task(accumulator))
-        }
-      }
-
-      val result = blockingExecuteMonix(loop())(threadPool)
-      assert(result == totalLoops)
-    }
-
-    @Benchmark
-    def scalaz(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scalaz.concurrent.Task[Int] = {
-        if (i < totalLoops) {
-          _root_.scalaz.concurrent.Task.fork(loop(i + 1, accumulator + 1))
-        } else {
-          _root_.scalaz.concurrent.Task(accumulator)(threadPool)
-        }
-      }
-      val result = loop().unsafePerformSync
-      assert(result == totalLoops)
+      val result = Task.blockingAwait(loop(tasks))
+      assert(result == listSize)
     }
 
     @Benchmark
     def cats(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.cats.effect.IO[Int] = {
-        if (i < totalLoops) {
-          _root_.cats.effect.IO
-            .shift(threadPool)
-            .flatMap { _: Unit =>
-              loop(i + 1, accumulator + 1)
-            }
-        } else {
-          _root_.cats.effect.IO
-            .shift(threadPool)
-            .map { _: Unit =>
-              accumulator
-            }
+      import _root_.cats.effect.IO
+      val tasks = {
+        List.fill(listSize) {
+          for {
+            _ <- IO.shift(threadPool)
+          } yield 1
         }
       }
-      val result = loop().unsafeRunSync()
-      assert(result == totalLoops)
+      def loop(tasks: List[IO[Int]], accumulator: Int = 0): IO[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            IO.pure(accumulator)
+        }
+      }
+
+      val result = loop(tasks).unsafeRunSync()
+      assert(result == listSize)
     }
 
     @Benchmark
-    def scalaConcurrentFuture(): Unit = {
-      def loop(i: Int = 0, accumulator: Int = 0): _root_.scala.concurrent.Future[Int] = {
-        if (i < totalLoops) {
-          _root_.scala.concurrent
-            .Future(())(threadPool)
-            .flatMap { _: Unit =>
-              loop(i + 1, accumulator + 1)
-            }(threadPool)
-        } else {
-          _root_.scala.concurrent.Future(accumulator)(threadPool)
+    def monix(): Unit = {
+      import _root_.monix.eval.Task
+
+      val tasks = List.fill(listSize)(Task.fork(Task.eval(1)))
+
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            Task.now(accumulator)
         }
       }
-      val result = Await.result(loop(), Duration.Inf)
-      assert(result == totalLoops)
+
+      val result = blockingExecuteMonix(loop(tasks))(threadPool)
+      assert(result == listSize)
     }
+
+    @Benchmark
+    def scalaz(): Unit = {
+      import _root_.scalaz.concurrent.Task
+      val tasks = List.fill(listSize)(Task(1))
+
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            Task.now(accumulator)
+        }
+      }
+
+      val result = loop(tasks).unsafePerformSync
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def scala(): Unit = {
+      import _root_.scala.concurrent.Future
+      val tasks: List[Future[Int]] = {
+        List.fill(listSize)(Future(1))
+      }
+
+      def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = {
+        tasks match {
+          case head :: tail =>
+            for {
+              i <- head
+              r <- loop(tail, i + accumulator)
+            } yield r
+          case Nil =>
+            Future.successful(accumulator)
+        }
+      }
+
+      val result = Await.result(loop(tasks), Duration.Inf)
+      assert(result == listSize)
+    }
+
   }
 
   @Threads(value = Threads.MAX)
-  class MultiThreadAsyncTask extends AsyncTask
+  class MultiThreadAsynchronous extends Asynchronous
 
   @Threads(value = 1)
-  class SingleThreadAsyncTask extends AsyncTask
+  class SingleThreadAsynchronous extends Asynchronous
 
 }
