@@ -53,9 +53,9 @@ object Catch extends LowPriorityCatch0 {
 
   @inline
   def tryCatch[InnerDomain, OuterDomain, Value](finalizer: Value => OuterDomain)(
-      implicit catch2Dsl: CatchDsl[InnerDomain, OuterDomain, Value]) = {
+      implicit catchDsl: CatchDsl[InnerDomain, OuterDomain, Value]) = {
     (block: InnerDomain !! Value, catcher: Catcher[InnerDomain !! Value]) =>
-      catch2Dsl.tryCatch(block, catcher, finalizer)
+      catchDsl.tryCatch(block, catcher, finalizer)
   }
 
   implicit def throwableCatchDsl[LeftDomain, Value](

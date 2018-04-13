@@ -61,7 +61,7 @@ object Fork {
       isTraversableOnce: RightDomain <:< TraversableOnce[WidenElement],
       canBuildFrom: CanBuildFrom[Nothing, WidenElement, RightDomain],
       hangDsl: Dsl[Hang[Unit], LeftDomain, Unit],
-      catch2Dsl: CatchDsl[LeftDomain, LeftDomain, Unit]
+      catchDsl: CatchDsl[LeftDomain, LeftDomain, Unit]
   ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] =
     new Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] {
       def interpret(fork: Fork[NarrowElement],
