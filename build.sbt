@@ -74,6 +74,14 @@ Seq[ProjectReference](
 
 crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.5")
 
+scalacOptions in ThisBuild ++= {
+  if (scalaBinaryVersion.value == "2.11") {
+    Some("-Ybackend:GenBCode")
+  } else {
+    None
+  }
+}
+
 lazy val unidoc =
   project
     .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
