@@ -25,7 +25,7 @@ object AutoClose {
 
   // TODO: Dsl for try/catch
   implicit def throwableContinuationAutoCloseDsl[Domain, Value, R <: AutoCloseable](
-      implicit catch2Dsl: CatchDsl[Domain, Domain, Value],
+      implicit catchDsl: CatchDsl[Domain, Domain, Value],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
   ): Dsl[AutoClose[R], Domain !! Value, R] =
     new Dsl[AutoClose[R], Domain !! Value, R] {
