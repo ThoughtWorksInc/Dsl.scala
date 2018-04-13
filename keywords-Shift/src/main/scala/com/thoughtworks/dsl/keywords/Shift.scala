@@ -18,6 +18,7 @@ final case class Shift[Domain, Value](continuation: Domain !! Value)
 
 private[keywords] trait LowPriorityShift1 {
 
+  @inline
   implicit def stackUnsafeShiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
     new Dsl[Shift[Domain, Value], Domain, Value] {
       def interpret(shift: Shift[Domain, Value], mapper: Value => Domain): Domain =
@@ -39,9 +40,10 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
 object Shift extends LowPriorityShift0 {
   trait StackSafeShiftDsl[Domain, Value] extends Dsl[Shift[Domain, Value], Domain, Value]
 
-  implicit def implicitShift[Domain, Value](fa: Domain !! Value): Shift[Domain, Value] =
-    Shift[Domain, Value](fa)
+  @inline
+  implicit def implicitShift[Domain, Value](fa: Domain !! Value): Shift[Domain, Value] = new Shift[Domain, Value](fa)
 
+  @inline
   implicit def tailRecShiftDsl[R, Value]: StackSafeShiftDsl[TailRec[R], Value] =
     new StackSafeShiftDsl[TailRec[R], Value] {
       def interpret(keyword: Shift[TailRec[R], Value], handler: Value => TailRec[R]): TailRec[R] = {
