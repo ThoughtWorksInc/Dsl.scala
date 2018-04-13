@@ -87,14 +87,15 @@ object benchmarks {
         })
 
       def listTask: Task[List[Int]] =
-        Task
-          .sequence {
-            (for {
-              x <- 0 until listSize
-              y <- 0 until listSize
-            } yield cellTask(x, y))(collection.breakOut(List.canBuildFrom))
-          }
-          .map(_.flatten)
+        for {
+          listOfList <- Task
+            .sequence {
+              (for {
+                x <- 0 until listSize
+                y <- 0 until listSize
+              } yield cellTask(x, y))(collection.breakOut(List.canBuildFrom))
+            }
+        } yield listOfList.flatten
 
       blockingExecuteMonix(listTask)(threadPool)
     }
@@ -106,9 +107,9 @@ object benchmarks {
       import _root_.cats.instances.list._
 
       def cellTask(x: Int, y: Int): IO[List[Int]] = {
-        IO.shift(threadPool).map { _: Unit =>
-          List(x, y)
-        }
+        for {
+          _ <- IO.shift(threadPool)
+        } yield List(x, y)
       }
 
       def listTask: IO[List[Int]] = {
@@ -140,7 +141,6 @@ object benchmarks {
             cellTask(x, y)
           }
         }
-
       }
 
       listTask.unsafePerformSync
@@ -160,14 +160,15 @@ object benchmarks {
         }
 
       def listTask: Future[List[Int]] =
-        Future
-          .sequence {
-            (for {
-              x <- 0 until listSize
-              y <- 0 until listSize
-            } yield cellTask(x, y))(collection.breakOut(List.canBuildFrom))
-          }
-          .map(_.flatten)
+        for {
+          listOfList <- Future
+            .sequence {
+              (for {
+                x <- 0 until listSize
+                y <- 0 until listSize
+              } yield cellTask(x, y))(collection.breakOut(List.canBuildFrom))
+            }
+        } yield listOfList.flatten
 
       Await.result(listTask, Duration.Inf)
 
@@ -540,7 +541,11 @@ object benchmarks {
     def scala(): Unit = {
       import _root_.scala.util.control.TailCalls, TailCalls.TailRec
       val tasks: List[TailRec[Int]] = {
-        List.fill(listSize)(TailCalls.done(()).map(Function.const(error(1))))
+        List.fill(listSize) {
+          for {
+            _ <- TailCalls.done(())
+          } yield error(1)
+        }
       }
 
       def loop(tasks: List[TailRec[Int]], accumulator: Int = 0): TailRec[Int] = {
