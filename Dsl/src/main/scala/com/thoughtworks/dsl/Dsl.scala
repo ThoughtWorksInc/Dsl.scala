@@ -31,6 +31,20 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 private[dsl] trait LowPriorityDsl1 {
 
+//  // FIXME: Shift
+//  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
+//      implicit restDsl: Dsl[Keyword, LeftDomain, Value],
+//      shiftDsl2: Dsl[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
+//  ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
+//    new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
+//      def interpret(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
+//        (continue: RightDomain => LeftDomain) =>
+//          restDsl.interpret(keyword, { a =>
+//            restDsl2.interpret(handler(a), continue)
+//          })
+//      }
+//    }
+//  }
   implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
