@@ -18,3 +18,5 @@ lazy val secret = project.settings(publishArtifact := false).in {
 }
 
 optimization in ThisBuild := true
+
+scalacOptions in ThisBuild ++= (if (scalaBinaryVersion.value == "2.11") None else Some("-opt-inline-from:com.thoughtworks.*Extractor*:com.thoughtworks.dsl.**"))
