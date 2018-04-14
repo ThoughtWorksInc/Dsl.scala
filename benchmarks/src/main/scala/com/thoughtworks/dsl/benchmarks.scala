@@ -42,9 +42,6 @@ object benchmarks {
   final class IntException(val n: Int) extends Exception with NoStackTrace
 
   @State(Scope.Benchmark)
-  @Warmup(iterations = 5)
-  @Measurement(iterations = 5)
-  @JmhFork(value = 1)
   abstract class BenchmarkState
 
   final val ThreadPool = "thread-pool"
