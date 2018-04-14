@@ -15,19 +15,22 @@ import scala.concurrent.duration._
 import scala.concurrent._
 import scala.util.continuations._
 import scala.util.control.{NoStackTrace, NonFatal}
+import scala.async.Async._
 
 object benchmarks {
 
-  private def blockingAwaitContinuations[A](task: => A @suspendable): A = {
+  private def blockingAwaitControlContext[A](task: ControlContext[A, Unit, Unit]): A = {
     val syncVar = new SyncVar[Try[A]]
-    reify[A, Unit, Unit] {
-      task
-    }.foreachFull({ a =>
+    task.foreachFull({ a =>
       syncVar.put(Success(a))
     }, { e =>
       syncVar.put(Failure(e))
     })
     syncVar.take(TimeOut.toMillis).get
+  }
+
+  private def blockingAwaitContinuations[A](task: => A @suspendable): A = {
+    blockingAwaitControlContext(reify(task))
   }
 
   private def blockingAwaitMonix[A](task: _root_.monix.eval.Task[A]): A = {
@@ -236,11 +239,9 @@ object benchmarks {
     def scala(): Unit = {
       import _root_.scala.concurrent.Future
 
-      def cellTask(x: Future[Int], y: Future[Int]): Future[List[Int]] =
-        for {
-          tmp1 <- x
-          tmp2 <- y
-        } yield List(tmp1, tmp2)
+      def cellTask(x: Future[Int], y: Future[Int]): Future[List[Int]] = async {
+        List(await(x), await(y))
+      }
 
       def listTask: Future[List[Int]] =
         for {
@@ -258,10 +259,27 @@ object benchmarks {
     }
   }
 
-  class BindOncePerElementSum extends SumState {
+  class RawSum extends SumState {
 
     @Param(Array("100", "10000"))
     var size: Int = _
+
+    @Benchmark
+    def continuation() = {
+
+      def loop(tasks: List[() => Int @suspendable], accumulator: Int = 0): ControlContext[Int, Unit, Unit] = {
+        tasks match {
+          case head :: tail =>
+            reify(head()).flatMap { i: Int =>
+              loop(tail, i + accumulator)
+            }
+          case Nil =>
+            new ControlContext(null, accumulator)
+        }
+      }
+
+      blockingAwaitControlContext(loop(continuationTask))
+    }
 
     @Benchmark
     def dsl() = {
@@ -390,6 +408,22 @@ object benchmarks {
     }
 
     @Benchmark
+    def scala() = {
+      import _root_.scala.concurrent.Future
+
+      def loop(tasks: List[Future[Int]]): Future[Int] = async {
+        tasks match {
+          case head :: tail =>
+            await(head) + await(loop(tail))
+          case Nil =>
+            0
+        }
+      }
+
+      Await.result(loop(scalaTasks), TimeOut)
+    }
+
+    @Benchmark
     def monix() = {
       import _root_.monix.eval.Task
 
@@ -444,25 +478,6 @@ object benchmarks {
       }
 
       loop(catsTasks).unsafeRunTimed(TimeOut).get
-    }
-
-    @Benchmark
-    def scala() = {
-      import _root_.scala.concurrent.Future
-
-      def loop(tasks: List[Future[Int]]): Future[Int] = {
-        tasks match {
-          case head :: tail =>
-            for {
-              i <- head
-              accumulator <- loop(tail)
-            } yield i + accumulator
-          case Nil =>
-            Future.successful(0)
-        }
-      }
-
-      Await.result(loop(scalaTasks), TimeOut)
     }
 
   }
@@ -565,15 +580,12 @@ object benchmarks {
     def scala() = {
       import _root_.scala.concurrent.Future
 
-      def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = {
+      def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = async {
         tasks match {
           case head :: tail =>
-            for {
-              i <- head
-              r <- loop(tail, i + accumulator)
-            } yield r
+            await(loop(tail, await(head) + accumulator))
           case Nil =>
-            Future.successful(accumulator)
+            accumulator
         }
       }
 
