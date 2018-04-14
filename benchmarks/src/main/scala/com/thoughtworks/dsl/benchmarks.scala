@@ -181,6 +181,124 @@ object benchmarks {
   @Threads(value = 1)
   class SingleThreadAsynchronousCartesianProduct extends AsynchronousCartesianProduct
 
+  abstract class Optimized extends SumState {
+
+    @Benchmark
+    def dsl(): Unit = {
+      import com.thoughtworks.dsl.task._
+
+      val tasks: List[Task[Int]] = {
+        List.fill(listSize)(_(1))
+      }
+
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0)(continue: Int => TaskDomain): TaskDomain = {
+        tasks match {
+          case head :: tail =>
+            loop(tail, !head + accumulator)(continue)
+          case Nil =>
+            continue(accumulator)
+        }
+      }
+
+      val result = Task.blockingAwait(loop(tasks))
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def cats(): Unit = {
+      import _root_.cats.effect.IO
+      val tasks = {
+        List.fill(listSize)(IO(1))
+      }
+      def loop(tasks: List[IO[Int]], accumulator: Int = 0): IO[Int] = {
+        tasks match {
+          case head :: tail =>
+            head.flatMap { i =>
+              loop(tail, i + accumulator)
+            }
+          case Nil =>
+            IO.pure(accumulator)
+        }
+      }
+
+      val result = loop(tasks).unsafeRunSync()
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def monix(): Unit = {
+      import _root_.monix.eval.Task
+
+      val tasks = List.fill(listSize)(Task.eval(1))
+
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            head.flatMap { i =>
+              loop(tail, i + accumulator)
+            }
+
+          case Nil =>
+            Task.now(accumulator)
+        }
+      }
+
+      val result = blockingAwaitMonix(loop(tasks))
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def scalaz(): Unit = {
+      import _root_.scalaz.concurrent.Task
+      val tasks = List.fill(listSize)(Task.delay(1))
+
+      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+        tasks match {
+          case head :: tail =>
+            head.flatMap { i =>
+              loop(tail, i + accumulator)
+            }
+          case Nil =>
+            Task.now(accumulator)
+        }
+      }
+
+      val result = loop(tasks).unsafePerformSync
+      assert(result == listSize)
+    }
+
+    @Benchmark
+    def scala(): Unit = {
+      import _root_.scala.util.control.TailCalls, TailCalls.TailRec
+      val tasks: List[TailRec[Int]] = {
+        List.fill(listSize)(for {
+          _ <- TailCalls.done(())
+        } yield 1)
+      }
+
+      def loop(tasks: List[TailRec[Int]], accumulator: Int = 0): TailRec[Int] = {
+        tasks match {
+          case head :: tail =>
+            head.flatMap { i =>
+              loop(tail, i + accumulator)
+            }
+          case Nil =>
+            TailCalls.done(accumulator)
+        }
+      }
+
+      val result = loop(tasks).result
+      assert(result == listSize)
+    }
+
+  }
+
+  @Threads(value = Threads.MAX)
+  class MultiThreadOptimized extends Optimized
+
+  @Threads(value = 1)
+  class SingleThreadOptimized extends Optimized
+
   abstract class NonTailRecursion extends SumState {
 
     @Benchmark
