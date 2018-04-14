@@ -14,7 +14,9 @@ import scala.util.control.TailCalls.TailRec
   */
 object task {
 
-  type Task[+A] = TailRec[Unit] !! Throwable !! A
+  type TaskDomain = TailRec[Unit] !! Throwable
+
+  type Task[+A] = TaskDomain !! A
 
   object Task {
 
