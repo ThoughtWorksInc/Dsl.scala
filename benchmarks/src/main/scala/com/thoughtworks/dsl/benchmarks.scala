@@ -236,7 +236,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def scala(): Unit = {
+    def scalaAsync(): Unit = {
       import _root_.scala.concurrent.Future
 
       def cellTask(x: Future[Int], y: Future[Int]): Future[List[Int]] = async {
@@ -265,7 +265,7 @@ object benchmarks {
     var size: Int = _
 
     @Benchmark
-    def continuation() = {
+    def scalaContinuation() = {
 
       def loop(tasks: List[() => Int @suspendable], accumulator: Int = 0): ControlContext[Int, Unit, Unit] = {
         tasks match {
@@ -352,7 +352,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def scala() = {
+    def scalaAsync() = {
       import _root_.scala.concurrent.Future
 
       def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = {
@@ -377,7 +377,7 @@ object benchmarks {
     var size: Int = _
 
     @Benchmark
-    def continuation() = {
+    def scalaContinuation() = {
 
       def loop(tasks: List[() => Int @suspendable]): Int @suspendable = {
         tasks match {
@@ -408,7 +408,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def scala() = {
+    def scalaAsync() = {
       import _root_.scala.concurrent.Future
 
       def loop(tasks: List[Future[Int]]): Future[Int] = async {
@@ -488,7 +488,7 @@ object benchmarks {
     var size: Int = _
 
     @Benchmark
-    def continuation() = {
+    def scalaContinuation() = {
 
       def loop(tasks: List[() => Int @suspendable], accumulator: Int = 0): Int @suspendable = {
         tasks match {
@@ -577,7 +577,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def scala() = {
+    def scalaAsync() = {
       import _root_.scala.concurrent.Future
 
       def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = async {
