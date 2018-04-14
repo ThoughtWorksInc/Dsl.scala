@@ -23,3 +23,16 @@ libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % 
 libraryDependencies += "io.monix" %% "monix" % "2.3.3"
 
 libraryDependencies += "org.typelevel" %% "cats-effect" % "0.10"
+
+libraryDependencies += {
+  VersionNumber(scalaVersion.value).numbers match {
+    case Seq(2L, 12L, minor) if minor > 2L =>
+      compilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.12.2" % "latest.release")
+    case _ =>
+      compilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin" % "latest.release" cross CrossVersion.patch)
+  }
+}
+
+libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "latest.release"
+
+scalacOptions += "-P:continuations:enable"
