@@ -11,17 +11,29 @@ import monix.execution.{Cancelable, Scheduler}
 import org.openjdk.jmh.annotations.{Fork => JmhFork, _}
 
 import scala.annotation.tailrec
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent._
 import scala.util.continuations._
 import scala.util.control.{NoStackTrace, NonFatal}
 
 object benchmarks {
 
+  private def blockingAwaitContinuations[A](task: => A @suspendable): A = {
+    val syncVar = new SyncVar[Try[A]]
+    reify[A, Unit, Unit] {
+      task
+    }.foreachFull({ a =>
+      syncVar.put(Success(a))
+    }, { e =>
+      syncVar.put(Failure(e))
+    })
+    syncVar.take(TimeOut.toMillis).get
+  }
+
   private def blockingAwaitMonix[A](task: _root_.monix.eval.Task[A]): A = {
     val syncVar = new SyncVar[Try[A]]
     task.runOnComplete(syncVar.put)(Scheduler.trampoline())
-    syncVar.take.get
+    syncVar.take(TimeOut.toMillis).get
   }
 
   final class IntException(val n: Int) extends Exception with NoStackTrace
@@ -35,19 +47,9 @@ object benchmarks {
   final val ThreadPool = "thread-pool"
   final val CurrentThread = "current-thread"
 
-  abstract class SumState extends BenchmarkState {
+  final val TimeOut = 5.seconds
 
-    protected def blockingAwaitContinuations[A](task: => A @suspendable): A = {
-      val syncVar = new SyncVar[Try[A]]
-      reify[A, Unit, Unit] {
-        task
-      }.foreachFull({ a =>
-        syncVar.put(Success(a))
-      }, { e =>
-        syncVar.put(Failure(e))
-      })
-      syncVar.take.get
-    }
+  abstract class SumState extends BenchmarkState {
 
     var size: Int
 
@@ -133,8 +135,8 @@ object benchmarks {
     }
 
     @TearDown
-    def tearDown() = {
-      threadPool.shutdown()
+    def tearDown(): Unit = {
+      threadPool.shutdownNow()
     }
 
   }
@@ -156,7 +158,7 @@ object benchmarks {
         cellTask(!Each(dslTasks), !Each(dslTasks))
       }
 
-      Task.blockingAwait(listTask)
+      Task.blockingAwait(listTask, TimeOut)
     }
 
     @Benchmark
@@ -204,7 +206,7 @@ object benchmarks {
 
       }
 
-      listTask.unsafeRunSync
+      listTask.unsafeRunTimed(TimeOut).get
     }
 
     @Benchmark
@@ -227,7 +229,7 @@ object benchmarks {
         }
       }
 
-      listTask.unsafePerformSync
+      listTask.unsafePerformSyncFor(TimeOut)
     }
 
     @Benchmark
@@ -251,7 +253,7 @@ object benchmarks {
             }
         } yield listOfList.flatten
 
-      Await.result(listTask, Duration.Inf)
+      Await.result(listTask, TimeOut)
 
     }
   }
@@ -275,7 +277,7 @@ object benchmarks {
         }
       }
 
-      Task.blockingAwait(loop(dslTasks))
+      Task.blockingAwait(loop(dslTasks), TimeOut)
     }
 
     @Benchmark
@@ -292,7 +294,7 @@ object benchmarks {
         }
       }
 
-      loop(catsTasks).unsafeRunSync()
+      loop(catsTasks).unsafeRunTimed(TimeOut).get
     }
 
     @Benchmark
@@ -328,7 +330,7 @@ object benchmarks {
         }
       }
 
-      loop(scalazTasks).unsafePerformSync
+      loop(scalazTasks).unsafePerformSyncFor(TimeOut)
     }
 
     @Benchmark
@@ -346,7 +348,7 @@ object benchmarks {
         }
       }
 
-      Await.result(loop(scalaTasks), Duration.Inf)
+      Await.result(loop(scalaTasks), TimeOut)
     }
 
   }
@@ -384,7 +386,7 @@ object benchmarks {
             0
         }
       }
-      Task.blockingAwait(loop(dslTasks))
+      Task.blockingAwait(loop(dslTasks), TimeOut)
     }
 
     @Benchmark
@@ -422,7 +424,7 @@ object benchmarks {
         }
       }
 
-      loop(scalazTasks).unsafePerformSync
+      loop(scalazTasks).unsafePerformSyncFor(TimeOut)
     }
 
     @Benchmark
@@ -441,7 +443,7 @@ object benchmarks {
         }
       }
 
-      loop(catsTasks).unsafeRunSync()
+      loop(catsTasks).unsafeRunTimed(TimeOut).get
     }
 
     @Benchmark
@@ -460,7 +462,7 @@ object benchmarks {
         }
       }
 
-      Await.result(loop(scalaTasks), Duration.Inf)
+      Await.result(loop(scalaTasks), TimeOut)
     }
 
   }
@@ -499,7 +501,7 @@ object benchmarks {
         }
       }
 
-      Task.blockingAwait(loop(dslTasks))
+      Task.blockingAwait(loop(dslTasks), TimeOut)
     }
 
     @Benchmark
@@ -518,7 +520,7 @@ object benchmarks {
         }
       }
 
-      loop(catsTasks).unsafeRunSync()
+      loop(catsTasks).unsafeRunTimed(TimeOut).get
     }
 
     @Benchmark
@@ -556,7 +558,7 @@ object benchmarks {
         }
       }
 
-      loop(scalazTasks).unsafePerformSync
+      loop(scalazTasks).unsafePerformSyncFor(TimeOut)
     }
 
     @Benchmark
@@ -575,7 +577,7 @@ object benchmarks {
         }
       }
 
-      Await.result(loop(scalaTasks), Duration.Inf)
+      Await.result(loop(scalaTasks), TimeOut)
     }
 
   }
