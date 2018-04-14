@@ -88,7 +88,7 @@ final class BangNotation(override val global: Global) extends Plugin {
 
     override def adaptAnnotations(tree0: Tree, typer: Typer, mode: Mode, pt: Type): Tree = {
       val tree = super.adaptAnnotations(tree0, typer, mode, pt)
-      val Seq(typedCpsTree) = tree.tpe.annotations.collect {
+      tree.tpe.annotations.collectFirst {
         case annotation if annotation.matches(resetAnnotationSymbol) =>
           val Some(attachment) = tree.attachments.get[CpsAttachment]
           val cpsTree = scalaBug8825Workaround(resetAttrs(attachment(identity)))
@@ -98,8 +98,13 @@ final class BangNotation(override val global: Global) extends Plugin {
               typer.typed(cpsTree, Mode.EXPRmode)
             }
           }
+      } match {
+        case Some(typedCpsTree) =>
+          typedCpsTree.modifyType(_.filterAnnotations(!_.matches(resetAnnotationSymbol)))
+        case None =>
+          tree
       }
-      typedCpsTree.modifyType(_.filterAnnotations(!_.matches(resetAnnotationSymbol)))
+
     }
 
   }
