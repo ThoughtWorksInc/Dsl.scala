@@ -19,4 +19,7 @@ lazy val secret = project.settings(publishArtifact := false).in {
 
 optimization in ThisBuild := true
 
+// Don't generate invokedynamic because it is not as fast as anonymous classes
+scalacOptions in ThisBuild += "-Ydelambdafy:inline"
+
 scalacOptions in ThisBuild ++= (if (scalaBinaryVersion.value == "2.11") None else Some("-opt-inline-from:com.thoughtworks.*Extractor*:com.thoughtworks.dsl.**"))
