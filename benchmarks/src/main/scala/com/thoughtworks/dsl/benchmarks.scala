@@ -233,7 +233,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def scalaAsync(): Unit = {
+    def future(): Unit = {
       import _root_.scala.concurrent.Future
 
       def cellTask(x: Future[Int], y: Future[Int]): Future[List[Int]] = async {
@@ -348,7 +348,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def scalaAsync() = {
+    def future() = {
       import _root_.scala.concurrent.Future
 
       @inline def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = {
@@ -404,7 +404,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def scalaAsync() = {
+    def future() = {
       import _root_.scala.concurrent.Future
 
       @inline def loop(tasks: List[Future[Int]]): Future[Int] = async {
@@ -573,7 +573,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def scalaAsync() = {
+    def future() = {
       import _root_.scala.concurrent.Future
 
       @inline def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = async {
