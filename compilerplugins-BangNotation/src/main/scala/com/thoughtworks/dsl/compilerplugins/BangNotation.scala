@@ -439,6 +439,9 @@ final class BangNotation(override val global: Global) extends Plugin {
             cpsAttachment(expr) { exprValue =>
               continue(treeCopy.Return(tree, exprValue))
             }
+          case tree =>
+            reporter.info(tree.pos, "CPS-transformation is skipped for this tree", force = false)
+            continue(tree)
         }
       }
 
