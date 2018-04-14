@@ -299,7 +299,7 @@ object benchmarks {
   @Threads(value = 1)
   class SingleThreadOptimized extends Optimized
 
-  abstract class NonTailRecursion extends SumState {
+  abstract class LeftAssociatedRecursion extends SumState {
 
     @Benchmark
     def dsl(): Unit = {
@@ -420,12 +420,12 @@ object benchmarks {
   }
 
   @Threads(value = Threads.MAX)
-  class MultiThreadNonTailRecursion extends NonTailRecursion
+  class MultiThreadLeftAssociatedRecursion extends LeftAssociatedRecursion
 
   @Threads(value = 1)
-  class SingleThreadNonTailRecursion extends NonTailRecursion
+  class SingleThreadLeftAssociatedRecursion extends LeftAssociatedRecursion
 
-  abstract class TailRecursion extends SumState {
+  abstract class RightAssociatedRecursion extends SumState {
 
     @Benchmark
     def dsl(): Unit = {
@@ -540,10 +540,10 @@ object benchmarks {
   }
 
   @Threads(value = Threads.MAX)
-  class MultiThreadTailRecursion extends TailRecursion
+  class MultiThreadRightAssociatedRecursion extends RightAssociatedRecursion
 
   @Threads(value = 1)
-  class SingleThreadTailRecursion extends TailRecursion
+  class SingleThreadRightAssociatedRecursion extends RightAssociatedRecursion
 
   abstract class ExceptionHandling extends SumState {
 
