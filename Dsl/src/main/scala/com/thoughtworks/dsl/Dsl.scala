@@ -46,7 +46,7 @@ private[dsl] trait LowPriorityDsl1 {
 //    }
 //  }
 
-  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, @specialized Value](
+  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
     new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
