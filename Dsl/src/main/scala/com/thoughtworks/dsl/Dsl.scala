@@ -45,14 +45,17 @@ private[dsl] trait LowPriorityDsl1 {
 //      }
 //    }
 //  }
-  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
+
+  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, @specialized Value](
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
     new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
       def interpret(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
+        val restDsl1 = restDsl
         (continue: RightDomain => LeftDomain) =>
-          restDsl.interpret(keyword, { a =>
-            handler(a)(continue)
+          val handler1 = handler
+          restDsl1.interpret(keyword, { a =>
+            handler1(a)(continue)
           })
       }
     }
