@@ -256,26 +256,10 @@ object benchmarks {
     }
   }
 
-  class OptimizedSum extends SumState {
+  class BindOncePerElementSum extends SumState {
 
     @Param(Array("100", "10000"))
     var size: Int = _
-
-    @Benchmark
-    def continuation() = {
-
-      def loop(tasks: List[() => Int @suspendable], accumulator: Int = 0): Int @suspendable = {
-        tasks match {
-          case head :: tail =>
-            loop(tail, head() + accumulator)
-          case Nil =>
-            accumulator
-        }
-      }
-
-      blockingAwaitContinuations(loop(continuationTask))
-
-    }
 
     @Benchmark
     def dsl() = {
@@ -284,6 +268,7 @@ object benchmarks {
       def loop(tasks: List[Task[Int]], accumulator: Int = 0)(continue: Int => TaskDomain): TaskDomain = {
         tasks match {
           case head :: tail =>
+            // Expand to: head.cpsApply(i => loop(tail, i + accumulator)(continue))
             loop(tail, !head + accumulator)(continue)
           case Nil =>
             continue(accumulator)
