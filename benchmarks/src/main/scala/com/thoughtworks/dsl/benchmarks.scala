@@ -267,14 +267,14 @@ object benchmarks {
     @Benchmark
     def scalaContinuation() = {
 
-      def loop(tasks: List[() => Int @suspendable], accumulator: Int = 0): ControlContext[Int, Unit, Unit] = {
+      @inline def loop(tasks: List[() => Int @suspendable], accumulator: Int = 0): ControlContext[Int, Unit, Unit] = {
         tasks match {
           case head :: tail =>
             reify(head()).flatMap { i: Int =>
               loop(tail, i + accumulator)
             }
           case Nil =>
-            new ControlContext(null, accumulator)
+            new ControlContext[Int, Unit, Unit](null, accumulator)
         }
       }
 
@@ -284,8 +284,7 @@ object benchmarks {
     @Benchmark
     def dsl() = {
       import com.thoughtworks.dsl.task._
-
-      def loop(tasks: List[Task[Int]], accumulator: Int = 0)(continue: Int => TaskDomain): TaskDomain = {
+      @inline def loop(tasks: List[Task[Int]], accumulator: Int = 0)(continue: Int => TaskDomain): TaskDomain = {
         tasks match {
           case head :: tail =>
             // Expand to: head.cpsApply(i => loop(tail, i + accumulator)(continue))
@@ -301,7 +300,7 @@ object benchmarks {
     @Benchmark
     def cats() = {
       import _root_.cats.effect.IO
-      def loop(tasks: List[IO[Int]], accumulator: Int = 0): IO[Int] = {
+      @inline def loop(tasks: List[IO[Int]], accumulator: Int = 0): IO[Int] = {
         tasks match {
           case head :: tail =>
             head.flatMap { i =>
@@ -319,7 +318,7 @@ object benchmarks {
     def monix() = {
       import _root_.monix.eval.Task
 
-      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+      @inline def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
         tasks match {
           case head :: tail =>
             head.flatMap { i =>
@@ -337,7 +336,7 @@ object benchmarks {
     def scalaz() = {
       import _root_.scalaz.concurrent.Task
 
-      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+      @inline def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
         tasks match {
           case head :: tail =>
             head.flatMap { i =>
@@ -355,7 +354,7 @@ object benchmarks {
     def scalaAsync() = {
       import _root_.scala.concurrent.Future
 
-      def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = {
+      @inline def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = {
         tasks match {
           case head :: tail =>
             head.flatMap { i =>
@@ -379,7 +378,7 @@ object benchmarks {
     @Benchmark
     def scalaContinuation() = {
 
-      def loop(tasks: List[() => Int @suspendable]): Int @suspendable = {
+      @inline def loop(tasks: List[() => Int @suspendable]): Int @suspendable = {
         tasks match {
           case head :: tail =>
             head() + loop(tail)
@@ -396,7 +395,7 @@ object benchmarks {
     def dsl() = {
       import com.thoughtworks.dsl.task._
 
-      def loop(tasks: List[Task[Int]]): Task[Int] = _ {
+      @inline def loop(tasks: List[Task[Int]]): Task[Int] = _ {
         tasks match {
           case head :: tail =>
             !head + !loop(tail)
@@ -411,7 +410,7 @@ object benchmarks {
     def scalaAsync() = {
       import _root_.scala.concurrent.Future
 
-      def loop(tasks: List[Future[Int]]): Future[Int] = async {
+      @inline def loop(tasks: List[Future[Int]]): Future[Int] = async {
         tasks match {
           case head :: tail =>
             await(head) + await(loop(tail))
@@ -427,7 +426,7 @@ object benchmarks {
     def monix() = {
       import _root_.monix.eval.Task
 
-      def loop(tasks: List[Task[Int]]): Task[Int] = {
+      @inline def loop(tasks: List[Task[Int]]): Task[Int] = {
         tasks match {
           case head :: tail =>
             for {
@@ -446,7 +445,7 @@ object benchmarks {
     def scalaz() = {
       import _root_.scalaz.concurrent.Task
 
-      def loop(tasks: List[Task[Int]]): Task[Int] = {
+      @inline def loop(tasks: List[Task[Int]]): Task[Int] = {
         tasks match {
           case head :: tail =>
             for {
@@ -465,7 +464,7 @@ object benchmarks {
     def cats() = {
       import _root_.cats.effect.IO
 
-      def loop(tasks: List[IO[Int]]): IO[Int] = {
+      @inline def loop(tasks: List[IO[Int]]): IO[Int] = {
         tasks match {
           case head :: tail =>
             for {
@@ -490,7 +489,7 @@ object benchmarks {
     @Benchmark
     def scalaContinuation() = {
 
-      def loop(tasks: List[() => Int @suspendable], accumulator: Int = 0): Int @suspendable = {
+      @inline def loop(tasks: List[() => Int @suspendable], accumulator: Int = 0): Int @suspendable = {
         tasks match {
           case head :: tail =>
             loop(tail, head() + accumulator)
@@ -507,7 +506,7 @@ object benchmarks {
     def dsl() = {
       import com.thoughtworks.dsl.task._
 
-      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = _ {
+      @inline def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = _ {
         tasks match {
           case head :: tail =>
             !loop(tail, !head + accumulator)
@@ -523,7 +522,7 @@ object benchmarks {
     def cats() = {
       import _root_.cats.effect.IO
 
-      def loop(tasks: List[IO[Int]], accumulator: Int = 0): IO[Int] = {
+      @inline def loop(tasks: List[IO[Int]], accumulator: Int = 0): IO[Int] = {
         tasks match {
           case head :: tail =>
             for {
@@ -542,7 +541,7 @@ object benchmarks {
     def monix() = {
       import _root_.monix.eval.Task
 
-      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+      @inline def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
         tasks match {
           case head :: tail =>
             for {
@@ -561,7 +560,7 @@ object benchmarks {
     def scalaz() = {
       import _root_.scalaz.concurrent.Task
 
-      def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
+      @inline def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = {
         tasks match {
           case head :: tail =>
             for {
@@ -580,7 +579,7 @@ object benchmarks {
     def scalaAsync() = {
       import _root_.scala.concurrent.Future
 
-      def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = async {
+      @inline def loop(tasks: List[Future[Int]], accumulator: Int = 0): Future[Int] = async {
         tasks match {
           case head :: tail =>
             await(loop(tail, await(head) + accumulator))
