@@ -146,7 +146,7 @@ object benchmarks {
 
   class CartesianProduct extends SumState {
 
-    @Param(Array("10", "100"))
+    @Param(Array("50"))
     var size: Int = _
 
     @Benchmark
@@ -261,7 +261,7 @@ object benchmarks {
 
   class RawSum extends SumState {
 
-    @Param(Array("100", "10000"))
+    @Param(Array("1000"))
     var size: Int = _
 
     @Benchmark
@@ -372,7 +372,7 @@ object benchmarks {
 
   class LeftAssociatedSum extends SumState {
 
-    @Param(Array("100", "10000"))
+    @Param(Array("1000"))
     var size: Int = _
 
     @Benchmark
@@ -483,7 +483,7 @@ object benchmarks {
 
   class RightAssociatedSum extends SumState {
 
-    @Param(Array("100", "10000"))
+    @Param(Array("1000"))
     var size: Int = _
 
     @Benchmark
