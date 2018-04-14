@@ -2,11 +2,21 @@ package com.thoughtworks.dsl
 package compilerplugins
 
 import com.thoughtworks.dsl.Dsl.{ResetAnnotation, nonTypeConstraintReset, shift}
+import com.thoughtworks.dsl.compilerplugins.BangNotation.HasReturn
 
+import scala.annotation.tailrec
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.transform.Transform
 import scala.tools.nsc.typechecker.ContextMode
 import scala.tools.nsc.{Global, Mode, Phase}
+private object BangNotation {
+  sealed trait HasReturn
+  object HasReturn {
+    case object Yes extends HasReturn
+    case object No extends HasReturn
+  }
+
+}
 
 /** The Scala compiler plug-in to convert ordinary Scala control flows to continuation-passing style,
   * which will then be interpreted by [[Dsl]].
@@ -209,6 +219,29 @@ final class BangNotation(override val global: Global) extends Plugin {
           """
       }
     }
+
+    private def hasReturnTree(tree: Tree): Boolean = {
+      tree.attachments.get[HasReturn] match {
+        case Some(HasReturn.Yes) =>
+          true
+        case Some(HasReturn.No) =>
+          false
+
+        case _ =>
+          tree match {
+            case _: Return =>
+              true
+            case valDef: ValDef =>
+              hasReturnTree(valDef.rhs)
+            case _: MemberDef =>
+              false
+            case _ =>
+              tree.children.exists(hasReturnTree)
+          }
+      }
+
+    }
+
     override def pluginsTyped(tpe0: Type, typer: Typer, tree: Tree, mode: Mode, pt: Type): Type = {
       val tpe = super.pluginsTyped(tpe0, typer, tree, mode, pt)
 
@@ -264,8 +297,21 @@ final class BangNotation(override val global: Global) extends Plugin {
             loop(stats)
           case If(cond, thenp, elsep) =>
             val endIfName = currentUnit.freshTermName("endIf")
+
             q"""
-            @${definitions.ScalaInlineClass} val $endIfName = ${toFunction1(continue, tpe)}
+            ${
+              val endIfBody = toFunction1(continue, tpe)
+              if (hasReturnTree(endIfBody)) {
+                q"""
+                  val $endIfName = $endIfBody
+                """.updateAttachment(HasReturn.Yes)
+              } else {
+                q"""
+                  @${definitions.ScalaInlineClass} def $endIfName = $endIfBody
+                """.updateAttachment(HasReturn.No)
+              }
+            }
+            
             ${cpsAttachment(cond) { condValue =>
               atPos(tree.pos) {
                 q"""
@@ -281,7 +327,19 @@ final class BangNotation(override val global: Global) extends Plugin {
           case Match(selector, cases) =>
             val endMatchName = currentUnit.freshTermName("endMatch")
             q"""
-            @${definitions.ScalaInlineClass} val $endMatchName = ${toFunction1(continue, tpe)}
+            ${
+              val endMatchBody = toFunction1(continue, tpe)
+              if (hasReturnTree(endMatchBody)) {
+                q"""
+                  val $endMatchName = $endMatchBody
+                """.updateAttachment(HasReturn.Yes)
+              } else {
+                q"""
+                  @${definitions.ScalaInlineClass} def $endMatchName = $endMatchBody
+                """.updateAttachment(HasReturn.No)
+              }
+            }
+            
             ${cpsAttachment(selector) { selectorValue =>
               atPos(tree.pos) {
                 Match(
@@ -395,8 +453,8 @@ final class BangNotation(override val global: Global) extends Plugin {
             cpsAttachment(shiftOps) { shiftOpsValue =>
               atPos(tree.pos) {
                 q"""
-                $shiftOpsValue.cpsApply(${toFunction1(continue, tpe)})
-              """
+                  $shiftOpsValue.cpsApply(${toFunction1(continue, tpe)})
+                """
               }
             }
           }
