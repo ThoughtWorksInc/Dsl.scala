@@ -4,6 +4,7 @@ import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.Shift
 
 import scala.collection.generic.CanBuildFrom
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise, SyncVar}
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.{Failure, Success, Try}
@@ -83,7 +84,7 @@ object task {
         .result
     }
 
-    def blockingAwait[A](task: Task[A]): A = {
+    def blockingAwait[A](task: Task[A], timeout: Duration = Duration.Inf): A = {
       val syncVar = new SyncVar[Try[A]]
       Continuation
         .toTryContinuation(task) { result =>
@@ -91,7 +92,12 @@ object task {
           TailCalls.done(())
         }
         .result
-      syncVar.take.get
+
+      if (timeout.isFinite()) {
+        syncVar.take(timeout.toMillis).get
+      } else {
+        syncVar.take.get
+      }
     }
 
     def toFuture[A](task: Task[A]): Future[A] = {
