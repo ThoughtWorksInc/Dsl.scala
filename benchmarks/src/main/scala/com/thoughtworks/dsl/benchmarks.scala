@@ -29,7 +29,7 @@ object benchmarks {
   @State(Scope.Benchmark)
   @Warmup(iterations = 5)
   @Measurement(iterations = 5)
-  @JmhFork(value = 1, jvmArgsAppend = Array("-XX:+EliminateAllocations", "-XX:+DoEscapeAnalysis"))
+  @JmhFork(value = 1)
   abstract class BenchmarkState
 
   final val ThreadPool = "thread-pool"
