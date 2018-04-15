@@ -232,7 +232,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def future(): Unit = {
+    def future() = {
       import _root_.scala.concurrent.Future
       import _root_.scalaz.std.list._
       import _root_.scalaz.std.scalaFuture._
@@ -311,7 +311,7 @@ object benchmarks {
     }
 
     @Benchmark
-    def future(): Unit = {
+    def future() = {
       import _root_.scalaz.syntax.all._
       import _root_.scalaz.ListT
       import _root_.scalaz.std.scalaFuture._
