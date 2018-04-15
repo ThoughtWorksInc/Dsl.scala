@@ -70,7 +70,7 @@ object benchmarks {
       }
     }
 
-    protected def dslTasks: List[task.Task[Int]] = {
+    protected def inputDslTasks: List[task.Task[Int]] = {
       import task.Task
       {
         executedIn match {
@@ -85,7 +85,7 @@ object benchmarks {
       }
     }
 
-    protected def monixTasks = {
+    protected def inputMonixTasks = {
       import _root_.monix.eval.Task
       val scheduler = Scheduler(threadPool: ExecutorService)
       executedIn match {
@@ -96,7 +96,7 @@ object benchmarks {
       }
     }
 
-    protected def catsTasks = {
+    protected def inputCatsIOs = {
       import _root_.cats.effect.IO
       executedIn match {
         case ThreadPool =>
@@ -110,7 +110,7 @@ object benchmarks {
       }
     }
 
-    protected def scalazTasks = {
+    protected def inputScalazTasks = {
       import _root_.scalaz.concurrent.Task
       executedIn match {
         case ThreadPool =>
@@ -120,7 +120,7 @@ object benchmarks {
       }
     }
 
-    protected def scalaTasks = {
+    protected def inputFutures = {
       import _root_.scala.concurrent.Future
       executedIn match {
         case ThreadPool =>
@@ -155,7 +155,7 @@ object benchmarks {
       }
 
       def listTask: Task[List[Int]] = {
-        cellTask(!Each(dslTasks), !Each(dslTasks))
+        cellTask(!Each(inputDslTasks), !Each(inputDslTasks))
       }
 
       Task.blockingAwait(listTask, TimeOut)
@@ -175,8 +175,8 @@ object benchmarks {
         } yield List(x, y)
 
       def listTask: Task[List[Int]] = {
-        monixTasks.traverseM { taskX =>
-          monixTasks.traverseM { taskY =>
+        inputMonixTasks.traverseM { taskX =>
+          inputMonixTasks.traverseM { taskY =>
             cellTask(taskX, taskY)
           }
         }
@@ -198,8 +198,8 @@ object benchmarks {
         } yield List(x, y)
 
       def listTask: IO[List[Int]] = {
-        catsTasks.flatTraverse { taskX =>
-          catsTasks.flatTraverse { taskY =>
+        inputCatsIOs.flatTraverse { taskX =>
+          inputCatsIOs.flatTraverse { taskY =>
             cellTask(taskX, taskY)
           }
         }
@@ -221,8 +221,8 @@ object benchmarks {
         } yield List(x, y)
 
       def listTask: Task[List[Int]] = {
-        scalazTasks.traverseM { taskX =>
-          scalazTasks.traverseM { taskY =>
+        inputScalazTasks.traverseM { taskX =>
+          inputScalazTasks.traverseM { taskY =>
             cellTask(taskX, taskY)
           }
         }
@@ -243,8 +243,8 @@ object benchmarks {
       }
 
       def listTask: Future[List[Int]] = {
-        scalaTasks.traverseM { taskX =>
-          scalaTasks.traverseM { taskY =>
+        inputFutures.traverseM { taskX =>
+          inputFutures.traverseM { taskY =>
             cellTask(taskX, taskY)
           }
         }
@@ -265,7 +265,7 @@ object benchmarks {
       import com.thoughtworks.dsl.task._
 
       def listTask: Task[List[Int]] = Task.reset {
-        List(!(!Each(dslTasks)), !(!Each(dslTasks)))
+        List(!(!Each(inputDslTasks)), !(!Each(inputDslTasks)))
       }
 
       Task.blockingAwait(listTask, TimeOut)
@@ -280,8 +280,8 @@ object benchmarks {
 
       def listTask: Task[List[Int]] = {
         for {
-          taskX <- ListT(Task.now(monixTasks))
-          taskY <- ListT(Task.now(monixTasks))
+          taskX <- ListT(Task.now(inputMonixTasks))
+          taskY <- ListT(Task.now(inputMonixTasks))
           x <- taskX.liftM[ListT]
           y <- taskY.liftM[ListT]
           r <- ListT(Task.now(List(x, y)))
@@ -299,8 +299,8 @@ object benchmarks {
 
       def listTask: Task[List[Int]] = {
         for {
-          taskX <- ListT(Task.now(scalazTasks))
-          taskY <- ListT(Task.now(scalazTasks))
+          taskX <- ListT(Task.now(inputScalazTasks))
+          taskY <- ListT(Task.now(inputScalazTasks))
           x <- taskX.liftM[ListT]
           y <- taskY.liftM[ListT]
           r <- ListT(Task.now(List(x, y)))
@@ -318,8 +318,8 @@ object benchmarks {
 
       def listTask: Future[List[Int]] = {
         for {
-          taskX <- ListT(Future.successful(scalaTasks))
-          taskY <- ListT(Future.successful(scalaTasks))
+          taskX <- ListT(Future.successful(inputFutures))
+          taskY <- ListT(Future.successful(inputFutures))
           x <- taskX.liftM[ListT]
           y <- taskY.liftM[ListT]
           r <- ListT(Future.successful(List(x, y)))
@@ -366,7 +366,7 @@ object benchmarks {
         }
       }
 
-      Task.blockingAwait(loop(dslTasks), TimeOut)
+      Task.blockingAwait(loop(inputDslTasks), TimeOut)
     }
 
     @Benchmark
@@ -383,7 +383,7 @@ object benchmarks {
         }
       }
 
-      loop(catsTasks).unsafeRunTimed(TimeOut).get
+      loop(inputCatsIOs).unsafeRunTimed(TimeOut).get
     }
 
     @Benchmark
@@ -401,7 +401,7 @@ object benchmarks {
         }
       }
 
-      blockingAwaitMonix(loop(monixTasks))
+      blockingAwaitMonix(loop(inputMonixTasks))
     }
 
     @Benchmark
@@ -419,7 +419,7 @@ object benchmarks {
         }
       }
 
-      loop(scalazTasks).unsafePerformSyncFor(TimeOut)
+      loop(inputScalazTasks).unsafePerformSyncFor(TimeOut)
     }
 
     @Benchmark
@@ -437,7 +437,7 @@ object benchmarks {
         }
       }
 
-      Await.result(loop(scalaTasks), TimeOut)
+      Await.result(loop(inputFutures), TimeOut)
     }
 
   }
@@ -475,7 +475,7 @@ object benchmarks {
             0
         }
       }
-      Task.blockingAwait(loop(dslTasks), TimeOut)
+      Task.blockingAwait(loop(inputDslTasks), TimeOut)
     }
 
     @Benchmark
@@ -491,7 +491,7 @@ object benchmarks {
         }
       }
 
-      Await.result(loop(scalaTasks), TimeOut)
+      Await.result(loop(inputFutures), TimeOut)
     }
 
     @Benchmark
@@ -510,7 +510,7 @@ object benchmarks {
         }
       }
 
-      blockingAwaitMonix(loop(monixTasks))
+      blockingAwaitMonix(loop(inputMonixTasks))
     }
 
     @Benchmark
@@ -529,7 +529,7 @@ object benchmarks {
         }
       }
 
-      loop(scalazTasks).unsafePerformSyncFor(TimeOut)
+      loop(inputScalazTasks).unsafePerformSyncFor(TimeOut)
     }
 
     @Benchmark
@@ -548,7 +548,7 @@ object benchmarks {
         }
       }
 
-      loop(catsTasks).unsafeRunTimed(TimeOut).get
+      loop(inputCatsIOs).unsafeRunTimed(TimeOut).get
     }
 
   }
@@ -587,7 +587,7 @@ object benchmarks {
         }
       }
 
-      Task.blockingAwait(loop(dslTasks), TimeOut)
+      Task.blockingAwait(loop(inputDslTasks), TimeOut)
     }
 
     @Benchmark
@@ -606,7 +606,7 @@ object benchmarks {
         }
       }
 
-      loop(catsTasks).unsafeRunTimed(TimeOut).get
+      loop(inputCatsIOs).unsafeRunTimed(TimeOut).get
     }
 
     @Benchmark
@@ -625,7 +625,7 @@ object benchmarks {
         }
       }
 
-      blockingAwaitMonix(loop(monixTasks))
+      blockingAwaitMonix(loop(inputMonixTasks))
     }
 
     @Benchmark
@@ -644,7 +644,7 @@ object benchmarks {
         }
       }
 
-      loop(scalazTasks).unsafePerformSyncFor(TimeOut)
+      loop(inputScalazTasks).unsafePerformSyncFor(TimeOut)
     }
 
     @Benchmark
@@ -660,7 +660,7 @@ object benchmarks {
         }
       }
 
-      Await.result(loop(scalaTasks), TimeOut)
+      Await.result(loop(inputFutures), TimeOut)
     }
 
   }
