@@ -22,6 +22,8 @@ libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % 
 
 libraryDependencies += "io.monix" %% "monix" % "2.3.3"
 
+libraryDependencies += "io.monix" %% "monix-scalaz-72" % "2.3.3"
+
 libraryDependencies += "org.typelevel" %% "cats-effect" % "0.10"
 
 libraryDependencies += {

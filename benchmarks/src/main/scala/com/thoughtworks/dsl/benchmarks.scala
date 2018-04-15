@@ -164,6 +164,9 @@ object benchmarks {
     @Benchmark
     def monix() = {
       import _root_.monix.eval.Task
+      import _root_.monix.scalaz._
+      import _root_.scalaz.std.list._
+      import _root_.scalaz.syntax.all._
 
       def cellTask(x: Task[Int], y: Task[Int]): Task[List[Int]] =
         for {
@@ -171,16 +174,13 @@ object benchmarks {
           tmp2 <- y
         } yield List(tmp1, tmp2)
 
-      def listTask: Task[List[Int]] =
-        for {
-          listOfList <- Task
-            .sequence {
-              for {
-                x <- monixTasks
-                y <- monixTasks
-              } yield cellTask(x, y)
-            }
-        } yield listOfList.flatten
+      def listTask: Task[List[Int]] = {
+        monixTasks.traverseM { x =>
+          monixTasks.traverseM { y =>
+            cellTask(x, y)
+          }
+        }
+      }
 
       blockingAwaitMonix(listTask)
     }
@@ -203,7 +203,6 @@ object benchmarks {
             cellTask(x, y)
           }
         }
-
       }
 
       listTask.unsafeRunTimed(TimeOut).get
@@ -235,21 +234,21 @@ object benchmarks {
     @Benchmark
     def future(): Unit = {
       import _root_.scala.concurrent.Future
+      import _root_.cats.instances.list._
+      import _root_.cats.instances.future._
+      import _root_.cats.syntax.all._
 
       def cellTask(x: Future[Int], y: Future[Int]): Future[List[Int]] = async {
         List(await(x), await(y))
       }
 
-      def listTask: Future[List[Int]] =
-        for {
-          listOfList <- Future
-            .sequence {
-              for {
-                x <- scalaTasks
-                y <- scalaTasks
-              } yield cellTask(x, y)
-            }
-        } yield listOfList.flatten
+      def listTask: Future[List[Int]] = {
+        scalaTasks.flatTraverse { x =>
+          scalaTasks.flatTraverse { y =>
+            cellTask(x, y)
+          }
+        }
+      }
 
       Await.result(listTask, TimeOut)
 
