@@ -141,7 +141,7 @@ object benchmarks {
 
   }
 
-  class CartesianProduct extends SumState {
+  class RawCartesianProduct extends SumState {
 
     @Param(Array("50"))
     var size: Int = _
@@ -150,8 +150,8 @@ object benchmarks {
     def dsl() = {
       import com.thoughtworks.dsl.task._
 
-      def cellTask(x: Task[Int], y: Task[Int]): Task[List[Int]] = _ {
-        List(!x, !y)
+      def cellTask(taskX: Task[Int], taskY: Task[Int]): Task[List[Int]] = _ {
+        List(!taskX, !taskY)
       }
 
       def listTask: Task[List[Int]] = {
@@ -168,16 +168,16 @@ object benchmarks {
       import _root_.scalaz.std.list._
       import _root_.scalaz.syntax.all._
 
-      def cellTask(x: Task[Int], y: Task[Int]): Task[List[Int]] =
+      def cellTask(taskX: Task[Int], taskY: Task[Int]): Task[List[Int]] =
         for {
-          tmp1 <- x
-          tmp2 <- y
-        } yield List(tmp1, tmp2)
+          x <- taskX
+          y <- taskY
+        } yield List(x, y)
 
       def listTask: Task[List[Int]] = {
-        monixTasks.traverseM { x =>
-          monixTasks.traverseM { y =>
-            cellTask(x, y)
+        monixTasks.traverseM { taskX =>
+          monixTasks.traverseM { taskY =>
+            cellTask(taskX, taskY)
           }
         }
       }
@@ -191,16 +191,16 @@ object benchmarks {
       import _root_.cats.effect.IO
       import _root_.cats.instances.list._
 
-      def cellTask(x: IO[Int], y: IO[Int]): IO[List[Int]] =
+      def cellTask(taskX: IO[Int], taskY: IO[Int]): IO[List[Int]] =
         for {
-          tmp1 <- x
-          tmp2 <- y
-        } yield List(tmp1, tmp2)
+          x <- taskX
+          y <- taskY
+        } yield List(x, y)
 
       def listTask: IO[List[Int]] = {
-        catsTasks.flatTraverse { x =>
-          catsTasks.flatTraverse { y =>
-            cellTask(x, y)
+        catsTasks.flatTraverse { taskX =>
+          catsTasks.flatTraverse { taskY =>
+            cellTask(taskX, taskY)
           }
         }
       }
@@ -214,16 +214,16 @@ object benchmarks {
       import _root_.scalaz.concurrent.Task
       import _root_.scalaz.std.list._
 
-      def cellTask(x: Task[Int], y: Task[Int]): Task[List[Int]] =
+      def cellTask(taskX: Task[Int], taskY: Task[Int]): Task[List[Int]] =
         for {
-          tmp1 <- x
-          tmp2 <- y
-        } yield List(tmp1, tmp2)
+          x <- taskX
+          y <- taskY
+        } yield List(x, y)
 
       def listTask: Task[List[Int]] = {
-        scalazTasks.traverseM { x =>
-          scalazTasks.traverseM { y =>
-            cellTask(x, y)
+        scalazTasks.traverseM { taskX =>
+          scalazTasks.traverseM { taskY =>
+            cellTask(taskX, taskY)
           }
         }
       }
@@ -234,21 +234,97 @@ object benchmarks {
     @Benchmark
     def future(): Unit = {
       import _root_.scala.concurrent.Future
-      import _root_.cats.instances.list._
-      import _root_.cats.instances.future._
-      import _root_.cats.syntax.all._
+      import _root_.scalaz.std.list._
+      import _root_.scalaz.std.scalaFuture._
+      import _root_.scalaz.syntax.all._
 
-      def cellTask(x: Future[Int], y: Future[Int]): Future[List[Int]] = async {
-        List(await(x), await(y))
+      def cellTask(taskX: Future[Int], taskY: Future[Int]): Future[List[Int]] = async {
+        List(await(taskX), await(taskY))
       }
 
       def listTask: Future[List[Int]] = {
-        scalaTasks.flatTraverse { x =>
-          scalaTasks.flatTraverse { y =>
-            cellTask(x, y)
+        scalaTasks.traverseM { taskX =>
+          scalaTasks.traverseM { taskY =>
+            cellTask(taskX, taskY)
           }
         }
       }
+
+      Await.result(listTask, TimeOut)
+
+    }
+  }
+
+  class CartesianProduct extends SumState {
+
+    @Param(Array("50"))
+    var size: Int = _
+
+    @Benchmark
+    def dsl() = {
+      import com.thoughtworks.dsl.task._
+
+      def listTask: Task[List[Int]] = Task.reset {
+        List(!(!Each(dslTasks)), !(!Each(dslTasks)))
+      }
+
+      Task.blockingAwait(listTask, TimeOut)
+    }
+
+    @Benchmark
+    def monix() = {
+      import _root_.monix.eval.Task
+      import _root_.monix.scalaz._
+      import _root_.scalaz.ListT
+      import _root_.scalaz.syntax.all._
+
+      def listTask: Task[List[Int]] = {
+        for {
+          taskX <- ListT(Task.now(monixTasks))
+          taskY <- ListT(Task.now(monixTasks))
+          x <- taskX.liftM[ListT]
+          y <- taskY.liftM[ListT]
+          r <- ListT(Task.now(List(x, y)))
+        } yield r
+      }.run
+
+      blockingAwaitMonix(listTask)
+    }
+
+    @Benchmark
+    def scalaz() = {
+      import _root_.scalaz.syntax.all._
+      import _root_.scalaz.concurrent.Task
+      import _root_.scalaz.ListT
+
+      def listTask: Task[List[Int]] = {
+        for {
+          taskX <- ListT(Task.now(scalazTasks))
+          taskY <- ListT(Task.now(scalazTasks))
+          x <- taskX.liftM[ListT]
+          y <- taskY.liftM[ListT]
+          r <- ListT(Task.now(List(x, y)))
+        } yield r
+      }.run
+
+      listTask.unsafePerformSyncFor(TimeOut)
+    }
+
+    @Benchmark
+    def future(): Unit = {
+      import _root_.scalaz.syntax.all._
+      import _root_.scalaz.ListT
+      import _root_.scalaz.std.scalaFuture._
+
+      def listTask: Future[List[Int]] = {
+        for {
+          taskX <- ListT(Future.successful(scalaTasks))
+          taskY <- ListT(Future.successful(scalaTasks))
+          x <- taskX.liftM[ListT]
+          y <- taskY.liftM[ListT]
+          r <- ListT(Future.successful(List(x, y)))
+        } yield r
+      }.run
 
       Await.result(listTask, TimeOut)
 
