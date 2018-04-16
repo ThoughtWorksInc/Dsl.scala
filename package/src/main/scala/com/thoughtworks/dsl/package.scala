@@ -426,9 +426,11 @@ package com.thoughtworks
   *            !httpClient(url)
   *          }
   *
-  *          val Seq(fileContent0, fileContent1) = blockingAwait(parallelTask)
-  *          fileContent0 should startWith("HTTP/1.1 200 OK")
-  *          fileContent1 should startWith("HTTP/1.1 200 OK")
+  *          inside(blockingAwait(parallelTask)) {
+  *            case Seq(fileContent0, fileContent1) =>
+  *              fileContent0 should startWith("HTTP/1.1 200 OK")
+  *              fileContent1 should startWith("HTTP/1.1 200 OK")
+  *          }
   *          }}}
   *
   * @example The built-in [[com.thoughtworks.dsl.keywords.Monadic Monadic]] keyword can be used as an adaptor
