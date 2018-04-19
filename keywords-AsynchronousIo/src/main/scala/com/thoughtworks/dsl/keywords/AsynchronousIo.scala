@@ -51,7 +51,7 @@ object AsynchronousIo {
     }
   }
 
-  implicit def nioDsl[Value]: Dsl[AsynchronousIo[Value], (Unit !! Throwable), Value] =
+  implicit def asynchronousIoDsl[Value]: Dsl[AsynchronousIo[Value], (Unit !! Throwable), Value] =
     new Dsl[AsynchronousIo[Value], Unit !! Throwable, Value] {
       def interpret(keyword: AsynchronousIo[Value], attachment: Value => (Unit !! Throwable)): (Unit !! Throwable) = {
         failureHandler =>
