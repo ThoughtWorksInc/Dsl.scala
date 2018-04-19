@@ -63,12 +63,13 @@ object AsynchronousIo {
               }
 
               def completed(result: Value, attachment: Value => (Unit !! Throwable)): Unit = {
-                (try {
+                val protectedContinuation = try {
                   attachment(result)
                 } catch {
                   case NonFatal(e) =>
                     return failureHandler(e)
-                }).apply(failureHandler)
+                }
+                protectedContinuation(failureHandler)
               }
             }
           )
