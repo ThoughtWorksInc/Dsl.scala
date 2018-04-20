@@ -204,7 +204,7 @@ package com.thoughtworks
   *          }}}
   *
   *
-  * @example The the closure in the previous example can be simplified with the help of Scala's placeholder syntax:
+  * @example The closure in the previous example can be simplified with the help of Scala's placeholder syntax:
   *
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Yield
