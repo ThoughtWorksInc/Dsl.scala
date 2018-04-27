@@ -158,4 +158,48 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
   }
 
+  "nested seq of task" in {
+
+    def composeTask(t0: Task[Seq[Task[Seq[Task[Seq[Task[Seq[Float]]]]]]]]): Task[Seq[Seq[Seq[Seq[Float]]]]] = {
+      Task.join {
+        val t1 = !Each(!t0)
+        !Task.join {
+          val t2 = !Each(!t1)
+          !Task.join {
+            val t3 = !Each(!t2)
+            !t3
+          }
+        }
+      }
+    }
+
+    Task
+      .toFuture(
+        composeTask(Task.now(
+          1 to 2 map { i =>
+            Task.now(1 to 3 map { j =>
+              Task.now(1 to 4 map { k =>
+                Task.now(1 to 5 map { l =>
+                  (i * 1000 + j * 100 + k * 10 + l).toFloat
+                })
+              })
+            })
+          }
+        )))
+      .map { s =>
+        s should be(
+          1 to 2 map { i =>
+            1 to 3 map { j =>
+              1 to 4 map { k =>
+                1 to 5 map { l =>
+                  (i * 1000 + j * 100 + k * 10 + l).toFloat
+                }
+              }
+            }
+          }
+        )
+
+      }
+
+  }
 }
