@@ -48,10 +48,6 @@ final class BangNotation(override val global: Global) extends Plugin {
 
   private type CpsAttachment = (Tree => Tree) => Tree
 
-  private val nonTypeConstraintResetSymbol = symbolOf[nonTypeConstraintReset]
-  private val resetAnnotationSymbol = symbolOf[ResetAnnotation]
-  private val shiftSymbol = symbolOf[shift]
-
   private trait Deactable extends AnalyzerPlugin {
     override def isActive(): Boolean = {
       active && phase.id < currentRun.picklerPhase.id
@@ -59,7 +55,7 @@ final class BangNotation(override val global: Global) extends Plugin {
   }
 
   /** An [[AnalyzerPlugin]] that replaces trees annatated as [[ResetAnnotation]] to its cps transformed trees */
-  private trait TreeResetter extends AnalyzerPlugin {
+  private trait TreeResetter extends AnalyzerPlugin with AnnotationSymbols {
     override def canAdaptAnnotations(tree: Tree, typer: Typer, mode: Mode, pt: Type): Boolean = {
       super.canAdaptAnnotations(tree, typer, mode, pt) || {
         mode.inExprMode && tree.tpe.hasAnnotation(resetAnnotationSymbol) && tree.hasAttachment[CpsAttachment]
@@ -109,7 +105,7 @@ final class BangNotation(override val global: Global) extends Plugin {
 
   }
 
-  private trait BangNotationTransformer extends AnalyzerPlugin {
+  private trait BangNotationTransformer extends AnalyzerPlugin with AnnotationSymbols {
 
     private def cpsAttachment(tree: Tree)(continue: Tree => Tree): Tree = {
       tree.attachments.get[CpsAttachment] match {
@@ -475,6 +471,11 @@ final class BangNotation(override val global: Global) extends Plugin {
       tpe
     }
 
+  }
+
+  private trait AnnotationSymbols {
+    private[BangNotation] lazy val resetAnnotationSymbol = symbolOf[ResetAnnotation]
+    private[BangNotation] lazy val shiftSymbol = symbolOf[shift]
   }
 
   val name: String = "BangNotation"
