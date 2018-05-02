@@ -45,7 +45,6 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          {{{
   *
   *          def scalazSyntaxSquare = trampoline3.flatMap { tmp1 =>
-  *            import scalaz.syntax.bind._
   *            trampoline3.flatMap { tmp2 =>
   *              Trampoline.delay {
   *                s"This string is produced by a trampoline: ${tmp1 * tmp2}"
