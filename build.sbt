@@ -72,7 +72,7 @@ Seq[ProjectReference](
   )
 }
 
-crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.5")
+crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.6")
 
 scalacOptions in ThisBuild ++= {
   if (scalaBinaryVersion.value == "2.11") {
