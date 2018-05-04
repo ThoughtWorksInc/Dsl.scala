@@ -23,7 +23,6 @@ object AutoClose {
   def apply[R <: AutoCloseable](r: => R)(
       implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): AutoClose[R] = new AutoClose(r _)
 
-  // TODO: Dsl for try/catch
   implicit def throwableContinuationAutoCloseDsl[Domain, Value, R <: AutoCloseable](
       implicit catchDsl: CatchDsl[Domain, Domain, Value],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
