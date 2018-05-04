@@ -279,7 +279,14 @@ final class BangNotation(override val global: Global) extends Plugin {
                 if (tpt.tpe.hasAnnotation(resetAnnotationSymbol)) {
                   continue(exprValue)
                 } else {
-                  continue(Typed(exprValue, tpt))
+                  tpt match {
+                    case tpt: TypeTree =>
+                      // Create a new TypeTree with a null original, as a workaround of https://github.com/ThoughtWorksInc/Dsl.scala/issues/114
+                      val noOriginal = TypeTree(tpt.tpe).setPos(tpt.pos)
+                      continue(Typed(exprValue, noOriginal))
+                    case _ =>
+                      continue(Typed(exprValue, tpt))
+                  }
                 }
               }
             }
