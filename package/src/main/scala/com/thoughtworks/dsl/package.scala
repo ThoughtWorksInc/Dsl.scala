@@ -153,7 +153,7 @@ package com.thoughtworks
   *          where the DSL [[com.thoughtworks.dsl.keywords.Yield Yield]] can be used,
   *          which was interpreted like the `yield` keyword in C#, JavaScript or Python.
   *
-  *          Note that the body of `xorshiftRandomGenerator` is annotated as `@reset`,
+  *          Note that the body of `xorshiftRandomGenerator` is annotated as `@[[Dsl.reset reset]]`,
   *          which enables the [[Dsl.Keyword#unary_$bang !-notation]] in the code block.
   *
   *          Alternatively, you can also use the
