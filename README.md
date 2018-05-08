@@ -6,7 +6,7 @@
 
 **Dsl.scala** is a framework to create embedded **D**omain-**S**pecific **L**anguages in Scala.
 
-A DSL author is able to create language keywords by implementing the [Dsl](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/Dsl.html) trait, which contains only one simple function. No knowledge about Scala compiler or AST macros is required.
+A DSL author is able to create language keywords by implementing the [Dsl](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/Dsl.html) trait, which contains only one abstract method to be implemented. No knowledge about Scala compiler or AST macros is required.
 
 DSLs written in **Dsl.scala** are collaborative with others DSLs and Scala control flows. A DSL user can create functions that contains interleaved DSLs implemented by different vendors, along with ordinary Scala control flows.
 
