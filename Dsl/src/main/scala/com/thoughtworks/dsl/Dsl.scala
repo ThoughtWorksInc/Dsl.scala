@@ -151,7 +151,11 @@ object Dsl extends LowPriorityDsl0 {
   private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
   private[dsl] final class nonTypeConstraintReset extends ResetAnnotation with StaticAnnotation
 
-  /** An annotation to explicitly perform reset control operator on a code block. */
+  /** An annotation to explicitly perform reset control operator on a code block.
+    *
+    * @note This annotation can be automatically added
+    *       if [[compilerplugins.ResetEverywhere ResetEverywhere]] compiler plug-in is enabled.
+    */
   final class reset extends ResetAnnotation with StaticAnnotation with TypeConstraint
 
   /** An annotation to mark a method is a shift control operator. */
@@ -170,10 +174,10 @@ object Dsl extends LowPriorityDsl0 {
 
     @shift
     @compileTimeOnly(
-      """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@reset`.""")
+      """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@[[Dsl.reset reset]]`.""")
     final def unary_! : Value = {
       throw new IllegalAccessException(
-        """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@reset`."""
+        """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@[[Dsl.reset reset]]`."""
       )
     }
 

@@ -18,7 +18,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   * in code blocks whose type support [[scalaz.Bind]], [[scalaz.MonadError]] and [[scalaz.MonadTrans]].
   *
   * @example [[scalaz.Free.Trampoline]] is a monadic data type that performs tail call optimization.
-  *          It can be built from a `@reset` code block within some [[Dsl.Keyword#unary_$bang !-notation]],
+  *          It can be built from a `@[[Dsl.reset reset]]` code block within some [[Dsl.Keyword#unary_$bang !-notation]],
   *          similar to the [[com.thoughtworks.each.Monadic.EachOps#each each]] method in
   *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
   *
@@ -57,12 +57,12 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *
   *          <hr/>
   *
-  *          A `@reset` code block can contain `try` / `catch` / `finally`
+  *          A `@[[Dsl.reset reset]]` code block can contain `try` / `catch` / `finally`
   *          if the monadic data type supports [[scalaz.MonadError]].
   *
   *          [[https://github.com/ThoughtWorksInc/tryt.scala tryt.scala]] is a monad transformer that provides
   *          [[scalaz.MonadError]],
-  *          therefore `try` / `catch` / `finally` expressions can be used inside a `@reset` code block
+  *          therefore `try` / `catch` / `finally` expressions can be used inside a `@[[Dsl.reset reset]]` code block
   *          whose return type is `TryT[Trampoline, ?]`.
   *
   *          {{{

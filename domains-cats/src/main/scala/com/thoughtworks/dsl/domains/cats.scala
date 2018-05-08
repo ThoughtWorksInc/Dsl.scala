@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 
-import _root_.cats.FlatMap
+import _root_.cats.{Applicative, FlatMap}
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 import _root_.cats.MonadError
@@ -19,7 +19,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   * in code blocks whose type support [[cats.FlatMap]] and [[cats.MonadError]].
   *
   * @example [[cats.free.Trampoline Trampoline]] is a monadic data type that performs tail call optimization.
-  *          It can be built from a `@reset` code block within some [[Dsl.Keyword#unary_$bang !-notation]],
+  *          It can be built from a `@[[Dsl.reset reset]]` code block within some [[Dsl.Keyword#unary_$bang !-notation]],
   *          similar to the [[com.thoughtworks.each.Monadic.EachOps#each each]] method in
   *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
   *
@@ -56,17 +56,19 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          catsSyntaxSquare.run should be("This string is produced by a trampoline: 9")
   *          }}}
   *
-  *          <hr/>
-  *
-  *          A `@reset` code block can contain `try` / `catch` / `finally`
+  * @example A `@[[Dsl.reset reset]]` code block can contain `try` / `catch` / `finally`
   *          if the monadic data type supports [[cats.MonadError]].
   *
   *          For example, [[cats.effect.IO]] is a monadic data type that supports [[cats.MonadError]],
-  *          therefore `try` / `catch` / `finally` expressions can be used inside a `@reset` code block
+  *          therefore `try` / `catch` / `finally` expressions can be used inside a `@[[Dsl.reset reset]]` code block
   *          whose return type is [[cats.effect.IO]].
   *
   *          {{{
+  *          import com.thoughtworks.dsl.keywords.Monadic._
+  *          import com.thoughtworks.dsl.domains.cats._
   *          import cats.effect.IO
+  *          import com.thoughtworks.dsl.Dsl.reset
+  *
   *          val io0 = IO(0)
   *
   *          def dslTryCatch: IO[String] = IO {
