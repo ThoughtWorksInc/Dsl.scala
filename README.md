@@ -66,6 +66,11 @@ myGenerator(2) should be(2101636938)
 
 The call to `xorshiftRandomGenerator` does not throw a `StackOverflowError` because the execution of `xorshiftRandomGenerator` will be paused at the keyword `Yield`, and it will be resumed when the caller is looking for the next number.
 
+## Showcases
+
+* [sbt-ammonite-classpath](https://github.com/ThoughtWorksInc/sbt-ammonite-classpath) is an sbt plug-in that [uses `Each` keywords to iterate through configuations and keys](https://github.com/ThoughtWorksInc/sbt-ammonite-classpath/blob/793bc20/src/main/scala/com/thoughtworks/deeplearning/sbtammoniteclasspath/AmmoniteClasspath.scala#L23), and an alternative syntax of `for` comprehensions.
+  
+(Feel free to add your project here)
 
 ## Links
 
