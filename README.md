@@ -19,7 +19,7 @@ We also provide some built-in keywords, including:
  * The `AutoClose` keyword to automatically close resources when exiting a scope, similar to the destructor feature in C++.
  * The `Monadic` keyword for creating Scalaz or Cats monadic control flow, similar to the !-notation in Idris.
 
-All the above keywords can be used together with each others.
+All the above keywords can be used together with each others. For example you can perform list comprehension to manipulate native resources in an asynchronous task by using `Each`, `AutoClose` and `Shift` together.
 
 ## Getting Started
 
