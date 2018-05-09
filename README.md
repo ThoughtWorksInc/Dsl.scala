@@ -12,7 +12,9 @@ DSLs written in **Dsl.scala** are collaborative with others DSLs and Scala contr
 
 We also provide some built-in keywords, including:
  * The `Shift` keyword for asynchronous programming, similar to `await` / `async` in C#, Python and JavaScript.
+ * The `AsynchronousIo.Connect`, `AsynchronousIo.Accept`, `AsynchronousIo.Read` and `AsynchronousIo.Write` keyword for perform I/O on an asynchronous channel.
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
+ * The `Each` keyword for iterate a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
  * The `Fork` keyword for duplicating current thread, similar to the `fork` system call in POSIX.
  * The `AutoClose` keyword to automatically close resources when exiting a scope, similar to the destructor feature in C++.
  * The `Monadic` keyword for creating Scalaz or Cats monadic control flow, similar to the !-notation in Idris.
