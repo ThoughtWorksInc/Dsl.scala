@@ -213,4 +213,11 @@ class YieldSpec extends FreeSpec with Matchers {
     }
   }
 
+  "nested function call" in {
+    def nested() = {
+      "foo" +: !Yield("bar") +: Stream.empty[Any]
+    }
+    nested() should be(Stream("bar", "foo", ()))
+  }
+
 }

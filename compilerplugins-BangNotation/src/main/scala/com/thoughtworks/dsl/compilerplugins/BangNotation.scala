@@ -142,6 +142,8 @@ final class BangNotation(override val global: Global) extends Plugin {
       def hasCpsAttachment(child: Any): Boolean = {
         child match {
           case list: List[_]             => list.exists(hasCpsAttachment)
+          case TypeApply(fun, args)      => hasCpsAttachment(fun)
+          case Apply(fun, args)          => hasCpsAttachment(fun) || args.exists(hasCpsAttachment)
           case CaseDef(pat, guard, body) => hasCpsAttachment(body)
           case childTree: Tree           => childTree.hasAttachment[CpsAttachment]
           case _                         => false
