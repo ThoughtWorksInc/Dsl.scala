@@ -20,9 +20,9 @@ object Yield {
 
   implicit def implicitYield[Element](element: Element): Yield[Element] = Yield[Element](element)
 
-  implicit def yieldDsl[Element]: Dsl[Yield[Element], Stream[Element], Unit] =
-    new Dsl[Yield[Element], Stream[Element], Unit] {
-      def interpret(keyword: Yield[Element], mapper: Unit => Stream[Element]): Stream[Element] = {
+  implicit def yieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
+    new Dsl[Yield[Element], Stream[That], Unit] {
+      def interpret(keyword: Yield[Element], mapper: Unit => Stream[That]): Stream[That] = {
         new Stream.Cons(keyword.element, mapper(()))
       }
     }
