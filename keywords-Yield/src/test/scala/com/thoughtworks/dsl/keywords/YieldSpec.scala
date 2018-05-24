@@ -213,11 +213,19 @@ class YieldSpec extends FreeSpec with Matchers {
     }
   }
 
-  "nested function call" in {
-    def nested() = {
-      "foo" +: !Yield("bar") +: Stream.empty[Any]
+  "nested function call" - {
+    "call by value" in {
+      def nested() = {
+        "foo" +: !Yield("bar") +: Stream.empty[Any]
+      }
+      nested() should be(Stream("bar", "foo", ()))
     }
-    nested() should be(Stream("bar", "foo", ()))
+    "call by name" in {
+      def nested() = {
+        "foo" #:: !Yield("bar") #:: Stream.empty[Any]
+      }
+      nested() should be(Stream("bar", "foo", ()))
+    }
   }
 
 }
