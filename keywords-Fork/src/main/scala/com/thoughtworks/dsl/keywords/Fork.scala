@@ -73,11 +73,14 @@ object Fork {
           val element = !Each(fork.elements)
           counter.incrementAndGet()
           try {
-            builder ++= !Shift(mapper(element))
+            builder ++= !Shift(mapper(element));
             ()
           } catch {
+            case MultipleException(throwableSet) =>
+              exceptionBuilder ++= throwableSet;
+              ()
             case e: Throwable =>
-              exceptionBuilder += e
+              exceptionBuilder += e;
               ()
           } finally {
             if (counter.decrementAndGet() > 0) {
