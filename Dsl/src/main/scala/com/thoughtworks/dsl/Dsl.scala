@@ -25,7 +25,7 @@ import scala.util.control.TailCalls.TailRec
 trait Dsl[-Keyword, Domain, +Value] {
 
   /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
-  def interpret(keyword: Keyword, handler: Value => Domain): Domain
+  def cpsApply(keyword: Keyword, handler: Value => Domain): Domain
 
 }
 
@@ -37,10 +37,10 @@ private[dsl] trait LowPriorityDsl1 {
 //      shiftDsl2: Dsl[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
 //  ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
 //    new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
-//      def interpret(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
+//      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
 //        (continue: RightDomain => LeftDomain) =>
-//          restDsl.interpret(keyword, { a =>
-//            restDsl2.interpret(handler(a), continue)
+//          restDsl.cpsApply(keyword, { a =>
+//            restDsl2.cpsApply(handler(a), continue)
 //          })
 //      }
 //    }
@@ -50,11 +50,11 @@ private[dsl] trait LowPriorityDsl1 {
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
     new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
-      def interpret(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
+      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
         val restDsl1 = restDsl
         (continue: RightDomain => LeftDomain) =>
           val handler1 = handler
-          restDsl1.interpret(keyword, { a =>
+          restDsl1.cpsApply(keyword, { a =>
             handler1(a)(continue)
           })
       }
@@ -68,9 +68,9 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! Throwable, Value] = {
     new Dsl[Keyword, LeftDomain !! Throwable, Value] {
-      def interpret(keyword: Keyword, handler: Value => LeftDomain !! Throwable): LeftDomain !! Throwable = {
+      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! Throwable): LeftDomain !! Throwable = {
         (continue: Throwable => LeftDomain) =>
-          restDsl.interpret(
+          restDsl.cpsApply(
             keyword,
             new (Value => LeftDomain) {
               def apply(value: Value): LeftDomain = {
@@ -95,8 +95,8 @@ object Dsl extends LowPriorityDsl0 {
   implicit def liftTailRecDsl[Keyword, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] =
     new Dsl[Keyword, TailRec[Domain], Value] {
-      def interpret(keyword: Keyword, handler: Value => TailRec[Domain]): TailRec[Domain] = TailCalls.done {
-        restDsl.interpret(keyword, { value =>
+      def cpsApply(keyword: Keyword, handler: Value => TailRec[Domain]): TailRec[Domain] = TailCalls.done {
+        restDsl.cpsApply(keyword, { value =>
           handler(value).result
         })
       }
@@ -106,10 +106,10 @@ object Dsl extends LowPriorityDsl0 {
       implicit restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value])
     : Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
     new Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] {
-      def interpret(keyword: Keyword,
+      def cpsApply(keyword: Keyword,
                     handler: Value => TailRec[LeftDomain] !! Throwable): TailRec[LeftDomain] !! Throwable = {
         tailRecFailureHandler =>
-          TailCalls.done(restDsl.interpret(keyword, { value => failureHandler =>
+          TailCalls.done(restDsl.cpsApply(keyword, { value => failureHandler =>
             handler(value) { e =>
               TailCalls.done(failureHandler(e))
             }.result
@@ -183,7 +183,7 @@ object Dsl extends LowPriorityDsl0 {
 
     @inline
     final def cpsApply[Domain](handler: Value => Domain)(implicit dsl: Dsl[Self, Domain, Value]): Domain = {
-      dsl.interpret(this, handler)
+      dsl.cpsApply(this, handler)
     }
 
   }

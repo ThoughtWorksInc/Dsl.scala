@@ -21,7 +21,7 @@ final class RaiiSpec extends FreeSpec with Matchers {
       case NonFatal(e) =>
         return failureHandler(e)
     }
-    shiftDsl.interpret(protectedContinuation, failureHandler)
+    shiftDsl.cpsApply(protectedContinuation, failureHandler)
   }
 
   /**

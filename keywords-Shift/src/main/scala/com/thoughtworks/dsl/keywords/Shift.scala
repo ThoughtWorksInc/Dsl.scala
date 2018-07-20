@@ -21,7 +21,7 @@ private[keywords] trait LowPriorityShift1 {
   @inline
   implicit def stackUnsafeShiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
     new Dsl[Shift[Domain, Value], Domain, Value] {
-      def interpret(shift: Shift[Domain, Value], mapper: Value => Domain): Domain =
+      def cpsApply(shift: Shift[Domain, Value], mapper: Value => Domain): Domain =
         shift.continuation(mapper)
     }
 
@@ -58,7 +58,7 @@ object Shift extends LowPriorityShift0 {
   @inline
   implicit def tailRecShiftDsl[R, Value]: SameDomainStackSafeShiftDsl[TailRec[R], Value] =
     new SameDomainStackSafeShiftDsl[TailRec[R], Value] {
-      def interpret(keyword: Shift[TailRec[R], Value], handler: Value => TailRec[R]): TailRec[R] = {
+      def cpsApply(keyword: Shift[TailRec[R], Value], handler: Value => TailRec[R]): TailRec[R] = {
         shiftTailRec(keyword.continuation, handler)
       }
     }
@@ -100,7 +100,7 @@ object Shift extends LowPriorityShift0 {
   implicit def stackSafeThrowableShiftDsl[LeftDomain, Value] =
     new SameDomainStackSafeShiftDsl[LeftDomain !! Throwable, Value] {
 
-      def interpret(keyword: Shift[LeftDomain !! Throwable, Value],
+      def cpsApply(keyword: Shift[LeftDomain !! Throwable, Value],
                     handler: Value => LeftDomain !! Throwable): !![LeftDomain, Throwable] =
         suspend(keyword.continuation, handler)
     }
@@ -131,7 +131,7 @@ object Shift extends LowPriorityShift0 {
   @inline
   implicit def taskStackSafeShiftDsl[LeftDomain, RightDomain, Value] =
     new StackSafeShiftDsl[LeftDomain !! Throwable, LeftDomain !! Throwable !! RightDomain, Value] {
-      def interpret(
+      def cpsApply(
           keyword: Shift[!![LeftDomain, Throwable], Value],
           handler: Value => !![!![LeftDomain, Throwable], RightDomain]): !![!![LeftDomain, Throwable], RightDomain] =
         taskFlatMap(keyword.continuation, handler)

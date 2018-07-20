@@ -53,7 +53,7 @@ object AsynchronousIo {
 
   implicit def asynchronousIoDsl[Value]: Dsl[AsynchronousIo[Value], (Unit !! Throwable), Value] =
     new Dsl[AsynchronousIo[Value], Unit !! Throwable, Value] {
-      def interpret(keyword: AsynchronousIo[Value], attachment: Value => (Unit !! Throwable)): (Unit !! Throwable) = {
+      def cpsApply(keyword: AsynchronousIo[Value], attachment: Value => (Unit !! Throwable)): (Unit !! Throwable) = {
         failureHandler =>
           keyword.start(
             attachment,

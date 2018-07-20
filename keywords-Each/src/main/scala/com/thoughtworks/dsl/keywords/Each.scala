@@ -21,7 +21,7 @@ object Each {
       bf: CanBuildFrom[Nothing, DomainElement, Domain]
   ): Dsl[Each[Element], Domain, Element] =
     new Dsl[Each[Element], Domain, Element] {
-      def interpret(keyword: Each[Element], handler: Element => Domain): Domain = {
+      def cpsApply(keyword: Each[Element], handler: Element => Domain): Domain = {
         keyword.elements.flatMap(handler)(collection.breakOut(bf))
       }
     }
@@ -29,7 +29,7 @@ object Each {
   @deprecated(message = "This is dangerous. Don't use it.", since = "1.0.0-RC5")
   implicit def foreachDsl[Element]: Dsl[Each[Element], Unit, Element] =
     new Dsl[Each[Element], Unit, Element] {
-      def interpret(keyword: Each[Element], handler: Element => Unit): Unit = {
+      def cpsApply(keyword: Each[Element], handler: Element => Unit): Unit = {
         keyword.elements.foreach(handler)
       }
     }
@@ -41,7 +41,7 @@ object Each {
       shiftDsl: Dsl[Shift[LeftDomain, TraversableOnce[DomainElement]], LeftDomain, TraversableOnce[DomainElement]]
   ): Dsl[Each[Element], LeftDomain !! RightDomain, Element] = {
     new Dsl[Each[Element], LeftDomain !! RightDomain, Element] {
-      def interpret(keyword: Each[Element],
+      def cpsApply(keyword: Each[Element],
                     handler0: Element => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
         val i = keyword.elements.toIterator
         val builder = bf()
