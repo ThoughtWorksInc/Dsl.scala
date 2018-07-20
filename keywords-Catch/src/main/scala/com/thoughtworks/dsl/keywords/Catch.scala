@@ -46,7 +46,7 @@ object Catch extends LowPriorityCatch0 {
                  catcher: Catcher[InnerDomain !! Value],
                  handler: Value => OuterDomain): OuterDomain
 
-    @inline final def interpret(keyword: Catch[InnerDomain, Value], handler: Value => OuterDomain): OuterDomain = {
+    @inline final def cpsApply(keyword: Catch[InnerDomain, Value], handler: Value => OuterDomain): OuterDomain = {
       tryCatch(keyword.block, keyword.catcher, handler)
     }
   }
@@ -102,7 +102,7 @@ object Catch extends LowPriorityCatch0 {
               case NonFatal(e) =>
                 return recover(e)
             }
-            shiftDsl.interpret(protectedContinuation, recover)
+            shiftDsl.cpsApply(protectedContinuation, recover)
           }
 
         }

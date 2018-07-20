@@ -166,7 +166,7 @@ object scalaz {
 
   implicit def scalazBindDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[Monadic[F, A], F[B], A] =
     new Dsl[Monadic[F, A], F[B], A] {
-      def interpret(keyword: Monadic[F, A], handler: A => F[B]): F[B] = {
+      def cpsApply(keyword: Monadic[F, A], handler: A => F[B]): F[B] = {
         bind.bind(keyword.fa)(handler)
       }
     }
@@ -176,7 +176,7 @@ object scalaz {
 
     def lift(fa: F[A]): G[A]
 
-    final def interpret(keyword: Monadic[F, A], handler: A => G[B]): G[B] = {
+    final def cpsApply(keyword: Monadic[F, A], handler: A => G[B]): G[B] = {
       monad.bind(lift(keyword.fa))(handler)
     }
 

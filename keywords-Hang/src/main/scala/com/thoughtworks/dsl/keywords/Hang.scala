@@ -15,12 +15,12 @@ sealed case class Hang[Value]() extends Keyword[Hang[Value], Value]
 object Hang {
 
   implicit def hangUnitDsl[Value]: Dsl[Hang[Value], Unit, Value] = new Dsl[Hang[Value], Unit, Value] {
-    def interpret(keyword: Hang[Value], handler: Value => Unit): Unit = ()
+    def cpsApply(keyword: Hang[Value], handler: Value => Unit): Unit = ()
   }
 
   implicit def hangStreamDsl[Value, Element]: Dsl[Hang[Value], Stream[Element], Value] =
     new Dsl[Hang[Value], Stream[Element], Value] {
-      def interpret(keyword: Hang[Value], handler: Value => Stream[Element]): Stream[Element] = Stream.empty
+      def cpsApply(keyword: Hang[Value], handler: Value => Stream[Element]): Stream[Element] = Stream.empty
     }
 
 }

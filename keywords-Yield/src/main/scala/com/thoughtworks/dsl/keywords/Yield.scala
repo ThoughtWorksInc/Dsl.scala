@@ -22,7 +22,7 @@ object Yield {
 
   implicit def yieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
     new Dsl[Yield[Element], Stream[That], Unit] {
-      def interpret(keyword: Yield[Element], mapper: Unit => Stream[That]): Stream[That] = {
+      def cpsApply(keyword: Yield[Element], mapper: Unit => Stream[That]): Stream[That] = {
         new Stream.Cons(keyword.element, mapper(()))
       }
     }

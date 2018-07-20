@@ -28,7 +28,7 @@ object AutoClose {
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
   ): Dsl[AutoClose[R], Domain !! Value, R] =
     new Dsl[AutoClose[R], Domain !! Value, R] {
-      def interpret(keyword: AutoClose[R], handler: R => Domain !! Value): Domain !! Value = _ {
+      def cpsApply(keyword: AutoClose[R], handler: R => Domain !! Value): Domain !! Value = _ {
         val r = keyword.open()
         val scopeResult = try {
           !Shift(handler(r))

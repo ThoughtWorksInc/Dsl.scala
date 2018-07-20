@@ -64,7 +64,7 @@ object Fork {
       catchDsl: CatchDsl[LeftDomain, LeftDomain, Unit]
   ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] =
     new Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] {
-      def interpret(fork: Fork[NarrowElement],
+      def cpsApply(fork: Fork[NarrowElement],
                     mapper: NarrowElement => LeftDomain !! RightDomain): LeftDomain !! RightDomain = _ {
         val builder: mutable.Builder[WidenElement, RightDomain] = canBuildFrom()
         val exceptionBuilder = Set.newBuilder[Throwable]
