@@ -107,7 +107,7 @@ object Dsl extends LowPriorityDsl0 {
     : Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
     new Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] {
       def cpsApply(keyword: Keyword,
-                    handler: Value => TailRec[LeftDomain] !! Throwable): TailRec[LeftDomain] !! Throwable = {
+                   handler: Value => TailRec[LeftDomain] !! Throwable): TailRec[LeftDomain] !! Throwable = {
         tailRecFailureHandler =>
           TailCalls.done(restDsl.cpsApply(keyword, { value => failureHandler =>
             handler(value) { e =>
