@@ -264,7 +264,7 @@ object benchmarks {
     def dsl() = {
       import com.thoughtworks.dsl.task._
 
-      def listTask: Task[List[Int]] = Task.reset {
+      def listTask: Task[List[Int]] = Task.apply {
         List(!(!Each(inputDslTasks)), !(!Each(inputDslTasks)))
       }
 

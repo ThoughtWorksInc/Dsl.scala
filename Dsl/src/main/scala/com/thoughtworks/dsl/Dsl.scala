@@ -132,7 +132,7 @@ object Dsl extends LowPriorityDsl0 {
     def delay[R, A](a: () => A): R !! A = _(a())
 
     @inline
-    def reset[R, A](a: => A): (R !! A) @reset = delay(a _)
+    def apply[R, A](a: => A): (R !! A) @reset = delay(a _)
 
     def toTryContinuation[LeftDomain, Value](task: LeftDomain !! Throwable !! Value): LeftDomain !! Try[Value] = {
       handler =>

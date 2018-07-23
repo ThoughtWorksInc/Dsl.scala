@@ -28,7 +28,7 @@ object task {
     def delay[A](f: () => A): Task[A] = _(f())
 
     @inline
-    def reset[A](a: => A): Task[A] @reset = delay(a _)
+    def apply[A](a: => A): Task[A] @reset = delay(a _)
 
     /** Returns a task that does nothing but let the succeeding tasks run on `executionContext`
       *
