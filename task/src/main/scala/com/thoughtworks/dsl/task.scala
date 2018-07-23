@@ -2,6 +2,7 @@ package com.thoughtworks.dsl
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.Shift
+import com.thoughtworks.enableIf
 
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.Duration
@@ -70,7 +71,7 @@ object task {
       TailCalls.done(())
     }
 
-    @inline
+    @noinline
     def join[Element, That](element: Element)(
         implicit canBuildFrom: CanBuildFrom[Nothing, Element, That]): Task[That] @reset = now {
       (canBuildFrom() += element).result()
@@ -84,6 +85,7 @@ object task {
         .result
     }
 
+    @enableIf(c => !c.compilerSettings.exists(_.matches("""^-Xplugin:.*scalajs-compiler_[0-9\.\-]*\.jar$""")))
     def blockingAwait[A](task: Task[A], timeout: Duration = Duration.Inf): A = {
       val syncVar = new SyncVar[Try[A]]
       Continuation
