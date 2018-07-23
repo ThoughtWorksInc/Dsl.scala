@@ -1,6 +1,6 @@
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.4" % Test
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {
@@ -9,12 +9,6 @@ scalacOptions in Compile ++= {
   }
 }
 
-enablePlugins(Example)
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
-import scala.meta._
-exampleSuperTypes := exampleSuperTypes.value.map {
-  case ctor"_root_.org.scalatest.FreeSpec" =>
-    ctor"_root_.org.scalatest.AsyncFreeSpec"
-  case otherTrait =>
-    otherTrait
-}
+libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "latest.release"

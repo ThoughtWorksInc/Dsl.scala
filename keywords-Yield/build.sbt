@@ -1,6 +1,4 @@
-enablePlugins(Example)
-
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.4" % Test
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {
