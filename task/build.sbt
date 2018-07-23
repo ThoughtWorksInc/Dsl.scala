@@ -11,4 +11,4 @@ scalacOptions in Compile ++= {
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
-libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "latest.release"
+libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.4"
