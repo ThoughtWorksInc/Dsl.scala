@@ -67,7 +67,8 @@ object AsynchronousIo {
                   attachment(result)
                 } catch {
                   case NonFatal(e) =>
-                    return failureHandler(e)
+                    val () = failureHandler(e)
+                    return
                 }
                 protectedContinuation(failureHandler)
               }
