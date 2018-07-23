@@ -21,7 +21,7 @@ class AutoCloseSpec extends FreeSpec with Matchers {
       "arm" in {
         var isOpen = false
 
-        def raii: Stream[Int] !! Throwable !! Assertion = Continuation.reset {
+        def raii: Stream[Int] !! Throwable !! Assertion = Continuation.apply {
           !Yield(1)
           isOpen should be(false)
           val a = !AutoClose {

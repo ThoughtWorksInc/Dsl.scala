@@ -29,11 +29,11 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     result should be(499500)
   }
 
-  "taskToFuture" in Task.toFuture(Task.reset {
+  "taskToFuture" in Task.toFuture(Task.apply {
     succeed
   })
 
-  "loop" in Task.toFuture(Task.reset {
+  "loop" in Task.toFuture(Task.apply {
 
     val task1: Task[Int] = Task.now(1)
 
@@ -45,13 +45,13 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
   })
 
-  "try" in Task.toFuture(Task.reset {
+  "try" in Task.toFuture(Task.apply {
     class MyException extends Exception
-    val task1: Task[Int] = Task.reset {
+    val task1: Task[Int] = Task.apply {
       throw new MyException
     }
 
-    val task2 = Task.reset {
+    val task2 = Task.apply {
       val v = try {
         !task1
         "no exception"
@@ -100,7 +100,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
   "autoClose" in {
     val logs = ArrayBuffer.empty[Int]
 
-    val task: Task[Unit] = Task.reset {
+    val task: Task[Unit] = Task.apply {
 
       logs += 0
 
@@ -123,7 +123,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
         }
       })
 
-      !Task.reset {
+      !Task.apply {
         logs += 3
 
         !AutoClose(new AutoCloseable {

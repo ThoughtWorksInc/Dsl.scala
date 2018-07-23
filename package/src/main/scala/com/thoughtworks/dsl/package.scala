@@ -207,64 +207,64 @@ package com.thoughtworks
   * @example The closure in the previous example can be simplified with the help of Scala's placeholder syntax:
   *
   *          {{{
-  *          import com.thoughtworks.dsl.keywords.Yield
-  *          import com.thoughtworks.dsl.Dsl.!!
-  *          import scala.util.parsing.json._
-  *          def parseAndLog2(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
-  *            !Yield(s"I am going to parse the JSON text $jsonContent...")
-  *            JSON.parseRaw(jsonContent) match {
-  *              case Some(json) =>
-  *                !Yield(s"Succeeded to parse $jsonContent")
-  *                json
-  *              case None =>
-  *                !Yield(s"Failed to parse $jsonContent")
-  *                defaultValue
-  *            }
-  *          }
+  *                    import com.thoughtworks.dsl.keywords.Yield
+  *                    import com.thoughtworks.dsl.Dsl.!!
+  *                    import scala.util.parsing.json._
+  *                    def parseAndLog2(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
+  *                      !Yield(s"I am going to parse the JSON text $jsonContent...")
+  *                      JSON.parseRaw(jsonContent) match {
+  *                        case Some(json) =>
+  *                          !Yield(s"Succeeded to parse $jsonContent")
+  *                          json
+  *                        case None =>
+  *                          !Yield(s"Failed to parse $jsonContent")
+  *                          defaultValue
+  *                      }
+  *                    }
   *
-  *          val logs = parseAndLog2(""" { "key": "value" } """, JSONArray(Nil)) { json =>
-  *            json should be(JSONObject(Map("key" -> "value")))
-  *            Stream("done")
-  *          }
+  *                    val logs = parseAndLog2(""" { "key": "value" } """, JSONArray(Nil)) { json =>
+  *                      json should be(JSONObject(Map("key" -> "value")))
+  *                      Stream("done")
+  *                    }
   *
-  *          logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
-  *                                "Succeeded to parse  { \"key\": \"value\" } ",
-  *                                "done"))
+  *                    logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
+  *                                          "Succeeded to parse  { \"key\": \"value\" } ",
+  *                                          "done"))
   *          }}}
   *
   *          Note that `parseAndLog2` is equivelent to `parseAndLog1`.
   *          The code block after underscore is still inside a function whose return type is `Stream[String]`.
   *
   * @example Instead of manually create the continuation-passing style function,
-  *          you can also create the function from [[com.thoughtworks.dsl.Dsl.Continuation.reset reset]].
+  *          you can also create the function from a [[com.thoughtworks.dsl.Dsl.!!.apply !!]] block.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.keywords.Yield
-  *          import com.thoughtworks.dsl.Dsl.!!, !!.reset
-  *          import scala.util.parsing.json._
-  *          def parseAndLog3(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = reset {
-  *            !Yield(s"I am going to parse the JSON text $jsonContent...")
-  *            JSON.parseRaw(jsonContent) match {
-  *              case Some(json) =>
-  *                !Yield(s"Succeeded to parse $jsonContent")
-  *                json
-  *              case None =>
-  *                !Yield(s"Failed to parse $jsonContent")
-  *                defaultValue
-  *            }
-  *          }
+  *                    import com.thoughtworks.dsl.keywords.Yield
+  *                    import com.thoughtworks.dsl.Dsl.!!
+  *                    import scala.util.parsing.json._
+  *                    def parseAndLog3(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = !! {
+  *                      !Yield(s"I am going to parse the JSON text $jsonContent...")
+  *                      JSON.parseRaw(jsonContent) match {
+  *                        case Some(json) =>
+  *                          !Yield(s"Succeeded to parse $jsonContent")
+  *                          json
+  *                        case None =>
+  *                          !Yield(s"Failed to parse $jsonContent")
+  *                          defaultValue
+  *                      }
+  *                    }
   *
-  *          val logs = parseAndLog3(""" { "key": "value" } """, JSONArray(Nil)) { json =>
-  *            json should be(JSONObject(Map("key" -> "value")))
-  *            Stream("done")
-  *          }
+  *                    val logs = parseAndLog3(""" { "key": "value" } """, JSONArray(Nil)) { json =>
+  *                      json should be(JSONObject(Map("key" -> "value")))
+  *                      Stream("done")
+  *                    }
   *
-  *          logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
-  *                                "Succeeded to parse  { \"key\": \"value\" } ",
-  *                                "done"))
+  *                    logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
+  *                                          "Succeeded to parse  { \"key\": \"value\" } ",
+  *                                          "done"))
   *          }}}
   *
-  *          Unlike the `parseAndLog2` example, The code inside a `reset` block is not in an anonymous function.
+  *          Unlike the `parseAndLog2` example, The code inside a `!!` block is not in an anonymous function.
   *          Instead, they are directly inside `parseAndLog3`, whose return type is `Stream[String] !! JSONType`.
   *
   *          That is to say,
@@ -282,13 +282,13 @@ package com.thoughtworks
   *          and finally return the total number of lines in the `Stream[String] !! Throwable !! Int` domain.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.Dsl.!!, !!.reset
+  *          import com.thoughtworks.dsl.Dsl.!!
   *          import com.thoughtworks.dsl.keywords.AutoClose
   *          import com.thoughtworks.dsl.keywords.Yield
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import java.io._
   *
-  *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Throwable !! Int = reset {
+  *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Throwable !! Int = !! {
   *            val reader = !AutoClose(createReader())
   *
   *            def loop(lineNumber: Int): Stream[String] !! Throwable !! Int = _ {
