@@ -2,6 +2,8 @@ package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Keyword
+
+import scala.concurrent.Future
 import scala.language.implicitConversions
 
 /**
@@ -24,6 +26,13 @@ object Yield {
     new Dsl[Yield[Element], Stream[That], Unit] {
       def cpsApply(keyword: Yield[Element], mapper: Unit => Stream[That]): Stream[That] = {
         new Stream.Cons(keyword.element, mapper(()))
+      }
+    }
+
+  implicit def futureYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[Future[That]], Unit] =
+    new Dsl[Yield[Element], Stream[Future[That]], Unit] {
+      def cpsApply(keyword: Yield[Element], handler: Unit => Stream[Future[That]]): Stream[Future[That]] = {
+        new Stream.Cons(Future.successful(keyword.element), handler(()))
       }
     }
 }
