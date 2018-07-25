@@ -17,17 +17,17 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers {
   implicit val materializer = ActorMaterializer()
 
   "https get" in ({
-    val response = !Await(Http().singleRequest(HttpRequest(uri = "https://akka.io")))
+    val response = !Await(Http().singleRequest(HttpRequest(uri = "http://example.com")))
     response.status should be(StatusCodes.OK)
   }: @reset)
 
   "multiple https" in ({
 
     def createAsynchronousStream(): Stream[Future[Int]] = {
-      val response1 = !Await(Http().singleRequest(HttpRequest(uri = "https://akka.io")))
+      val response1 = !Await(Http().singleRequest(HttpRequest(uri = "http://example.com")))
       !Yield(response1.status.intValue())
       response1.discardEntityBytes()
-      val response2 = !Await(Http().singleRequest(HttpRequest(uri = "https://akka.io")))
+      val response2 = !Await(Http().singleRequest(HttpRequest(uri = "http://example.net")))
       !Yield(response2.status.intValue())
       response2.discardEntityBytes()
       Stream.empty[Future[Int]]
