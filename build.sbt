@@ -99,6 +99,17 @@ lazy val `keywords-Each` =
 lazy val `keywords-EachJS` = `keywords-Each`.js
 lazy val `keywords-EachJVM` = `keywords-Each`.jvm
 
+lazy val `keywords-Await` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl, `keywords-Yield` % Test)
+lazy val `keywords-AwaitJS` = `keywords-Await`.js
+lazy val `keywords-AwaitJVM` = `keywords-Await`.jvm
+
 lazy val `keywords-Yield` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -159,6 +170,7 @@ lazy val `package` = project
     `keywords-EachJVM`,
     `keywords-YieldJVM`,
     `keywords-ForkJVM`,
+    `keywords-AwaitJVM`,
     `keywords-AsynchronousIoJVM`,
     `keywords-AutoCloseJVM`,
     taskJVM,
