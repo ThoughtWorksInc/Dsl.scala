@@ -15,7 +15,7 @@ import scala.concurrent.duration._
   * @author 杨博 (Yang Bo)
   */
 final class AwaitSpec extends AsyncFreeSpec with Matchers {
-  
+
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
 
@@ -37,6 +37,22 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers {
   "https get" in ({
     val response = !Await(Http().singleRequest(HttpRequest(uri = "https://example.com")))
     response.status should be(StatusCodes.OK)
+  }: @reset)
+
+  "Downloading two web pages as an asynchronous generator, in the style of !-notation" in ({
+    def downloadTwoPagesGenerator(): Stream[Future[ByteString]] = {
+      val response1 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, "http://example.com")))
+      val content1 = !Await(response1.entity.toStrict(timeout = 5.seconds))
+      !Yield(content1.data)
+      val response2 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, "http://example.net")))
+      val content2 = !Await(response2.entity.toStrict(timeout = 5.seconds))
+      !Yield(content2.data)
+
+      Stream.empty[Future[ByteString]]
+    }
+
+    val stream = downloadTwoPagesGenerator()
+    !Await(stream(0)) should be(!Await(stream(1)))
   }: @reset)
 
   "multiple https" in ({
