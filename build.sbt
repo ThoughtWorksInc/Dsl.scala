@@ -10,7 +10,7 @@ lazy val Dsl =
 lazy val DslJS = Dsl.js
 lazy val DslJVM = Dsl.jvm
 
-lazy val task =
+lazy val `domains-task` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .settings(
@@ -18,8 +18,8 @@ lazy val task =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
     .dependsOn(`keywords-Shift`, `keywords-Fork` % Test, `keywords-AutoClose` % Test, `keywords-Yield` % Test)
-lazy val taskJS = task.js
-lazy val taskJVM = task.jvm
+lazy val `domains-taskJS` = `domains-task`.js
+lazy val `domains-taskJVM` = `domains-task`.jvm
 
 lazy val `keywords-Fork` =
   crossProject(JSPlatform, JVMPlatform)
@@ -156,7 +156,7 @@ lazy val benchmarks = project
     scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
     scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
   )
-  .dependsOn(taskJVM, `keywords-CatchJVM`, `keywords-ForkJVM`)
+  .dependsOn(`domains-taskJVM`, `keywords-CatchJVM`, `keywords-ForkJVM`)
 
 lazy val `package` = project
   .settings(
@@ -173,7 +173,7 @@ lazy val `package` = project
     `keywords-AwaitJVM`,
     `keywords-AsynchronousIoJVM`,
     `keywords-AutoCloseJVM`,
-    taskJVM,
+    `domains-taskJVM`,
     DslJVM
   )
 

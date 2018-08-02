@@ -1,4 +1,5 @@
 package com.thoughtworks.dsl
+package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.Shift
@@ -35,7 +36,7 @@ object task {
       *
       * @example All the code after a `!switchExecutionContext` should be executed on `executionContext`
       *          {{{
-      *          import com.thoughtworks.dsl.task.Task
+      *          import com.thoughtworks.dsl.domains.task.Task
       *          import org.scalatest.Assertion
       *          import scala.concurrent.ExecutionContext
       *          import com.thoughtworks.dsl.keywords.Shift.implicitShift

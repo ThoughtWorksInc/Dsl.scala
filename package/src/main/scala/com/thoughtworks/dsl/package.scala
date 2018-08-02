@@ -341,17 +341,17 @@ package com.thoughtworks
   *
   * @example If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
   *          you can use `TailRec[Unit] !! Throwable !! A`
-  *          or the alias [[com.thoughtworks.dsl.task.Task]] as the return type,
+  *          or the alias [[com.thoughtworks.dsl.domains.task.Task]] as the return type,
   *          which can be used as an asynchronous task that support RAII,
   *          as a higher-performance replacement of
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
   *          Also, there are some keywords in [[com.thoughtworks.dsl.keywords.AsynchronousIo]]
-  *          to asynchronously perform Java NIO.2 IO operations in a [[com.thoughtworks.dsl.task.Task]] domain.
+  *          to asynchronously perform Java NIO.2 IO operations in a [[com.thoughtworks.dsl.domains.task.Task]] domain.
   *          For example, you can implement an HTTP client from those keywords.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.task._
+  *          import com.thoughtworks.dsl.domains.task._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift.implicitShift
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo._
@@ -398,11 +398,11 @@ package com.thoughtworks
   *          The usage of `Task` is similar to previous examples.
   *          You can check the result or exception in asynchronous handlers.
   *
-  *          But we also provides [[com.thoughtworks.dsl.task.Task.blockingAwait blockingAwait]] and some other utilities
-  *          at [[com.thoughtworks.dsl.task.Task]].
+  *          But we also provides [[com.thoughtworks.dsl.domains.task.Task.blockingAwait blockingAwait]] and some other utilities
+  *          at [[com.thoughtworks.dsl.domains.task.Task]].
   *
   *          {{{
-  *          import com.thoughtworks.dsl.task.Task.blockingAwait
+  *          import com.thoughtworks.dsl.domains.task.Task.blockingAwait
   *
   *          val fileContent = blockingAwait(httpClient(new URL("http://ftp.debian.org/debian/")))
   *          fileContent should startWith("HTTP/1.1 200 OK")
@@ -413,7 +413,7 @@ package com.thoughtworks
   *          similar to the POSIX `fork` system call.
   *
   *          [[com.thoughtworks.dsl.keywords.Fork Fork]] should be used inside
-  *          a [[com.thoughtworks.dsl.task.Task#join]] block, which collects the result of each forked control flow.
+  *          a [[com.thoughtworks.dsl.domains.task.Task#join]] block, which collects the result of each forked control flow.
   *
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Fork

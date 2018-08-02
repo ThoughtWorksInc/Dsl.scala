@@ -1,9 +1,10 @@
 package com.thoughtworks.dsl
+package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.{Catch, Shift, Yield}
 import org.scalatest.{FreeSpec, Matchers}
-import com.thoughtworks.dsl.task._
+import com.thoughtworks.dsl.domains.task._
 
 import scala.util.control.NonFatal
 
