@@ -1,7 +1,12 @@
 // shadow sbt-scalajs' crossProject(JSPlatform, JVMPlatform) and CrossType from Scala.js 0.6.x
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-lazy val `compilerplugins-BangNotation` = project.dependsOn(DslJVM % Test, DslJVM % Provided)
+lazy val `compilerplugins-BangNotation` = project
+  .dependsOn(DslJVM % Test, DslJVM % Provided)
+  .settings(
+    scalacOptions in Test += raw"""-Xplugin:${(packageBin in Compile).value}""",
+    scalacOptions in Test += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+  )
 
 lazy val `compilerplugins-ResetEverywhere` = project.dependsOn(DslJVM % Test, DslJVM % Provided)
 
