@@ -3,6 +3,7 @@ package com.thoughtworks.dsl
 import java.util.concurrent.{ExecutorService, Executors}
 
 import com.thoughtworks.dsl.Dsl.!!
+import com.thoughtworks.dsl.domains.task
 import com.thoughtworks.dsl.keywords.{Each, Shift}
 
 import scala.util.{Failure, Success, Try, continuations}
@@ -148,7 +149,7 @@ object benchmarks {
 
     @Benchmark
     def dsl() = {
-      import com.thoughtworks.dsl.task._
+      import com.thoughtworks.dsl.domains.task._
 
       def cellTask(taskX: Task[Int], taskY: Task[Int]): Task[List[Int]] = _ {
         List(!taskX, !taskY)
@@ -262,7 +263,7 @@ object benchmarks {
 
     @Benchmark
     def dsl() = {
-      import com.thoughtworks.dsl.task._
+      import com.thoughtworks.dsl.domains.task._
 
       def listTask: Task[List[Int]] = Task.apply {
         List(!(!Each(inputDslTasks)), !(!Each(inputDslTasks)))
@@ -355,7 +356,7 @@ object benchmarks {
 
     @Benchmark
     def dsl() = {
-      import com.thoughtworks.dsl.task._
+      import com.thoughtworks.dsl.domains.task._
       @inline def loop(tasks: List[Task[Int]], accumulator: Int = 0)(continue: Int => TaskDomain): TaskDomain = {
         tasks match {
           case head :: tail =>
@@ -465,7 +466,7 @@ object benchmarks {
 
     @Benchmark
     def dsl() = {
-      import com.thoughtworks.dsl.task._
+      import com.thoughtworks.dsl.domains.task._
 
       @inline def loop(tasks: List[Task[Int]]): Task[Int] = _ {
         tasks match {
@@ -576,7 +577,7 @@ object benchmarks {
 
     @Benchmark
     def dsl() = {
-      import com.thoughtworks.dsl.task._
+      import com.thoughtworks.dsl.domains.task._
 
       @inline def loop(tasks: List[Task[Int]], accumulator: Int = 0): Task[Int] = _ {
         tasks match {

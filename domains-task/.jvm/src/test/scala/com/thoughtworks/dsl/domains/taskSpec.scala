@@ -1,10 +1,11 @@
 package com.thoughtworks.dsl
+package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, reset}
 import org.scalatest.{Assertion, AsyncFreeSpec, Matchers}
 
 import com.thoughtworks.dsl.keywords.{AutoClose, Each, Fork}
-import com.thoughtworks.dsl.task._
+import com.thoughtworks.dsl.domains.task._
 import com.thoughtworks.dsl.keywords.Shift.implicitShift
 
 import scala.collection.mutable.ArrayBuffer
