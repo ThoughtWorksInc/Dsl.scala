@@ -502,8 +502,18 @@ final class BangNotation(override val global: Global) extends Plugin {
   val name: String = "BangNotation"
 
   override def init(options: List[String], error: String => Unit): Boolean = {
-    global.analyzer.addAnalyzerPlugin(new Deactable with TreeResetter with BangNotationTransformer)
-    true
+    super.init(options, error) && {
+      try {
+        global.analyzer.addAnalyzerPlugin(new Deactable with TreeResetter with BangNotationTransformer)
+        true
+      } catch {
+        case e: ScalaReflectionException =>
+          error("""This compiler plug-in requires the runtime library:
+  libraryDependencies += "com.thoughtworks.dsl" %% "dsl" % "latest.release"
+""")
+          false
+      }
+    }
   }
 
   val description: String =

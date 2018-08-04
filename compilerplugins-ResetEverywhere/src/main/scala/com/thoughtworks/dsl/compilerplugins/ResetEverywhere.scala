@@ -2,6 +2,7 @@ package com.thoughtworks.dsl.compilerplugins
 
 import com.thoughtworks.dsl.Dsl.{ResetAnnotation, nonTypeConstraintReset, shift}
 
+import scala.reflect.internal.FatalError
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.transform.Transform
 import scala.tools.nsc.typechecker.ContextMode
@@ -37,8 +38,22 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
 
   private type CpsAttachment = (Tree => Tree) => Tree
 
-  private val nonTypeConstraintResetSymbol = symbolOf[nonTypeConstraintReset]
+  private var nonTypeConstraintResetSymbol: Symbol = _ // = symbolOf[nonTypeConstraintReset]
 
+  override def init(options: List[String], error: String => Unit): Boolean = {
+    super.init(options, error) && {
+      try {
+        nonTypeConstraintResetSymbol = symbolOf[nonTypeConstraintReset]
+        true
+      } catch {
+        case e: ScalaReflectionException =>
+          error("""This compiler plug-in requires the runtime library:
+  libraryDependencies += "com.thoughtworks.dsl" %% "dsl" % "latest.release"
+""")
+          false
+      }
+    }
+  }
   val name: String = "ResetEverywhere"
 
   private final class ResetAnnotationCreator extends PluginComponent with Transform {
