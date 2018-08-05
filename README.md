@@ -11,7 +11,9 @@ A DSL author is able to create language keywords by implementing the [Dsl](https
 DSLs written in **Dsl.scala** are collaborative with others DSLs and Scala control flows. A DSL user can create functions that contains interleaved DSLs implemented by different vendors, along with ordinary Scala control flows.
 
 We also provide some built-in keywords, including:
- * The `Shift` keyword for asynchronous programming, similar to `await` / `async` in C#, Python and JavaScript.
+
+ * The `Await` keyword for asynchronous programming with Scala [Future](https://docs.scala-lang.org/overviews/core/futures.html), similar to `await` / `async` in C#, Python and JavaScript.
+ * The `Shift` keyword for asynchronous programming with delimited continuations, similar to the `shift` operator in [Scala Continuations](https://github.com/scala/scala-continuations).
  * The `AsynchronousIo.Connect`, `AsynchronousIo.Accept`, `AsynchronousIo.Read` and `AsynchronousIo.Write` keyword for perform I/O on an asynchronous channel.
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
  * The `Each` keyword for iterate a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
