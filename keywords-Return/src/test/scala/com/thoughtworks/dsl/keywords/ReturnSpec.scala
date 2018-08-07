@@ -1,6 +1,5 @@
 package com.thoughtworks.dsl.keywords
 import org.scalatest.{FreeSpec, Matchers}
-import Return._
 import com.thoughtworks.dsl.Dsl.!!
 
 /**
@@ -9,13 +8,12 @@ import com.thoughtworks.dsl.Dsl.!!
 final class ReturnSpec extends FreeSpec with Matchers {
 
   "return a Stream" in {
-    def s = !Return[Int, Stream[Int]](1)
-
-    s should be(Stream(1))
+    def stream: Stream[Int] = !Return[Int](1)
+    stream should be(Stream(1))
   }
 
   "return the left domain" in {
-    def continuation: Int !! String = !Return[Int, Int !! String](42)
+    def continuation: Int !! String = !Return(42)
 
     continuation { s =>
       throw new AssertionError(s)
@@ -23,7 +21,7 @@ final class ReturnSpec extends FreeSpec with Matchers {
   }
 
   "return the right domain" in {
-    def continuation: Int !! String = !Return[String, Int !! String]("right value")
+    def continuation: Int !! String = !Return("right value")
 
     continuation { s =>
       s should be("right value")
@@ -34,7 +32,7 @@ final class ReturnSpec extends FreeSpec with Matchers {
   "return the middle domain" - {
 
     "as the return value" in {
-      def continuation: Int !! Double !! String = !Return[Double, Int !! Double !! String](1.23)
+      def continuation: Int !! Double !! String = !Return(1.23)
 
       continuation { s =>
         throw new AssertionError(s)
@@ -45,9 +43,9 @@ final class ReturnSpec extends FreeSpec with Matchers {
     }
 
     "then the throw expression will not be executed" in {
-      def continuation = {
-        throw !Return[Double, Exception](1.23)
-      }: Int !! Double !! String
+      def continuation: Int !! Double !! String = {
+        throw !Return(1.23)
+      }
 
       continuation { s =>
         throw new AssertionError(s)
