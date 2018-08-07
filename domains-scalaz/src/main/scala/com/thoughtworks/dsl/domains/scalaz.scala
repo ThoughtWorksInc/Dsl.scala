@@ -164,7 +164,7 @@ object scalaz {
 
     }
 
-  implicit def scalazBindDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[Monadic[F, A], F[B], A] =
+  implicit def scalazMonadicDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[Monadic[F, A], F[B], A] =
     new Dsl[Monadic[F, A], F[B], A] {
       def cpsApply(keyword: Monadic[F, A], handler: A => F[B]): F[B] = {
         bind.bind(keyword.fa)(handler)
