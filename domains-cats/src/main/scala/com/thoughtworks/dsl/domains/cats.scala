@@ -7,7 +7,7 @@ import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 import _root_.cats.MonadError
 import com.thoughtworks.Extractor._
 import com.thoughtworks.dsl.keywords.Catch.CatchDsl
-import com.thoughtworks.dsl.keywords.{Catch, Monadic}
+import com.thoughtworks.dsl.keywords.{Catch, Monadic, Return}
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
@@ -24,8 +24,8 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
   *
   *          {{{
-  *          import cats.free.Trampoline
-  *          import cats.instances.function._
+  *          import _root_.cats.free.Trampoline
+  *          import _root_.cats.instances.function._
   *          import com.thoughtworks.dsl.keywords.Monadic._
   *          import com.thoughtworks.dsl.domains.cats._
   *          import com.thoughtworks.dsl.Dsl.reset
@@ -55,7 +55,6 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *
   *          catsSyntaxSquare.run should be("This string is produced by a trampoline: 9")
   *          }}}
-  *
   * @example A `@[[Dsl.reset reset]]` code block can contain `try` / `catch` / `finally`
   *          if the monadic data type supports [[cats.MonadError]].
   *
@@ -66,7 +65,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Monadic._
   *          import com.thoughtworks.dsl.domains.cats._
-  *          import cats.effect.IO
+  *          import _root_.cats.effect.IO
   *          import com.thoughtworks.dsl.Dsl.reset
   *
   *          val io0 = IO(0)
@@ -87,7 +86,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *
   *          {{{
   *          def catsSyntaxTryCatch: IO[String] = {
-  *            import cats.syntax.applicativeError._
+  *            import _root_.cats.syntax.applicativeError._
   *            io0.flatMap { tmp0 =>
   *              io0.flatMap { tmp1 =>
   *                 IO(s"Division result: ${tmp0 / tmp1}")
@@ -104,11 +103,18 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *
   *          catsSyntaxTryCatch.unsafeRunSync() should be("Cannot divide 0 by itself")
   *          }}}
-  *
   * @author 杨博 (Yang Bo)
   */
 object cats {
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
+
+  implicit def catsReturnDsl[F[_], A, B, R](implicit applicative: Applicative[F],
+                                            restReturnDsl: Dsl[Return[A, B], B, B]) =
+    new Dsl[Return[A, R], F[B], Nothing] {
+      def cpsApply(keyword: Return[A, R], handler: Nothing => F[B]): F[B] = {
+        applicative.pure(restReturnDsl.cpsApply(Return(keyword.returnValue), identity))
+      }
+    }
 
   implicit def catsCatchDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): CatchDsl[F[A], F[B], A] =
     new CatchDsl[F[A], F[B], A] {

@@ -37,6 +37,18 @@ lazy val `keywords-Fork` =
 lazy val `keywords-ForkJS` = `keywords-Fork`.js
 lazy val `keywords-ForkJVM` = `keywords-Fork`.jvm
 
+lazy val `keywords-Return` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl)
+
+lazy val `keywords-ReturnJS` = `keywords-Return`.js
+lazy val `keywords-ReturnJVM` = `keywords-Return`.jvm
+
 lazy val `keywords-Hang` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -140,7 +152,7 @@ lazy val `domains-scalaz` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Shift` % Test, `keywords-Yield` % Test)
+    .dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Return`, `keywords-Shift` % Test, `keywords-Yield` % Test)
 lazy val `domains-scalazJS` = `domains-scalaz`.js
 lazy val `domains-scalazJVM` = `domains-scalaz`.jvm
 
@@ -151,7 +163,7 @@ lazy val `domains-cats` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Shift` % Test, `keywords-Yield` % Test)
+    .dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Return`, `keywords-Shift` % Test, `keywords-Yield` % Test)
 
 lazy val `domains-catsJVM` = `domains-cats`.jvm
 lazy val `domains-catsJS` = `domains-cats`.js

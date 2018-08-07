@@ -6,9 +6,9 @@ import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
-import _root_.scalaz.{Bind, Monad, MonadError, MonadTrans, Unapply}
+import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans, Unapply}
 import com.thoughtworks.dsl.keywords.Catch.CatchDsl
-import com.thoughtworks.dsl.keywords.{Catch, Monadic}
+import com.thoughtworks.dsl.keywords.{Catch, Monadic, Return}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.{ControlThrowable, NonFatal}
@@ -23,8 +23,8 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
   *
   *          {{{
-  *          import scalaz.Trampoline
-  *          import scalaz.Free.Trampoline
+  *          import _root_.scalaz.Trampoline
+  *          import _root_.scalaz.Free.Trampoline
   *          import com.thoughtworks.dsl.keywords.Monadic._
   *          import com.thoughtworks.dsl.domains.scalaz._
   *          import com.thoughtworks.dsl.Dsl.reset
@@ -99,7 +99,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *
   *          {{{
   *          def scalazSyntaxTryCatch: TryTTransfomredTrampoline[String] = {
-  *            import scalaz.syntax.monadError._
+  *            import _root_.scalaz.syntax.monadError._
   *            trampoline3.liftM[TryT].flatMap { tmp0 =>
   *              trampolineSuccess0.flatMap { tmp1 =>
   *                 TryT(Trampoline.delay(Try(s"Division result: ${tmp0 / tmp1}")))
@@ -140,6 +140,14 @@ object scalaz {
             monadError.raiseError[A](e)
         }
         monadError.bind(protectedFa)(handler)
+      }
+    }
+
+  implicit def scalazReturnDsl[F[_], A, B, R](implicit applicative: Applicative[F],
+                                              restReturnDsl: Dsl[Return[A, B], B, B]) =
+    new Dsl[Return[A, R], F[B], Nothing] {
+      def cpsApply(keyword: Return[A, R], handler: Nothing => F[B]): F[B] = {
+        applicative.pure(restReturnDsl.cpsApply(Return(keyword.returnValue), identity))
       }
     }
 

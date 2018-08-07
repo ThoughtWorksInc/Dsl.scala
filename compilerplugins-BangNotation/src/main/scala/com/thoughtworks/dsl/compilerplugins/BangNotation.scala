@@ -108,6 +108,7 @@ final class BangNotation(override val global: Global) extends Plugin {
           }
       } match {
         case Some(typedCpsTree) =>
+//          reporter.info(tree.pos, s"Translating to continuation-passing style: $typedCpsTree", true)
           typedCpsTree.modifyType(_.filterAnnotations(!_.matches(resetAnnotationSymbol)))
         case None =>
           tree
