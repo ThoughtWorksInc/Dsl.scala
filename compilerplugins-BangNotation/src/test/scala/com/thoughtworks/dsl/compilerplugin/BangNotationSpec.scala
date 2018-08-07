@@ -27,8 +27,8 @@ class BangNotationSpec extends FreeSpec with Matchers {
     def f3 = "The value of " + !StringPlaceholder + " is " + !IntPlaceholder + "."
 
     f1 should be("Hello World!")
-    f2("World") should be("Hello World!")
-    f3("x")(3) should be("The value of x is 3.")
+    f2.asInstanceOf[String => String]("World") should be("Hello World!")
+    f3.asInstanceOf[String => Int => String]("x")(3) should be("The value of x is 3.")
   }
 
 }
