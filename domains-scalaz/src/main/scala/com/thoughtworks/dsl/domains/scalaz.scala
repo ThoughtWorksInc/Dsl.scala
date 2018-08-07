@@ -6,9 +6,9 @@ import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
-import _root_.scalaz.{Bind, Monad, MonadError, MonadTrans, Unapply}
+import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans, Unapply}
 import com.thoughtworks.dsl.keywords.Catch.CatchDsl
-import com.thoughtworks.dsl.keywords.{Catch, Monadic}
+import com.thoughtworks.dsl.keywords.{Catch, Monadic, Return}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.{ControlThrowable, NonFatal}
@@ -140,6 +140,14 @@ object scalaz {
             monadError.raiseError[A](e)
         }
         monadError.bind(protectedFa)(handler)
+      }
+    }
+
+  implicit def scalazReturnDsl[F[_], A, B, R](implicit applicative: Applicative[F],
+                                              restReturnDsl: Dsl[Return[A, B], B, B]) =
+    new Dsl[Return[A, R], F[B], Nothing] {
+      def cpsApply(keyword: Return[A, R], handler: Nothing => F[B]): F[B] = {
+        applicative.pure(restReturnDsl.cpsApply(Return(keyword.returnValue), identity))
       }
     }
 
