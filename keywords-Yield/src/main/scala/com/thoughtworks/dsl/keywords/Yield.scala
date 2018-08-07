@@ -12,7 +12,7 @@ import scala.language.implicitConversions
   *          or it will not compile.
   *
   *          {{{
-  *          "def f(): Unit = !Yield(1)" shouldNot compile
+  *          "def f(): Int = !Yield(1)" shouldNot compile
   *          }}}
   *
   */

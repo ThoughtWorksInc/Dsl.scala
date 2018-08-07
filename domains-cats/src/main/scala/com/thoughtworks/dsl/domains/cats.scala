@@ -24,8 +24,8 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
   *
   *          {{{
-  *          import cats.free.Trampoline
-  *          import cats.instances.function._
+  *          import _root_.cats.free.Trampoline
+  *          import _root_.cats.instances.function._
   *          import com.thoughtworks.dsl.keywords.Monadic._
   *          import com.thoughtworks.dsl.domains.cats._
   *          import com.thoughtworks.dsl.Dsl.reset
@@ -66,7 +66,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Monadic._
   *          import com.thoughtworks.dsl.domains.cats._
-  *          import cats.effect.IO
+  *          import _root_.cats.effect.IO
   *          import com.thoughtworks.dsl.Dsl.reset
   *
   *          val io0 = IO(0)
@@ -87,7 +87,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *
   *          {{{
   *          def catsSyntaxTryCatch: IO[String] = {
-  *            import cats.syntax.applicativeError._
+  *            import _root_.cats.syntax.applicativeError._
   *            io0.flatMap { tmp0 =>
   *              io0.flatMap { tmp1 =>
   *                 IO(s"Division result: ${tmp0 / tmp1}")

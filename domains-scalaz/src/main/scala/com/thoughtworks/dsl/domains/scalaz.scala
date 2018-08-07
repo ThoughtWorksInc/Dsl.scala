@@ -23,8 +23,8 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
   *
   *          {{{
-  *          import scalaz.Trampoline
-  *          import scalaz.Free.Trampoline
+  *          import _root_.scalaz.Trampoline
+  *          import _root_.scalaz.Free.Trampoline
   *          import com.thoughtworks.dsl.keywords.Monadic._
   *          import com.thoughtworks.dsl.domains.scalaz._
   *          import com.thoughtworks.dsl.Dsl.reset
@@ -99,7 +99,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *
   *          {{{
   *          def scalazSyntaxTryCatch: TryTTransfomredTrampoline[String] = {
-  *            import scalaz.syntax.monadError._
+  *            import _root_.scalaz.syntax.monadError._
   *            trampoline3.liftM[TryT].flatMap { tmp0 =>
   *              trampolineSuccess0.flatMap { tmp1 =>
   *                 TryT(Trampoline.delay(Try(s"Division result: ${tmp0 / tmp1}")))
