@@ -65,7 +65,7 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
 
     protected def newTransformer(unit: CompilationUnit): Transformer = new Transformer {
 
-      private def annotateAsReset(tree: Tree) = {
+      private def annotatedReset(tree: Tree) = {
         if (tree.isEmpty) {
           tree
         } else {
@@ -73,9 +73,19 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
         }
       }
 
+      private def typedReset(tree: Tree, typeTree: Tree) = {
+        if (tree.isEmpty) {
+          tree
+        } else if (typeTree.isEmpty) {
+          Annotated(q"new $nonTypeConstraintResetSymbol()", transform(tree))
+        } else {
+          Annotated(q"new $nonTypeConstraintResetSymbol()", Typed(transform(tree), typeTree))
+        }
+      }
+
       private def transformRootValDef(tree: ValDef) = {
         val ValDef(mods, name, tpt, rhs) = tree
-        treeCopy.ValDef(tree, mods, name, tpt, annotateAsReset(rhs))
+        treeCopy.ValDef(tree, mods, name, tpt, typedReset(rhs, tpt))
       }
 
       override def transformTemplate(tree: Template): Template = {
@@ -88,7 +98,7 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
             case valDef: ValDef if !valDef.mods.isParamAccessor =>
               transformRootValDef(valDef)
             case initializer: TermTree =>
-              annotateAsReset(initializer)
+              annotatedReset(initializer)
             case stat =>
               transform(stat)
           }
@@ -98,7 +108,7 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
       private def annotateArgsAsReset(tree: Tree): Tree = {
         tree match {
           case tree: Apply =>
-            treeCopy.Apply(tree, annotateArgsAsReset(tree.fun), tree.args.mapConserve(annotateAsReset))
+            treeCopy.Apply(tree, annotateArgsAsReset(tree.fun), tree.args.mapConserve(annotatedReset))
           case fun =>
             fun
         }
@@ -111,17 +121,17 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
           case Typed(expr, tpt) =>
             treeCopy.Typed(tree, transform(expr), tpt)
           case Function(vparams, body) =>
-            treeCopy.Function(tree, vparams, annotateAsReset(body))
+            treeCopy.Function(tree, vparams, annotatedReset(body))
           case DefDef(mods, name, tparams, vparamss, tpt, rhs)
               if name != termNames.CONSTRUCTOR && name != termNames.MIXIN_CONSTRUCTOR && rhs.nonEmpty && !mods
                 .hasAnnotationNamed(definitions.TailrecClass.name) =>
-            treeCopy.DefDef(tree, mods, name, tparams, transformValDefss(vparamss), tpt, annotateAsReset(rhs))
+            treeCopy.DefDef(tree, mods, name, tparams, transformValDefss(vparamss), tpt, typedReset(rhs, tpt))
           case valDef: ValDef if valDef.mods.hasDefault =>
             transformRootValDef(valDef)
           case Match(EmptyTree, cases) =>
             treeCopy.Match(tree, EmptyTree, cases.mapConserve {
               case caseDef @ CaseDef(pat, guard, body) =>
-                treeCopy.CaseDef(caseDef, pat, guard, annotateAsReset(body))
+                treeCopy.CaseDef(caseDef, pat, guard, annotatedReset(body))
             })
           case q"${Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
             annotateArgsAsReset(tree)
