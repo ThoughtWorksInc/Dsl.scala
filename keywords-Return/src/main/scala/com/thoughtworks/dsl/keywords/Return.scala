@@ -1,16 +1,63 @@
 package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.Keyword
 
 import scala.language.implicitConversions
 
-/**
+/** A [[Keyword]] to early return a lifted value from the enclosing function.
+  *
   * @author 杨博 (Yang Bo)
+  * @example Suppose you are generating a random integer less than 100,
+  *          whose first digit and second digit is different.
+  *          A solution is generating integers in an infinite loop,
+  *          and [[Return]] from the loop when the generated integer conforms with requirements.
+  *
+  *          {{{
+  *          import scala.util.Random
+  *          import scala.util.control.TailCalls
+  *          import scala.util.control.TailCalls.TailRec
+  *          def randomInt(): TailRec[Int] = {
+  *            while (true) {
+  *              val r = Random.nextInt(100)
+  *              if (r % 10 != r / 10) {
+  *                !Return(TailCalls.done(r))
+  *              }
+  *            }
+  *            throw new AssertionError("Unreachable code");
+  *          }
+  *
+  *          val r = randomInt().result
+  *          r should be < 100
+  *          r % 10 should not be r / 10
+  *          }}}
+  *
+  * @example Since this [[Return]] keyword can automatically lift the return type,
+  *          `TailCalls.done` can be omitted.
+  *
+  *          {{{
+  *          import scala.util.Random
+  *          import scala.util.control.TailCalls
+  *          import scala.util.control.TailCalls.TailRec
+  *          def randomInt(): TailRec[Int] = {
+  *            while (true) {
+  *              val r = Random.nextInt(100)
+  *              if (r % 10 != r / 10) {
+  *                !Return(r)
+  *              }
+  *            }
+  *            throw new AssertionError("Unreachable code");
+  *          }
+  *
+  *          val r = randomInt().result
+  *          r should be < 100
+  *          r % 10 should not be r / 10
+  *          }}}
+  *
   */
 final case class Return[ReturnValue](returnValue: ReturnValue) extends Keyword[Return[ReturnValue], Nothing]
 
-private[keywords] sealed trait LowPriorityReturn1 {
+object Return {
 
   implicit def returnDsl[ReturnValue]: Dsl[Return[ReturnValue], ReturnValue, Nothing] =
     new Dsl[Return[ReturnValue], ReturnValue, Nothing] {
@@ -18,28 +65,4 @@ private[keywords] sealed trait LowPriorityReturn1 {
         keyword.returnValue
       }
     }
-}
-
-private[keywords] sealed trait LowPriorityReturn0 extends LowPriorityReturn1 {
-
-  implicit def returnContinuationDsl[ReturnValue, LeftDomain, RightDomain](
-      implicit restReturnDsl: Dsl[Return[ReturnValue], RightDomain, RightDomain])
-    : Dsl[Return[ReturnValue], LeftDomain !! RightDomain, Nothing] =
-    new Dsl[Return[ReturnValue], LeftDomain !! RightDomain, Nothing] {
-      def cpsApply(keyword: Return[ReturnValue],
-                   handler: Nothing => LeftDomain !! RightDomain): LeftDomain !! RightDomain =
-        _(restReturnDsl.cpsApply(Return(keyword.returnValue), identity))
-    }
-}
-
-object Return extends LowPriorityReturn0 {
-
-  implicit def returnStreamDsl[ReturnValue, Domain](implicit restReturnDsl: Dsl[Return[ReturnValue], Domain, Domain])
-    : Dsl[Return[ReturnValue], Stream[Domain], Nothing] =
-    new Dsl[Return[ReturnValue], Stream[Domain], Nothing] {
-      def cpsApply(keyword: Return[ReturnValue], handler: Nothing => Stream[Domain]): Stream[Domain] = {
-        restReturnDsl.cpsApply(Return(keyword.returnValue), identity) #:: Stream.empty[Domain]
-      }
-    }
-
 }

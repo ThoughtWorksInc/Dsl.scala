@@ -112,7 +112,7 @@ object cats {
                                          restReturnDsl: Dsl[Return[A], B, Nothing]) =
     new Dsl[Return[A], F[B], Nothing] {
       def cpsApply(keyword: Return[A], handler: Nothing => F[B]): F[B] = {
-        applicative.pure(restReturnDsl.cpsApply(Return(keyword.returnValue), identity))
+        applicative.pure(restReturnDsl.cpsApply(keyword, identity))
       }
     }
 
