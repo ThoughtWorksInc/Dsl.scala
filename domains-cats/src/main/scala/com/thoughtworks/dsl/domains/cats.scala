@@ -108,10 +108,10 @@ import scala.util.control.{ControlThrowable, NonFatal}
 object cats {
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
-  implicit def catsReturnDsl[F[_], A, B, R](implicit applicative: Applicative[F],
-                                            restReturnDsl: Dsl[Return[A, B], B, B]) =
-    new Dsl[Return[A, R], F[B], Nothing] {
-      def cpsApply(keyword: Return[A, R], handler: Nothing => F[B]): F[B] = {
+  implicit def catsReturnDsl[F[_], A, B](implicit applicative: Applicative[F],
+                                         restReturnDsl: Dsl[Return[A], B, Nothing]) =
+    new Dsl[Return[A], F[B], Nothing] {
+      def cpsApply(keyword: Return[A], handler: Nothing => F[B]): F[B] = {
         applicative.pure(restReturnDsl.cpsApply(Return(keyword.returnValue), identity))
       }
     }
