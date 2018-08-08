@@ -3,6 +3,7 @@ package com.thoughtworks.dsl
 import com.thoughtworks.dsl.Dsl.!!
 
 import scala.annotation._
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
@@ -91,6 +92,37 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 }
 
 object Dsl extends LowPriorityDsl0 {
+
+  implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](
+      implicit restDsl: Dsl[Keyword, RightDomain, Nothing]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
+    new Dsl[Keyword, LeftDomain !! RightDomain, Nothing] {
+      def cpsApply(keyword: Keyword, handler: Nothing => LeftDomain !! RightDomain): LeftDomain !! RightDomain =
+        _(restDsl.cpsApply(keyword, identity))
+    }
+
+  implicit def nothingStreamDsl[Keyword, Domain](
+      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Stream[Domain], Nothing] =
+    new Dsl[Keyword, Stream[Domain], Nothing] {
+      def cpsApply(keyword: Keyword, handler: Nothing => Stream[Domain]): Stream[Domain] = {
+        restDsl.cpsApply(keyword, identity) #:: Stream.empty[Domain]
+      }
+    }
+
+  implicit def nothingFutureDsl[Keyword, Domain](
+      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] =
+    new Dsl[Keyword, Future[Domain], Nothing] {
+      def cpsApply(keyword: Keyword, handler: Nothing => Future[Domain]): Future[Domain] = {
+        Future.successful(restDsl.cpsApply(keyword, identity))
+      }
+    }
+
+  implicit def nothingTailRecDsl[Keyword, Domain](
+      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, TailRec[Domain], Nothing] =
+    new Dsl[Keyword, TailRec[Domain], Nothing] {
+      def cpsApply(keyword: Keyword, handler: Nothing => TailRec[Domain]): TailRec[Domain] = {
+        TailCalls.done(restDsl.cpsApply(keyword, identity))
+      }
+    }
 
   implicit def liftTailRecDsl[Keyword, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] =

@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Keyword
+import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 
 import scala.language.implicitConversions
 import scala.util.control.TailCalls
