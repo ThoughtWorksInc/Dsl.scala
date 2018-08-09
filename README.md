@@ -16,7 +16,7 @@ We also provide some built-in keywords, including:
  * The `Shift` keyword for asynchronous programming with delimited continuations, similar to the `shift` operator in [Scala Continuations](https://github.com/scala/scala-continuations).
  * The `AsynchronousIo.Connect`, `AsynchronousIo.Accept`, `AsynchronousIo.Read` and `AsynchronousIo.Write` keyword for perform I/O on an asynchronous channel.
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
- * The `Each` keyword for iterate a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
+ * The `Each` keyword for iterating on a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
  * The `Hang` keyword for terminate the current context, similar to the `scala.sys.exit()`.
  * The `Fork` keyword for duplicating current context, similar to the `fork` system call in POSIX.
  * The `Return` keyword for early returning, similar to the native `return` keyword in Scala, except `Return` works in `Future` or other domains.
