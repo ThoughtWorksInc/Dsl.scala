@@ -12,8 +12,8 @@ DSLs written in **Dsl.scala** are collaborative with others DSLs and Scala contr
 
 We also provide some built-in keywords, including:
 
- * The `Await` keyword for asynchronous programming with Scala [Future](https://docs.scala-lang.org/overviews/core/futures.html)s, similar to the `await` / `async` keywords in C#, Python and JavaScript.
- * The `Shift` keyword for asynchronous programming with delimited continuations, similar to the `shift` operator in [Scala Continuations](https://github.com/scala/scala-continuations).
+ * The `Await` keyword for creating memoized asynchronous values as Scala [Future](https://docs.scala-lang.org/overviews/core/futures.html)s, similar to the `await` / `async` keywords in C#, Python and JavaScript.
+ * The `Shift` keyword for creating asynchronous tasks as delimited continuations, similar to the `shift` operator in [Scala Continuations](https://github.com/scala/scala-continuations).
  * The `AsynchronousIo.Connect`, `AsynchronousIo.Accept`, `AsynchronousIo.Read` and `AsynchronousIo.Write` keyword for perform I/O on an asynchronous channel.
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
  * The `Each` keyword for iterating on a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
