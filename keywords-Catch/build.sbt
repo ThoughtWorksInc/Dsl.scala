@@ -9,4 +9,4 @@ scalacOptions in Compile ++= {
   }
 }
 
-libraryDependencies += "com.thoughtworks.extractor" %%% "extractor" % "2.1.0"
+libraryDependencies += "com.thoughtworks.extractor" %%% "extractor" % "2.1.1"
