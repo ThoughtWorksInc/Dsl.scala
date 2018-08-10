@@ -28,4 +28,4 @@ libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.4"
 import scala.meta._
 exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
 
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
+addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
