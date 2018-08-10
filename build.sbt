@@ -215,9 +215,8 @@ lazy val unidoc =
         inDependencies(`compilerplugins-BangNotation`) ||
         inDependencies(`compilerplugins-ResetEverywhere`)
       },
-      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
-      scalacOptions += "-Xexperimental",
-      scalacOptions += "-Ypartial-unification"
+      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
+      scalacOptions += "-Xexperimental"
     )
 
 publishArtifact := false

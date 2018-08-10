@@ -1,6 +1,6 @@
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
+addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.4" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP1" % Test
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {
@@ -9,4 +9,3 @@ scalacOptions in Compile ++= {
   }
 }
 
-scalacOptions in Test += "-Ypartial-unification"

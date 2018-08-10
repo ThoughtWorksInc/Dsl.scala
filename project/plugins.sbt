@@ -1,8 +1,8 @@
 addSbtPlugin("com.thoughtworks.sbt-best-practice" % "sbt-best-practice" % "4.0.3")
 
-addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.0")
+addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")
 
-addSbtPlugin("com.thoughtworks.example" % "sbt-example" % "5.0.0")
+addSbtPlugin("com.thoughtworks.example" % "sbt-example" % "5.0.1")
 
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.4")
 

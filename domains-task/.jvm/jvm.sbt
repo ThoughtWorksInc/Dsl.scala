@@ -1,4 +1,5 @@
 enablePlugins(Example)
+libraryDependencies -= "org.scalatest" %%% "scalatest" % "3.0.5" % Test
 
 import scala.meta._
 exampleSuperTypes := exampleSuperTypes.value.map {
