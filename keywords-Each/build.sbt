@@ -9,4 +9,3 @@ scalacOptions in Compile ++= {
   }
 }
 
-scalacOptions in Test += "-Ypartial-unification"

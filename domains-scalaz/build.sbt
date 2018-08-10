@@ -8,5 +8,3 @@ scalacOptions in Compile ++= {
     case _      => Seq.empty
   }
 }
-
-scalacOptions in Test += "-Ypartial-unification"
