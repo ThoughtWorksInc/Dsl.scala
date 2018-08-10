@@ -33,7 +33,7 @@ lazy val `keywords-Fork` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Hang`, `keywords-Each`)
+    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Break`, `keywords-Each`)
 lazy val `keywords-ForkJS` = `keywords-Fork`.js
 lazy val `keywords-ForkJVM` = `keywords-Fork`.jvm
 
@@ -49,7 +49,7 @@ lazy val `keywords-Return` =
 lazy val `keywords-ReturnJS` = `keywords-Return`.js
 lazy val `keywords-ReturnJVM` = `keywords-Return`.jvm
 
-lazy val `keywords-Hang` =
+lazy val `keywords-Break` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .settings(
@@ -58,8 +58,8 @@ lazy val `keywords-Hang` =
     )
     .dependsOn(Dsl)
 
-lazy val `keywords-HangJS` = `keywords-Hang`.js
-lazy val `keywords-HangJVM` = `keywords-Hang`.jvm
+lazy val `keywords-BreakJS` = `keywords-Break`.js
+lazy val `keywords-BreakJVM` = `keywords-Break`.jvm
 
 lazy val `keywords-AsynchronousIo` =
   crossProject(JSPlatform, JVMPlatform)
