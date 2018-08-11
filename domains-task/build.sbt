@@ -9,6 +9,13 @@ scalacOptions in Compile ++= {
   }
 }
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+libraryDependencies ++= {
+  import Ordering.Implicits._
+  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+    Nil
+  } else {
+    Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
+  }
+}
 
-libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.4"
+libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.6"
