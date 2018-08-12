@@ -168,13 +168,6 @@ lazy val `domains-cats` =
 lazy val `domains-catsJVM` = `domains-cats`.jvm
 lazy val `domains-catsJS` = `domains-cats`.js
 
-lazy val benchmarks = project
-  .settings(
-    scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
-    scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
-  )
-  .dependsOn(`domains-taskJVM`, `keywords-CatchJVM`, `keywords-ForkJVM`)
-
 lazy val `package` = project
   .settings(
     scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
