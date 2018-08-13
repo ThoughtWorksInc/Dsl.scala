@@ -3,9 +3,11 @@ package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.Shift
-import com.thoughtworks.enableIf
+import com.thoughtworks.{enableIf, enableMembersIf}
 
+import scala.collection._
 import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable.Builder
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise, SyncVar}
 import scala.util.control.{NonFatal, TailCalls}
@@ -71,11 +73,33 @@ object task {
       })
       TailCalls.done(())
     }
+    @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
+    private[task] object Scala211Or212 {
+      type Factory[-A, +C] = scala.collection.generic.CanBuildFrom[Nothing, A, C]
+
+      @inline
+      def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
+        factory()
+      }
+
+    }
+
+    @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
+    private[task] object Scala213 {
+
+      @inline
+      def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
+        factory.newBuilder
+      }
+
+    }
+
+    import Scala211Or212._
+    import Scala213._
 
     @noinline
-    def join[Element, That](element: Element)(
-        implicit canBuildFrom: CanBuildFrom[Nothing, Element, That]): Task[That] @reset = now {
-      (canBuildFrom() += element).result()
+    def join[Element, That](element: Element)(implicit factory: Factory[Element, That]): Task[That] @reset = now {
+      (newBuilder[Element, That] += element).result()
     }
 
     def onComplete[A](task: Task[A])(continue: (Try[A] => Unit)) = {
