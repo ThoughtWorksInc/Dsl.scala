@@ -22,7 +22,7 @@ lazy val `domains-task` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(`keywords-Shift`, `keywords-Fork` % Test, `keywords-AutoClose` % Test, `keywords-Yield` % Test)
+    .dependsOn(`keywords-Shift`, `keywords-Fork` % Test, `keywords-Using` % Test, `keywords-Yield` % Test)
 lazy val `domains-taskJS` = `domains-task`.js
 lazy val `domains-taskJVM` = `domains-task`.jvm
 
@@ -83,7 +83,7 @@ lazy val `keywords-Shift` =
 lazy val `keywords-ShiftJS` = `keywords-Shift`.js
 lazy val `keywords-ShiftJVM` = `keywords-Shift`.jvm
 
-lazy val `keywords-AutoClose` =
+lazy val `keywords-Using` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .settings(
@@ -91,8 +91,8 @@ lazy val `keywords-AutoClose` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
     .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`)
-lazy val `keywords-AutoCloseJS` = `keywords-AutoClose`.js
-lazy val `keywords-AutoCloseJVM` = `keywords-AutoClose`.jvm
+lazy val `keywords-UsingJS` = `keywords-Using`.js
+lazy val `keywords-UsingJVM` = `keywords-Using`.jvm
 
 lazy val `keywords-Catch` =
   crossProject(JSPlatform, JVMPlatform)
@@ -182,7 +182,7 @@ lazy val `package` = project
     `keywords-ForkJVM`,
     `keywords-AwaitJVM`,
     `keywords-AsynchronousIoJVM`,
-    `keywords-AutoCloseJVM`,
+    `keywords-UsingJVM`,
     `domains-taskJVM`,
     DslJVM
   )

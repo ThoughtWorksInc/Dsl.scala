@@ -20,7 +20,7 @@ We also provide some built-in keywords, including:
  * The `Fork` keyword for duplicating current context, similar to the `fork` system call in POSIX.
  * The `Return` keyword for early returning, similar to the native `return` keyword in Scala.
  * The `Break` keyword for terminating the current context without a return value, similar to the native `break` keyword in C/C++.
- * The `AutoClose` keyword to automatically close resources when exiting a scope, similar to the destructor feature in C++.
+ * The `Using` keyword to automatically close resources when exiting a scope, similar to the native `using` keyword in C#.
  * The `Monadic` keyword for creating Scalaz or Cats monadic control flow, similar to the !-notation in Idris.
 
 All the above keywords can be used together with each others. For example you can perform list comprehension to manipulate native resources in an asynchronous task by using `Each`, `AutoClose` and `Shift` together.
