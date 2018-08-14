@@ -152,7 +152,12 @@ lazy val `domains-scalaz` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Return`, `keywords-Shift` % Test, `keywords-Yield` % Test)
+    .dependsOn(Dsl,
+               `keywords-Catch`,
+               `keywords-Monadic`,
+               `keywords-Return`,
+               `keywords-Shift` % Test,
+               `keywords-Yield` % Test)
 lazy val `domains-scalazJS` = `domains-scalaz`.js
 lazy val `domains-scalazJVM` = `domains-scalaz`.jvm
 
@@ -163,7 +168,12 @@ lazy val `domains-cats` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Catch`, `keywords-Monadic`, `keywords-Return`, `keywords-Shift` % Test, `keywords-Yield` % Test)
+    .dependsOn(Dsl,
+               `keywords-Catch`,
+               `keywords-Monadic`,
+               `keywords-Return`,
+               `keywords-Shift` % Test,
+               `keywords-Yield` % Test)
 
 lazy val `domains-catsJVM` = `domains-cats`.jvm
 lazy val `domains-catsJS` = `domains-cats`.js
@@ -210,7 +220,23 @@ lazy val unidoc =
         inDependencies(`compilerplugins-ResetEverywhere`)
       },
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
-      scalacOptions += "-Xexperimental"
+      scalacOptions += "-Xexperimental",
+      scalacOptions ++= {
+        import Ordering.Implicits._
+        if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+          Seq("-Ymacro-annotations")
+        } else {
+          Nil
+        }
+      },
+      libraryDependencies ++= {
+        import Ordering.Implicits._
+        if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+          Nil
+        } else {
+          Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
+        }
+      }
     )
 
 publishArtifact := false
