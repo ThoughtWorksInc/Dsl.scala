@@ -215,9 +215,19 @@ lazy val unidoc =
     .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
     .settings(
       unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := {
-        inDependencies(`package`) ||
-        inDependencies(`compilerplugins-BangNotation`) ||
-        inDependencies(`compilerplugins-ResetEverywhere`)
+        import Ordering.Implicits._
+        if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+          (
+            inDependencies(`package`) ||
+            inDependencies(`compilerplugins-BangNotation`) ||
+            inDependencies(`compilerplugins-ResetEverywhere`)
+          ) --
+            inProjects(`domains-taskJVM`, `keywords-EachJVM`, `keywords-ForkJVM`)
+        } else {
+          inDependencies(`package`) ||
+          inDependencies(`compilerplugins-BangNotation`) ||
+          inDependencies(`compilerplugins-ResetEverywhere`)
+        }
       },
       addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
       scalacOptions += "-Xexperimental",
