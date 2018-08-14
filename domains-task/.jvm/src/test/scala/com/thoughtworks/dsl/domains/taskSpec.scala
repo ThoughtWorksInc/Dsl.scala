@@ -162,11 +162,12 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
   "nested seq of task" in {
 
     def composeTask(t0: Task[Seq[Task[Seq[Task[Seq[Task[Seq[Float]]]]]]]]): Task[Seq[Seq[Seq[Seq[Float]]]]] = {
-      Task.join {
+      // TODO: remove explicit type parameters when https://github.com/scala/bug/issues/11068 is fixed
+      Task.join[Seq[Seq[Seq[Float]]], Seq[Seq[Seq[Seq[Float]]]]] {
         val t1 = !Each(!t0)
-        !Task.join {
+        !Task.join[Seq[Seq[Float]], Seq[Seq[Seq[Float]]]] {
           val t2 = !Each(!t1)
-          !Task.join {
+          !Task.join[Seq[Float], Seq[Seq[Float]]] {
             val t3 = !Each(!t2)
             !t3
           }
