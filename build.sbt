@@ -176,6 +176,7 @@ lazy val `package` = project
   .dependsOn(
     `domains-catsJVM`,
     `domains-scalazJVM`,
+    `keywords-ReturnJVM`,
     `keywords-ShiftJVM`,
     `keywords-EachJVM`,
     `keywords-YieldJVM`,
