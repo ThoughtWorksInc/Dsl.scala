@@ -58,7 +58,7 @@ object Fork {
   implicit def forkContinuationDsl[NarrowElement, LeftDomain, WidenElement, RightDomain](
       implicit eachDsl: Dsl[Each[NarrowElement], LeftDomain, NarrowElement],
       booleanEachDsl: Dsl[Each[Boolean], LeftDomain, Boolean],
-      isTraversableOnce: RightDomain <:< TraversableOnce[WidenElement],
+      isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
       canBuildFrom: CanBuildFrom[Nothing, WidenElement, RightDomain],
       breakDsl: Dsl[Break, LeftDomain, Nothing],
       catchDsl: CatchDsl[LeftDomain, LeftDomain, Unit]
