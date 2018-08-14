@@ -10,25 +10,25 @@ import scala.util.Try
 /**
   * @author 杨博 (Yang Bo)
   */
-final case class AutoClose[R <: AutoCloseable](open: () => R) extends AnyVal with Keyword[AutoClose[R], R]
+final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal with Keyword[Using[R], R]
 
 /**
   *
   * @example
   */
-object AutoClose {
+object Using {
 
-  implicit def implicitAutoClose[R <: AutoCloseable](r: => R): AutoClose[R] = AutoClose[R](r _)
+  implicit def implicitAutoClose[R <: AutoCloseable](r: => R): Using[R] = Using[R](r _)
 
   def apply[R <: AutoCloseable](r: => R)(
-      implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): AutoClose[R] = new AutoClose(r _)
+      implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): Using[R] = new Using(r _)
 
   implicit def throwableContinuationAutoCloseDsl[Domain, Value, R <: AutoCloseable](
       implicit catchDsl: CatchDsl[Domain, Domain, Value],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
-  ): Dsl[AutoClose[R], Domain !! Value, R] =
-    new Dsl[AutoClose[R], Domain !! Value, R] {
-      def cpsApply(keyword: AutoClose[R], handler: R => Domain !! Value): Domain !! Value = _ {
+  ): Dsl[Using[R], Domain !! Value, R] =
+    new Dsl[Using[R], Domain !! Value, R] {
+      def cpsApply(keyword: Using[R], handler: R => Domain !! Value): Domain !! Value = _ {
         val r = keyword.open()
         val scopeResult = try {
           !Shift(handler(r))

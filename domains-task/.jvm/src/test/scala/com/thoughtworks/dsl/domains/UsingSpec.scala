@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
-import com.thoughtworks.dsl.keywords.{AutoClose, Yield}
+import com.thoughtworks.dsl.keywords.{Using, Yield}
 import org.scalatest.{Assertion, FreeSpec, Matchers}
 import com.thoughtworks.dsl.domains.task._
 
@@ -11,7 +11,7 @@ import scala.util.{Failure, Success}
 /**
   * @author 杨博 (Yang Bo)
   */
-class AutoCloseSpec extends FreeSpec with Matchers {
+class UsingSpec extends FreeSpec with Matchers {
 
   def successContinuation[Domain](domain: Domain): (Domain !! Throwable) @reset = Continuation.empty(domain)
 
@@ -25,7 +25,7 @@ class AutoCloseSpec extends FreeSpec with Matchers {
         def raii: Stream[Int] !! Throwable !! Assertion = Continuation.apply {
           !Yield(1)
           isOpen should be(false)
-          val a = !AutoClose {
+          val a = !Using {
             !Yield(2)
             new AutoCloseable {
               isOpen should be(false)

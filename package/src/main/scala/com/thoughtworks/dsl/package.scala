@@ -283,13 +283,13 @@ package com.thoughtworks
   *
   *          {{{
   *          import com.thoughtworks.dsl.Dsl.!!
-  *          import com.thoughtworks.dsl.keywords.AutoClose
+  *          import com.thoughtworks.dsl.keywords.Using
   *          import com.thoughtworks.dsl.keywords.Yield
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import java.io._
   *
   *          def readerToStream(createReader: () => BufferedReader): Stream[String] !! Throwable !! Int = !! {
-  *            val reader = !AutoClose(createReader())
+  *            val reader = !Using(createReader())
   *
   *            def loop(lineNumber: Int): Stream[String] !! Throwable !! Int = _ {
   *              reader.readLine() match {
@@ -311,7 +311,7 @@ package com.thoughtworks
   *          which is similar to the `await` keyword in JavaScript, Python or C#.
   *
   *          A type like `A !! B !! C` means a domain-specific value of type `C` in the domain of `A` and `B`.
-  *          When `B` is [[Throwable]], the [[com.thoughtworks.dsl.keywords.AutoClose AutoClose]]
+  *          When `B` is [[Throwable]], the [[com.thoughtworks.dsl.keywords.Using Using]]
   *          is available, which will close a resource when exiting the current function.
   *
   *          {{{

@@ -4,7 +4,7 @@ package domains
 import com.thoughtworks.dsl.Dsl.{!!, reset}
 import org.scalatest.{Assertion, AsyncFreeSpec, Matchers}
 
-import com.thoughtworks.dsl.keywords.{AutoClose, Each, Fork}
+import com.thoughtworks.dsl.keywords.{Using, Each, Fork}
 import com.thoughtworks.dsl.domains.task._
 import com.thoughtworks.dsl.keywords.Shift.implicitShift
 
@@ -105,19 +105,19 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
       logs += 0
 
-      !AutoClose(new AutoCloseable {
+      !Using(new AutoCloseable {
         logs += 10
         def close(): Unit = {
           logs += 20
         }
       })
-      !AutoClose(new AutoCloseable {
+      !Using(new AutoCloseable {
         logs += 11
         def close(): Unit = {
           logs += 21
         }
       })
-      !AutoClose(new AutoCloseable {
+      !Using(new AutoCloseable {
         logs += 12
         def close(): Unit = {
           logs += 22
@@ -127,19 +127,19 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       !Task.apply {
         logs += 3
 
-        !AutoClose(new AutoCloseable {
+        !Using(new AutoCloseable {
           logs += 40
           def close(): Unit = {
             logs += 50
           }
         })
-        !AutoClose(new AutoCloseable {
+        !Using(new AutoCloseable {
           logs += 41
           def close(): Unit = {
             logs += 51
           }
         })
-        !AutoClose(new AutoCloseable {
+        !Using(new AutoCloseable {
           logs += 42
           def close(): Unit = {
             logs += 52
