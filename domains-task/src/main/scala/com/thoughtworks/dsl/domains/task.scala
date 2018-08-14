@@ -86,7 +86,7 @@ object task {
         .result
     }
 
-    @enableIf(c => !c.compilerSettings.exists(_.matches("""^-Xplugin:.*scalajs-compiler_[0-9\.\-]*\.jar$""")))
+    @enableIf(c => !c.compilerSettings.exists(_.matches("""^-Xplugin:.*scalajs-compiler_.*\.jar$""")))
     def blockingAwait[A](task: Task[A], timeout: Duration = Duration.Inf): A = {
       val syncVar = new SyncVar[Try[A]]
       Continuation
