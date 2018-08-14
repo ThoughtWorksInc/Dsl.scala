@@ -35,7 +35,7 @@ final class BangNotation(override val global: Global) extends Plugin {
   import global.analyzer._
 
   private val hasScalaJsPlugin =
-    global.settings.plugin.value.exists(_.matches("""^.*scalajs-compiler_[0-9\.\-]*\.jar$"""))
+    global.settings.plugin.value.exists(_.matches("""^.*scalajs-compiler_.*\.jar$"""))
 
   // Workaround for https://github.com/scala-js/scala-js/issues/3415
   private def scalaJsIssues3415Workaround = {
