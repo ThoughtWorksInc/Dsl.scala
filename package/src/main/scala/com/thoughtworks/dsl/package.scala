@@ -404,7 +404,7 @@ package com.thoughtworks
   *          {{{
   *          import com.thoughtworks.dsl.domains.task.Task.blockingAwait
   *
-  *          val fileContent = blockingAwait(httpClient(new URL("http://ftp.debian.org/debian/")))
+  *          val fileContent = blockingAwait(httpClient(new URL("http://example.com/")))
   *          fileContent should startWith("HTTP/1.1 200 OK")
   *          }}}
   *
@@ -418,8 +418,8 @@ package com.thoughtworks
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Fork
   *          val Urls = Seq(
-  *            new URL("http://ftp.debian.org/debian/README.CD-manufacture"),
-  *            new URL("http://ftp.debian.org/debian/README")
+  *            new URL("http://example.org/"),
+  *            new URL("http://example.com/")
   *          )
   *          def parallelTask: Task[Seq[String]] = Task.join {
   *            val url = !Fork(Urls)
