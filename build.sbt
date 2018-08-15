@@ -250,5 +250,3 @@ lazy val unidoc =
     )
 
 publishArtifact := false
-
-parallelExecution in Global := false
