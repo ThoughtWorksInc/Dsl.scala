@@ -250,3 +250,8 @@ lazy val unidoc =
     )
 
 publishArtifact := false
+
+parallelExecution in Global := {
+  import Ordering.Implicits._
+  VersionNumber(scalaVersion.value).numbers >= Seq(2L, 12L)
+}
