@@ -93,18 +93,23 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
 object Dsl extends LowPriorityDsl0 {
 
+  @inline
+  private def domain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
+    dsl.cpsApply(keyword, identity)
+  }
+
   implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](
-      implicit restDsl: Dsl[Keyword, RightDomain, Nothing]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
+      implicit restDsl: Dsl[Keyword, RightDomain, RightDomain]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
     new Dsl[Keyword, LeftDomain !! RightDomain, Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => LeftDomain !! RightDomain): LeftDomain !! RightDomain =
-        _(restDsl.cpsApply(keyword, identity))
+        _(domain(keyword))
     }
 
   implicit def nothingStreamDsl[Keyword, Domain](
-      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Stream[Domain], Nothing] =
+      implicit restDsl: Dsl[Keyword, Domain, Domain]): Dsl[Keyword, Stream[Domain], Nothing] =
     new Dsl[Keyword, Stream[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Stream[Domain]): Stream[Domain] = {
-        restDsl.cpsApply(keyword, identity) #:: Stream.empty[Domain]
+        domain(keyword) #:: Stream.empty[Domain]
       }
     }
 
@@ -112,7 +117,6 @@ object Dsl extends LowPriorityDsl0 {
       implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] =
     new Dsl[Keyword, Future[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Future[Domain]): Future[Domain] = {
-        Future.successful(restDsl.cpsApply(keyword, identity))
       }
     }
 
@@ -121,6 +125,7 @@ object Dsl extends LowPriorityDsl0 {
     new Dsl[Keyword, TailRec[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => TailRec[Domain]): TailRec[Domain] = {
         TailCalls.done(restDsl.cpsApply(keyword, identity))
+        Future.successful(domain(keyword))
       }
     }
 
