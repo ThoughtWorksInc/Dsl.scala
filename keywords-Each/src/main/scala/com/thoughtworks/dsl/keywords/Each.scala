@@ -75,7 +75,7 @@ object Each {
       }
     }
 
-  implicit def foreachDsl[Element]: Dsl[Each[Element], Unit, Element] =
+  private[dsl] def foreachDsl[Element]: Dsl[Each[Element], Unit, Element] =
     new Dsl[Each[Element], Unit, Element] {
       def cpsApply(keyword: Each[Element], handler: Element => Unit): Unit = {
         keyword.elements.foreach(handler)

@@ -96,8 +96,8 @@ object Fork {
   }
 
   implicit def forkContinuationDsl[NarrowElement, LeftDomain, WidenElement, RightDomain](
-      implicit eachDsl: Dsl[Each[NarrowElement], LeftDomain, NarrowElement],
-      booleanEachDsl: Dsl[Each[Boolean], LeftDomain, Boolean],
+      implicit eachDsl: Dsl[ForEach[NarrowElement], LeftDomain, NarrowElement],
+      booleanEachDsl: Dsl[ForEach[Boolean], LeftDomain, Boolean],
       isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
       canBuildFrom: Factory[WidenElement, RightDomain],
       continueDsl: Dsl[Continue, LeftDomain, Nothing],
@@ -109,8 +109,8 @@ object Fork {
         val builder: mutable.Builder[WidenElement, RightDomain] = newBuilder[WidenElement, RightDomain]
         val exceptionBuilder = Set.newBuilder[Throwable]
         val counter = new AtomicInteger(1)
-        if (!Each(Seq(true, false))) {
-          val element = !Each(fork.elements)
+        if (!ForEach(Seq(true, false))) {
+          val element = !ForEach(fork.elements)
           counter.incrementAndGet()
           try {
             builder ++= !Shift(mapper(element));
@@ -150,16 +150,16 @@ object Fork {
 
   @deprecated("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]", "Dsl.scala 1.2.0")
   private[Fork] def forkContinuationDsl[NarrowElement, LeftDomain, WidenElement, RightDomain](
-      implicit eachDsl: Dsl[Each[NarrowElement], LeftDomain, NarrowElement],
-      booleanEachDsl: Dsl[Each[Boolean], LeftDomain, Boolean],
+      implicit eachDsl: Dsl[ForEach[NarrowElement], LeftDomain, NarrowElement],
+      booleanEachDsl: Dsl[ForEach[Boolean], LeftDomain, Boolean],
       isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
       canBuildFrom: Factory[WidenElement, RightDomain],
       continueDsl: Dsl[Continue, LeftDomain, Nothing],
       catchDsl: CatchDsl[LeftDomain, LeftDomain, Unit]
   ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] = {
     forkContinuationDsl(
-      eachDsl: Dsl[Each[NarrowElement], LeftDomain, NarrowElement],
-      booleanEachDsl: Dsl[Each[Boolean], LeftDomain, Boolean],
+      eachDsl: Dsl[ForEach[NarrowElement], LeftDomain, NarrowElement],
+      booleanEachDsl: Dsl[ForEach[Boolean], LeftDomain, Boolean],
       isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
       canBuildFrom: Factory[WidenElement, RightDomain],
       continueDsl: Dsl[Continue, LeftDomain, Nothing],
