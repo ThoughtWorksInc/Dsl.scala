@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.Dsl.!!
+import com.thoughtworks.dsl.Dsl.{!!, domain}
 
 import scala.annotation._
 import scala.concurrent.Future
@@ -30,7 +30,25 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 }
 
-private[dsl] trait LowPriorityDsl1 {
+private[dsl] trait LowPriorityDsl2 {
+
+  @inline
+  private[dsl] def domain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
+    dsl.cpsApply(keyword, identity)
+  }
+
+  implicit def nothingFunction1Dsl[Keyword, State, Domain](
+      implicit restDsl: Dsl[Keyword, Domain, Domain]
+  ): Dsl[Keyword, State => Domain, Nothing] =
+    new Dsl[Keyword, State => Domain, Nothing] {
+      def cpsApply(keyword: Keyword, handler: Nothing => State => Domain): State => Domain = { _ =>
+        domain(keyword)(restDsl)
+      }
+    }
+
+}
+
+private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
@@ -92,11 +110,6 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 }
 
 object Dsl extends LowPriorityDsl0 {
-
-  @inline
-  private def domain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
-    dsl.cpsApply(keyword, identity)
-  }
 
   implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](
       implicit restDsl: Dsl[Keyword, RightDomain, RightDomain]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
