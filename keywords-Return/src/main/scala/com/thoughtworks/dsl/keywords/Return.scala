@@ -55,7 +55,7 @@ import scala.language.implicitConversions
   *          }}}
   *
   */
-final case class Return[ReturnValue](returnValue: ReturnValue) extends Keyword[Return[ReturnValue], Nothing]
+final case class Return[ReturnValue](returnValue: ReturnValue) extends AnyVal with Keyword[Return[ReturnValue], Nothing]
 
 object Return {
 
