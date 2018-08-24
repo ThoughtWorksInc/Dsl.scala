@@ -21,8 +21,8 @@ private[keywords] trait LowPriorityShift1 {
   @inline
   implicit def stackUnsafeShiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
     new Dsl[Shift[Domain, Value], Domain, Value] {
-      def cpsApply(shift: Shift[Domain, Value], mapper: Value => Domain): Domain =
-        shift.continuation(mapper)
+      def cpsApply(shift: Shift[Domain, Value], handler: Value => Domain) =
+        shift.continuation(handler)
     }
 
 }

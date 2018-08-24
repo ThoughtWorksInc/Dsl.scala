@@ -61,6 +61,29 @@ lazy val `keywords-Break` =
 lazy val `keywords-BreakJS` = `keywords-Break`.js
 lazy val `keywords-BreakJVM` = `keywords-Break`.jvm
 
+lazy val `keywords-Get` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl)
+
+lazy val `keywords-GetJS` = `keywords-Get`.js
+lazy val `keywords-GetJVM` = `keywords-Get`.jvm
+
+lazy val `keywords-Put` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl, `keywords-Get` % Test, `keywords-Return` % Test)
+lazy val `keywords-PutJS` = `keywords-Put`.js
+lazy val `keywords-PutJVM` = `keywords-Put`.jvm
+
 lazy val `keywords-AsynchronousIo` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -186,6 +209,8 @@ lazy val `package` = project
   .dependsOn(
     `domains-catsJVM`,
     `domains-scalazJVM`,
+    `keywords-GetJVM`,
+    `keywords-PutJVM`,
     `keywords-ReturnJVM`,
     `keywords-ShiftJVM`,
     `keywords-EachJVM`,

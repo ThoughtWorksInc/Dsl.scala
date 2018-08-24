@@ -509,7 +509,7 @@ final class BangNotation(override val global: Global) extends Plugin {
         true
       } catch {
         case e: ScalaReflectionException =>
-          error("""This compiler plug-in requires the runtime library:
+          error("""The BangNotation compiler plug-in requires the runtime library:
   libraryDependencies += "com.thoughtworks.dsl" %% "dsl" % "latest.release"
 """)
           false

@@ -30,7 +30,25 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 }
 
-private[dsl] trait LowPriorityDsl1 {
+private[dsl] trait LowPriorityDsl2 {
+
+  @inline
+  private[dsl] def resetDomain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
+    dsl.cpsApply(keyword, identity)
+  }
+
+  implicit def nothingFunction1Dsl[Keyword, State, Domain](
+      implicit restDsl: Dsl[Keyword, Domain, Domain]
+  ): Dsl[Keyword, State => Domain, Nothing] =
+    new Dsl[Keyword, State => Domain, Nothing] {
+      def cpsApply(keyword: Keyword, handler: Nothing => State => Domain): State => Domain = { _ =>
+        resetDomain(keyword)(restDsl)
+      }
+    }
+
+}
+
+private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
@@ -93,23 +111,18 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
 object Dsl extends LowPriorityDsl0 {
 
-  @inline
-  private def domain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
-    dsl.cpsApply(keyword, identity)
-  }
-
   implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](
       implicit restDsl: Dsl[Keyword, RightDomain, RightDomain]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
     new Dsl[Keyword, LeftDomain !! RightDomain, Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => LeftDomain !! RightDomain): LeftDomain !! RightDomain =
-        _(domain(keyword))
+        _(resetDomain(keyword))
     }
 
   implicit def nothingStreamDsl[Keyword, Domain](
       implicit restDsl: Dsl[Keyword, Domain, Domain]): Dsl[Keyword, Stream[Domain], Nothing] =
     new Dsl[Keyword, Stream[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Stream[Domain]): Stream[Domain] = {
-        domain(keyword) #:: Stream.empty[Domain]
+        resetDomain(keyword) #:: Stream.empty[Domain]
       }
     }
 
@@ -117,7 +130,7 @@ object Dsl extends LowPriorityDsl0 {
       implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] =
     new Dsl[Keyword, Future[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Future[Domain]): Future[Domain] = {
-        Future.successful(domain(keyword))
+        Future.successful(resetDomain(keyword))
       }
     }
 
