@@ -117,14 +117,6 @@ object Dsl extends LowPriorityDsl0 {
       implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] =
     new Dsl[Keyword, Future[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Future[Domain]): Future[Domain] = {
-      }
-    }
-
-  implicit def nothingTailRecDsl[Keyword, Domain](
-      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, TailRec[Domain], Nothing] =
-    new Dsl[Keyword, TailRec[Domain], Nothing] {
-      def cpsApply(keyword: Keyword, handler: Nothing => TailRec[Domain]): TailRec[Domain] = {
-        TailCalls.done(restDsl.cpsApply(keyword, identity))
         Future.successful(domain(keyword))
       }
     }
