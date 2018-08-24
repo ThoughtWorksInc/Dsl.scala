@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import com.thoughtworks.dsl.Dsl.{!!, domain}
+import com.thoughtworks.dsl.Dsl.!!
 
 import scala.annotation._
 import scala.concurrent.Future
@@ -33,7 +33,7 @@ trait Dsl[-Keyword, Domain, +Value] {
 private[dsl] trait LowPriorityDsl2 {
 
   @inline
-  private[dsl] def domain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
+  private[dsl] def resetDomain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
     dsl.cpsApply(keyword, identity)
   }
 
@@ -42,7 +42,7 @@ private[dsl] trait LowPriorityDsl2 {
   ): Dsl[Keyword, State => Domain, Nothing] =
     new Dsl[Keyword, State => Domain, Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => State => Domain): State => Domain = { _ =>
-        domain(keyword)(restDsl)
+        resetDomain(keyword)(restDsl)
       }
     }
 
@@ -115,14 +115,14 @@ object Dsl extends LowPriorityDsl0 {
       implicit restDsl: Dsl[Keyword, RightDomain, RightDomain]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
     new Dsl[Keyword, LeftDomain !! RightDomain, Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => LeftDomain !! RightDomain): LeftDomain !! RightDomain =
-        _(domain(keyword))
+        _(resetDomain(keyword))
     }
 
   implicit def nothingStreamDsl[Keyword, Domain](
       implicit restDsl: Dsl[Keyword, Domain, Domain]): Dsl[Keyword, Stream[Domain], Nothing] =
     new Dsl[Keyword, Stream[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Stream[Domain]): Stream[Domain] = {
-        domain(keyword) #:: Stream.empty[Domain]
+        resetDomain(keyword) #:: Stream.empty[Domain]
       }
     }
 
@@ -130,7 +130,7 @@ object Dsl extends LowPriorityDsl0 {
       implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] =
     new Dsl[Keyword, Future[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Future[Domain]): Future[Domain] = {
-        Future.successful(domain(keyword))
+        Future.successful(resetDomain(keyword))
       }
     }
 
