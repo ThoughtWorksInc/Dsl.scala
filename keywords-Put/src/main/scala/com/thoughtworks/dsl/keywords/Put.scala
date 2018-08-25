@@ -57,7 +57,7 @@ import com.thoughtworks.dsl.Dsl.Keyword
   * @see [[Get]]
   * @author 杨博 (Yang Bo)
   */
-final case class Put[A](value: A) extends Keyword[Put[A], Unit]
+final case class Put[A](value: A) extends AnyVal with Keyword[Put[A], Unit]
 
 object Put {
 
