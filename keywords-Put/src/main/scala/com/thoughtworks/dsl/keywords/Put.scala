@@ -10,6 +10,7 @@ import com.thoughtworks.dsl.Dsl.Keyword
   * [[Put]] and [[Get]] are the [[Dsl]]-based replacements of state monads.
   *
   * @example The parameter of a [[scala.Function1]] can be read from [[Get]] keyword, and changed by [[Put]] keyword.
+  *
   *          {{{
   *          def dslBasedState: String => Int = {
   *            !Get[String]() should be("initial value")
@@ -24,6 +25,7 @@ import com.thoughtworks.dsl.Dsl.Keyword
   *          The implementation of [[Get]] and [[Put]] keywords does not use native Scala `var`,
   *          though its behavior is similar to `var`.
   * @example The behavior of the above code is equivalent to the following code based on native Scala `var`:
+  *
   *          {{{
   *          def varBasedState(initialValue: String): Int = {
   *            var v = initialValue
@@ -34,6 +36,23 @@ import com.thoughtworks.dsl.Dsl.Keyword
   *          }
   *
   *          varBasedState("initial value") should be(0)
+  *          }}}
+  *
+  * @example [[Put]] and [[Get]] support multiple states.
+  *
+  *          The following code creates a formatter that [[Put]] parts of content into a `List[Any]` of string buffers.
+  *
+  *          {{{
+  *          def format: Double => Int => List[Any] => String = {
+  *            !Put("x=" :: !Get[List[Any]])
+  *            !Put(!Get[Double] :: !Get[List[Any]])
+  *            !Put(",y=" :: !Get[List[Any]])
+  *            !Put(!Get[Int] :: !Get[List[Any]])
+  *
+  *            !Return((!Get[List[Any]]).reverse.mkString)
+  *          }
+  *
+  *          format(0.5)(42)(Nil) should be("x=0.5,y=42")
   *          }}}
   * @see [[Get]]
   * @author 杨博 (Yang Bo)
