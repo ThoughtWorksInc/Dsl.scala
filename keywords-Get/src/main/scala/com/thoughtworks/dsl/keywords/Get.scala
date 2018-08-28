@@ -6,12 +6,12 @@ import com.thoughtworks.dsl.Dsl.Keyword
   * @see [[Put]]
   * @author 杨博 (Yang Bo)
   */
-final case class Get[A]() extends Keyword[Get[A], A]
+final case class Get[S]() extends Keyword[Get[S], S]
 
 object Get {
 
-  implicit def getDsl[A, B <: A, C] = new Dsl[Get[A], B => C, A] {
-    def cpsApply(keyword: Get[A], handler: A => B => C): B => C = { b =>
+  implicit def getDsl[S0, S <: S0, A] = new Dsl[Get[S0], S => A, S0] {
+    def cpsApply(keyword: Get[S0], handler: S0 => S => A): S => A = { b =>
       handler(b)(b)
     }
   }
