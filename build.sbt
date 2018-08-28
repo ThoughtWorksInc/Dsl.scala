@@ -280,3 +280,6 @@ parallelExecution in Global := {
   import Ordering.Implicits._
   VersionNumber(scalaVersion.value).numbers >= Seq(2L, 12L)
 }
+
+import sbtrelease.ReleaseStateTransformations._
+releaseProcess -= runClean
