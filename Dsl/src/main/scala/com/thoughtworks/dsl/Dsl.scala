@@ -32,7 +32,7 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 private[dsl] trait LowPriorityDsl2 {
 
-  implicit def liftFunction1Dsl[Keyword, State, Domain, Value](
+  implicit def derivedFunction1Dsl[Keyword, State, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]
   ): Dsl[Keyword, State => Domain, Value] =
     new Dsl[Keyword, State => Domain, Value] {
@@ -60,7 +60,7 @@ private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 //    }
 //  }
 
-  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
+  implicit def derivedContinuationDsl[Keyword, LeftDomain, RightDomain, Value](
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
     new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
@@ -107,20 +107,19 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 object Dsl extends LowPriorityDsl0 {
 
   @inline
-  private def resetDomain[Keyword, Domain](keyword: Keyword)(
-      implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
+  private def resetDomain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
     dsl.cpsApply(keyword, identity)
   }
 
   implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](
-      implicit restDsl: Dsl[Keyword, RightDomain, RightDomain]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
+      implicit restDsl: Dsl[Keyword, RightDomain, Nothing]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
     new Dsl[Keyword, LeftDomain !! RightDomain, Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => LeftDomain !! RightDomain): LeftDomain !! RightDomain =
         _(resetDomain(keyword))
     }
 
   implicit def nothingStreamDsl[Keyword, Domain](
-      implicit restDsl: Dsl[Keyword, Domain, Domain]): Dsl[Keyword, Stream[Domain], Nothing] =
+      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Stream[Domain], Nothing] =
     new Dsl[Keyword, Stream[Domain], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Stream[Domain]): Stream[Domain] = {
         resetDomain(keyword) #:: Stream.empty[Domain]
@@ -135,7 +134,7 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-  implicit def liftTailRecDsl[Keyword, Domain, Value](
+  implicit def derivedTailRecDsl[Keyword, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] =
     new Dsl[Keyword, TailRec[Domain], Value] {
       def cpsApply(keyword: Keyword, handler: Value => TailRec[Domain]): TailRec[Domain] = TailCalls.done {
@@ -145,7 +144,7 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-  implicit def liftThrowableTailRecDsl[Keyword, LeftDomain, Value](
+  implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](
       implicit restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value])
     : Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
     new Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] {

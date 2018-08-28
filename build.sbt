@@ -80,7 +80,7 @@ lazy val `keywords-Put` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Get` % Test, `keywords-Return` % Test)
+    .dependsOn(Dsl, `keywords-Get` % Test, `keywords-Yield` % Test, `keywords-Return` % Test)
 lazy val `keywords-PutJS` = `keywords-Put`.js
 lazy val `keywords-PutJVM` = `keywords-Put`.jvm
 
