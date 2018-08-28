@@ -159,8 +159,6 @@ package com.thoughtworks
   *          Alternatively, you can also use the
   *          [[com.thoughtworks.dsl.compilerplugins.ResetEverywhere ResetEverywhere]] compiler plug-in,
   *          which enable [[Dsl.Keyword#unary_$bang !-notation]] for every methods and functions.
-  *
-  *
   * @example [[com.thoughtworks.dsl.keywords.Yield Yield]] and [[scala.collection.immutable.Stream Stream]]
   *          can be also used for logging.
   *
@@ -202,8 +200,6 @@ package com.thoughtworks
   *                                "Succeeded to parse  { \"key\": \"value\" } ",
   *                                "done"))
   *          }}}
-  *
-  *
   * @example The closure in the previous example can be simplified with the help of Scala's placeholder syntax:
   *
   *          {{{
@@ -234,7 +230,6 @@ package com.thoughtworks
   *
   *          Note that `parseAndLog2` is equivelent to `parseAndLog1`.
   *          The code block after underscore is still inside a function whose return type is `Stream[String]`.
-  *
   * @example Instead of manually create the continuation-passing style function,
   *          you can also create the function from a [[com.thoughtworks.dsl.Dsl.!!.apply !!]] block.
   *
@@ -272,7 +267,6 @@ package com.thoughtworks
   *          is not `Stream[String]` any more, the domain is `Stream[String] !! JSONType` now,
   *          which supports more keywords, which you will learnt from the next examples,
   *          than the `Stream[String]` domain.
-  *
   * @example [[com.thoughtworks.dsl.Dsl.$bang$bang !!]], or [[com.thoughtworks.dsl.Dsl.Continuation Continuation]],
   *          is the preferred approach to enable multiple domains in one function.
   *
@@ -338,7 +332,6 @@ package com.thoughtworks
   *          stream should be(Stream("line1", "line2", "line3"))
   *          isClosed should be(true)
   *          }}}
-  *
   * @example If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
   *          you can use `TailRec[Unit] !! Throwable !! A`
   *          or the alias [[com.thoughtworks.dsl.domains.task.Task]] as the return type,
@@ -404,7 +397,8 @@ package com.thoughtworks
   *          {{{
   *          import com.thoughtworks.dsl.domains.task.Task.blockingAwait
   *
-  *          val fileContent = blockingAwait(httpClient(new URL("http://example.com/")))
+  *          val url = new URL("http://localhost:4001/ping")
+  *          val fileContent = blockingAwait(httpClient(url))
   *          fileContent should startWith("HTTP/1.1 200 OK")
   *          }}}
   *
@@ -418,8 +412,8 @@ package com.thoughtworks
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Fork
   *          val Urls = Seq(
-  *            new URL("http://example.org/"),
-  *            new URL("http://example.com/")
+  *            new URL("http://localhost:4001/ping"),
+  *            new URL("http://localhost:4001/pong")
   *          )
   *          def parallelTask: Task[Seq[String]] = Task.join {
   *            val url = !Fork(Urls)
@@ -432,7 +426,6 @@ package com.thoughtworks
   *              fileContent1 should startWith("HTTP/1.1 200 OK")
   *          }
   *          }}}
-  *
   * @example The built-in [[com.thoughtworks.dsl.keywords.Monadic Monadic]] keyword can be used as an adaptor
   *          to [[scalaz.Monad]] and [[scalaz.MonadTrans]],
   *          to create monadic code from imperative syntax,
@@ -474,7 +467,6 @@ package com.thoughtworks
   *          }
   *
   *          }}}
-  *
   * @example The previous code requires a `toStream` conversion on `children`,
   *          because `children`'s type `Array[File]` does not fit the `F` type parameter in [[scalaz.Monad.bind]].
   *
@@ -524,7 +516,6 @@ package com.thoughtworks
   *          Unlike Haskell's do-notation or Idris's !-notation,
   *          Dsl.scala allows non-monadic keywords like [[com.thoughtworks.dsl.keywords.Each Each]] works along with
   *          monads.
-  *
   * @example Dsl.scala also supports [[scalaz.MonadTrans]].
   *          
   *          Considering the line counter implemented in previous example may be failed for some files,
@@ -568,7 +559,6 @@ package com.thoughtworks
   *          you can simply have `!Stream(children: _*)`.
   *          The implicit lifting feature looks like Idris's effect monads,
   *          though the mechanisms is different from `implicit lift` in Idris.
-  *
   * @see [[Dsl]] for the guideline to create your custom DSL.
   * @see [[domains.scalaz]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[scalaz]].
   * @see [[domains.cats]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[cats]].
