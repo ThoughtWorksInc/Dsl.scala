@@ -1,9 +1,13 @@
 package com.thoughtworks.dsl
 
 import com.thoughtworks.dsl.Dsl.!!
+import com.thoughtworks.enableMembersIf
 
 import scala.annotation._
+import scala.collection._
+import scala.collection.mutable.Builder
 import scala.concurrent.Future
+import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
@@ -30,7 +34,24 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 }
 
-private[dsl] trait LowPriorityDsl2 {
+private[dsl] trait LowPriorityDsl3 {
+
+  import Dsl._
+  import Scala211Or212._
+  import Scala213._
+
+  implicit def nothingFactoryDsl[Keyword, Element, Collection[_]](
+      implicit restDsl: Dsl[Keyword, Element, Nothing],
+      factory: Factory[Element, Collection[Element]]
+  ): Dsl[Keyword, Collection[Element], Nothing] =
+    new Dsl[Keyword, Collection[Element], Nothing] {
+      def cpsApply(keyword: Keyword, handler: Nothing => Collection[Element]): Collection[Element] = {
+        singleton(resetDomain(keyword))
+      }
+    }
+}
+
+private[dsl] trait LowPriorityDsl2 extends LowPriorityDsl3 {
 
   implicit def derivedFunction1Dsl[Keyword, State, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]
@@ -106,8 +127,33 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
 object Dsl extends LowPriorityDsl0 {
 
+  @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
+  private[dsl] object Scala211Or212 {
+    type Factory[-A, +C] = scala.collection.generic.CanBuildFrom[Nothing, A, C]
+
+    @inline
+    def singleton[A, C](a: A)(implicit factory: Factory[A, C]): C = {
+      val builder = factory()
+      builder.sizeHint(1)
+      builder += a
+      builder.result()
+    }
+
+  }
+
+  @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
+  private[dsl] object Scala213 {
+
+    @inline
+    def singleton[A, C](a: A)(implicit factory: Factory[A, C]): C = {
+      factory.fromSpecific(a :: Nil)
+    }
+
+  }
+
   @inline
-  private def resetDomain[Keyword, Domain](keyword: Keyword)(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
+  private[dsl] def resetDomain[Keyword, Domain](keyword: Keyword)(
+      implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
     dsl.cpsApply(keyword, identity)
   }
 
@@ -118,14 +164,6 @@ object Dsl extends LowPriorityDsl0 {
         _(resetDomain(keyword))
     }
 
-  implicit def nothingStreamDsl[Keyword, Domain](
-      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Stream[Domain], Nothing] =
-    new Dsl[Keyword, Stream[Domain], Nothing] {
-      def cpsApply(keyword: Keyword, handler: Nothing => Stream[Domain]): Stream[Domain] = {
-        resetDomain(keyword) #:: Stream.empty[Domain]
-      }
-    }
-
   implicit def nothingFutureDsl[Keyword, Domain](
       implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] =
     new Dsl[Keyword, Future[Domain], Nothing] {
@@ -133,6 +171,7 @@ object Dsl extends LowPriorityDsl0 {
         Future.successful(resetDomain(keyword))
       }
     }
+
 
   implicit def derivedTailRecDsl[Keyword, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] =
