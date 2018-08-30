@@ -225,7 +225,7 @@ lazy val `package` = project
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
-crossScalaVersions in ThisBuild := Seq("2.11.12", "2.12.6", "2.13.0-M4")
+crossScalaVersions in ThisBuild := Seq("2.13.0-M4", "2.12.6", "2.11.12")
 
 scalacOptions in ThisBuild ++= {
   if (scalaBinaryVersion.value == "2.11") {
