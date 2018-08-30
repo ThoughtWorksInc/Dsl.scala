@@ -34,7 +34,7 @@ import com.thoughtworks.dsl.Dsl.Keyword
   *
   * @example [[Put]] and [[Get]] support multiple states.
   *
-  *          The following code creates a formatter that [[Put]] parts of content into a `List[Any]` of string buffers.
+  *          The following code creates a formatter that [[Put]] parts of content into a `Vector[Any]` of string buffers.
   *
   *          {{{
   *          def formatter: Double => Int => Vector[Any] => String = {
