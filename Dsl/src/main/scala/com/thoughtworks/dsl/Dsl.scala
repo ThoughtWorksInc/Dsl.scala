@@ -41,8 +41,8 @@ private[dsl] trait LowPriorityDsl3 {
   import Scala213._
 
   implicit def nothingFactoryDsl[Keyword, Element, Collection[_]](
-      implicit restDsl: Dsl[Keyword, Element, Nothing],
-      factory: Factory[Element, Collection[Element]]
+      implicit factory: Factory[Element, Collection[Element]],
+      restDsl: Dsl[Keyword, Element, Nothing]
   ): Dsl[Keyword, Collection[Element], Nothing] =
     new Dsl[Keyword, Collection[Element], Nothing] {
       def cpsApply(keyword: Keyword, handler: Nothing => Collection[Element]): Collection[Element] = {
@@ -171,7 +171,6 @@ object Dsl extends LowPriorityDsl0 {
         Future.successful(resetDomain(keyword))
       }
     }
-
 
   implicit def derivedTailRecDsl[Keyword, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] =
