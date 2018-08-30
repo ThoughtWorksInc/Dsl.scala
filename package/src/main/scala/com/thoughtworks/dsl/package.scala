@@ -411,13 +411,14 @@ package com.thoughtworks
   *
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Fork
+  *          import com.thoughtworks.dsl.keywords.Return
   *          val Urls = Seq(
   *            new URL("http://localhost:4001/ping"),
   *            new URL("http://localhost:4001/pong")
   *          )
-  *          def parallelTask: Task[Seq[String]] = Task.join {
+  *          def parallelTask: Task[Seq[String]] = {
   *            val url = !Fork(Urls)
-  *            !httpClient(url)
+  *            !Return(!httpClient(url))
   *          }
   *
   *          inside(blockingAwait(parallelTask)) {
