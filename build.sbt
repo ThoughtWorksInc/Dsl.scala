@@ -284,3 +284,5 @@ parallelExecution in Global := {
 
 import sbtrelease.ReleaseStateTransformations._
 releaseProcess -= runTest
+
+Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
