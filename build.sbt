@@ -283,4 +283,4 @@ parallelExecution in Global := {
 }
 
 import sbtrelease.ReleaseStateTransformations._
-releaseProcess -= runClean
+releaseProcess -= runTest
