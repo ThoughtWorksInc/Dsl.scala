@@ -247,7 +247,7 @@ lazy val unidoc =
             inDependencies(`compilerplugins-BangNotation`) ||
             inDependencies(`compilerplugins-ResetEverywhere`)
           ) --
-            inProjects(`domains-taskJVM`, `keywords-EachJVM`, `keywords-ForkJVM`)
+            inProjects(DslJVM, `domains-taskJVM`, `keywords-EachJVM`, `keywords-ForkJVM`)
         } else {
           inDependencies(`package`) ||
           inDependencies(`compilerplugins-BangNotation`) ||
