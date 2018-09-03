@@ -71,7 +71,7 @@ case object Continue extends Continue with Keyword[Continue, Nothing] {
   import Scala211Or212._
   import Scala213._
 
-  implicit def continueFactoryDsl[Value, Element, Collection[_]](
+  implicit def collectionContinueDsl[Value, Element, Collection[_]](
       implicit factory: Factory[Element, Collection[Element]]): Dsl[Continue, Collection[Element], Value] =
     new Dsl[Continue, Collection[Element], Value] {
       def cpsApply(keyword: Continue, handler: Value => Collection[Element]): Collection[Element] = {
