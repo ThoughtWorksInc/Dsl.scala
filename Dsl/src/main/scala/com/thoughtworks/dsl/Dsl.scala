@@ -40,7 +40,7 @@ private[dsl] trait LowPriorityDsl3 {
   import Scala211Or212._
   import Scala213._
 
-  implicit def nothingFactoryDsl[Keyword, Element, Collection[_]](
+  implicit def nothingCollectionDsl[Keyword, Element, Collection[_]](
       implicit factory: Factory[Element, Collection[Element]],
       restDsl: Dsl[Keyword, Element, Nothing]
   ): Dsl[Keyword, Collection[Element], Nothing] =
