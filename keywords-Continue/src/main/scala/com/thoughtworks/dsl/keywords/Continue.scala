@@ -10,13 +10,38 @@ import scala.util.control.TailCalls
 import scala.util.control.TailCalls.TailRec
 import scala.collection._
 
-sealed class Continue extends Keyword[Continue, Nothing]
-
-/**
+/** The base type of [[Continue$ Continue]] keyword.
   *
+  * @see The [[Continue$ Continue]] object, which is the only instance of this [[Continue]] class.
+  */
+sealed class Continue
+
+/** A keyword to skip the current iteration in a collection comprehension block.
+  *
+  * @note This [[Continue$ Continue]] keyword is usually used with [[Each]], to skip an element in the loop.
+  * @see [[Each]] for creating collection comprehensions.
+  * @example [[Each]] and [[Continue$ Continue]] can be used to calculate composite numbers and prime numbers.
+  *
+  *          {{{
+  *          def compositeNumbersBelow(maxNumber: Int) = collection.immutable.HashSet {
+  *            val factor = !Each(2 until math.ceil(math.sqrt(maxNumber)).toInt)
+  *            !Each(2 * factor until maxNumber by factor)
+  *          }
+  *
+  *          compositeNumbersBelow(13) should be(Set(4, 6, 8, 9, 10, 12))
+  *
+  *          def primeNumbersBelow(maxNumber: Int) = Seq {
+  *            val compositeNumbers = compositeNumbersBelow(maxNumber)
+  *            val i = !Each(2 until maxNumber)
+  *            if (compositeNumbers(i)) !Continue
+  *            i
+  *          }
+  *
+  *          primeNumbersBelow(13) should be(Array(2, 3, 5, 7, 11))
+  *          }}}
   * @author 杨博 (Yang Bo)
   */
-case object Continue extends Continue {
+case object Continue extends Continue with Keyword[Continue, Nothing] {
 
   implicit def continueUnitDsl[Value]: Dsl[Continue, Unit, Value] = new Dsl[Continue, Unit, Value] {
     def cpsApply(keyword: Continue, handler: Value => Unit): Unit = ()
