@@ -67,7 +67,6 @@ object task {
           protectedContinuation(failureHandler)
         }
 
-        @noinline
         def run(): Unit = stackSafeRun().result
 
       })
@@ -97,7 +96,6 @@ object task {
     import Scala211Or212._
     import Scala213._
 
-    @noinline
     def join[Element, That](element: Element)(implicit factory: Factory[Element, That]): Task[That] @reset = now {
       (newBuilder[Element, That] += element).result()
     }

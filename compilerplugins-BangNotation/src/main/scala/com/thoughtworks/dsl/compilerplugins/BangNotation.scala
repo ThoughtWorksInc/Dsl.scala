@@ -37,15 +37,6 @@ final class BangNotation(override val global: Global) extends Plugin {
   private val hasScalaJsPlugin =
     global.settings.plugin.value.exists(_.matches("""^.*scalajs-compiler_.*\.jar$"""))
 
-  // Workaround for https://github.com/scala-js/scala-js/issues/3415
-  private def scalaJsIssues3415Workaround = {
-    if (hasScalaJsPlugin) {
-      definitions.ScalaNoInlineClass
-    } else {
-      definitions.ScalaInlineClass
-    }
-  }
-
   private var active = true
   private def deactAnalyzerPlugins[A](run: => A): A = {
     synchronized {
@@ -173,7 +164,7 @@ final class BangNotation(override val global: Global) extends Plugin {
       val bodyName = currentUnit.freshTermName("body")
       val endWhileName = currentUnit.freshTermName("endWhile")
       q"""
-      @${scalaJsIssues3415Workaround} def $whileName[$domainName]($endWhileName: => $domainName)(
+      @${definitions.ScalaInlineClass} def $whileName[$domainName]($endWhileName: => $domainName)(
         $bodyName: (=> $domainName) => $domainName,
         $conditionName: (_root_.scala.Boolean => $domainName) => $domainName): $domainName = {
         $conditionName { $conditionValueName: ${TypeTree()} =>
@@ -197,7 +188,7 @@ final class BangNotation(override val global: Global) extends Plugin {
       val bodyName = currentUnit.freshTermName("body")
       val endDoWhileName = currentUnit.freshTermName("endDoWhile")
       q"""
-      @${scalaJsIssues3415Workaround} def $doWhileName[$domainName]($endDoWhileName: => $domainName)(
+      @${definitions.ScalaInlineClass} def $doWhileName[$domainName]($endDoWhileName: => $domainName)(
         $bodyName: (=> $domainName) => $domainName,
         $conditionName: (_root_.scala.Boolean => $domainName) => $domainName): $domainName = {
         $bodyName {
@@ -330,7 +321,7 @@ final class BangNotation(override val global: Global) extends Plugin {
                 """.updateAttachment(HasReturn.Yes)
               } else {
                 q"""
-                  @${scalaJsIssues3415Workaround} def $endIfName = $endIfBody
+                  @${definitions.ScalaInlineClass} def $endIfName = $endIfBody
                 """.updateAttachment(HasReturn.No)
               }
             }
@@ -358,7 +349,7 @@ final class BangNotation(override val global: Global) extends Plugin {
                 """.updateAttachment(HasReturn.Yes)
               } else {
                 q"""
-                  @${scalaJsIssues3415Workaround} def $endMatchName = $endMatchBody
+                  @${definitions.ScalaInlineClass} def $endMatchName = $endMatchBody
                 """.updateAttachment(HasReturn.No)
               }
             }

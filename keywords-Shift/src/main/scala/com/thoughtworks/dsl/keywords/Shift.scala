@@ -47,7 +47,6 @@ object Shift extends LowPriorityShift0 {
   @inline
   implicit def implicitShift[Domain, Value](fa: Domain !! Value): Shift[Domain, Value] = new Shift[Domain, Value](fa)
 
-  @noinline
   private def shiftTailRec[R, Value](continuation: TailRec[R] !! Value, handler: Value => TailRec[R]) = {
     continuation { a =>
       val handler1 = handler
@@ -67,7 +66,6 @@ object Shift extends LowPriorityShift0 {
     protected def step(): LeftDomain !! Throwable
 
     @tailrec
-    @noinline
     private final def last(): LeftDomain !! Throwable = {
       step() match {
         case trampoline: TrampolineContinuation[LeftDomain] =>
@@ -88,7 +86,6 @@ object Shift extends LowPriorityShift0 {
     }
   }
 
-  @noinline
   private def suspend[LeftDomain, Value](
       continuation: LeftDomain !! Throwable !! Value,
       handler: Value => LeftDomain !! Throwable): TrampolineContinuation[LeftDomain] =
@@ -115,7 +112,6 @@ object Shift extends LowPriorityShift0 {
       }
     }
 
-  @noinline
   private def taskFlatMap[LeftDomain, RightDomain, Value](
       task: LeftDomain !! Throwable !! Value,
       handler0: Value => LeftDomain !! Throwable !! RightDomain): LeftDomain !! Throwable !! RightDomain = {
