@@ -461,23 +461,25 @@ final class BangNotation(override val global: Global) extends Plugin {
 
       if (mode.inExprMode) {
         val symbol = tree.symbol
-        if (symbol != null && symbol.hasAnnotation(shiftSymbol) && !tree.isDef) {
-          val q"$shiftOps.$shiftMethod" = tree
-          def attachment: CpsAttachment = { continue: (Tree => Tree) =>
-            val aName = currentUnit.freshTermName("a")
+        tree match {
+          case q"$shiftOps.$shiftMethod" if symbol != null && symbol.hasAnnotation(shiftSymbol) =>
+            def attachment: CpsAttachment = { continue: (Tree => Tree) =>
+              val aName = currentUnit.freshTermName("a")
 
-            // FIXME: tpe is a by-name type. I don't know why.
-            cpsAttachment(shiftOps) { shiftOpsValue =>
-              atPos(tree.pos) {
-                q"""
+              // FIXME: tpe is a by-name type. I don't know why.
+              cpsAttachment(shiftOps) { shiftOpsValue =>
+                atPos(tree.pos) {
+                  q"""
                   $shiftOpsValue.cpsApply(${toFunction1(continue, tpe)})
                 """
+                }
               }
             }
-          }
-          tree.updateAttachment[CpsAttachment](attachment)
-        } else if (isCpsTree(tree)) {
-          tree.updateAttachment[CpsAttachment](cps)
+            tree.updateAttachment[CpsAttachment](attachment)
+          case _ =>
+            if (isCpsTree(tree)) {
+              tree.updateAttachment[CpsAttachment](cps)
+            }
         }
       }
 
