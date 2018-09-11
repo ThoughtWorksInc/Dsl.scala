@@ -2,7 +2,7 @@ package com.thoughtworks.dsl.keywords
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Keyword
 
-/** S [[Keyword]] to put the [[value]] to the context.
+/** [[Put]] is a [[Keyword]] to put the [[value]] to the context.
   *
   * Purely functional programming languages usually do not support native first-class mutable variables.
   * In those languages, mutable states can be implemented in state monads.
