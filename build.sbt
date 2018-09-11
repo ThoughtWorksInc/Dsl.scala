@@ -128,6 +128,17 @@ lazy val `keywords-Catch` =
 lazy val `keywords-CatchJS` = `keywords-Catch`.js
 lazy val `keywords-CatchJVM` = `keywords-Catch`.jvm
 
+lazy val `keywords-NullSafe` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl)
+lazy val `keywords-NullSafeJS` = `keywords-NullSafe`.js
+lazy val `keywords-NullSafeJVM` = `keywords-NullSafe`.jvm
+
 lazy val `keywords-Each` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -217,6 +228,7 @@ lazy val `package` = project
     `keywords-EachJVM`,
     `keywords-YieldJVM`,
     `keywords-ForkJVM`,
+    `keywords-NullSafeJVM`,
     `keywords-AwaitJVM`,
     `keywords-AsynchronousIoJVM`,
     `keywords-UsingJVM`,
