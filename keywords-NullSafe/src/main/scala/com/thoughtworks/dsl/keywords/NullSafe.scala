@@ -8,7 +8,6 @@ import scala.language.implicitConversions
 import scala.language.higherKinds
 import scala.annotation.{StaticAnnotation, TypeConstraint, compileTimeOnly}
 
-
 /** [[NullSafe]] is a keyword to perform `null` check.
   *
   * @example You can use [[NullSafe$.? ?]] annotation to represent a nullable value.
@@ -58,8 +57,16 @@ import scala.annotation.{StaticAnnotation, TypeConstraint, compileTimeOnly}
   *
   * @author 杨博 (Yang Bo)
   */
-final case class NullSafe[A <: AnyRef](nullable: A @ ?)
-    extends AnyVal with Keyword[NullSafe[A], NotNull[A]] {
+final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
+
+  @inline
+  final def cpsApply[Domain >: Null](handler: NotNull[A] => Domain @ ?): Domain @ ? = {
+    if (nullable == null) {
+      null
+    } else {
+      handler(NotNull(nullable))
+    }
+  }
 
   @shift
   @compileTimeOnly(
@@ -87,16 +94,6 @@ object NullSafe {
 
   /** @template */
   type ? = reset
-
-  implicit def nullSafeDsl[A <: AnyRef, Domain >: Null] =
-    new Dsl[NullSafe[A], Domain @ ?, NotNull[A]] {
-      def cpsApply(keyword: NullSafe[A], handler: NotNull[A] => (Domain @ ?)): Domain @ ? =
-        if (keyword.nullable == null) {
-          null
-        } else {
-          handler(NotNull(keyword.nullable))
-        }
-    }
 
   implicit def implicitNullSafe[A <: AnyRef](nullable: A @ ?) = new NullSafe[A](nullable)
 
