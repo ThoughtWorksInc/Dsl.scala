@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ThoughtWorksInc/Dsl.scala.svg?branch=master)](https://travis-ci.org/ThoughtWorksInc/Dsl.scala)
 [![Latest version](https://index.scala-lang.org/thoughtworksinc/dsl.scala/dsl/latest.svg)](https://index.scala-lang.org/thoughtworksinc/dsl.scala)
-[![Scaladoc](https://javadoc.io/badge/com.thoughtworks.dsl/dsl_2.12.svg?label=scaladoc)](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html)
+[![Scaladoc](https://javadoc.io/badge/com.thoughtworks.dsl/dsl_2.12.svg?label=scaladoc)](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html) [![Join the chat at https://gitter.im/ThoughtWorksInc/Dsl.scala](https://badges.gitter.im/ThoughtWorksInc/Dsl.scala.svg)](https://gitter.im/ThoughtWorksInc/Dsl.scala?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 **Dsl.scala** is a framework to create embedded **D**omain-**S**pecific **L**anguages in Scala.
 
