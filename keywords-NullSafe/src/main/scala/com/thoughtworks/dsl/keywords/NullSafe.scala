@@ -41,12 +41,12 @@ import scala.annotation.compileTimeOnly
   *          root.?.right.?.left.?.value should be(null)
   *          }}}
   *
-  *          The entire expression is `null` if one of `?` is performed on a `null` value.
+  *          The entire expression is `null` if one of [[?]] is performed on a null` value.
   *
   *          <hr/>
   *
   *          The boundary of a null safe operator [[?]] is the nearest enclosing expression
-  *          whose type is annotated as [[NullSafe$.? ?]].
+  *          whose type is annotated as `@ ?`.
   *
   *          {{{
   *          ("Hello " + ("world " + root.?.right.?.left.?.value)) should be("Hello world null")
@@ -86,6 +86,9 @@ import scala.annotation.compileTimeOnly
   *       }}}
   *
   * @author 杨博 (Yang Bo)
+  *
+  * @define qmark ?
+  *
   */
 final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
 
@@ -136,7 +139,7 @@ object NullSafe {
     *         NotNull(o) should be(o)
     *         }}}
     *
-    * @throws NullPointerException if `a` is `null`.
+    * @throws java.lang.NullPointerException if `a` is `null`.
     *
     *         {{{
     *         import com.thoughtworks.dsl.keywords.NullSafe._
