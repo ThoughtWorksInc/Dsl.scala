@@ -62,12 +62,12 @@ import scala.annotation.compileTimeOnly
   *       import com.thoughtworks.dsl.keywords.NullSafe._
   *
   *       val explicitNullable: String @ $qmark = null
-  *       (explicitNullable.? + " Doe" : @ $qmark) should be(null)
+  *       ((explicitNullable.? + " Doe") : @ $qmark) should be(null)
   *       }}}
   *
   *       {{{
   *       val implicitNullable: String = null
-  *       (implicitNullable.? + " Doe" : @ $qmark) should be(null)
+  *       ((implicitNullable.? + " Doe") : @ $qmark) should be(null)
   *       }}}
   *
   *       A type is considered as not nullable if it is a value type.
@@ -78,7 +78,7 @@ import scala.annotation.compileTimeOnly
   *       }}}
   *
   *       Alternatively, a type can be considered as not nullable
-  *       by explicitly converting it to [[NullSafe$.NotNull NotNull]].
+  *       by explicitly converting it to [[NotNull]].
   *
   *       {{{
   *       val explicitNotNullable: NotNull[String] = NotNull("John")
@@ -115,18 +115,20 @@ final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
 object NullSafe {
 
   private[NullSafe] trait OpaqueTypes {
-    type NotNull[A] <: A
+    type NotNull[+A] <: A
 
     private[NullSafe] def toNotNull[A](a: A): NotNull[A]
   }
 
   private[NullSafe] val OpaqueTypes: OpaqueTypes = new OpaqueTypes {
-    type NotNull[A] = A
+    type NotNull[+A] = A
     private[NullSafe] def toNotNull[A](a: A) = a
   }
 
-  /** @template */
-  type NotNull[A] = OpaqueTypes.NotNull[A]
+  /**
+    * @usecase type NotNull[+A] <: A
+    */
+  type NotNull[+A] = OpaqueTypes.NotNull[A]
 
   /** Returns `a` if `a` is not `null`.
     *
