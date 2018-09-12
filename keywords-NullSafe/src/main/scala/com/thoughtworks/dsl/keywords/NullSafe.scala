@@ -62,12 +62,12 @@ import scala.annotation.compileTimeOnly
   *       import com.thoughtworks.dsl.keywords.NullSafe._
   *
   *       val explicitNullable: String @ $qmark = null
-  *       (explicitNullable.? + " Doe" : @ $qmark) should be(null)
+  *       ((explicitNullable.? + " Doe") : @ $qmark) should be(null)
   *       }}}
   *
   *       {{{
   *       val implicitNullable: String = null
-  *       (implicitNullable.? + " Doe" : @ $qmark) should be(null)
+  *       ((implicitNullable.? + " Doe") : @ $qmark) should be(null)
   *       }}}
   *
   *       A type is considered as not nullable if it is a value type.
