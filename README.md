@@ -22,6 +22,7 @@ We also provide some built-in keywords, including:
  * The `Break` keyword for terminating the current context without a return value, similar to the native `break` keyword in C/C++.
  * The `Using` keyword to automatically close resources when exiting a scope, similar to the native `using` keyword in C#.
  * The `Monadic` keyword for creating Scalaz or Cats monadic control flow, similar to the !-notation in Idris.
+ * The `NullSafe` keyword for the null safe operator, similar to the `?` operator in Kotlin and Groovy.
 
 All the above keywords can be used together with each others. For example you can perform list comprehension to manipulate native resources in an asynchronous task by using `Each`, `AutoClose` and `Shift` together.
 
