@@ -1,12 +1,11 @@
 package com.thoughtworks.dsl.keywords
-import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{Keyword, ResetAnnotation, reset, shift}
+import com.thoughtworks.dsl.Dsl.{reset, shift}
 import com.thoughtworks.dsl.keywords.NullSafe.?
-import com.thoughtworks.dsl.keywords.NullSafe.OpaqueTypes.NotNull
+import com.thoughtworks.dsl.keywords.NullSafe.NotNull
 
 import scala.language.implicitConversions
 import scala.language.higherKinds
-import scala.annotation.{StaticAnnotation, TypeConstraint, compileTimeOnly}
+import scala.annotation.compileTimeOnly
 
 /** [[NullSafe]] is a keyword to perform `null` check.
   *
@@ -26,7 +25,7 @@ import scala.annotation.{StaticAnnotation, TypeConstraint, compileTimeOnly}
   *          )
   *          }}}
   *
-  *          Normal `.` is not null safe, when selecting nullable `left`, `right` or `value`.
+  *          A normal `.` is not null safe, when selecting `left`, `right` or `value` on a `null` value.
   *
   *          {{{
   *          a[NullPointerException] should be thrownBy {
@@ -42,20 +41,54 @@ import scala.annotation.{StaticAnnotation, TypeConstraint, compileTimeOnly}
   *          root.?.right.?.left.?.value should be(null)
   *          }}}
   *
-  *          The entire expression is `null` if one of `?` is performed on a `null` value.
+  *          The entire expression is `null` if one of [[?]] is performed on a null` value.
   *
   *          <hr/>
   *
   *          The boundary of a null safe operator [[?]] is the nearest enclosing expression
-  *          whose type is annotated as [[NullSafe$.? ?]].
+  *          whose type is annotated as `@ ?`.
   *
   *          {{{
   *          ("Hello " + ("world " + root.?.right.?.left.?.value)) should be("Hello world null")
   *          ("Hello " + (("world " + root.?.right.?.left.?.value.?): @ $qmark)) should be("Hello null")
   *          (("Hello " + ("world " + root.?.right.?.left.?.value.?)): @ $qmark) should be(null)
   *          }}}
+  * @note The [[?]] operator is only available on nullable values.
+  *
+  *       A type is considered as nullable if it is a reference type,
+  *       no matter it is annotated as `@ ?` or not.
+  *
+  *       {{{
+  *       import com.thoughtworks.dsl.keywords.NullSafe._
+  *
+  *       val explicitNullable: String @ $qmark = null
+  *       (explicitNullable.? + " Doe" : @ $qmark) should be(null)
+  *       }}}
+  *
+  *       {{{
+  *       val implicitNullable: String = null
+  *       (implicitNullable.? + " Doe" : @ $qmark) should be(null)
+  *       }}}
+  *
+  *       A type is considered as not nullable if it is a value type.
+  *
+  *       {{{
+  *       val implicitNotNullable: Int = 0
+  *       "(implicitNotNullable.? + 42) : @ $qmark" shouldNot compile
+  *       }}}
+  *
+  *       Alternatively, a type can be considered as not nullable
+  *       by explicitly converting it to [[NullSafe$.NotNull NotNull]].
+  *
+  *       {{{
+  *       val explicitNotNullable: NotNull[String] = NotNull("John")
+  *       """(explicitNotNullable.? + " Doe") : @ $qmark""" shouldNot compile
+  *       }}}
   *
   * @author 杨博 (Yang Bo)
+  *
+  * @define qmark ?
+  *
   */
 final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
 
@@ -64,7 +97,7 @@ final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
     if (nullable == null) {
       null
     } else {
-      handler(NotNull(nullable))
+      handler(NullSafe.OpaqueTypes.toNotNull(nullable))
     }
   }
 
@@ -81,15 +114,46 @@ final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
 
 object NullSafe {
 
-  trait OpaqueTypes {
+  private[NullSafe] trait OpaqueTypes {
     type NotNull[A] <: A
 
-    private[NullSafe] def NotNull[A](a: A): NotNull[A]
+    private[NullSafe] def toNotNull[A](a: A): NotNull[A]
   }
 
-  val OpaqueTypes: OpaqueTypes = new OpaqueTypes {
+  private[NullSafe] val OpaqueTypes: OpaqueTypes = new OpaqueTypes {
     type NotNull[A] = A
-    private[NullSafe] def NotNull[A](a: A) = a
+    private[NullSafe] def toNotNull[A](a: A) = a
+  }
+
+  /** @template */
+  type NotNull[A] = OpaqueTypes.NotNull[A]
+
+  /** Returns `a` if `a` is not `null`.
+    *
+    * @return `a` if `a` is not `null`.
+    *
+    *         {{{
+    *         import com.thoughtworks.dsl.keywords.NullSafe._
+    *
+    *         val o = new AnyRef
+    *         NotNull(o) should be(o)
+    *         }}}
+    *
+    * @throws java.lang.NullPointerException if `a` is `null`.
+    *
+    *         {{{
+    *         import com.thoughtworks.dsl.keywords.NullSafe._
+    *         a[NullPointerException] should be thrownBy {
+    *           NotNull(null)
+    *         }
+    *         }}}
+    */
+  def NotNull[A](a: A): NotNull[A] = {
+    if (a == null) {
+      throw new NullPointerException
+    } else {
+      OpaqueTypes.toNotNull(a)
+    }
   }
 
   /** @template */
