@@ -53,6 +53,16 @@ import scala.annotation.compileTimeOnly
   *          ("Hello " + (("world " + root.?.right.?.left.?.value.?): @ $qmark)) should be("Hello null")
   *          (("Hello " + ("world " + root.?.right.?.left.?.value.?)): @ $qmark) should be(null)
   *          }}}
+  *
+  * @example The [[?]] operator usually works with Java libraries that may produce `null`.
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.NullSafe._
+  *
+  *          val myMap = new java.util.HashMap[String, String]();
+  *          ((myMap.get("key1").? + myMap.get("key2").?): @ $qmark) should be(null)
+  *          }}}
+  *
   * @note The [[?]] operator is only available on nullable values.
   *
   *       A type is considered as nullable if it is a reference type,
