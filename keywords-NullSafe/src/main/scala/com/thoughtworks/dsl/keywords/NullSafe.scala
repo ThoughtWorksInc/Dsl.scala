@@ -41,7 +41,7 @@ import scala.annotation.compileTimeOnly
   *          root.?.right.?.left.?.value should be(null)
   *          }}}
   *
-  *          The entire expression is `null` if one of [[?]] is performed on a null` value.
+  *          The entire expression is `null` if one of [[?]] is performed on a `null` value.
   *
   *          <hr/>
   *
