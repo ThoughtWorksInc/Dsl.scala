@@ -2,13 +2,18 @@ package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Keyword
+import com.thoughtworks.dsl.keywords.Yield.From
+import com.thoughtworks.enableMembersIf
 
+import scala.collection._
+import scala.collection.generic.CanBuildFrom
 import scala.concurrent.Future
 import scala.language.implicitConversions
+import scala.language.higherKinds
 
 /**
   * @author 杨博 (Yang Bo)
-  * @example This `Yield` keyword must be put inside a function that returns `Stream[Element]` or `Stream[Element] !! ...`,
+  * @example This `Yield` keyword must be put inside a function that returns `Seq[Element]` or `Seq[Element] !! ...`,
   *          or it will not compile.
   *
   *          {{{
@@ -18,40 +23,148 @@ import scala.language.implicitConversions
   */
 final case class Yield[Element](element: Element) extends AnyVal with Keyword[Yield[Element], Unit]
 
-object Yield {
+private[keywords] object YieldScalaVersions {
 
-  final case class From[Element](elements: Stream[Element]) extends AnyVal with Keyword[From[Element], Unit]
+  @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
+  object Scala211Or212 {
+    trait LowPriorityYield0 {
 
-  def apply[Element](element0: Element, element1: Element, restElements: Element*) = {
-    From(new Stream.Cons(element0, new Stream.Cons(element1, restElements.toStream)))
+      implicit def seqYieldFromDsl[A,
+                                   B >: A,
+                                   FromCollection[X] <: Iterable[X],
+                                   Collection[X] <: SeqLike[X, Collection[X]]](
+          implicit canBuildFrom: CanBuildFrom[Collection[B], B, Collection[B]])
+        : Dsl[From[FromCollection, A], Collection[B], Unit] =
+        new Dsl[From[FromCollection, A], Collection[B], Unit] {
+          def cpsApply(keyword: From[FromCollection, A], generateTail: Unit => Collection[B]): Collection[B] = {
+            keyword.elements ++: generateTail(())
+          }
+        }
+
+      implicit def futureSeqYieldFromDsl[A,
+                                         B >: A,
+                                         FromCollection[X] <: Iterable[X],
+                                         Collection[X] <: SeqLike[X, Collection[X]]](
+          implicit canBuildFrom: CanBuildFrom[Collection[Future[B]], Future[B], Collection[Future[B]]])
+        : Dsl[From[FromCollection, A], Collection[Future[B]], Unit] =
+        new Dsl[From[FromCollection, A], Collection[Future[B]], Unit] {
+          def cpsApply(keyword: From[FromCollection, A],
+                       generateTail: Unit => Collection[Future[B]]): Collection[Future[B]] = {
+            keyword.elements.map(Future.successful) ++: generateTail(())
+          }
+        }
+
+      implicit def seqYieldDsl[A, B >: A, Collection[X] <: SeqLike[X, Collection[X]]](
+          implicit canBuildFrom: CanBuildFrom[Collection[B], B, Collection[B]]): Dsl[Yield[A], Collection[B], Unit] =
+        new Dsl[Yield[A], Collection[B], Unit] {
+          def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {
+            keyword.element +: generateTail(())
+          }
+        }
+
+      implicit def futureSeqYieldDsl[A, B >: A, Collection[X] <: SeqLike[X, Collection[X]]](
+          implicit canBuildFrom: CanBuildFrom[Collection[Future[B]], Future[B], Collection[Future[B]]])
+        : Dsl[Yield[A], Collection[Future[B]], Unit] =
+        new Dsl[Yield[A], Collection[Future[B]], Unit] {
+          def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[Future[B]]): Collection[Future[B]] = {
+            Future.successful(keyword.element) +: generateTail(())
+          }
+        }
+
+    }
   }
 
-  implicit def implicitYieldFrom[Element](elements: Stream[Element]): From[Element] = From[Element](elements)
+  @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
+  object Scala213 {
+    trait LowPriorityYield0 {
 
-  implicit def yieldFromDsl[Element, That >: Element]: Dsl[From[Element], Stream[That], Unit] =
-    new Dsl[From[Element], Stream[That], Unit] {
-      def cpsApply(keyword: From[Element], generateTail: Unit => Stream[That]): Stream[That] = {
-        keyword.elements.append(generateTail(()))
+      implicit def seqYieldFromDsl[A,
+                                   B >: A,
+                                   FromCollection[X] <: Iterable[X],
+                                   Collection[X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
+        : Dsl[From[FromCollection, A], Collection[B], Unit] =
+        new Dsl[From[FromCollection, A], Collection[B], Unit] {
+          def cpsApply(keyword: From[FromCollection, A], generateTail: Unit => Collection[B]): Collection[B] = {
+            keyword.elements ++: generateTail(())
+          }
+        }
+
+      implicit def futureSeqYieldFromDsl[A,
+                                         B >: A,
+                                         FromCollection[X] <: Iterable[X],
+                                         Collection[X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
+        : Dsl[From[FromCollection, A], Collection[Future[B]], Unit] =
+        new Dsl[From[FromCollection, A], Collection[Future[B]], Unit] {
+          def cpsApply(keyword: From[FromCollection, A],
+                       generateTail: Unit => Collection[Future[B]]): Collection[Future[B]] = {
+            keyword.elements.map(Future.successful) ++: generateTail(())
+          }
+        }
+
+      implicit def seqYieldDsl[A, B >: A, Collection[+X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
+        : Dsl[Yield[A], Collection[B], Unit] =
+        new Dsl[Yield[A], Collection[B], Unit] {
+          def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {
+            keyword.element +: generateTail(())
+          }
+        }
+
+      implicit def futureSeqYieldDsl[A, B >: A, Collection[X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
+        : Dsl[Yield[A], Collection[Future[B]], Unit] =
+        new Dsl[Yield[A], Collection[Future[B]], Unit] {
+          def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[Future[B]]): Collection[Future[B]] = {
+            Future.successful(keyword.element) +: generateTail(())
+          }
+        }
+
+    }
+  }
+
+}
+
+import YieldScalaVersions.Scala211Or212._
+import YieldScalaVersions.Scala213._
+
+object Yield extends LowPriorityYield0 {
+
+  final case class From[Collection[_], Element](elements: Collection[Element])
+      extends AnyVal
+      with Keyword[From[Collection, Element], Unit]
+
+  def apply[Element](element0: Element, element1: Element, restElements: Element*) = {
+    From(element0 +: element1 +: restElements)
+  }
+
+  implicit def implicitYieldFrom[FromCollection[_], Element](
+      elements: FromCollection[Element]): From[FromCollection, Element] = From[FromCollection, Element](elements)
+
+  implicit def streamYieldFromDsl[A, B >: A, FromCollection[X] <: Iterable[X]]
+    : Dsl[From[FromCollection, A], Stream[B], Unit] =
+    new Dsl[From[FromCollection, A], Stream[B], Unit] {
+      def cpsApply(keyword: From[FromCollection, A], generateTail: Unit => Stream[B]): Stream[B] = {
+        keyword.elements.toStream.append(generateTail(()))
       }
     }
 
-  implicit def futureYieldFromDsl[Element, That >: Element]: Dsl[From[Element], Stream[Future[That]], Unit] =
-    new Dsl[From[Element], Stream[Future[That]], Unit] {
-      def cpsApply(keyword: From[Element], generateTail: Unit => Stream[Future[That]]): Stream[Future[That]] = {
-        keyword.elements.map(Future.successful).append(generateTail(()))
+  implicit def futureStreamYieldFromDsl[Element, That >: Element, FromCollection[X] <: Iterable[X]]
+    : Dsl[From[FromCollection, Element], Stream[Future[That]], Unit] =
+    new Dsl[From[FromCollection, Element], Stream[Future[That]], Unit] {
+      def cpsApply(keyword: From[FromCollection, Element],
+                   generateTail: Unit => Stream[Future[That]]): Stream[Future[That]] = {
+        keyword.elements.toStream.map(Future.successful).append(generateTail(()))
       }
     }
 
   implicit def implicitYield[Element](element: Element): Yield[Element] = Yield[Element](element)
 
-  implicit def yieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
+  implicit def streamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
     new Dsl[Yield[Element], Stream[That], Unit] {
       def cpsApply(keyword: Yield[Element], generateTail: Unit => Stream[That]): Stream[That] = {
         new Stream.Cons(keyword.element, generateTail(()))
       }
     }
 
-  implicit def futureYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[Future[That]], Unit] =
+  implicit def futureStreamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[Future[That]], Unit] =
     new Dsl[Yield[Element], Stream[Future[That]], Unit] {
       def cpsApply(keyword: Yield[Element], generateTail: Unit => Stream[Future[That]]): Stream[Future[That]] = {
         new Stream.Cons(Future.successful(keyword.element), generateTail(()))
