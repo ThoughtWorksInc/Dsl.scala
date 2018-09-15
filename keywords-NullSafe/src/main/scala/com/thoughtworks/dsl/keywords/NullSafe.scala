@@ -38,10 +38,10 @@ import scala.annotation.compileTimeOnly
   *          The exception can be avoided by using [[?]] on a nullable value:
   *
   *          {{{
-  *          root.?.right.?.left.?.value should be(null)
+  *          root.?.right.?.left.?.right.?.value should be(null)
   *          }}}
   *
-  *          The entire expression is `null` if one of [[?]] is performed on a `null` value.
+  *          The entire expression will be `null` if one of [[?]] is performed on a `null` value.
   *
   *          <hr/>
   *
