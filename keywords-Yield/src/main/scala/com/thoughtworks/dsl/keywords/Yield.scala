@@ -23,11 +23,46 @@ import scala.language.higherKinds
   */
 final case class Yield[Element](element: Element) extends AnyVal with Keyword[Yield[Element], Unit]
 
+private[keywords] trait LowPriorityYield1 {
+
+  implicit def iteratorYieldFromDsl[A, B >: A, FromCollection[X] <: Iterator[X]]
+    : Dsl[From[FromCollection, A], Iterator[B], Unit] =
+    new Dsl[From[FromCollection, A], Iterator[B], Unit] {
+      def cpsApply(keyword: From[FromCollection, A], generateTail: Unit => Iterator[B]): Iterator[B] = {
+        keyword.elements ++ generateTail(())
+      }
+    }
+
+  implicit def futureIteratorYieldFromDsl[A, B >: A, FromCollection[X] <: Iterator[X]]
+    : Dsl[From[FromCollection, A], Iterator[Future[B]], Unit] =
+    new Dsl[From[FromCollection, A], Iterator[Future[B]], Unit] {
+      def cpsApply(keyword: From[FromCollection, A], generateTail: Unit => Iterator[Future[B]]): Iterator[Future[B]] = {
+        keyword.elements.map(Future.successful) ++ generateTail(())
+      }
+    }
+
+  implicit def iteratorYieldDsl[A, B >: A]: Dsl[Yield[A], Iterator[B], Unit] =
+    new Dsl[Yield[A], Iterator[B], Unit] {
+      def cpsApply(keyword: Yield[A], generateTail: Unit => Iterator[B]): Iterator[B] = {
+        Iterator.single(keyword.element) ++ generateTail(())
+      }
+    }
+
+  implicit def futureIteratorYieldDsl[A, B >: A]: Dsl[Yield[A], Iterator[Future[B]], Unit] =
+    new Dsl[Yield[A], Iterator[Future[B]], Unit] {
+      def cpsApply(keyword: Yield[A], generateTail: Unit => Iterator[Future[B]]): Iterator[Future[B]] = {
+        Iterator.single(Future.successful(keyword.element)) ++ generateTail(())
+      }
+    }
+
+}
+
 private[keywords] object YieldScalaVersions {
 
   @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
   object Scala211Or212 {
-    trait LowPriorityYield0 {
+
+    trait LowPriorityYield0 extends LowPriorityYield1 {
 
       implicit def seqYieldFromDsl[A,
                                    B >: A,
@@ -76,7 +111,7 @@ private[keywords] object YieldScalaVersions {
 
   @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
   object Scala213 {
-    trait LowPriorityYield0 {
+    trait LowPriorityYield0 extends LowPriorityYield1 {
 
       implicit def seqYieldFromDsl[A,
                                    B >: A,
