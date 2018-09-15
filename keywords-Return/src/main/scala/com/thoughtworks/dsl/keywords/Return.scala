@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.Dsl.Keyword
 
 import scala.language.implicitConversions
 
-/** A [[Keyword]] to early return a lifted value from the enclosing function.
+/** A [[Dsl.Keyword]] to early return a lifted value from the enclosing function.
   *
   * @author 杨博 (Yang Bo)
   * @example Suppose you are generating a random integer less than 100,
