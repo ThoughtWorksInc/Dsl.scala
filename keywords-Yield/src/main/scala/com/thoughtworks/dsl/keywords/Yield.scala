@@ -33,25 +33,10 @@ private[keywords] trait LowPriorityYield1 {
       }
     }
 
-  implicit def futureIteratorYieldFromDsl[A, B >: A, FromCollection[X] <: Iterator[X]]
-    : Dsl[From[FromCollection, A], Iterator[Future[B]], Unit] =
-    new Dsl[From[FromCollection, A], Iterator[Future[B]], Unit] {
-      def cpsApply(keyword: From[FromCollection, A], generateTail: Unit => Iterator[Future[B]]): Iterator[Future[B]] = {
-        keyword.elements.map(Future.successful) ++ generateTail(())
-      }
-    }
-
   implicit def iteratorYieldDsl[A, B >: A]: Dsl[Yield[A], Iterator[B], Unit] =
     new Dsl[Yield[A], Iterator[B], Unit] {
       def cpsApply(keyword: Yield[A], generateTail: Unit => Iterator[B]): Iterator[B] = {
         Iterator.single(keyword.element) ++ generateTail(())
-      }
-    }
-
-  implicit def futureIteratorYieldDsl[A, B >: A]: Dsl[Yield[A], Iterator[Future[B]], Unit] =
-    new Dsl[Yield[A], Iterator[Future[B]], Unit] {
-      def cpsApply(keyword: Yield[A], generateTail: Unit => Iterator[Future[B]]): Iterator[Future[B]] = {
-        Iterator.single(Future.successful(keyword.element)) ++ generateTail(())
       }
     }
 
@@ -76,33 +61,11 @@ private[keywords] object YieldScalaVersions {
           }
         }
 
-      implicit def futureSeqYieldFromDsl[A,
-                                         B >: A,
-                                         FromCollection[X] <: Iterable[X],
-                                         Collection[X] <: SeqLike[X, Collection[X]]](
-          implicit canBuildFrom: CanBuildFrom[Collection[Future[B]], Future[B], Collection[Future[B]]])
-        : Dsl[From[FromCollection, A], Collection[Future[B]], Unit] =
-        new Dsl[From[FromCollection, A], Collection[Future[B]], Unit] {
-          def cpsApply(keyword: From[FromCollection, A],
-                       generateTail: Unit => Collection[Future[B]]): Collection[Future[B]] = {
-            keyword.elements.map(Future.successful) ++: generateTail(())
-          }
-        }
-
       implicit def seqYieldDsl[A, B >: A, Collection[X] <: SeqLike[X, Collection[X]]](
           implicit canBuildFrom: CanBuildFrom[Collection[B], B, Collection[B]]): Dsl[Yield[A], Collection[B], Unit] =
         new Dsl[Yield[A], Collection[B], Unit] {
           def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {
             keyword.element +: generateTail(())
-          }
-        }
-
-      implicit def futureSeqYieldDsl[A, B >: A, Collection[X] <: SeqLike[X, Collection[X]]](
-          implicit canBuildFrom: CanBuildFrom[Collection[Future[B]], Future[B], Collection[Future[B]]])
-        : Dsl[Yield[A], Collection[Future[B]], Unit] =
-        new Dsl[Yield[A], Collection[Future[B]], Unit] {
-          def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[Future[B]]): Collection[Future[B]] = {
-            Future.successful(keyword.element) +: generateTail(())
           }
         }
 
@@ -124,31 +87,11 @@ private[keywords] object YieldScalaVersions {
           }
         }
 
-      implicit def futureSeqYieldFromDsl[A,
-                                         B >: A,
-                                         FromCollection[X] <: Iterable[X],
-                                         Collection[X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
-        : Dsl[From[FromCollection, A], Collection[Future[B]], Unit] =
-        new Dsl[From[FromCollection, A], Collection[Future[B]], Unit] {
-          def cpsApply(keyword: From[FromCollection, A],
-                       generateTail: Unit => Collection[Future[B]]): Collection[Future[B]] = {
-            keyword.elements.map(Future.successful) ++: generateTail(())
-          }
-        }
-
       implicit def seqYieldDsl[A, B >: A, Collection[+X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
         : Dsl[Yield[A], Collection[B], Unit] =
         new Dsl[Yield[A], Collection[B], Unit] {
           def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {
             keyword.element +: generateTail(())
-          }
-        }
-
-      implicit def futureSeqYieldDsl[A, B >: A, Collection[X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
-        : Dsl[Yield[A], Collection[Future[B]], Unit] =
-        new Dsl[Yield[A], Collection[Future[B]], Unit] {
-          def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[Future[B]]): Collection[Future[B]] = {
-            Future.successful(keyword.element) +: generateTail(())
           }
         }
 
