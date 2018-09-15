@@ -29,10 +29,10 @@ private[keywords] trait LowPriorityYield2 {
     From(elements)
   }
 
-  implicit def iteratorYieldFromDsl[A, B >: A, FromCollection <: TraversableOnce[A]]
-    : Dsl[From[FromCollection], Iterator[B], Unit] =
-    new Dsl[From[FromCollection], Iterator[B], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Iterator[B]): Iterator[B] = {
+  implicit def iteratorYieldFromDsl[A, FromCollection <: TraversableOnce[A]]
+    : Dsl[From[FromCollection], Iterator[A], Unit] =
+    new Dsl[From[FromCollection], Iterator[A], Unit] {
+      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Iterator[A]): Iterator[A] = {
         keyword.elements.toIterator ++ generateTail(())
       }
     }
@@ -53,12 +53,12 @@ private[keywords] object YieldScalaVersions {
 
     trait LowPriorityYield1 extends LowPriorityYield2 {
 
-      implicit def seqViewYieldFromDsl[A, B >: A, FromCollection <: Iterable[A], Coll1, Coll2](
-          implicit canBuildFrom: CanBuildFrom[SeqView[B, Coll1], B, SeqView[B, Coll2]])
-        : Dsl[From[FromCollection], SeqView[B, Coll1], Unit] =
-        new Dsl[From[FromCollection], SeqView[B, Coll1], Unit] {
-          def cpsApply(keyword: From[FromCollection], generateTail: Unit => SeqView[B, Coll1]): SeqView[B, Coll1] = {
-            (keyword.elements ++: generateTail(()))(canBuildFrom).asInstanceOf[SeqView[B, Coll1]]
+      implicit def seqViewYieldFromDsl[A, FromCollection <: Traversable[A], Coll1, Coll2](
+          implicit canBuildFrom: CanBuildFrom[SeqView[A, Coll1], A, SeqView[A, Coll2]])
+        : Dsl[From[FromCollection], SeqView[A, Coll1], Unit] =
+        new Dsl[From[FromCollection], SeqView[A, Coll1], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => SeqView[A, Coll1]): SeqView[A, Coll1] = {
+            (keyword.elements.toIterable ++: generateTail(()))(canBuildFrom).asInstanceOf[SeqView[A, Coll1]]
           }
         }
 
@@ -74,14 +74,11 @@ private[keywords] object YieldScalaVersions {
 
     trait LowPriorityYield0 extends LowPriorityYield1 {
 
-      implicit def seqYieldFromDsl[A,
-                                   B >: A,
-                                   FromCollection <: Iterable[A],
-                                   Collection[X] <: SeqLike[X, Collection[X]]](
-          implicit canBuildFrom: CanBuildFrom[Collection[B], B, Collection[B]])
-        : Dsl[From[FromCollection], Collection[B], Unit] =
-        new Dsl[From[FromCollection], Collection[B], Unit] {
-          def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[B]): Collection[B] = {
+      implicit def seqYieldFromDsl[A, FromCollection <: Iterable[A], Collection[X] <: SeqLike[X, Collection[X]]](
+          implicit canBuildFrom: CanBuildFrom[Collection[A], A, Collection[A]])
+        : Dsl[From[FromCollection], Collection[A], Unit] =
+        new Dsl[From[FromCollection], Collection[A], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[A]): Collection[A] = {
             keyword.elements ++: generateTail(())
           }
         }
@@ -102,10 +99,10 @@ private[keywords] object YieldScalaVersions {
 
     trait LowPriorityYield1 extends LowPriorityYield2 {
 
-      implicit def viewYieldFromDsl[A, B >: A, FromCollection <: View.SomeIterableOps[A]]
-        : Dsl[From[FromCollection], View[B], Unit] =
-        new Dsl[From[FromCollection], View[B], Unit] {
-          def cpsApply(keyword: From[FromCollection], generateTail: Unit => View[B]): View[B] = {
+      implicit def viewYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A]]
+        : Dsl[From[FromCollection], View[A], Unit] =
+        new Dsl[From[FromCollection], View[A], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => View[A]): View[A] = {
             new View.Concat(keyword.elements, generateTail(()))
           }
         }
@@ -134,12 +131,11 @@ private[keywords] object YieldScalaVersions {
 
     trait LowPriorityYield0 extends LowPriorityYield1 {
       implicit def seqYieldFromDsl[A,
-                                   B >: A,
                                    FromCollection <: View.SomeIterableOps[A],
                                    Collection[X] <: SeqOps[X, Collection, Collection[X]]]
-        : Dsl[From[FromCollection], Collection[B], Unit] =
-        new Dsl[From[FromCollection], Collection[B], Unit] {
-          def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[B]): Collection[B] = {
+        : Dsl[From[FromCollection], Collection[A], Unit] =
+        new Dsl[From[FromCollection], Collection[A], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[A]): Collection[A] = {
             keyword.elements.toIterable ++: generateTail(())
           }
         }
@@ -169,18 +165,17 @@ object Yield extends LowPriorityYield0 {
   implicit def implicitYieldFrom[FromCollection <: TraversableOnce[_]](elements: FromCollection): From[FromCollection] =
     From(elements)
 
-  implicit def streamYieldFromDsl[A, B >: A, FromCollection <: Iterable[A]]
-    : Dsl[From[FromCollection], Stream[B], Unit] =
-    new Dsl[From[FromCollection], Stream[B], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Stream[B]): Stream[B] = {
+  implicit def streamYieldFromDsl[A, FromCollection <: Iterable[A]]: Dsl[From[FromCollection], Stream[A], Unit] =
+    new Dsl[From[FromCollection], Stream[A], Unit] {
+      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Stream[A]): Stream[A] = {
         keyword.elements.toStream.append(generateTail(()))
       }
     }
 
-  implicit def futureStreamYieldFromDsl[A, B >: A, FromCollection <: Iterable[A]]
-    : Dsl[From[FromCollection], Stream[Future[B]], Unit] =
-    new Dsl[From[FromCollection], Stream[Future[B]], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Stream[Future[B]]): Stream[Future[B]] = {
+  implicit def futureStreamYieldFromDsl[A, FromCollection <: Iterable[A]]
+    : Dsl[From[FromCollection], Stream[Future[A]], Unit] =
+    new Dsl[From[FromCollection], Stream[Future[A]], Unit] {
+      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Stream[Future[A]]): Stream[Future[A]] = {
         keyword.elements.toStream.map(Future.successful).append(generateTail(()))
       }
     }
