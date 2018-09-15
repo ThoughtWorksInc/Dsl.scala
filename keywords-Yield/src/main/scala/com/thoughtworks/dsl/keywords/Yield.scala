@@ -23,7 +23,7 @@ import scala.language.higherKinds
   */
 final case class Yield[Element](element: Element) extends AnyVal with Keyword[Yield[Element], Unit]
 
-private[keywords] trait LowPriorityYield1 {
+private[keywords] trait LowPriorityYield2 {
 
   def apply[A](elements: A*) = {
     From(elements)
@@ -50,6 +50,27 @@ private[keywords] object YieldScalaVersions {
 
   @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
   object Scala211Or212 {
+
+    trait LowPriorityYield1 extends LowPriorityYield2 {
+
+      implicit def seqViewYieldFromDsl[A, B >: A, FromCollection <: Iterable[A], Coll1, Coll2](
+          implicit canBuildFrom: CanBuildFrom[SeqView[B, Coll1], B, SeqView[B, Coll2]])
+        : Dsl[From[FromCollection], SeqView[B, Coll1], Unit] =
+        new Dsl[From[FromCollection], SeqView[B, Coll1], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => SeqView[B, Coll1]): SeqView[B, Coll1] = {
+            (keyword.elements ++: generateTail(()))(canBuildFrom).asInstanceOf[SeqView[B, Coll1]]
+          }
+        }
+
+      implicit def seqViewYieldDsl[A, B >: A, Coll1, Coll2](
+          implicit canBuildFrom: CanBuildFrom[scala.collection.SeqView[B, Coll1], B, SeqView[B, Coll2]])
+        : Dsl[Yield[A], SeqView[B, Coll1], Unit] =
+        new Dsl[Yield[A], SeqView[B, Coll1], Unit] {
+          def cpsApply(keyword: Yield[A], generateTail: Unit => SeqView[B, Coll1]): SeqView[B, Coll1] = {
+            (keyword.element +: generateTail(()))(canBuildFrom).asInstanceOf[SeqView[B, Coll1]]
+          }
+        }
+    }
 
     trait LowPriorityYield0 extends LowPriorityYield1 {
 
@@ -78,20 +99,52 @@ private[keywords] object YieldScalaVersions {
 
   @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
   object Scala213 {
-    trait LowPriorityYield0 extends LowPriorityYield1 {
 
-      implicit def seqYieldFromDsl[A,
-                                   B >: A,
-                                   FromCollection <: Iterable[A],
-                                   Collection[X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
-        : Dsl[From[FromCollection], Collection[B], Unit] =
-        new Dsl[From[FromCollection], Collection[B], Unit] {
-          def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[B]): Collection[B] = {
-            keyword.elements ++: generateTail(())
+    trait LowPriorityYield1 extends LowPriorityYield2 {
+
+      implicit def viewYieldFromDsl[A, B >: A, FromCollection <: View.SomeIterableOps[A]]
+        : Dsl[From[FromCollection], View[B], Unit] =
+        new Dsl[From[FromCollection], View[B], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => View[B]): View[B] = {
+            new View.Concat(keyword.elements, generateTail(()))
           }
         }
 
-      implicit def seqYieldDsl[A, B >: A, Collection[+X] <: Seq[X] with SeqOps[X, Collection, Collection[X]]]
+      implicit def seqViewYieldDsl[A, B >: A]: Dsl[Yield[A], SeqView[B], Unit] =
+        new Dsl[Yield[A], SeqView[B], Unit] {
+          def cpsApply(keyword: Yield[A], generateTail: Unit => SeqView[B]): SeqView[B] = {
+            generateTail(()).prepended(keyword.element)
+          }
+        }
+
+      implicit def indexedSeqViewYieldDsl[A, B >: A]: Dsl[Yield[A], IndexedSeqView[B], Unit] =
+        new Dsl[Yield[A], IndexedSeqView[B], Unit] {
+          def cpsApply(keyword: Yield[A], generateTail: Unit => IndexedSeqView[B]): IndexedSeqView[B] = {
+            generateTail(()).prepended(keyword.element)
+          }
+        }
+
+      implicit def viewYieldDsl[A, B >: A]: Dsl[Yield[A], View[B], Unit] =
+        new Dsl[Yield[A], View[B], Unit] {
+          def cpsApply(keyword: Yield[A], generateTail: Unit => View[B]): View[B] = {
+            new View.Concat[B](new View.Single(keyword.element), generateTail(()))
+          }
+        }
+    }
+
+    trait LowPriorityYield0 extends LowPriorityYield1 {
+      implicit def seqYieldFromDsl[A,
+                                   B >: A,
+                                   FromCollection <: View.SomeIterableOps[A],
+                                   Collection[X] <: SeqOps[X, Collection, Collection[X]]]
+        : Dsl[From[FromCollection], Collection[B], Unit] =
+        new Dsl[From[FromCollection], Collection[B], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[B]): Collection[B] = {
+            keyword.elements.toIterable ++: generateTail(())
+          }
+        }
+
+      implicit def seqYieldDsl[A, B >: A, Collection[+X] <: SeqOps[X, Collection, Collection[X]]]
         : Dsl[Yield[A], Collection[B], Unit] =
         new Dsl[Yield[A], Collection[B], Unit] {
           def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {

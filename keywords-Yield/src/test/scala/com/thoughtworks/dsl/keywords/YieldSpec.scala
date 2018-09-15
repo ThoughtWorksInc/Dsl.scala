@@ -11,9 +11,24 @@ import scala.runtime.NonLocalReturnControl
   */
 class YieldSpec extends FreeSpec with Matchers {
 
-  {
+  locally {
     !Yield("naked")
     Stream.empty[String]
+  } // should compile
+
+  locally {
+    !Yield("naked")
+    Iterator.empty: Iterator[String]
+  } // should compile
+
+  locally {
+    !Yield("naked")
+    Vector.empty[String]
+  } // should compile
+
+  locally {
+    !Yield("naked")
+    Vector.empty[String].view
   } // should compile
 
   "local method" in {
