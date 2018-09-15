@@ -30,8 +30,8 @@ package com.thoughtworks
   *
   * For example, the [[https://akka.io akka]] provides
   * [[https://doc.akka.io/docs/akka/2.5.10/fsm.html a DSL to create finite-state machines]],
-  * which consists of some domain-specific keywords like [[akka.actor.AbstractFSM#when when]],
-  * [[akka.actor.AbstractFSM#goto goto]] and [[akka.actor.AbstractFSM#stay stay]].
+  * which consists of some domain-specific keywords like [[akka.actor.FSM!.when when]],
+  * [[akka.actor.FSM!.goto goto]] and [[akka.actor.FSM!.stay stay]].
   * Unfortunately, you cannot embedded those keywords into your ordinary `if` / `while` / `try` control flows,
   * because Akka's DSL is required to be split into small closures,
   * preventing ordinary control flows from crossing the boundary of those closures.
@@ -74,7 +74,7 @@ package com.thoughtworks
   *
   * For example, [[https://github.com/scala/scala-async scala.async]] provides a macro
   * to generate asynchronous control flow.
-  * The users just wrap normal synchronous code in a [[scala.async]] block,
+  * The users just wrap normal synchronous code in a [[scala.async.Async.async async]] block,
   * and it runs asynchronously.
   *
   * This approach can be generalized to any monadic data types.
@@ -101,7 +101,7 @@ package com.thoughtworks
   * For example, [[https://github.com/qifun/stateless-future-akka stateless-future-akka]],
   * based on `stateless-future`,
   * provides a special final result type for akka actors.
-  * Unlike [[akka.actor.AbstractFSM]]'s inconsistent control flows, users can create complex finite-state machines
+  * Unlike [[akka.actor.FSM]]'s inconsistent control flows, users can create complex finite-state machines
   * from simple ordinary control flows along with `stateless-future-akka`'s domain-specific keyword `nextMessage`.
   *
   * == Collaborative DSLs ==
@@ -188,7 +188,7 @@ package com.thoughtworks
   *          where [[com.thoughtworks.dsl.Dsl.$bang$bang !!]] is
   *          `(JSONType => Stream[String]) => Stream[String]`,
   *          an alias of continuation-passing style function,
-  *          indicating it produces both a [[scala.util.parsing.json.JSONType JSONType]] and a [[Stream]] of logs.
+  *          indicating it produces both a [[scala.util.parsing.json.JSONType JSONType]] and a [[scala.Stream Stream]] of logs.
   *
   *          {{{
   *          val logs = parseAndLog1(""" { "key": "value" } """, JSONArray(Nil)) { json =>
@@ -203,60 +203,60 @@ package com.thoughtworks
   * @example The closure in the previous example can be simplified with the help of Scala's placeholder syntax:
   *
   *          {{{
-  *                    import com.thoughtworks.dsl.keywords.Yield
-  *                    import com.thoughtworks.dsl.Dsl.!!
-  *                    import scala.util.parsing.json._
-  *                    def parseAndLog2(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
-  *                      !Yield(s"I am going to parse the JSON text $jsonContent...")
-  *                      JSON.parseRaw(jsonContent) match {
-  *                        case Some(json) =>
-  *                          !Yield(s"Succeeded to parse $jsonContent")
-  *                          json
-  *                        case None =>
-  *                          !Yield(s"Failed to parse $jsonContent")
-  *                          defaultValue
-  *                      }
-  *                    }
+  *          import com.thoughtworks.dsl.keywords.Yield
+  *          import com.thoughtworks.dsl.Dsl.!!
+  *          import scala.util.parsing.json._
+  *          def parseAndLog2(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
+  *            !Yield(s"I am going to parse the JSON text $jsonContent...")
+  *            JSON.parseRaw(jsonContent) match {
+  *              case Some(json) =>
+  *                !Yield(s"Succeeded to parse $jsonContent")
+  *                json
+  *              case None =>
+  *                !Yield(s"Failed to parse $jsonContent")
+  *                defaultValue
+  *            }
+  *          }
   *
-  *                    val logs = parseAndLog2(""" { "key": "value" } """, JSONArray(Nil)) { json =>
-  *                      json should be(JSONObject(Map("key" -> "value")))
-  *                      Stream("done")
-  *                    }
+  *          val logs = parseAndLog2(""" { "key": "value" } """, JSONArray(Nil)) { json =>
+  *            json should be(JSONObject(Map("key" -> "value")))
+  *            Stream("done")
+  *          }
   *
-  *                    logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
-  *                                          "Succeeded to parse  { \"key\": \"value\" } ",
-  *                                          "done"))
+  *          logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
+  *                                "Succeeded to parse  { \"key\": \"value\" } ",
+  *                                "done"))
   *          }}}
   *
   *          Note that `parseAndLog2` is equivelent to `parseAndLog1`.
   *          The code block after underscore is still inside a function whose return type is `Stream[String]`.
   * @example Instead of manually create the continuation-passing style function,
-  *          you can also create the function from a [[com.thoughtworks.dsl.Dsl.!!.apply !!]] block.
+  *          you can also create the function from a [[com.thoughtworks.dsl.Dsl.$bang$bang !!]] block.
   *
   *          {{{
-  *                    import com.thoughtworks.dsl.keywords.Yield
-  *                    import com.thoughtworks.dsl.Dsl.!!
-  *                    import scala.util.parsing.json._
-  *                    def parseAndLog3(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = !! {
-  *                      !Yield(s"I am going to parse the JSON text $jsonContent...")
-  *                      JSON.parseRaw(jsonContent) match {
-  *                        case Some(json) =>
-  *                          !Yield(s"Succeeded to parse $jsonContent")
-  *                          json
-  *                        case None =>
-  *                          !Yield(s"Failed to parse $jsonContent")
-  *                          defaultValue
-  *                      }
-  *                    }
+  *          import com.thoughtworks.dsl.keywords.Yield
+  *          import com.thoughtworks.dsl.Dsl.!!
+  *          import scala.util.parsing.json._
+  *          def parseAndLog3(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = !! {
+  *            !Yield(s"I am going to parse the JSON text $jsonContent...")
+  *            JSON.parseRaw(jsonContent) match {
+  *              case Some(json) =>
+  *                !Yield(s"Succeeded to parse $jsonContent")
+  *                json
+  *              case None =>
+  *                !Yield(s"Failed to parse $jsonContent")
+  *                defaultValue
+  *            }
+  *          }
   *
-  *                    val logs = parseAndLog3(""" { "key": "value" } """, JSONArray(Nil)) { json =>
-  *                      json should be(JSONObject(Map("key" -> "value")))
-  *                      Stream("done")
-  *                    }
+  *          val logs = parseAndLog3(""" { "key": "value" } """, JSONArray(Nil)) { json =>
+  *            json should be(JSONObject(Map("key" -> "value")))
+  *            Stream("done")
+  *          }
   *
-  *                    logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
-  *                                          "Succeeded to parse  { \"key\": \"value\" } ",
-  *                                          "done"))
+  *          logs should be(Stream("I am going to parse the JSON text  { \"key\": \"value\" } ...",
+  *                                "Succeeded to parse  { \"key\": \"value\" } ",
+  *                                "done"))
   *          }}}
   *
   *          Unlike the `parseAndLog2` example, The code inside a `!!` block is not in an anonymous function.
@@ -271,7 +271,7 @@ package com.thoughtworks
   *          is the preferred approach to enable multiple domains in one function.
   *
   *          For example, you can create a function that
-  *          lazily read each line of a [[java.io.BufferedReader BufferedReader]] to a [[Stream]],
+  *          lazily read each line of a [[java.io.BufferedReader BufferedReader]] to a [[scala.Stream Stream]],
   *          automatically close the [[java.io.BufferedReader BufferedReader]] after reading the last line,
   *          and finally return the total number of lines in the `Stream[String] !! Throwable !! Int` domain.
   *
@@ -300,12 +300,12 @@ package com.thoughtworks
   *          }}}
   *
   *          `!loop(0)` is a shortcut of `!Shift(loop(0))`,
-  *          because there is [[com.thoughtworks.dsl.keywords.Shift#implicitShift an implicit conversion]]
-  *          from `Stream[String] !! Throwable !! Int` to a [[com.thoughtworks.dsl.keywords.Shift Shift]] case class,
+  *          because there is [[keywords.Shift.implicitShift an implicit conversion]]
+  *          from `Stream[String] !! Throwable !! Int` to a [[keywords.Shift]] case class,
   *          which is similar to the `await` keyword in JavaScript, Python or C#.
   *
   *          A type like `A !! B !! C` means a domain-specific value of type `C` in the domain of `A` and `B`.
-  *          When `B` is [[Throwable]], the [[com.thoughtworks.dsl.keywords.Using Using]]
+  *          When `B` is [[scala.Throwable Throwable]], the [[keywords.Using]]
   *          is available, which will close a resource when exiting the current function.
   *
   *          {{{
@@ -332,15 +332,15 @@ package com.thoughtworks
   *          stream should be(Stream("line1", "line2", "line3"))
   *          isClosed should be(true)
   *          }}}
-  * @example If you don't need to collaborate to [[scala.collection.immutable.Stream Stream]] or other domains,
+  * @example If you don't need to collaborate to [[scala.Stream Stream]] or other domains,
   *          you can use `TailRec[Unit] !! Throwable !! A`
-  *          or the alias [[com.thoughtworks.dsl.domains.task.Task]] as the return type,
+  *          or the alias [[domains.task.Task]] as the return type,
   *          which can be used as an asynchronous task that support RAII,
   *          as a higher-performance replacement of
   *          [[scala.concurrent.Future]], [[scalaz.concurrent.Task]] or [[monix.eval.Task]].
   *
-  *          Also, there are some keywords in [[com.thoughtworks.dsl.keywords.AsynchronousIo]]
-  *          to asynchronously perform Java NIO.2 IO operations in a [[com.thoughtworks.dsl.domains.task.Task]] domain.
+  *          Also, there are some keywords in [[keywords.AsynchronousIo]]
+  *          to asynchronously perform Java NIO.2 IO operations in a [[domains.task.Task]] domain.
   *          For example, you can implement an HTTP client from those keywords.
   *
   *          {{{
@@ -392,7 +392,7 @@ package com.thoughtworks
   *          You can check the result or exception in asynchronous handlers.
   *
   *          But we also provides [[com.thoughtworks.dsl.domains.task.Task.blockingAwait blockingAwait]] and some other utilities
-  *          at [[com.thoughtworks.dsl.domains.task.Task]].
+  *          at [[domains.task.Task]].
   *
   *          {{{
   *          import com.thoughtworks.dsl.domains.task.Task.blockingAwait
@@ -427,13 +427,13 @@ package com.thoughtworks
   *              fileContent1 should startWith("HTTP/1.1 200 OK")
   *          }
   *          }}}
-  * @example The built-in [[com.thoughtworks.dsl.keywords.Monadic Monadic]] keyword can be used as an adaptor
+  * @example The built-in [[keywords.Monadic]] can be used as an adaptor
   *          to [[scalaz.Monad]] and [[scalaz.MonadTrans]],
   *          to create monadic code from imperative syntax,
   *          similar to the !-notation in Idris.
   *
   *          For example, suppose you are creating a program that counts lines of code under a directory.
-  *          You want to store the result in a [[scala.collection.immutable.Stream Stream]] of line count of each file.
+  *          You want to store the result in a [[scala.Stream Stream]] of line count of each file.
   *
   *          {{{
   *          import java.io.File

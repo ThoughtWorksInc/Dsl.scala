@@ -3,13 +3,7 @@ enablePlugins(Example)
 
 import Ordering.Implicits._
 
-libraryDependencies ++= {
-  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
-    None
-  } else {
-    Some("org.typelevel" %%% "cats-effect" % "0.9" % Test)
-  }
-}
+libraryDependencies += "org.typelevel" %%% "cats-effect" % "1.0.0" % Optional
 
 sourceGenerators in Test := {
   (sourceGenerators in Test).value.filterNot { sourceGenerator =>

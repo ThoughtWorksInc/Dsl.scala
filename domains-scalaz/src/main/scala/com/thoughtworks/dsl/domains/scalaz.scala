@@ -14,7 +14,7 @@ import scala.util.control.Exception.Catcher
 import scala.util.control.{ControlThrowable, NonFatal}
 
 /** Contains interpreters to enable [[Dsl.Keyword#unary_$bang !-notation]]
-  * for [[keywords.Monadic]] and other keywords
+  * for [[keywords.Monadic Monadic]] and other keywords
   * in code blocks whose type support [[scalaz.Bind]], [[scalaz.MonadError]] and [[scalaz.MonadTrans]].
   *
   * @example [[scalaz.Free.Trampoline]] is a monadic data type that performs tail call optimization.
@@ -92,7 +92,7 @@ import scala.util.control.{ControlThrowable, NonFatal}
   *          i.e. `trampoline3` is a vanilla [[scalaz.Free.Trampoline Trampoline]],
   *          while `trampolineSuccess0` is a [[com.thoughtworks.tryt.invariant.TryT TryT]]-transfomred
   *          [[scalaz.Free.Trampoline Trampoline]].
-  *          It is possible because the interpreters of this [[Monadic]] keyword invoke
+  *          It is possible because the interpreters of the [[keywords.Monadic]] invoke
   *          [[scalaz.MonadTrans.liftM]] automatically.
   *
   *          The above `dslTryCatch` method is equivalent to the following code in [[scalaz.syntax]]:

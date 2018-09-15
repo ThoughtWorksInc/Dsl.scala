@@ -88,7 +88,7 @@ import scala.annotation.compileTimeOnly
   *       }}}
   *
   *       Alternatively, a type can be considered as not nullable
-  *       by explicitly converting it to [[NotNull]].
+  *       by explicitly converting it to [[com.thoughtworks.dsl.keywords.NullSafe.NotNull[A]* NotNull]].
   *
   *       {{{
   *       val explicitNotNullable: NotNull[String] = NotNull("John")

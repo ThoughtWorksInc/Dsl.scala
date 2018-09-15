@@ -10,17 +10,18 @@ libraryDependencies ++= {
     Nil
   } else {
     Seq(
-      "org.scala-lang.modules" %% "scala-async" % "0.9.7",
-      "com.typesafe.akka" %% "akka-actor" % "2.5.14",
-      "com.twitter" %% "algebird-core" % "0.13.4",
-      "com.thoughtworks.binding" %% "binding" % "11.0.1",
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0",
-      "org.scalacheck" %% "scalacheck" % "1.13.5",
-      "com.thoughtworks.each" %% "each" % "3.3.1",
-      "com.lihaoyi" %% "sourcecode" % "0.1.4",
-      "io.monix" %% "monix" % "2.3.3",
-      "com.typesafe.akka" %% "akka-stream" % "2.5.14" % Test,
-      "com.typesafe.akka" %% "akka-http" % "10.1.3" % Test
+      "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
+      "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
+      "com.typesafe.akka" %% "akka-actor" % "2.5.14" % Optional,
+      "com.twitter" %% "algebird-core" % "0.13.4" % Optional,
+      "com.thoughtworks.binding" %% "binding" % "11.0.1" % Optional,
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0" % Optional,
+      "org.scalacheck" %% "scalacheck" % "1.13.5" % Optional,
+      "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
+      "com.lihaoyi" %% "sourcecode" % "0.1.4" % Optional,
+      "io.monix" %% "monix" % "2.3.3" % Optional,
+      "com.typesafe.akka" %% "akka-stream" % "2.5.14" % Optional,
+      "com.typesafe.akka" %% "akka-http" % "10.1.3" % Optional
     )
   }
 }
