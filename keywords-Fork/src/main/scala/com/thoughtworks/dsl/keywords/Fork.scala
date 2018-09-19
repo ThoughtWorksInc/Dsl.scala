@@ -100,7 +100,7 @@ object Fork {
       booleanEachDsl: Dsl[Each[Boolean], LeftDomain, Boolean],
       isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
       canBuildFrom: Factory[WidenElement, RightDomain],
-      continueDsl: Dsl[Continue, LeftDomain, Nothing],
+      continueDsl: Dsl[Abort, LeftDomain, Nothing],
       catchDsl: CatchDsl[LeftDomain, LeftDomain, Unit]
   ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] =
     new Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] {
@@ -124,12 +124,12 @@ object Fork {
               ()
           } finally {
             if (counter.decrementAndGet() > 0) {
-              !Continue
+              !Abort
             }
           }
         } else {
           if (counter.decrementAndGet() > 0) {
-            !Continue
+            !Abort
           }
         }
 
