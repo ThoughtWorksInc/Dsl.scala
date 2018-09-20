@@ -17,7 +17,7 @@ We also provide some built-in keywords, including:
  * The `AsynchronousIo.Connect`, `AsynchronousIo.Accept`, `AsynchronousIo.Read` and `AsynchronousIo.Write` keyword for perform I/O on an asynchronous channel.
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
  * The `Each` keyword for iterating on a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
- * The `Abort` keyword LDK for skipping an element in a `Each` collection comprehension, similar to the native `continue` keyword in C/C++.
+ * The `Continue` keyword LDK for skipping an element in a `Each` collection comprehension, similar to the native \lstinline{continue} keyword in C/C++.
  * The `Fork` keyword for duplicating current context, similar to the `fork` system call in POSIX.
  * The `Return` keyword for early returning, similar to the native `return` keyword in Scala.
  * The `Using` keyword to automatically close resources when exiting a scope, similar to the native `using` keyword in C#.

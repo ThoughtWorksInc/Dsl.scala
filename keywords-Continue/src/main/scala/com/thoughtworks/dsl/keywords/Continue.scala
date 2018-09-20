@@ -10,17 +10,17 @@ import scala.util.control.TailCalls
 import scala.util.control.TailCalls.TailRec
 import scala.collection._
 
-/** The base type of [[Abort$ Abort]] keyword.
+/** The base type of [[Continue$ Continue]] keyword.
   *
-  * @see The [[Abort$ Abort]] object, which is the only instance of this [[Abort]] class.
+  * @see The [[Continue$ Continue]] object, which is the only instance of this [[Continue]] class.
   */
-sealed class Abort
+sealed class Continue
 
 /** A keyword to skip the current iteration in a collection comprehension block.
   *
-  * @note This [[Abort$ Abort]] keyword is usually used with [[Each]], to skip an element in the loop.
+  * @note This [[Continue$ Continue]] keyword is usually used with [[Each]], to skip an element in the loop.
   * @see [[Each]] for creating collection comprehensions.
-  * @example [[Each]] and [[Abort$ Abort]] can be used to calculate composite numbers and prime numbers.
+  * @example [[Each]] and [[Continue$ Continue]] can be used to calculate composite numbers and prime numbers.
   *
   *          {{{
   *          def compositeNumbersBelow(maxNumber: Int) = collection.immutable.HashSet {
@@ -33,7 +33,7 @@ sealed class Abort
   *          def primeNumbersBelow(maxNumber: Int) = Seq {
   *            val compositeNumbers = compositeNumbersBelow(maxNumber)
   *            val i = !Each(2 until maxNumber)
-  *            if (compositeNumbers(i)) !Abort
+  *            if (compositeNumbers(i)) !Continue
   *            i
   *          }
   *
@@ -41,10 +41,10 @@ sealed class Abort
   *          }}}
   * @author 杨博 (Yang Bo)
   */
-case object Abort extends Abort with Keyword[Abort, Nothing] {
+case object Continue extends Continue with Keyword[Continue, Nothing] {
 
-  implicit def continueUnitDsl[Value]: Dsl[Abort, Unit, Value] = new Dsl[Abort, Unit, Value] {
-    def cpsApply(keyword: Abort, handler: Value => Unit): Unit = ()
+  implicit def continueUnitDsl[Value]: Dsl[Continue, Unit, Value] = new Dsl[Continue, Unit, Value] {
+    def cpsApply(keyword: Continue, handler: Value => Unit): Unit = ()
   }
 
   @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
@@ -71,10 +71,10 @@ case object Abort extends Abort with Keyword[Abort, Nothing] {
   import Scala211Or212._
   import Scala213._
 
-  implicit def collectionAbortDsl[Value, Element, Collection[_]](
-      implicit factory: Factory[Element, Collection[Element]]): Dsl[Abort, Collection[Element], Value] =
-    new Dsl[Abort, Collection[Element], Value] {
-      def cpsApply(keyword: Abort, handler: Value => Collection[Element]): Collection[Element] = {
+  implicit def collectionContinueDsl[Value, Element, Collection[_]](
+      implicit factory: Factory[Element, Collection[Element]]): Dsl[Continue, Collection[Element], Value] =
+    new Dsl[Continue, Collection[Element], Value] {
+      def cpsApply(keyword: Continue, handler: Value => Collection[Element]): Collection[Element] = {
         empty[Element, Collection[Element]]
       }
     }
