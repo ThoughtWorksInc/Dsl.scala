@@ -34,7 +34,7 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 }
 
-private[dsl] trait LowPriorityDsl3 {
+private[dsl] trait LowPriorityDsl2 {
 
   import Dsl._
   import Scala211Or212._
@@ -51,20 +51,24 @@ private[dsl] trait LowPriorityDsl3 {
     }
 }
 
-private[dsl] trait LowPriorityDsl2 extends LowPriorityDsl3 {
+private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 
   implicit def derivedFunction1Dsl[Keyword, State, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]
   ): Dsl[Keyword, State => Domain, Value] =
     new Dsl[Keyword, State => Domain, Value] {
-      def cpsApply(keyword: Keyword, handler: Value => State => Domain): State => Domain = { state: State =>
-        restDsl.cpsApply(keyword, handler(_)(state))
+      def cpsApply(keyword: Keyword, handler: Value => State => Domain): State => Domain = {
+        val restDsl1 = restDsl
+        locally { state: State =>
+          val handler1 = handler
+          restDsl1.cpsApply(keyword, handler1(_)(state))
+        }
       }
     }
 
 }
 
-private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
+private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
@@ -80,24 +84,6 @@ private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 //      }
 //    }
 //  }
-
-  implicit def derivedContinuationDsl[Keyword, LeftDomain, RightDomain, Value](
-      implicit restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
-    new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
-      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
-        val restDsl1 = restDsl
-        (continue: RightDomain => LeftDomain) =>
-          val handler1 = handler
-          restDsl1.cpsApply(keyword, { a =>
-            handler1(a)(continue)
-          })
-      }
-    }
-  }
-}
-
-private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
   implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
