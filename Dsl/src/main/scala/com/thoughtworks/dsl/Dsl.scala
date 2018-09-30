@@ -57,8 +57,12 @@ private[dsl] trait LowPriorityDsl2 extends LowPriorityDsl3 {
       implicit restDsl: Dsl[Keyword, Domain, Value]
   ): Dsl[Keyword, State => Domain, Value] =
     new Dsl[Keyword, State => Domain, Value] {
-      def cpsApply(keyword: Keyword, handler: Value => State => Domain): State => Domain = { state: State =>
-        restDsl.cpsApply(keyword, handler(_)(state))
+      def cpsApply(keyword: Keyword, handler: Value => State => Domain): State => Domain = {
+        val restDsl1 = restDsl
+        locally { state: State =>
+          val handler1 = handler
+          restDsl1.cpsApply(keyword, handler1(_)(state))
+        }
       }
     }
 
@@ -81,20 +85,10 @@ private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 //    }
 //  }
 
-  implicit def derivedContinuationDsl[Keyword, LeftDomain, RightDomain, Value](
+  @inline implicit def derivedContinuationDsl[Keyword, LeftDomain, RightDomain, Value](
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
-    new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
-      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
-        val restDsl1 = restDsl
-        (continue: RightDomain => LeftDomain) =>
-          val handler1 = handler
-          restDsl1.cpsApply(keyword, { a =>
-            handler1(a)(continue)
-          })
-      }
-    }
-  }
+  ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = derivedFunction1Dsl(restDsl)
+
 }
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
