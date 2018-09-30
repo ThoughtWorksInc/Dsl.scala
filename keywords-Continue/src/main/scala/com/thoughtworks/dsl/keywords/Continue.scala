@@ -79,4 +79,12 @@ case object Continue extends Continue with Keyword[Continue, Nothing] {
       }
     }
 
+  implicit def OptionContinueDsl[Value, Element](
+      implicit factory: Factory[Element, Option[Element]]): Dsl[Continue, Option[Element], Value] =
+    new Dsl[Continue, Option[Element], Value] {
+      def cpsApply(keyword: Continue, handler: Value => Option[Element]): Option[Element] = {
+        None
+      }
+    }
+
 }

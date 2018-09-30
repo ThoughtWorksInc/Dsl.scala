@@ -17,12 +17,13 @@ We also provide some built-in keywords, including:
  * The `AsynchronousIo.Connect`, `AsynchronousIo.Accept`, `AsynchronousIo.Read` and `AsynchronousIo.Write` keyword for perform I/O on an asynchronous channel.
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
  * The `Each` keyword for iterating on a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
- * The `Continue` keyword LDK for skipping an element in a `Each` collection comprehension, similar to the native `continue` keyword in C/C++.
+ * The `Continue` keyword LDK for skipping an element in a `Each` collection comprehension, similar to the native `continue` keyword in C/C++ or the `mzero` in Haskell.
  * The `Fork` keyword for duplicating current context, similar to the `fork` system call in POSIX.
  * The `Return` keyword for early returning, similar to the native `return` keyword in Scala.
  * The `Using` keyword to automatically close resources when exiting a scope, similar to the native `using` keyword in C#.
  * The `Monadic` keyword for creating Scalaz or Cats monadic control flow, similar to the !-notation in Idris.
  * The `NullSafe` keyword for the null safe operator, similar to the `?` operator in Kotlin and Groovy.
+ * The `NoneSafe` keyword for the `None` safe operator, similar to the `Maybe` monad in Haskell.
 
 All the above keywords can be used together with each others. For example you can perform list comprehension to manipulate native resources in an asynchronous task by using `Each`, `AutoClose` and `Shift` together.
 
