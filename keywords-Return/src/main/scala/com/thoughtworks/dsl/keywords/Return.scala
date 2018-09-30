@@ -59,9 +59,9 @@ final case class Return[ReturnValue](returnValue: ReturnValue) extends AnyVal wi
 
 object Return {
 
-  implicit def returnDsl[ReturnValue]: Dsl[Return[ReturnValue], ReturnValue, Nothing] =
-    new Dsl[Return[ReturnValue], ReturnValue, Nothing] {
-      def cpsApply(keyword: Return[ReturnValue], handler: Nothing => ReturnValue): ReturnValue = {
+  implicit def returnDsl[ReturnValue, Domain >: ReturnValue]: Dsl[Return[ReturnValue], Domain, Nothing] =
+    new Dsl[Return[ReturnValue], Domain, Nothing] {
+      def cpsApply(keyword: Return[ReturnValue], handler: Nothing => Domain): Domain = {
         keyword.returnValue
       }
     }
