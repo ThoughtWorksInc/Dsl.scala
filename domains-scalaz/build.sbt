@@ -1,4 +1,4 @@
-libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.25"
+libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.26"
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 
