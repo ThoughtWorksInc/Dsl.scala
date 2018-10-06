@@ -1,6 +1,6 @@
 enablePlugins(Example)
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP1" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Test
 
 publishArtifact := false
 
@@ -16,7 +16,7 @@ libraryDependencies ++= {
       "com.twitter" %% "algebird-core" % "0.13.4" % Optional,
       "com.thoughtworks.binding" %% "binding" % "11.0.1" % Optional,
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1" % Optional,
-      "org.scalacheck" %% "scalacheck" % "1.13.5" % Optional,
+      "org.scalacheck" %% "scalacheck" % "1.14.0" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
       "com.lihaoyi" %% "sourcecode" % "0.1.4" % Optional,
       "io.monix" %% "monix" % "2.3.3" % Optional,
@@ -38,7 +38,7 @@ sourceGenerators in Test := {
   }
 }
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.25"
+libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.26"
 
 import scala.meta._
 
