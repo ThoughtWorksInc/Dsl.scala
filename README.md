@@ -49,7 +49,7 @@ addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-reseteverywhere" % 
 The random number generator can be implemented as a recursive function that produces the next random number in each iteration.
 
 ```scala
-import com.thoughtworks.dsl.instructions.Yield
+import com.thoughtworks.dsl.keys.Yield
 def xorshiftRandomGenerator(seed: Int): Stream[Int] = {
   val tmp1 = seed ^ (seed << 13)
   val tmp2 = tmp1 ^ (tmp1 >>> 17)
