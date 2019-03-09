@@ -25,7 +25,7 @@ We also provide some built-in keywords, including:
  * The `NullSafe` keyword for the null safe operator, similar to the `?` operator in Kotlin and Groovy.
  * The `NoneSafe` keyword for the `None` safe operator, similar to the `Maybe` monad in Haskell.
 
-All the above keywords can be used together with each others. For example you can perform list comprehension to manipulate native resources in an asynchronous task by using `Each`, `AutoClose` and `Shift` together.
+All the above keywords can be used together with each others. For example you can perform list comprehension to manipulate native resources in an asynchronous task by using `Each`, `Using` and `Shift` together.
 
 ## Getting Started
 
