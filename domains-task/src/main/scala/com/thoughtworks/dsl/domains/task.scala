@@ -100,7 +100,7 @@ object task {
       (newBuilder[Element, That] += element).result()
     }
 
-    def onComplete[A](task: Task[A])(continue: (Try[A] => Unit)) = {
+    def onComplete[A](task: Task[A])(continue: Try[A] => Unit) = {
       Continuation
         .toTryContinuation(task) { result =>
           TailCalls.done(continue(result))
