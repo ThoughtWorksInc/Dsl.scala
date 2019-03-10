@@ -30,12 +30,11 @@ object Using {
     new Dsl[Using[R], Domain !! Value, R] {
       def cpsApply(keyword: Using[R], handler: R => Domain !! Value): Domain !! Value = _ {
         val r = keyword.open()
-        val scopeResult = try {
+        try {
           !Shift(handler(r))
         } finally {
           r.close()
         }
-        scopeResult
       }
 
     }
