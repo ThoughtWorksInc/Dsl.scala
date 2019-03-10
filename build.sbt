@@ -267,6 +267,7 @@ lazy val unidoc =
       unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := {
         import Ordering.Implicits._
         if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+          // Workaround for https://github.com/scala/bug/issues/11045
           (
             inDependencies(`package`) ||
             inDependencies(`compilerplugins-BangNotation`) ||
