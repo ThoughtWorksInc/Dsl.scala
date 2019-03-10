@@ -200,13 +200,35 @@ object Dsl extends LowPriorityDsl0 {
     @inline
     def apply[R, A](a: => A): (R !! A) @reset = delay(a _)
 
-    def toTryContinuation[LeftDomain, Value](task: LeftDomain !! Throwable !! Value): LeftDomain !! Try[Value] = {
-      handler =>
-        task { a => failureHandler =>
-          handler(Success(a))
-        } { e =>
-          handler(Failure(e))
+    def toTryContinuation[LeftDomain, Value](task: LeftDomain !! Throwable !! Value)(
+        handler: Try[Value] => LeftDomain): LeftDomain = {
+      task { a => failureHandler =>
+        handler(Success(a))
+      } { e =>
+        handler(Failure(e))
+      }
+    }
+
+    def fromTryContinuation[LeftDomain, Value](continuation: LeftDomain !! Try[Value])(
+        successHandler: Value => LeftDomain !! Throwable)(failureHandler: Throwable => LeftDomain): LeftDomain = {
+      continuation(
+        new (Try[Value] => LeftDomain) {
+          def apply(result: Try[Value]): LeftDomain = {
+            result match {
+              case Success(a) =>
+                val protectedContinuation = try {
+                  successHandler(a)
+                } catch {
+                  case NonFatal(e) =>
+                    return failureHandler(e)
+                }
+                protectedContinuation(failureHandler)
+              case Failure(e) =>
+                failureHandler(e)
+            }
+          }
         }
+      )
     }
 
   }
