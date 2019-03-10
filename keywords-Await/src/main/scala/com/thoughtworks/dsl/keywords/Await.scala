@@ -10,7 +10,7 @@ import scala.language.implicitConversions
 
 /** [[Await]] is a [[Dsl.Keyword Keyword]] to extract value from a [[scala.concurrent.Future]].
   *
-  * This keyword is available in functions whose return type is
+  * This keyword is available in functions whose return types are
   * [[scala.concurrent.Future Future]], [[domains.task.Task]],
   * or any exception aware continuations as `(_ !! Throwable !! _)`.
   *
