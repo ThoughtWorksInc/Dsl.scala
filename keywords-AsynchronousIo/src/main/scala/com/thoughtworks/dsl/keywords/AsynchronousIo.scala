@@ -1,6 +1,5 @@
 package com.thoughtworks.dsl
 package keywords
-import java.io.IOException
 import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.{
@@ -9,8 +8,8 @@ import java.nio.channels.{
   AsynchronousSocketChannel,
   CompletionHandler
 }
-import Shift.implicitShift
-import Dsl.{!!, Keyword}
+
+import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 
 import scala.util.control.NonFatal
 
@@ -51,30 +50,28 @@ object AsynchronousIo {
     }
   }
 
-  implicit def asynchronousIoDsl[Value]: Dsl[AsynchronousIo[Value], (Unit !! Throwable), Value] =
-    new Dsl[AsynchronousIo[Value], Unit !! Throwable, Value] {
-      def cpsApply(keyword: AsynchronousIo[Value], attachment: Value => (Unit !! Throwable)): (Unit !! Throwable) = {
-        failureHandler =>
-          keyword.start(
-            attachment,
-            new CompletionHandler[Value, Value => (Unit !! Throwable)] {
-              def failed(exc: Throwable, attachment: Value => (Unit !! Throwable)): Unit = {
-                failureHandler(exc)
-              }
+  private def completionHandler[Value](successHandler: Value => (Unit !! Throwable)) = {
+    new CompletionHandler[Value, Throwable => Unit] {
+      def failed(exc: Throwable, failureHandler: Throwable => Unit): Unit = {
+        failureHandler(exc)
+      }
 
-              def completed(result: Value, attachment: Value => (Unit !! Throwable)): Unit = {
-                val protectedContinuation = try {
-                  attachment(result)
-                } catch {
-                  case NonFatal(e) =>
-                    val () = failureHandler(e)
-                    return
-                }
-                protectedContinuation(failureHandler)
-              }
-            }
-          )
+      def completed(result: Value, failureHandler: Throwable => Unit): Unit = {
+        val protectedContinuation = try {
+          successHandler(result)
+        } catch {
+          case NonFatal(e) =>
+            val () = failureHandler(e)
+            return
+        }
+        protectedContinuation(failureHandler)
       }
     }
+  }
+
+  implicit def asynchronousIoDsl[Value]: Dsl[AsynchronousIo[Value], Unit !! Throwable, Value] = {
+    (keyword, handler) =>
+      keyword.start(_, completionHandler(handler))
+  }
 
 }
