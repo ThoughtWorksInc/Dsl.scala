@@ -17,18 +17,28 @@ import scala.language.implicitConversions
   * @example Given a [[scala.concurrent.Future Future]]:
   *          {{{
   *          import scala.concurrent.Future
-  *          val myFuture = Future {
-  *            42
+  *          val myFuture40 = Future {
+  *            40
+  *          }
+  *          }}}
+  *
+  *          It can be [[Await]] in another [[scala.concurrent.Future Future]]
+  *
+  *          {{{
+  *          import scala.concurrent.Future
+  *          def myFuture42 = Future {
+  *            !Await(myFuture40) + 2
   *          }
   *          }}}
   *
   *          It can be converted to a [[domains.task.Task]]
-  *          with the help of [[Return]] and [[Await]].
+  *          with the help of [[Await]].
+  *
   *          {{{
   *          import com.thoughtworks.dsl.domains.task._
   *          import com.thoughtworks.dsl.keywords._
   *          val myTask = Task {
-  *            !Await(myFuture)
+  *            !Await(myFuture42)
   *          }
   *          }}}
   *
