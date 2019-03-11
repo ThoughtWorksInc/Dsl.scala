@@ -50,7 +50,7 @@ The random number generator can be implemented as a recursive function that prod
 
 ```scala
 import com.thoughtworks.dsl.keys.Yield
-def xorshiftRandomGenerator(seed: Int): Stream[Int] = {
+def xorshiftRandomGenerator(seed: Int): scala.collection.immutable.Stream[Int] = {
   val tmp1 = seed ^ (seed << 13)
   val tmp2 = tmp1 ^ (tmp1 >>> 17)
   val tmp3 = tmp2 ^ (tmp2 << 5)
