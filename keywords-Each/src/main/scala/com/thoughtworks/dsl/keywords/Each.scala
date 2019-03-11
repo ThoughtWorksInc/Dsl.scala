@@ -66,7 +66,6 @@ object Each {
       }
     }
 
-  @deprecated(message = "This is dangerous. Don't use it.", since = "1.0.0-RC5")
   implicit def foreachDsl[Element]: Dsl[Each[Element], Unit, Element] =
     new Dsl[Each[Element], Unit, Element] {
       def cpsApply(keyword: Each[Element], handler: Element => Unit): Unit = {
