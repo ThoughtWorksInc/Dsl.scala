@@ -95,6 +95,7 @@ import scala.annotation.compileTimeOnly
   *       """(explicitNotNullable.? + " Doe") : @ $qmark""" shouldNot compile
   *       }}}
   *
+  * @see [[NoneSafe]] for similar checks on [[scala.Option]]s.
   * @author 杨博 (Yang Bo)
   *
   * @define qmark ?
