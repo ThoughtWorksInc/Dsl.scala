@@ -4,9 +4,6 @@ package domains
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.{Using, Yield}
 import org.scalatest.{Assertion, FreeSpec, Matchers}
-import com.thoughtworks.dsl.domains.task._
-
-import scala.util.{Failure, Success}
 
 /**
   * @author 杨博 (Yang Bo)
