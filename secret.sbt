@@ -1,10 +1,6 @@
-enablePlugins(Travis)
-
-enablePlugins(SonatypeRelease)
-
 lazy val secret = project.settings(publishArtifact := false).in {
   val secretDirectory = file(sourcecode.File()).getParentFile / "secret"
-  sys.env.get("GITHUB_PERSONAL_ACCESS_TOKEN").foreach { token =>
+  for (token <- sys.env.get("GITHUB_PERSONAL_ACCESS_TOKEN")) {
     IO.delete(secretDirectory)
     org.eclipse.jgit.api.Git
       .cloneRepository()
