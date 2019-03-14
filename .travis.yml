@@ -35,3 +35,4 @@ deploy:
     skip_cleanup: true
     on:
       all_branches: true
+      condition: $GITHUB_PERSONAL_ACCESS_TOKEN
