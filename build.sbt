@@ -304,7 +304,7 @@ lazy val unidoc =
       }
     )
 
-publishArtifact := false
+skip in publish := true
 
 parallelExecution in Global := {
   import Ordering.Implicits._
