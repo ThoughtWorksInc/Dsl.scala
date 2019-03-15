@@ -1,6 +1,6 @@
 addSbtPlugin("com.thoughtworks.sbt-best-practice" % "sbt-best-practice" % "6.0.0")
 
-addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.3.0")
+addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.3.0+7-d5e88cd5")
 
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.2")
 
