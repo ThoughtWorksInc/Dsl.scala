@@ -3,16 +3,15 @@ package domains
 
 import _root_.cats.{Applicative, FlatMap}
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.!!
 import _root_.cats.MonadError
 import com.thoughtworks.Extractor._
 import com.thoughtworks.dsl.keywords.Catch.CatchDsl
-import com.thoughtworks.dsl.keywords.{Catch, Monadic, Return}
+import com.thoughtworks.dsl.keywords.{Monadic, Return}
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
 import scala.util.control.Exception.Catcher
-import scala.util.control.{ControlThrowable, NonFatal}
 
 /** Contains interpreters to enable [[Dsl.Keyword#unary_$bang !-notation]]
   * for [[keywords.Monadic]] and other keywords
@@ -109,32 +108,26 @@ object cats {
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
   implicit def catsReturnDsl[F[_], A, B](implicit applicative: Applicative[F],
-                                         restReturnDsl: Dsl[Return[A], B, Nothing]) =
-    new Dsl[Return[A], F[B], Nothing] {
-      def cpsApply(keyword: Return[A], handler: Nothing => F[B]): F[B] = {
-        applicative.pure(restReturnDsl.cpsApply(keyword, identity))
-      }
-    }
+                                         restReturnDsl: Dsl[Return[A], B, Nothing]): Dsl[Return[A], F[B], Nothing] = {
+    (keyword: Return[A], handler: Nothing => F[B]) =>
+      applicative.pure(restReturnDsl.cpsApply(keyword, identity))
+  }
 
-  implicit def catsCatchDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): CatchDsl[F[A], F[B], A] =
-    new CatchDsl[F[A], F[B], A] {
-      def tryCatch(block: F[A] !! A, catcher: Catcher[F[A] !! A], handler: A => F[B]): F[B] = {
-        val fa = monadError.flatMap(monadError.pure(block))(_(monadError.pure(_)))
-        val protectedFa = monadError.handleErrorWith(fa) {
-          case catcher.extract(recovered) =>
-            recovered(monadError.pure(_))
-          case e =>
-            monadError.raiseError[A](e)
-        }
-        monadError.flatMap(protectedFa)(handler)
+  implicit def catsCatchDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): CatchDsl[F[A], F[B], A] = {
+    (block: F[A] !! A, catcher: Catcher[F[A] !! A], handler: A => F[B]) =>
+      val fa = monadError.flatMap(monadError.pure(block))(_(monadError.pure))
+      val protectedFa = monadError.handleErrorWith(fa) {
+        case catcher.extract(recovered) =>
+          recovered(monadError.pure)
+        case e =>
+          monadError.raiseError[A](e)
       }
-    }
+      monadError.flatMap(protectedFa)(handler)
+  }
 
-  implicit def catsMonadicDsl[F[_], A, B](implicit flatMap: FlatMap[F]): Dsl[Monadic[F, A], F[B], A] =
-    new Dsl[Monadic[F, A], F[B], A] {
-      def cpsApply(keyword: Monadic[F, A], handler: A => F[B]): F[B] = {
-        flatMap.flatMap(keyword.fa)(handler)
-      }
-    }
+  implicit def catsMonadicDsl[F[_], A, B](implicit flatMap: FlatMap[F]): Dsl[Monadic[F, A], F[B], A] = {
+    (keyword: Monadic[F, A], handler: A => F[B]) =>
+      flatMap.flatMap(keyword.fa)(handler)
+  }
 
 }
