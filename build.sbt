@@ -310,5 +310,3 @@ parallelExecution in Global := {
   import Ordering.Implicits._
   VersionNumber(scalaVersion.value).numbers >= Seq(2L, 12L)
 }
-
-Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
