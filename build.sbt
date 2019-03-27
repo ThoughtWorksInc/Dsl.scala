@@ -311,5 +311,3 @@ parallelExecution in Global := {
   VersionNumber(scalaVersion.value).numbers >= Seq(2L, 12L)
 }
 
-dynverSeparator in ThisBuild := "-"
-
