@@ -156,6 +156,17 @@ final class BangNotation(override val global: Global) extends Plugin {
       tree.productIterator.exists(hasCpsAttachment)
     }
 
+    private lazy val catchIdent: Tree = {
+      try {
+        Ident(rootMirror.staticModule("_root_.com.thoughtworks.dsl.keywords.Catch"))
+      } catch {
+        case e: ScalaReflectionException =>
+          abort("""The BangNotation compiler plug-in requires the runtime library `keywords-catch` to enable !-notation in `try` / `catch` / `finally` expressions:
+  libraryDependencies += "com.thoughtworks.dsl" %% "keywords-catch" % "latest.release"
+""")
+      }
+    }
+
     private val whileName = currentUnit.freshTermName("while")
     private val whileDef = {
       val domainName = currentUnit.freshTypeName("Domain")
@@ -376,7 +387,7 @@ final class BangNotation(override val global: Global) extends Plugin {
             val resultName = currentUnit.freshTermName("result")
 
             q"""
-            _root_.com.thoughtworks.dsl.keywords.Catch.tryCatch { ($resultName: $tpe) => ${{
+            $catchIdent.tryCatch { ($resultName: $tpe) => ${{
               cpsAttachment(finalizer) { finalizerValue =>
                 q"""
                   ..${notPure(finalizerValue)}
