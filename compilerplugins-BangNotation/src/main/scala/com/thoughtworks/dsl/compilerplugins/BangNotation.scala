@@ -145,12 +145,13 @@ final class BangNotation(override val global: Global) extends Plugin {
     private def isCpsTree(tree: Tree) = {
       def hasCpsAttachment(child: Any): Boolean = {
         child match {
-          case list: List[_]             => list.exists(hasCpsAttachment)
-          case TypeApply(fun, args)      => hasCpsAttachment(fun)
-          case Apply(fun, args)          => hasCpsAttachment(fun) || args.exists(hasCpsAttachment)
-          case CaseDef(pat, guard, body) => hasCpsAttachment(body)
-          case childTree: Tree           => childTree.hasAttachment[CpsAttachment]
-          case _                         => false
+          case list: List[_]                => list.exists(hasCpsAttachment)
+          case TypeApply(fun, args)         => hasCpsAttachment(fun)
+          case Apply(fun, args)             => hasCpsAttachment(fun) || args.exists(hasCpsAttachment)
+          case CaseDef(pat, guard, body)    => hasCpsAttachment(body)
+          case ValDef(mods, name, tpt, rhs) => hasCpsAttachment(rhs)
+          case childTree: Tree              => childTree.hasAttachment[CpsAttachment]
+          case _                            => false
         }
       }
       tree.productIterator.exists(hasCpsAttachment)
@@ -280,16 +281,6 @@ final class BangNotation(override val global: Global) extends Plugin {
                 q"$method[..$typeParameters](...$parameterListsValues)"
               })
             }
-          // TODO: lazy val
-          case ValDef(mods, name, tpt, rhs) =>
-            cpsAttachment(rhs) { rhsValue =>
-              atPos(tree.pos) {
-                q"""
-                ${treeCopy.ValDef(tree, mods, name, tpt, rhsValue)}
-                ${continue(q"()")}
-                """
-              }
-            }
           case Typed(expr, tpt) =>
             cpsAttachment(expr) { exprValue =>
               atPos(tree.pos) {
@@ -312,13 +303,19 @@ final class BangNotation(override val global: Global) extends Plugin {
               stats match {
                 case Nil =>
                   cpsAttachment(expr)(continue)
+                case (valDef @ ValDef(mods, name, tpt, rhs)) :: tail =>
+                  // TODO: lazy val
+                  cpsAttachment(rhs) { rhsValue =>
+                    atPos(valDef.pos) {
+                      q"${treeCopy.ValDef(valDef, mods, name, tpt, rhsValue)}; ${loop(tail)}"
+                    }
+                  }
                 case head :: tail =>
                   cpsAttachment(head) { headValue =>
                     q"..${notPure(headValue)}; ${loop(tail)}"
                   }
               }
             }
-
             loop(stats)
           case If(cond, thenp, elsep) =>
             val endIfName = currentUnit.freshTermName("endIf")
@@ -475,14 +472,12 @@ final class BangNotation(override val global: Global) extends Plugin {
         tree match {
           case q"$shiftOps.$shiftMethod" if symbol != null && symbol.hasAnnotation(shiftSymbol) =>
             def attachment: CpsAttachment = { continue: (Tree => Tree) =>
-              val aName = currentUnit.freshTermName("a")
-
               // FIXME: tpe is a by-name type. I don't know why.
               cpsAttachment(shiftOps) { shiftOpsValue =>
                 atPos(tree.pos) {
                   q"""
-                  $shiftOpsValue.cpsApply(${toFunction1(continue, tpe)})
-                """
+                    $shiftOpsValue.cpsApply(${toFunction1(continue, tpe)})
+                  """
                 }
               }
             }

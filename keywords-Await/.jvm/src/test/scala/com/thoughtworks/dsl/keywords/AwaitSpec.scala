@@ -23,14 +23,14 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
   implicit val materializer = ActorMaterializer()
 
   def downloadTwoPages(): Future[(ByteString, ByteString)] = Future {
-    val response1 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, PingUri)))
+    val response1 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pingUri))))
     val content1 = !Await(response1.entity.toStrict(timeout = 5.seconds))
-    val response2 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, PongUri)))
+    val response2 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pongUri))))
     val content2 = !Await(response2.entity.toStrict(timeout = 5.seconds))
     (content1.data, content2.data)
   }
 
-  private val mockServer: Http.ServerBinding = {
+  private val mockServer = {
     val route =
       get {
         path("ping") {
@@ -39,12 +39,14 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
           complete("PONG!")
         }
       }
-    concurrent.Await.result(Http().bindAndHandle(route, "localhost", 0), Duration.Inf)
+    Http().bindAndHandle(route, "localhost", 0)
   }
   override protected def afterAll(): Unit = {
-    mockServer
-      .unbind()
-      .onComplete(_ => system.terminate())
+    val _ = Future {
+      val binding = !Await(mockServer)
+      !Await(binding.unbind())
+      system.terminate()
+    }: @reset
   }
 
   "download two pages" in {
@@ -55,25 +57,31 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
     }
   }
 
-  private val PingUri = Uri.from(scheme = "http",
-                                 host = mockServer.localAddress.getHostName,
-                                 port = mockServer.localAddress.getPort,
-                                 path = "/ping")
-  private val PongUri = Uri.from(scheme = "http",
-                                 host = mockServer.localAddress.getHostName,
-                                 port = mockServer.localAddress.getPort,
-                                 path = "/pong")
+  private def pingUri = Future {
+    Uri.from(scheme = "http",
+             host = (!Await(mockServer)).localAddress.getHostName,
+             port = (!Await(mockServer)).localAddress.getPort,
+             path = "/ping")
+  }
+
+  private def pongUri = Future {
+    Uri.from(scheme = "http",
+             host = (!Await(mockServer)).localAddress.getHostName,
+             port = (!Await(mockServer)).localAddress.getPort,
+             path = "/pong")
+  }
+
   "http get" in ({
-    val response = !Await(Http().singleRequest(HttpRequest(uri = PingUri)))
+    val response = !Await(Http().singleRequest(HttpRequest(uri = !Await(pingUri))))
     response.status should be(StatusCodes.OK)
   }: @reset)
 
   "Downloading two web pages as an asynchronous generator, in the style of !-notation" in ({
     def downloadTwoPagesGenerator(): Stream[Future[ByteString]] = {
-      val response1 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, PingUri)))
+      val response1 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pingUri))))
       val content1 = !Await(response1.entity.toStrict(timeout = 5.seconds))
       !Yield(content1.data)
-      val response2 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, PongUri)))
+      val response2 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pongUri))))
       val content2 = !Await(response2.entity.toStrict(timeout = 5.seconds))
       !Yield(content2.data)
 
@@ -88,10 +96,10 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
   "multiple http" in ({
 
     def createAsynchronousStream(): Stream[Future[Int]] = {
-      val response1 = !Await(Http().singleRequest(HttpRequest(uri = PingUri)))
+      val response1 = !Await(Http().singleRequest(HttpRequest(uri = !Await(pingUri))))
       !Yield(response1.status.intValue())
       response1.discardEntityBytes()
-      val response2 = !Await(Http().singleRequest(HttpRequest(uri = PongUri)))
+      val response2 = !Await(Http().singleRequest(HttpRequest(uri = !Await(pongUri))))
       !Yield(response2.status.intValue())
       response2.discardEntityBytes()
       Stream.empty[Future[Int]]
