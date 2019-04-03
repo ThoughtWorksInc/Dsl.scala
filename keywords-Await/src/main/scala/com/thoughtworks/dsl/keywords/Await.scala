@@ -14,15 +14,19 @@ import scala.language.implicitConversions
   * [[scala.concurrent.Future Future]], [[domains.task.Task]],
   * or any exception aware continuations as `(_ !! Throwable !! _)`.
   *
+  * {{{
+  * import scala.concurrent.Future
+  * }}}
+  *
   * @example Given a [[scala.concurrent.Future Future]]:
   *          {{{
-  *          import scala.concurrent.Future
+  *
   *          val myFuture40 = Future {
   *            40
   *          }
   *          }}}
   *
-  *          It can be [[Await]] in another [[scala.concurrent.Future Future]]
+  *          You can [[Await]] the [[scala.concurrent.Future Future]] in another [[scala.concurrent.Future Future]]
   *
   *          {{{
   *          import scala.concurrent.Future
@@ -31,7 +35,7 @@ import scala.language.implicitConversions
   *          }
   *          }}}
   *
-  *          It can be converted to a [[domains.task.Task]]
+  *          A [[scala.concurrent.Future Future]] can be converted to a [[domains.task.Task]]
   *          with the help of [[Await]].
   *
   *          {{{
@@ -51,6 +55,24 @@ import scala.language.implicitConversions
   *          }
   *          Task.toFuture(myAssertionTask)
   *          }}}
+  * @note `!Await` can be used together with `try` / `catch` / `finally`.
+  *       {{{
+  *       def recoverFuture = Future {
+  *         "Oh"
+  *       }
+  *       def exceptionalFuture = Future[String] {
+  *         throw new IllegalStateException("No!")
+  *       }
+  *       def myFuture = Future {
+  *         (try {
+  *           !Await(exceptionalFuture)
+  *         } catch {
+  *           case e: IllegalStateException =>
+  *             s"${!Await(recoverFuture)} ${e.getMessage}"
+  *         }) should be("Oh No!")
+  *       }
+  *       myFuture
+  *       }}}
   * @author 杨博 (Yang Bo)
   */
 final case class Await[Value](future: Future[Value]) extends AnyVal with Keyword[Await[Value], Value]
