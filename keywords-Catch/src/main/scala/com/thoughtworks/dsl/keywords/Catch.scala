@@ -5,6 +5,8 @@ import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, Keyword}
 import com.thoughtworks.dsl.keywords.Catch.CatchDsl
 
+import scala.annotation.implicitNotFound
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
 
@@ -13,7 +15,37 @@ import scala.util.control.NonFatal
   */
 final case class Catch[Domain, Value](block: Domain !! Value, catcher: Catcher[Domain !! Value])
     extends Keyword[Catch[Domain, Value], Value]
-private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
+private[keywords] trait LowPriorityCatch1 {
+
+  implicit def liftFunction1CatchDsl[InnerDomain, OuterDomain, State, Value](
+      implicit leftCatchDsl: CatchDsl[InnerDomain, OuterDomain, Value])
+    : CatchDsl[State => InnerDomain, State => OuterDomain, Value] = {
+    new CatchDsl[State => InnerDomain, State => OuterDomain, Value] {
+      def tryCatch(block: (State => InnerDomain) !! Value,
+                   catcher: Catcher[(State => InnerDomain) !! Value],
+                   handler: Value => State => OuterDomain): State => OuterDomain = { state =>
+        leftCatchDsl.tryCatch(
+          block = { (continue: Value => InnerDomain) =>
+            block { value: Value => _ =>
+              continue(value)
+            }(state)
+          },
+          catcher = {
+            case catcher.extract(recoveredValueContinuation) =>
+              continue =>
+                recoveredValueContinuation { value: Value => _ =>
+                  continue(value)
+                }(state)
+          },
+          handler = handler(_)(state)
+        )
+      }
+    }
+  }
+
+}
+
+private[keywords] trait LowPriorityCatch0 extends LowPriorityCatch1 { this: Catch.type =>
 
   implicit def liftContinuationCatchDsl[LeftDomain, RightDomain, Value](
       implicit leftCatchDsl: CatchDsl[LeftDomain, LeftDomain, Value])
@@ -40,6 +72,8 @@ private[keywords] trait LowPriorityCatch0 { this: Catch.type =>
 
 object Catch extends LowPriorityCatch0 {
 
+  @implicitNotFound(
+    "Statements `try` / `catch` / `finally` are not supported in the domain ${OuterDomain} when the return value is ${Value} and the inner domain is ${InnerDomain}.")
   trait CatchDsl[InnerDomain, OuterDomain, Value] extends Dsl[Catch[InnerDomain, Value], OuterDomain, Value] {
 
     def tryCatch(block: InnerDomain !! Value,
@@ -57,6 +91,21 @@ object Catch extends LowPriorityCatch0 {
     (block: InnerDomain !! Value, catcher: Catcher[InnerDomain !! Value]) =>
       catchDsl.tryCatch(block, catcher, finalizer)
   }
+
+  implicit def futureCatchDsl[InnerValue, OuterValue](
+      implicit executionContext: ExecutionContext): CatchDsl[Future[InnerValue], Future[OuterValue], InnerValue] =
+    new CatchDsl[Future[InnerValue], Future[OuterValue], InnerValue] {
+      def tryCatch(block: Future[InnerValue] !! InnerValue,
+                   catcher: Catcher[Future[InnerValue] !! InnerValue],
+                   handler: InnerValue => Future[OuterValue]): Future[OuterValue] = {
+        val fa = Future(block).flatMap(_(Future.successful))
+        val protectedFa = fa.recoverWith {
+          case catcher.extract(recovered) =>
+            recovered(Future.successful)
+        }
+        protectedFa.flatMap(handler)
+      }
+    }
 
   implicit def throwableCatchDsl[LeftDomain, Value](
       implicit shiftDsl: Dsl[Shift[LeftDomain, Throwable], LeftDomain, Throwable])
