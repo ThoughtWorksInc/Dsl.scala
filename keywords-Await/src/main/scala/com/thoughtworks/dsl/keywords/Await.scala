@@ -55,24 +55,53 @@ import scala.language.implicitConversions
   *          }
   *          Task.toFuture(myAssertionTask)
   *          }}}
-  * @note `!Await` can be used together with `try` / `catch` / `finally`.
-  *       {{{
-  *       def recoverFuture = Future {
-  *         "Oh"
-  *       }
-  *       def exceptionalFuture = Future[String] {
-  *         throw new IllegalStateException("No!")
-  *       }
-  *       def myFuture = Future {
-  *         (try {
-  *           !Await(exceptionalFuture)
-  *         } catch {
-  *           case e: IllegalStateException =>
-  *             s"${!Await(recoverFuture)} ${e.getMessage}"
-  *         }) should be("Oh No!")
-  *       }
-  *       myFuture
-  *       }}}
+  * @example `!Await` can be used together with `try` / `catch` / `finally`.
+  *          {{{
+  *          val buffer = new StringBuffer
+  *          def recoverFuture = Future {
+  *            buffer.append("Oh")
+  *          }
+  *          def exceptionalFuture = Future[StringBuffer] {
+  *            throw new IllegalStateException("No")
+  *          }
+  *          def myFuture = Future {
+  *            try {
+  *              !Await(exceptionalFuture)
+  *            } catch {
+  *              case e: IllegalStateException =>
+  *                !Await(recoverFuture)
+  *                buffer.append(' ')
+  *                buffer.append(e.getMessage)
+  *            } finally {
+  *              buffer.append("!")
+  *            }
+  *          }
+  *          myFuture.map(_.toString should be("Oh No!"))
+  *          }}}
+  * @example Other keywords, including [[Return]] or [[Get]], can be used together with [[Await]]
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.{Get, Return}
+  *          val buffer = new StringBuffer
+  *          def recoverFuture = Future {
+  *            buffer.append("Oh")
+  *          }
+  *          def exceptionalFuture = Future[StringBuffer] {
+  *            throw new IllegalStateException("No")
+  *          }
+  *          def myFuture: Char => Future[StringBuffer] = !Return {
+  *            try {
+  *              !Await(exceptionalFuture)
+  *            } catch {
+  *              case e: IllegalStateException =>
+  *                !Await(recoverFuture)
+  *                buffer.append(!Get[Char])
+  *                buffer.append(e.getMessage)
+  *            } finally {
+  *              buffer.append("!")
+  *            }
+  *          }
+  *          myFuture(' ').map(_.toString should be("Oh No!"))
+  *          }}}
   * @author 杨博 (Yang Bo)
   */
 final case class Await[Value](future: Future[Value]) extends AnyVal with Keyword[Await[Value], Value]

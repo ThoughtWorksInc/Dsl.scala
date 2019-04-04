@@ -168,7 +168,13 @@ lazy val `keywords-Await` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Yield` % Test, `domains-task` % Test, `keywords-Return` % Test, `keywords-Catch` % Test)
+    .dependsOn(Dsl,
+               `domains-task` % Test,
+               `keywords-Catch` % Test,
+               `keywords-Get` % Test,
+               `keywords-Return` % Test,
+               `keywords-Yield` % Test,
+    )
 lazy val `keywords-AwaitJS` = `keywords-Await`.js
 lazy val `keywords-AwaitJVM` = `keywords-Await`.jvm
 
