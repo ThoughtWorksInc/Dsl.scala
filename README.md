@@ -34,8 +34,11 @@ Suppose you want to create a random number generator. The generated numbers shou
 So, you need to add the library that contains the implementation of the keyword `Yield`:
 
 ``` scala
-// Add the following setting in your build.sbt 
+// Add the "keywords-yield" library in your build.sbt, to use the `Yield` keyword
 libraryDependencies += "com.thoughtworks.dsl" %% "keywords-yield" % "latest.release"
+
+// Add other "keywords-xxx" libraries in your build.sbt, to use other keywords
+// libraryDependencies += "com.thoughtworks.dsl" %% "keywords-xxx" % "latest.release"
 ```
 
 And the Dsl.scala compiler plug-ins that are shared by all DSLs:   
