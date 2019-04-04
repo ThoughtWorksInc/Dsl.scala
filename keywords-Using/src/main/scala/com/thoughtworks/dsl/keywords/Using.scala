@@ -4,8 +4,10 @@ import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 import com.thoughtworks.dsl.keywords.Catch.CatchDsl
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
+import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
@@ -13,8 +15,7 @@ import scala.util.Try
 final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal with Keyword[Using[R], R]
 
 /**
-  *
-  * @example
+  * @see [[dsl]] for usage of this [[Using]] keyword in continuations
   */
 object Using {
 
@@ -36,7 +37,49 @@ object Using {
           r.close()
         }
       }
+    }
 
+  implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](
+      implicit executionContext: ExecutionContext): Dsl[Using[R], Future[A], R] =
+    new Dsl[Using[R], Future[A], R] {
+      def cpsApply(keyword: Using[R], handler: R => Future[A]): Future[A] = {
+        Future(keyword.open()).flatMap { r: R =>
+          def onFailure(e: Throwable): Future[Nothing] = {
+            try {
+              r.close()
+              Future.failed(e)
+            } catch {
+              case NonFatal(e2) =>
+                Future.failed(e2)
+            }
+          }
+
+          def onSuccess(a: A): Future[A] = {
+            try {
+              r.close()
+              Future.successful(a)
+            } catch {
+              case NonFatal(e2) =>
+                Future.failed(e2)
+            }
+          }
+
+          def returnableBlock(): Future[A] = {
+            val fa: Future[A] = try {
+              handler(r)
+            } catch {
+              case NonFatal(e) =>
+                return onFailure(e)
+            }
+            fa.recoverWith {
+                case NonFatal(e) =>
+                  onFailure(e)
+              }
+              .flatMap(onSuccess)
+          }
+          returnableBlock()
+        }
+      }
     }
 
 }
