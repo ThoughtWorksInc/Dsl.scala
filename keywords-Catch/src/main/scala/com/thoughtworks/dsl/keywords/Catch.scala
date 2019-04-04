@@ -99,11 +99,23 @@ object Catch extends LowPriorityCatch0 {
                    catcher: Catcher[Future[InnerValue] !! InnerValue],
                    handler: InnerValue => Future[OuterValue]): Future[OuterValue] = {
         val fa = Future(block).flatMap(_(Future.successful))
-        val protectedFa = fa.recoverWith {
-          case catcher.extract(recovered) =>
+
+        val protectedFa = fa.recoverWith(catcher.andThen { recovered =>
+          try {
             recovered(Future.successful)
+          } catch {
+            case NonFatal(e) =>
+              Future.failed(e)
+          }
+        })
+        protectedFa.flatMap { outerValue =>
+          try {
+            handler(outerValue)
+          } catch {
+            case NonFatal(e) =>
+              Future.failed(e)
+          }
         }
-        protectedFa.flatMap(handler)
       }
     }
 
