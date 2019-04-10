@@ -9,3 +9,7 @@ addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.2")
 addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")
 
 addSbtPlugin("com.thoughtworks.example" % "sbt-example" % "6.0.1")
+
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")
+
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.26")
