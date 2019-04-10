@@ -157,7 +157,7 @@ object Catch extends LowPriorityCatch0 {
       }
     }
 
-  protected class LiftContinuationCatchDsl[LeftDomain, RightDomain, Value](
+  private[keywords] class LiftContinuationCatchDsl[LeftDomain, RightDomain, Value](
       implicit leftCatchDsl: DslCatch[LeftDomain, LeftDomain, Value])
       extends CatchDsl[LeftDomain !! Value, LeftDomain !! RightDomain, Value] {
     def tryCatch(block: LeftDomain !! Value !! Value,
@@ -178,7 +178,7 @@ object Catch extends LowPriorityCatch0 {
     }
   }
 
-  protected class LiftFunction1CatchDsl[InnerDomain, OuterDomain, State, Value](
+  private[keywords] class LiftFunction1CatchDsl[InnerDomain, OuterDomain, State, Value](
       implicit leftCatchDsl: DslCatch[InnerDomain, OuterDomain, Value])
       extends CatchDsl[State => InnerDomain, State => OuterDomain, Value] {
     def tryCatch(block: (State => InnerDomain) !! Value,
