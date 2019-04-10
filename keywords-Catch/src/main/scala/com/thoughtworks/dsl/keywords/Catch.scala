@@ -3,7 +3,7 @@ package com.thoughtworks.dsl.keywords
 import com.thoughtworks.Extractor._
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, Keyword}
-import com.thoughtworks.dsl.keywords.Catch.CatchDsl
+import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
 
 import scala.annotation.implicitNotFound
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,66 +15,44 @@ import scala.util.control.NonFatal
   */
 final case class Catch[Domain, Value](block: Domain !! Value, catcher: Catcher[Domain !! Value])
     extends Keyword[Catch[Domain, Value], Value]
-private[keywords] trait LowPriorityCatch1 {
 
-  implicit def liftFunction1CatchDsl[InnerDomain, OuterDomain, State, Value](
+private[keywords] trait LowPriorityCatch1 { this: Catch.type =>
+  @deprecated("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]", "Dsl.scala 1.2.0")
+  private[keywords] def liftFunction1CatchDsl[InnerDomain, OuterDomain, State, Value](
       implicit leftCatchDsl: CatchDsl[InnerDomain, OuterDomain, Value])
     : CatchDsl[State => InnerDomain, State => OuterDomain, Value] = {
-    new CatchDsl[State => InnerDomain, State => OuterDomain, Value] {
-      def tryCatch(block: (State => InnerDomain) !! Value,
-                   catcher: Catcher[(State => InnerDomain) !! Value],
-                   handler: Value => State => OuterDomain): State => OuterDomain = { state =>
-        leftCatchDsl.tryCatch(
-          block = { (continue: Value => InnerDomain) =>
-            block { value: Value => _ =>
-              continue(value)
-            }(state)
-          },
-          catcher = {
-            case catcher.extract(recoveredValueContinuation) =>
-              continue =>
-                recoveredValueContinuation { value: Value => _ =>
-                  continue(value)
-                }(state)
-          },
-          handler = handler(_)(state)
-        )
-      }
-    }
+    new LiftFunction1CatchDsl
   }
 
+  implicit def liftFunction1CatchDsl[InnerDomain, OuterDomain, State, Value](
+      implicit leftCatchDsl: DslCatch[InnerDomain, OuterDomain, Value])
+    : DslCatch[State => InnerDomain, State => OuterDomain, Value] = {
+    new LiftFunction1CatchDsl
+  }
 }
 
 private[keywords] trait LowPriorityCatch0 extends LowPriorityCatch1 { this: Catch.type =>
 
   implicit def liftContinuationCatchDsl[LeftDomain, RightDomain, Value](
-      implicit leftCatchDsl: CatchDsl[LeftDomain, LeftDomain, Value])
+      implicit leftCatchDsl: DslCatch[LeftDomain, LeftDomain, Value])
     : CatchDsl[LeftDomain !! Value, LeftDomain !! RightDomain, Value] = {
-    new CatchDsl[LeftDomain !! Value, LeftDomain !! RightDomain, Value] {
-      def tryCatch(block: LeftDomain !! Value !! Value,
-                   catcher: Catcher[LeftDomain !! Value !! Value],
-                   handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = { outerHandler =>
-        leftCatchDsl.tryCatch(
-          block = block(Continuation.now),
-          catcher = {
-            case catcher.extract(recoveredValueContinuation) =>
-              recoveredValueContinuation(Continuation.now)
-          },
-          handler = { value: Value =>
-            handler(value)(outerHandler)
-          }
-        )
-      }
-    }
+    new LiftContinuationCatchDsl
   }
 
+  @deprecated("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]", "Dsl.scala 1.2.0")
+  private[keywords] def liftContinuationCatchDsl[LeftDomain, RightDomain, Value](
+      implicit leftCatchDsl: CatchDsl[LeftDomain, LeftDomain, Value])
+    : CatchDsl[LeftDomain !! Value, LeftDomain !! Nothing, Value] = {
+    new LiftContinuationCatchDsl
+  }
 }
 
 object Catch extends LowPriorityCatch0 {
 
-  @implicitNotFound(
-    "Statements `try` / `catch` / `finally` are not supported in the domain ${OuterDomain} when the return value is ${Value} and the inner domain is ${InnerDomain}.")
-  trait CatchDsl[InnerDomain, OuterDomain, Value] extends Dsl[Catch[InnerDomain, Value], OuterDomain, Value] {
+  type DslCatch[InnerDomain, OuterDomain, Value] = Dsl[Catch[InnerDomain, Value], OuterDomain, Value]
+
+  @implicitNotFound("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]")
+  private[dsl] trait CatchDsl[InnerDomain, OuterDomain, Value] extends DslCatch[InnerDomain, OuterDomain, Value] {
 
     def tryCatch(block: InnerDomain !! Value,
                  catcher: Catcher[InnerDomain !! Value],
@@ -87,6 +65,14 @@ object Catch extends LowPriorityCatch0 {
 
   @inline
   def tryCatch[InnerDomain, OuterDomain, Value](finalizer: Value => OuterDomain)(
+      implicit catchDsl: DslCatch[InnerDomain, OuterDomain, Value])
+    : (InnerDomain !! Value, Catcher[InnerDomain !! Value]) => OuterDomain = {
+    (block: InnerDomain !! Value, catcher: Catcher[InnerDomain !! Value]) =>
+      catchDsl.cpsApply(Catch(block, catcher), finalizer)
+  }
+
+  @deprecated("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]", "Dsl.scala 1.2.0")
+  private[Catch] def tryCatch[InnerDomain, OuterDomain, Value](finalizer: Value => OuterDomain)(
       implicit catchDsl: CatchDsl[InnerDomain, OuterDomain, Value]) = {
     (block: InnerDomain !! Value, catcher: Catcher[InnerDomain !! Value]) =>
       catchDsl.tryCatch(block, catcher, finalizer)
@@ -171,4 +157,50 @@ object Catch extends LowPriorityCatch0 {
       }
     }
 
+  protected class LiftContinuationCatchDsl[LeftDomain, RightDomain, Value](
+      implicit leftCatchDsl: DslCatch[LeftDomain, LeftDomain, Value])
+      extends CatchDsl[LeftDomain !! Value, LeftDomain !! RightDomain, Value] {
+    def tryCatch(block: LeftDomain !! Value !! Value,
+                 catcher: Catcher[LeftDomain !! Value !! Value],
+                 handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = { outerHandler =>
+      leftCatchDsl.cpsApply(
+        Catch(
+          block = block(Continuation.now),
+          catcher = {
+            case catcher.extract(recoveredValueContinuation) =>
+              recoveredValueContinuation(Continuation.now)
+          }
+        ),
+        handler = { value: Value =>
+          handler(value)(outerHandler)
+        }
+      )
+    }
+  }
+
+  protected class LiftFunction1CatchDsl[InnerDomain, OuterDomain, State, Value](
+      implicit leftCatchDsl: DslCatch[InnerDomain, OuterDomain, Value])
+      extends CatchDsl[State => InnerDomain, State => OuterDomain, Value] {
+    def tryCatch(block: (State => InnerDomain) !! Value,
+                 catcher: Catcher[(State => InnerDomain) !! Value],
+                 handler: Value => State => OuterDomain): State => OuterDomain = { state =>
+      leftCatchDsl.cpsApply(
+        Catch(
+          block = { (continue: Value => InnerDomain) =>
+            block { value: Value => _ =>
+              continue(value)
+            }(state)
+          },
+          catcher = {
+            case catcher.extract(recoveredValueContinuation) =>
+              continue =>
+                recoveredValueContinuation { value: Value => _ =>
+                  continue(value)
+                }(state)
+          }
+        ),
+        handler = handler(_)(state)
+      )
+    }
+  }
 }

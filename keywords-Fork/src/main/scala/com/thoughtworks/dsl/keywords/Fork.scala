@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
-import com.thoughtworks.dsl.keywords.Catch.CatchDsl
+import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
 import com.thoughtworks.enableMembersIf
 
 import scala.collection._
@@ -101,7 +101,7 @@ object Fork {
       isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
       canBuildFrom: Factory[WidenElement, RightDomain],
       continueDsl: Dsl[Continue, LeftDomain, Nothing],
-      catchDsl: CatchDsl[LeftDomain, LeftDomain, Unit]
+      catchDsl: DslCatch[LeftDomain, LeftDomain, Unit]
   ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] =
     new Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] {
       def cpsApply(fork: Fork[NarrowElement],
@@ -147,5 +147,24 @@ object Fork {
         }
       }
     }
+
+  @deprecated("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]", "Dsl.scala 1.2.0")
+  private[Fork] def forkContinuationDsl[NarrowElement, LeftDomain, WidenElement, RightDomain](
+      implicit eachDsl: Dsl[Each[NarrowElement], LeftDomain, NarrowElement],
+      booleanEachDsl: Dsl[Each[Boolean], LeftDomain, Boolean],
+      isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
+      canBuildFrom: Factory[WidenElement, RightDomain],
+      continueDsl: Dsl[Continue, LeftDomain, Nothing],
+      catchDsl: CatchDsl[LeftDomain, LeftDomain, Unit]
+  ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] = {
+    forkContinuationDsl(
+      eachDsl: Dsl[Each[NarrowElement], LeftDomain, NarrowElement],
+      booleanEachDsl: Dsl[Each[Boolean], LeftDomain, Boolean],
+      isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
+      canBuildFrom: Factory[WidenElement, RightDomain],
+      continueDsl: Dsl[Continue, LeftDomain, Nothing],
+      catchDsl: DslCatch[LeftDomain, LeftDomain, Unit]
+    )
+  }
 
 }

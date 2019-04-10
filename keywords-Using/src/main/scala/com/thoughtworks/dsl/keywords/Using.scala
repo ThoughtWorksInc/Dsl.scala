@@ -2,7 +2,7 @@ package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
-import com.thoughtworks.dsl.keywords.Catch.CatchDsl
+import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -25,7 +25,7 @@ object Using {
       implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): Using[R] = new Using(r _)
 
   implicit def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](
-      implicit catchDsl: CatchDsl[Domain, Domain, Value],
+      implicit catchDsl: DslCatch[Domain, Domain, Value],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
   ): Dsl[Using[R], Domain !! Value, R] =
     new Dsl[Using[R], Domain !! Value, R] {
@@ -38,6 +38,15 @@ object Using {
         }
       }
     }
+
+  @deprecated("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]", "Dsl.scala 1.2.0")
+  private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](
+      implicit catchDsl: CatchDsl[Domain, Domain, Value],
+      shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
+  ): Dsl[Using[R], Domain !! Value, R] = {
+    throwableContinuationUsingDsl(catchDsl: DslCatch[Domain, Domain, Value],
+                                  shiftDsl: Dsl[Shift[Domain, Value], Domain, Value])
+  }
 
   implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](
       implicit executionContext: ExecutionContext): Dsl[Using[R], Future[A], R] =
