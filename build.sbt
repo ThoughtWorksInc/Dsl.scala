@@ -56,7 +56,7 @@ lazy val `keywords-Continue` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Each` % Test)
+    .dependsOn(Dsl)
 
 lazy val `keywords-ContinueJS` = `keywords-Continue`.js
 lazy val `keywords-ContinueJVM` = `keywords-Continue`.jvm
@@ -128,6 +128,39 @@ lazy val `keywords-Catch` =
 lazy val `keywords-CatchJS` = `keywords-Catch`.js
 lazy val `keywords-CatchJVM` = `keywords-Catch`.jvm
 
+lazy val `keywords-Map` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl)
+lazy val `keywords-MapJS` = `keywords-Map`.js
+lazy val `keywords-MapJVM` = `keywords-Map`.jvm
+
+lazy val `keywords-FlatMap` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl)
+lazy val `keywords-FlatMapJS` = `keywords-FlatMap`.js
+lazy val `keywords-FlatMapJVM` = `keywords-FlatMap`.jvm
+
+lazy val `keywords-WithFilter` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(`keywords-Continue`)
+lazy val `keywords-WithFilterJS` = `keywords-WithFilter`.js
+lazy val `keywords-WithFilterJVM` = `keywords-WithFilter`.jvm
+
 lazy val `keywords-NoneSafe` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -157,7 +190,7 @@ lazy val `keywords-Each` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
+    .dependsOn(Dsl, `keywords-Shift`, `keywords-Continue` % Test)
 lazy val `keywords-EachJS` = `keywords-Each`.js
 lazy val `keywords-EachJVM` = `keywords-Each`.jvm
 
@@ -185,7 +218,7 @@ lazy val `keywords-Yield` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Shift` % Test)
+    .dependsOn(Dsl, `keywords-Shift` % Test, `keywords-Continue` % Test)
 lazy val `keywords-YieldJS` = `keywords-Yield`.js
 lazy val `keywords-YieldJVM` = `keywords-Yield`.jvm
 
@@ -229,6 +262,24 @@ lazy val `domains-cats` =
 lazy val `domains-catsJVM` = `domains-cats`.jvm
 lazy val `domains-catsJS` = `domains-cats`.js
 
+lazy val comprehension =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(
+      `keywords-Map`,
+      `keywords-FlatMap`,
+      `keywords-WithFilter`,
+      `keywords-Return`,
+      `keywords-Yield` % Test,
+      `keywords-Each` % Test,
+    )
+lazy val comprehensionJS = comprehension.js
+lazy val comprehensionJVM = comprehension.jvm
+
 lazy val `package` = project
   .settings(
     scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
@@ -250,6 +301,10 @@ lazy val `package` = project
     `keywords-AwaitJVM`,
     `keywords-AsynchronousIoJVM`,
     `keywords-UsingJVM`,
+    `keywords-MapJVM`,
+    `keywords-FlatMapJVM`,
+    `keywords-WithFilterJVM`,
+    `comprehensionJVM`,
     `domains-taskJVM`,
     DslJVM
   )
@@ -316,4 +371,3 @@ parallelExecution in Global := {
   import Ordering.Implicits._
   VersionNumber(scalaVersion.value).numbers >= Seq(2L, 12L)
 }
-

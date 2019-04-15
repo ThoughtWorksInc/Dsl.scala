@@ -11,7 +11,16 @@ import Shift.implicitShift
 import scala.collection.mutable.Builder
 
 /**
+  * Iterates though each element in [[elements]].
   * @author 杨博 (Yang Bo)
+  *
+  * @example [[Each]] keywords can be used to calculate cartesian product.
+  *
+  *          {{{
+  *          def cartesianProduct = List(!Each(Array(1, 2, 3)) * !Each(Vector(1, 10, 100, 1000)))
+  *          cartesianProduct should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
+  *          }}}
+  * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
   */
 final case class Each[Element](elements: Traversable[Element]) extends Keyword[Each[Element], Element]
 object Each {

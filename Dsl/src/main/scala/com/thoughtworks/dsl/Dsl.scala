@@ -43,28 +43,23 @@ private[dsl] trait LowPriorityDsl2 {
   implicit def nothingCollectionDsl[Keyword, Element, Collection[_]](
       implicit factory: Factory[Element, Collection[Element]],
       restDsl: Dsl[Keyword, Element, Nothing]
-  ): Dsl[Keyword, Collection[Element], Nothing] =
-    new Dsl[Keyword, Collection[Element], Nothing] {
-      def cpsApply(keyword: Keyword, handler: Nothing => Collection[Element]): Collection[Element] = {
-        singleton(resetDomain(keyword))
-      }
-    }
+  ): Dsl[Keyword, Collection[Element], Nothing] = { (keyword, handler) =>
+    singleton(resetDomain(keyword))
+  }
 }
 
 private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 
   implicit def derivedFunction1Dsl[Keyword, State, Domain, Value](
       implicit restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, State => Domain, Value] =
-    new Dsl[Keyword, State => Domain, Value] {
-      def cpsApply(keyword: Keyword, handler: Value => State => Domain): State => Domain = {
-        val restDsl1 = restDsl
-        locally { state: State =>
-          val handler1 = handler
-          restDsl1.cpsApply(keyword, handler1(_)(state))
-        }
-      }
+  ): Dsl[Keyword, State => Domain, Value] = { (keyword, handler) =>
+    val restDsl1 = restDsl
+    locally { state: State =>
+      val handler1 = handler
+      restDsl1.cpsApply(keyword, handler1(_)(state))
     }
+
+  }
 
 }
 
@@ -87,28 +82,24 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
   implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](
       implicit restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Dsl[Keyword, LeftDomain !! Throwable, Value] = {
-    new Dsl[Keyword, LeftDomain !! Throwable, Value] {
-      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! Throwable): LeftDomain !! Throwable = {
-        (continue: Throwable => LeftDomain) =>
-          restDsl.cpsApply(
-            keyword,
-            new (Value => LeftDomain) {
-              def apply(value: Value): LeftDomain = {
-                val protectedContinuation = try {
-                  handler(value)
-                } catch {
-                  case NonFatal(e) =>
-                    return continue(e)
-                }
-                // FIXME: Shift[Domain, Throwable]
-                protectedContinuation(continue)
-              }
-            }
-          )
+  ): Dsl[Keyword, LeftDomain !! Throwable, Value] = { (keyword, handler) => continue =>
+    restDsl.cpsApply(
+      keyword,
+      new (Value => LeftDomain) {
+        def apply(value: Value): LeftDomain = {
+          val protectedContinuation = try {
+            handler(value)
+          } catch {
+            case NonFatal(e) =>
+              return continue(e)
+          }
+          // FIXME: Shift[Domain, Throwable]
+          protectedContinuation(continue)
+        }
       }
-    }
+    )
   }
+
 }
 
 object Dsl extends LowPriorityDsl0 {
@@ -140,50 +131,40 @@ object Dsl extends LowPriorityDsl0 {
   @inline
   private[dsl] def resetDomain[Keyword, Domain](keyword: Keyword)(
       implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
-    dsl.cpsApply(keyword, identity)
+    dsl.cpsApply(keyword, implicitly)
   }
 
   implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](
-      implicit restDsl: Dsl[Keyword, RightDomain, Nothing]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] =
-    new Dsl[Keyword, LeftDomain !! RightDomain, Nothing] {
-      def cpsApply(keyword: Keyword, handler: Nothing => LeftDomain !! RightDomain): LeftDomain !! RightDomain =
-        _(resetDomain(keyword))
-    }
+      implicit restDsl: Dsl[Keyword, RightDomain, Nothing]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] = {
+    (keyword, handler) =>
+      _(resetDomain(keyword))
+  }
 
   implicit def nothingFutureDsl[Keyword, Domain](
-      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] =
-    new Dsl[Keyword, Future[Domain], Nothing] {
-      def cpsApply(keyword: Keyword, handler: Nothing => Future[Domain]): Future[Domain] = {
-        Future.successful(resetDomain(keyword))
-      }
-    }
+      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] = { (keyword, handler) =>
+    Future.successful(resetDomain(keyword))
+  }
 
   implicit def derivedTailRecDsl[Keyword, Domain, Value](
-      implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] =
-    new Dsl[Keyword, TailRec[Domain], Value] {
-      def cpsApply(keyword: Keyword, handler: Value => TailRec[Domain]): TailRec[Domain] = TailCalls.done {
-        restDsl.cpsApply(keyword, { value =>
-          handler(value).result
-        })
-      }
+      implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] = { (keyword, handler) =>
+    TailCalls.done {
+      restDsl.cpsApply(keyword, { value =>
+        handler(value).result
+      })
     }
+  }
 
   implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](
       implicit restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value])
-    : Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
-    new Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] {
-      def cpsApply(keyword: Keyword,
-                   handler: Value => TailRec[LeftDomain] !! Throwable): TailRec[LeftDomain] !! Throwable = {
-        tailRecFailureHandler =>
-          TailCalls.done(restDsl.cpsApply(keyword, { value => failureHandler =>
-            handler(value) { e =>
-              TailCalls.done(failureHandler(e))
-            }.result
-          }) { e =>
-            tailRecFailureHandler(e).result
-          })
-      }
-    }
+    : Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] = { (keyword, handler) => tailRecFailureHandler =>
+    TailCalls.done(restDsl.cpsApply(keyword, { value => failureHandler =>
+      handler(value) { e =>
+        TailCalls.done(failureHandler(e))
+      }.result
+    }) { e =>
+      tailRecFailureHandler(e).result
+    })
+  }
 
   type Continuation[R, +A] = (A => R @reset) => R
 

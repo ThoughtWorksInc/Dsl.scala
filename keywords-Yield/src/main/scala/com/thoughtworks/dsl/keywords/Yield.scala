@@ -20,6 +20,21 @@ import scala.language.higherKinds
   *          "def f(): Int = !Yield(1)" shouldNot compile
   *          }}}
   *
+  * @example [[Yield]] keywords can be used together with other keywords.
+  *          {{{
+  *          def gccFlagBuilder(sourceFile: String, includes: String*): Stream[String] = {
+  *            !Yield("gcc")
+  *            !Yield("-c")
+  *            !Yield(sourceFile)
+  *            val include = !Each(includes)
+  *            !Yield("-I")
+  *            !Yield(include)
+  *            !Continue
+  *          }
+  *
+  *          gccFlagBuilder("main.c", "lib1/include", "lib2/include") should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
+  *          }}}
+  * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
   */
 final case class Yield[Element](element: Element) extends AnyVal with Keyword[Yield[Element], Unit]
 
