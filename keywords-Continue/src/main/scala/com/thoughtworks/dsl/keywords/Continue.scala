@@ -14,7 +14,7 @@ import scala.collection._
   *
   * @see The [[Continue$ Continue]] object, which is the only instance of this [[Continue]] class.
   */
-sealed class Continue
+sealed class Continue extends Keyword[Continue, Nothing]
 
 /** A keyword to skip the current iteration in a collection comprehension block.
   *
