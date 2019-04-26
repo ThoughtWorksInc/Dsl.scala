@@ -145,6 +145,12 @@ class EachSpec extends FreeSpec with Matchers {
     }
   }
 
+  "new" in {
+    val seq = 1 to 3
+    def seq2 = Seq(new java.lang.Integer(!Each(seq))): @reset
+    seq2 should be(Seq(new java.lang.Integer(1), new java.lang.Integer(2), new java.lang.Integer(3)))
+  }
+
   "foreach" in {
     val seq = 1 to 10
     var accumulator = 0

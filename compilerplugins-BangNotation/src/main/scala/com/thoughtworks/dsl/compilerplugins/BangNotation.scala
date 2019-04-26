@@ -274,11 +274,16 @@ final class BangNotation(override val global: Global) extends Plugin {
                 })
               }
             }
-
           case q"${method: Ident}[..$typeParameters](...$parameterLists)" =>
             cpsParameterList(parameterLists) { parameterListsValues =>
               continue(atPos(tree.pos) {
                 q"$method[..$typeParameters](...$parameterListsValues)"
+              })
+            }
+          case q"new $constructor[..$typeParameters](...$parameterLists)" =>
+            cpsParameterList(parameterLists) { parameterListsValues =>
+              continue(atPos(tree.pos) {
+                q"new $constructor[..$typeParameters](...$parameterListsValues)"
               })
             }
           case Typed(expr, tpt) =>
