@@ -17,7 +17,10 @@ import scala.tools.nsc.{Global, Mode, Phase}
   * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-reseteverywhere" % "latest.release")
   * </pre>`
   *
-  * @note All `@[[Dsl.reset reset]]` annotations are not neseccary if this [[ResetEverywhere]] plug-in is enabled.
+  * @note Once this [[ResetEverywhere]] plug-in is enabled,
+  *       the `@[[Dsl.reset reset]]` annotations on every methods and functions automatically,
+  *       and some other macros or compiler plug-ins may conflict with those `@[[Dsl.reset reset]]` annotations.
+  *
   * @author 杨博 (Yang Bo)
   */
 final class ResetEverywhere(override val global: Global) extends Plugin {
