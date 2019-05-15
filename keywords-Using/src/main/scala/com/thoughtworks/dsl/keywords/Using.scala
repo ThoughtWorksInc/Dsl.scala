@@ -11,12 +11,10 @@ import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
+  * @see [[dsl]] for usage of this [[Using]] keyword in continuations
   */
 final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal with Keyword[Using[R], R]
 
-/**
-  * @see [[dsl]] for usage of this [[Using]] keyword in continuations
-  */
 object Using {
 
   implicit def implicitUsing[R <: AutoCloseable](r: => R): Using[R] = Using[R](r _)
