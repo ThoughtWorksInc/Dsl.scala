@@ -9,7 +9,9 @@ import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
-/**
+/** This [[Using]] keyword automatically manage resources in [[scala.concurrent.Future]], [[domains.task.Task]],
+  * and other asynchrounous domains derived from `Future` or `Task`.
+  *
   * @author 杨博 (Yang Bo)
   * @see [[dsl]] for usage of this [[Using]] keyword in continuations
   */
