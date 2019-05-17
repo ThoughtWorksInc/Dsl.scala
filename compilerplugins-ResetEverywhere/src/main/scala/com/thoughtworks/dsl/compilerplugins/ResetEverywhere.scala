@@ -18,7 +18,7 @@ import scala.tools.nsc.{Global, Mode, Phase}
   * </pre>`
   *
   * @note Once this [[ResetEverywhere]] plug-in is enabled,
-  *       the `@[[Dsl.reset reset]]` annotations are added to every methods and functions automatically.
+  *       the `@[[Dsl.reset reset]]` annotations are added to class fields, every methods and every functions automatically.
   *       Some other macros or compiler plug-ins may conflict with those `@[[Dsl.reset reset]]` annotations.
   *
   * @author 杨博 (Yang Bo)
