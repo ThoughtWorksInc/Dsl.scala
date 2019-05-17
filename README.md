@@ -82,8 +82,10 @@ The call to `xorshiftRandomGenerator` does not throw a `StackOverflowError` beca
   
 (Feel free to add your project here)
 
-## Links
+## Links and related works
 
 * Check the [Documentation](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html) to find examples about using or creating DSLs.
 * See [MVNRepository](http://mvnrepository.com/artifact/com.thoughtworks.dsl?sort=newest) or [Scaladex](https://index.scala-lang.org/thoughtworksinc/dsl.scala) for the settings of each built-in DSLs for your build tools.
 * [Benchmarks: Dsl.scala vs Monix vs Cats Effect vs Scalaz Concurrent vs Scala Async vs Scala Continuation](https://github.com/ThoughtWorksInc/Dsl.scala/wiki/Benchmarks:-Dsl.scala-vs-Monix-vs-Cats-Effect-vs-Scalaz-Concurrent-vs-Scala-Async-vs-Scala-Continuation)
+* [Control.Dsl](https://github.com/Atry/Control.Dsl) is the Haskell port of this library.
+* The syntax of our `BangNotation` compiler plugin is inspired by [Idris' !-notation](http://docs.idris-lang.org/en/latest/tutorial/interfaces.html#notation).
