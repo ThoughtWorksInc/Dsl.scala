@@ -22,7 +22,7 @@ import scala.util.control.TailCalls.TailRec
   *          Only two steps are required:
   *
   *           - Defining their domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
-  *           - Implementing thi [[Dsl]] type class, which is an interpreter for an [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
+  *           - Implementing this [[Dsl]] type class, which is an interpreter for an [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   *
   *          TODO: an example for creating a DSL
   */
