@@ -24,7 +24,6 @@ import scala.util.control.TailCalls.TailRec
   *           - Defining their domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   *           - Implementing this [[Dsl]] type class, which is an interpreter for an [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   *
-  *          TODO: an example for creating a DSL
   */
 @implicitNotFound("The keyword ${Keyword} is not supported inside a function that returns ${Domain}.")
 trait Dsl[-Keyword, Domain, +Value] {
