@@ -14,13 +14,9 @@ import scala.language.implicitConversions
   * [[scala.concurrent.Future Future]], [[domains.task.Task]],
   * or any exception aware continuations as `(_ !! Throwable !! _)`.
   *
-  * {{{
-  * import scala.concurrent.Future
-  * }}}
-  *
   * @example Given a [[scala.concurrent.Future Future]]:
   *          {{{
-  *
+  *          import scala.concurrent.Future
   *          val myFuture40 = Future {
   *            40
   *          }
@@ -29,7 +25,6 @@ import scala.language.implicitConversions
   *          You can [[Await]] the [[scala.concurrent.Future Future]] in another [[scala.concurrent.Future Future]]
   *
   *          {{{
-  *          import scala.concurrent.Future
   *          def myFuture42 = Future {
   *            !Await(myFuture40) + 2
   *          }
@@ -39,8 +34,8 @@ import scala.language.implicitConversions
   *          with the help of [[Await]].
   *
   *          {{{
-  *          import com.thoughtworks.dsl.domains.task._
-  *          import com.thoughtworks.dsl.keywords._
+  *          import com.thoughtworks.dsl.domains.task.Task
+  *          import com.thoughtworks.dsl.keywords.Await
   *          val myTask = Task {
   *            !Await(myFuture42)
   *          }
@@ -57,6 +52,7 @@ import scala.language.implicitConversions
   *          }}}
   * @example `!Await` can be used together with `try` / `catch` / `finally`.
   *          {{{
+  *          import scala.concurrent.Future
   *          val buffer = new StringBuffer
   *          def recoverFuture = Future {
   *            buffer.append("Oh")
@@ -80,6 +76,7 @@ import scala.language.implicitConversions
   *          }}}
   * @example Other keywords, including [[Return]] or [[Get]], can be used together with [[Await]]
   *          {{{
+  *          import scala.concurrent.Future
   *          import com.thoughtworks.dsl.keywords.{Get, Return}
   *          val buffer = new StringBuffer
   *          def recoverFuture = Future {
