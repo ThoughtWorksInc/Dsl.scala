@@ -7,3 +7,11 @@ scalacOptions ++= {
     None
   }
 }
+
+libraryDependencies += "com.thoughtworks.dsl" %%% "comprehension" % "1.2.0" % Optional
+
+libraryDependencies += "com.thoughtworks.dsl" %%% "domains-task" % "1.2.0" % Optional
+
+libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-using" % "1.2.0" % Optional
+
+libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.2.0+14-7a373cbd" % Optional
