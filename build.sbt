@@ -33,7 +33,7 @@ lazy val `keywords-Fork` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Continue`, `keywords-Each`)
+    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Continue`, `keywords-ForEach`)
 lazy val `keywords-ForkJS` = `keywords-Fork`.js
 lazy val `keywords-ForkJVM` = `keywords-Fork`.jvm
 
@@ -183,6 +183,17 @@ lazy val `keywords-NullSafe` =
 lazy val `keywords-NullSafeJS` = `keywords-NullSafe`.js
 lazy val `keywords-NullSafeJVM` = `keywords-NullSafe`.jvm
 
+lazy val `keywords-ForEach` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl)
+lazy val `keywords-ForEachJS` = `keywords-ForEach`.js
+lazy val `keywords-ForEachJVM` = `keywords-ForEach`.jvm
+
 lazy val `keywords-Each` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -293,6 +304,7 @@ lazy val `package` = project
     `keywords-ContinueJVM`,
     `keywords-ReturnJVM`,
     `keywords-ShiftJVM`,
+    `keywords-ForEachJVM`,
     `keywords-EachJVM`,
     `keywords-YieldJVM`,
     `keywords-ForkJVM`,

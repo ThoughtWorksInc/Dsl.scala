@@ -113,52 +113,6 @@ class EachSpec extends FreeSpec with Matchers {
         result.last should be(110)
       }
     }
-
-    "foreach" - {
-
-      "val" in {
-        val seq = 1 to 10
-
-        def run(): Unit = {
-          val plus100 = Seq {
-            !Each(seq) + 100
-          }
-          plus100.length should be(1)
-          !Each(plus100)
-        }
-
-        run()
-      }
-      "def" in {
-        val seq = 1 to 10
-
-        def run(): Unit = {
-          def plus100 = Seq {
-            !Each(seq) + 100
-          }
-          plus100.length should be(10)
-          !Each(plus100)
-        }
-
-        run()
-      }
-    }
-  }
-
-  "new" in {
-    val seq = 1 to 3
-    def seq2 = Seq(new java.lang.Integer(!Each(seq))): @reset
-    seq2 should be(Seq(new java.lang.Integer(1), new java.lang.Integer(2), new java.lang.Integer(3)))
-  }
-
-  "foreach" in {
-    val seq = 1 to 10
-    var accumulator = 0
-    def loop(): Unit = {
-      accumulator += !Each(seq)
-    }
-    loop()
-    accumulator should be(55)
   }
 
   "default parameter" in {
