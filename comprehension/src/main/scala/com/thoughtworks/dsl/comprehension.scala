@@ -53,7 +53,6 @@ private[dsl] sealed trait LowPriorityComprehension0 {
   *          {{{
   *          cartesianProduct.to[List] should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
   *          }}}
-  *
   * @example This example implements the same feature as the example on Scaladoc of [[keywords.Yield]],
   *          except this example use `for`-comprehension instead of !-notation.
   *
@@ -139,6 +138,12 @@ object comprehension extends LowPriorityComprehension0 {
 
     def to[Output[_]](implicit dsl: Dsl[Keyword, Output[Value], Value],
                       returnDsl: Dsl[Return[Value], Output[Value], Nothing]): Output[Value] = {
+      dsl.cpsApply(keyword, { value: Value =>
+        resetDomain(Return(value))
+      })
+    }
+    def as[Domain](implicit dsl: Dsl[Keyword, Domain, Value],
+                   returnDsl: Dsl[Return[Value], Domain, Nothing]): Domain = {
       dsl.cpsApply(keyword, { value: Value =>
         resetDomain(Return(value))
       })

@@ -22,7 +22,11 @@ lazy val `domains-task` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(`keywords-Shift`, `keywords-Fork` % Test, `keywords-Using` % Test, `keywords-Yield` % Test)
+    .dependsOn(`keywords-Shift`,
+               `keywords-Fork` % Test,
+               `keywords-Using` % Test,
+               `keywords-Yield` % Test,
+               `comprehension` % Test)
 lazy val `domains-taskJS` = `domains-task`.js
 lazy val `domains-taskJVM` = `domains-task`.jvm
 
@@ -91,7 +95,7 @@ lazy val `keywords-AsynchronousIo` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(`keywords-Shift`)
+    .dependsOn(`keywords-Shift`, `comprehension` % Test)
 lazy val `keywords-AsynchronousIoJS` = `keywords-AsynchronousIo`.js
 lazy val `keywords-AsynchronousIoJVM` = `keywords-AsynchronousIo`.jvm
 
@@ -285,8 +289,6 @@ lazy val comprehension =
       `keywords-FlatMap`,
       `keywords-WithFilter`,
       `keywords-Return`,
-      `keywords-Yield` % Test,
-      `keywords-Each` % Test,
     )
 lazy val comprehensionJS = comprehension.js
 lazy val comprehensionJVM = comprehension.jvm
