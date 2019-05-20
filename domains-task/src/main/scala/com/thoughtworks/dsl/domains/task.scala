@@ -21,6 +21,53 @@ object task {
 
   type TaskDomain = TailRec[Unit] !! Throwable
 
+  /** The asynchronous task that supports exception handling, resource management, and is stack-safe.
+    *
+    * @template
+    * @example A [[Task]] can be created from `for`-comprehension,
+    *          where [[keywords.Each]] and [[keywords.Fork]] can be used together to asynchronously iterate collections.
+    *
+    *          For example, the above `concatenateRemoteData` downloads and concatenates data from multiple URLs.
+    *
+    *          {{{
+    *          import com.thoughtworks.dsl.comprehension._
+    *          import com.thoughtworks.dsl.keywords._
+    *          import com.thoughtworks.dsl.keywords.Shift._
+    *          import com.thoughtworks.dsl.domains.task.Task
+    *          import java.net.URL
+    *          def concatenateRemoteData(urls: List[URL], downloader: URL => Task[Vector[Byte]]): Task[Vector[Byte]] = {
+    *            for {
+    *              url <- Fork(urls)
+    *              data <- downloader(url)
+    *              byte <- Each(data)
+    *            } yield byte
+    *          }.as[Task[Vector[Byte]]]
+    *          }}}
+    *
+    *          A [[Task]] can be also created from [[Task.apply]]
+    *
+    *          {{{
+    *          def mockDownloader(url: URL) = Task {
+    *            "mock data\n".getBytes.toVector
+    *          }
+    *          }}}
+    *
+    *          A [[Task]] can be then converted to [[scala.concurrent.Future]] via [[Task.toFuture]],
+    *          in order to integrate into other frameworks.
+    *
+    *          In this example, it's a `Future[Assertion]` required by [[org.scalatest.AsyncFreeSpec]].
+    *
+    *          {{{
+    *          val mockUrls = List(new URL("http://example.com/file1"), new URL("http://example.com/file2"))
+    *
+    *          import org.scalatest.Assertion
+    *          def assertion: Task[Assertion] = Task {
+    *            !concatenateRemoteData(mockUrls, mockDownloader) should be("mock data\nmock data\n".getBytes.toVector)
+    *          }
+    *
+    *          Task.toFuture(assertion)
+    *          }}}
+    */
   type Task[+A] = TaskDomain !! A
 
   object Task {

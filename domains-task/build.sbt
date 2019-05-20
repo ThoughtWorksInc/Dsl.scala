@@ -1,6 +1,6 @@
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Optional
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {
@@ -28,5 +28,3 @@ libraryDependencies ++= {
 }
 
 libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.6"
-
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.2.0" % Test
