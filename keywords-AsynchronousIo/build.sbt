@@ -14,4 +14,4 @@ libraryDependencies += "com.thoughtworks.dsl" %%% "domains-task" % "1.2.0" % Opt
 
 libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-using" % "1.2.0" % Optional
 
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.2.0+14-7a373cbd" % Optional
+libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.2.0+22-af129ac9" % Optional
