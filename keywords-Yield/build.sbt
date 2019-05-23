@@ -25,4 +25,4 @@ libraryDependencies ++= {
   }
 }
 
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.2.0" % Test
+libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.3.0" % Test
