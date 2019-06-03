@@ -1,12 +1,12 @@
 scalacOptions ++= {
-  import Ordering.Implicits._
-  if (VersionNumber(scalaVersion.value).numbers < Seq(2L, 12L)) {
-    // Enable SAM types for Scala 2.11
-    Some("-Xexperimental")
-  } else {
-    None
+  scalaBinaryVersion.value match {
+    case "2.11" =>
+      Some("-Xexperimental")
+    case _ =>
+      None
   }
 }
+
 
 scalacOptions ++= {
   import Ordering.Implicits._
