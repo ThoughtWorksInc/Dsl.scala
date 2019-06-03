@@ -307,7 +307,12 @@ final class BangNotation(override val global: Global) extends Plugin {
             def loop(stats: List[Tree]): Tree = {
               stats match {
                 case Nil =>
-                  cpsAttachment(expr)(continue)
+                  cpsAttachment(expr) {
+                    case block: Block =>
+                      continue(block)
+                    case notBlock =>
+                      continue(treeCopy.Block(tree, Nil, notBlock))
+                  }
                 case (valDef @ ValDef(mods, name, tpt, rhs)) :: tail =>
                   // TODO: lazy val
                   cpsAttachment(rhs) { rhsValue =>
