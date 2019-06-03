@@ -27,17 +27,16 @@ object Using {
   implicit def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](
       implicit catchDsl: DslCatch[Domain, Domain, Value],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
-  ): Dsl[Using[R], Domain !! Value, R] =
-    new Dsl[Using[R], Domain !! Value, R] {
-      def cpsApply(keyword: Using[R], handler: R => Domain !! Value): Domain !! Value = _ {
-        val r = keyword.open()
-        try {
-          !Shift(handler(r))
-        } finally {
-          r.close()
-        }
+  ): Dsl[Using[R], Domain !! Value, R] = { (keyword: Using[R], handler: R => Domain !! Value) =>
+    _ {
+      val r = keyword.open()
+      try {
+        !Shift(handler(r))
+      } finally {
+        r.close()
       }
     }
+  }
 
   @deprecated("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]", "Dsl.scala 1.2.0")
   private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](
@@ -48,47 +47,43 @@ object Using {
                                   shiftDsl: Dsl[Shift[Domain, Value], Domain, Value])
   }
 
-  implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](
-      implicit executionContext: ExecutionContext): Dsl[Using[R], Future[A], R] =
-    new Dsl[Using[R], Future[A], R] {
-      def cpsApply(keyword: Using[R], handler: R => Future[A]): Future[A] = {
-        Future(keyword.open()).flatMap { r: R =>
-          def onFailure(e: Throwable): Future[Nothing] = {
-            try {
-              r.close()
-              Future.failed(e)
-            } catch {
-              case NonFatal(e2) =>
-                Future.failed(e2)
-            }
-          }
-
-          def onSuccess(a: A): Future[A] = {
-            try {
-              r.close()
-              Future.successful(a)
-            } catch {
-              case NonFatal(e2) =>
-                Future.failed(e2)
-            }
-          }
-
-          def returnableBlock(): Future[A] = {
-            val fa: Future[A] = try {
-              handler(r)
-            } catch {
-              case NonFatal(e) =>
-                return onFailure(e)
-            }
-            fa.recoverWith {
-                case NonFatal(e) =>
-                  onFailure(e)
-              }
-              .flatMap(onSuccess)
-          }
-          returnableBlock()
+  implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](implicit executionContext: ExecutionContext)
+    : Dsl[Using[R], Future[A], R] = { (keyword: Using[R], handler: R => Future[A]) =>
+    Future(keyword.open()).flatMap { r: R =>
+      def onFailure(e: Throwable): Future[Nothing] = {
+        try {
+          r.close()
+          Future.failed(e)
+        } catch {
+          case NonFatal(e2) =>
+            Future.failed(e2)
         }
       }
-    }
 
+      def onSuccess(a: A): Future[A] = {
+        try {
+          r.close()
+          Future.successful(a)
+        } catch {
+          case NonFatal(e2) =>
+            Future.failed(e2)
+        }
+      }
+
+      def returnableBlock(): Future[A] = {
+        val fa: Future[A] = try {
+          handler(r)
+        } catch {
+          case NonFatal(e) =>
+            return onFailure(e)
+        }
+        fa.recoverWith {
+            case NonFatal(e) =>
+              onFailure(e)
+          }
+          .flatMap(onSuccess)
+      }
+      returnableBlock()
+    }
+  }
 }
