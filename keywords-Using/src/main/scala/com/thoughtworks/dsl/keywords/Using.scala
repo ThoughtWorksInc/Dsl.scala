@@ -6,7 +6,6 @@ import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 /** This [[Using]] keyword automatically manage resources in [[scala.concurrent.Future]], [[domains.task.Task]],
@@ -20,6 +19,38 @@ final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal with Ke
 object Using {
 
   implicit def implicitUsing[R <: AutoCloseable](r: => R): Using[R] = Using[R](r _)
+
+  /** Returns a [[Using]] keyword for a resource that could be a function literal.
+    *
+    * @note This method is similar to [[apply]],
+    *       except the parameter type is changed from a generic `R` to the SAM type [[java.lang.AutoCloseable]],
+    *       which allows for function literal expressions.
+    * @example The following function will perform `n *= 2` after `n += 20`:
+    *
+    *          {{{
+    *          import scala.concurrent.Future
+    *          import com.thoughtworks.dsl.Dsl.reset
+    *          import com.thoughtworks.dsl.keywords.Using.defer
+    *          var n = 1
+    *          def multiplicationAfterAddition = Future {
+    *            !defer { () =>
+    *              n *= 2
+    *            }
+    *            n += 20
+    *          }
+    *          }}}
+    *
+    *          Therefore, the final value of `n` should be `(1 + 20) * 2 = 42`.
+    *
+    *          {{{
+    *          Future {
+    *            !Await(multiplicationAfterAddition)
+    *            n should be(42)
+    *          }: @reset
+    *          }}}
+    *
+    */
+  def defer(r: => AutoCloseable) = new Using(r _)
 
   def apply[R <: AutoCloseable](r: => R)(
       implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): Using[R] = new Using(r _)
