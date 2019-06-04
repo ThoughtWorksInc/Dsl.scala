@@ -79,6 +79,8 @@ The call to `xorshiftRandomGenerator` does not throw a `StackOverflowError` beca
 ## Showcases
 
 * [sbt-ammonite-classpath](https://github.com/ThoughtWorksInc/sbt-ammonite-classpath) is an sbt plug-in that [uses `Each` keywords to iterate through configuations and keys](https://github.com/ThoughtWorksInc/sbt-ammonite-classpath/blob/793bc20/src/main/scala/com/thoughtworks/deeplearning/sbtammoniteclasspath/AmmoniteClasspath.scala#L23), as an alternative syntax of `for` comprehensions.
+* [Dsl.scala-akka-http](https://github.com/ThoughtWorksInc/Dsl.scala-akka-http) contains utilities to integrate Akka HTTP with Dsl.scala.
+
   
 (Feel free to add your project here)
 
