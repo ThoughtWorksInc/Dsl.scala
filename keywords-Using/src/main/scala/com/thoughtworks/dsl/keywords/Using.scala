@@ -1,4 +1,5 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
@@ -20,20 +21,25 @@ object Using {
 
   implicit def implicitUsing[R <: AutoCloseable](r: => R): Using[R] = Using[R](r _)
 
-  /** Returns a [[Using]] keyword for a resource that could be a function literal.
+  trait ScopeExitHandler extends AutoCloseable
+
+  /** Returns a [[Using]] keyword to execute a [[ScopeExitHandler]] when exiting the nearest enclosing scope
+    * that is annotated as [[Dsl.reset @reset]],
+    * (or the nearest enclosing function if [[compilerplugins.ResetEverywhere]] is enabled).
     *
     * @note This method is similar to [[apply]],
-    *       except the parameter type is changed from a generic `R` to the SAM type [[java.lang.AutoCloseable]],
-    *       which allows for function literal expressions.
+    *       except the parameter type is changed from a generic `R` to the SAM type [[ScopeExitHandler]],
+    *       which allows for function literal expressions
+    *       in Scala 2.12+ or Scala 2.11 with `-Xexperimental` compiler option.
+    *
     * @example The following function will perform `n *= 2` after `n += 20`:
     *
     *          {{{
     *          import scala.concurrent.Future
-    *          import com.thoughtworks.dsl.Dsl.reset
-    *          import com.thoughtworks.dsl.keywords.Using.defer
+    *          import com.thoughtworks.dsl.keywords.Using.scopeExit
     *          var n = 1
     *          def multiplicationAfterAddition = Future {
-    *            !defer { () =>
+    *            !scopeExit { () =>
     *              n *= 2
     *            }
     *            n += 20
@@ -43,6 +49,7 @@ object Using {
     *          Therefore, the final value of `n` should be `(1 + 20) * 2 = 42`.
     *
     *          {{{
+    *          import com.thoughtworks.dsl.Dsl.reset
     *          Future {
     *            !Await(multiplicationAfterAddition)
     *            n should be(42)
@@ -50,7 +57,7 @@ object Using {
     *          }}}
     *
     */
-  def defer(r: => AutoCloseable) = new Using(r _)
+  def scopeExit(r: => ScopeExitHandler) = new Using(r _)
 
   def apply[R <: AutoCloseable](r: => R)(
       implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): Using[R] = new Using(r _)
