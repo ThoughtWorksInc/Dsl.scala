@@ -31,4 +31,4 @@ libraryDependencies ++= {
 
 libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.6"
 
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-yield" % "1.3.0" % Test
+libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-yield" % "1.3.1" % Test

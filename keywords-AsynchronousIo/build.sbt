@@ -8,10 +8,10 @@ scalacOptions ++= {
   }
 }
 
-libraryDependencies += "com.thoughtworks.dsl" %%% "comprehension" % "1.3.0" % Optional
+libraryDependencies += "com.thoughtworks.dsl" %%% "comprehension" % "1.3.1" % Optional
 
-libraryDependencies += "com.thoughtworks.dsl" %%% "domains-task" % "1.3.0" % Optional
+libraryDependencies += "com.thoughtworks.dsl" %%% "domains-task" % "1.3.1" % Optional
 
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-using" % "1.3.0" % Optional
+libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-using" % "1.3.1" % Optional
 
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.3.0" % Optional
+libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.3.1" % Optional
