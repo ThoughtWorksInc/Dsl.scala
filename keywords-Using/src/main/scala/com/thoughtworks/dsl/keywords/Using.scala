@@ -17,7 +17,23 @@ import scala.util.control.NonFatal
   */
 final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal with Keyword[Using[R], R]
 
-object Using {
+trait LowPriorityUsing {
+
+  implicit def usingDsl[R <: AutoCloseable, Domain]: Dsl[Using[R], Domain, R] =
+    new Dsl[Using[R], Domain, R] {
+      def cpsApply(keyword: Using[R], handler: R => Domain): Domain = {
+        val r = keyword.open()
+        try {
+          handler(r)
+        } finally {
+          r.close()
+        }
+      }
+    }
+
+}
+
+object Using extends LowPriorityUsing {
 
   implicit def implicitUsing[R <: AutoCloseable](r: => R): Using[R] = Using[R](r _)
 

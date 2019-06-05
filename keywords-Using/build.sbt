@@ -21,3 +21,4 @@ scalacOptions ++= {
 }
 
 libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-await" % "1.3.1" % Test
+libraryDependencies += "com.thoughtworks.dsl" %%% "domains-task" % "1.3.1" % Test
