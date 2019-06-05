@@ -21,7 +21,6 @@ We also provide some built-in keywords, including:
  * The `Fork` keyword for duplicating current context, similar to the `fork` system call in POSIX.
  * The `Return` keyword for early returning, similar to the native `return` keyword in Scala.
  * The `Using` keyword to automatically close resources when exiting a scope, similar to the native `using` keyword in C#.
- * The `Defer` keyword for automatically run deferred statement when the surrounding function returns, similar to the native `defer` keyword in Go.
  * The `Monadic` keyword for creating Scalaz or Cats monadic control flow, similar to the !-notation in Idris.
  * The `NullSafe` keyword for the null safe operator, similar to the `?` operator in Kotlin and Groovy.
  * The `NoneSafe` keyword for the `None` safe operator, similar to the `Maybe` monad in Haskell.

@@ -25,7 +25,6 @@ lazy val `domains-task` =
     .dependsOn(`keywords-Shift`,
                `keywords-Fork` % Test,
                `keywords-Using` % Test,
-               `keywords-Defer` % Test,
                `keywords-Yield` % Test,
                `comprehension` % Test)
 lazy val `domains-taskJS` = `domains-task`.js
@@ -121,17 +120,6 @@ lazy val `keywords-Using` =
     .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`)
 lazy val `keywords-UsingJS` = `keywords-Using`.js
 lazy val `keywords-UsingJVM` = `keywords-Using`.jvm
-
-lazy val `keywords-Defer` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .settings(
-      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
-      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
-    )
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`)
-lazy val `keywords-DeferJS` = `keywords-Defer`.js
-lazy val `keywords-DeferJVM` = `keywords-Defer`.jvm
 
 lazy val `keywords-Catch` =
   crossProject(JSPlatform, JVMPlatform)
@@ -327,7 +315,6 @@ lazy val `package` = project
     `keywords-AwaitJVM`,
     `keywords-AsynchronousIoJVM`,
     `keywords-UsingJVM`,
-    `keywords-DeferJVM`,
     `keywords-MapJVM`,
     `keywords-FlatMapJVM`,
     `keywords-WithFilterJVM`,
