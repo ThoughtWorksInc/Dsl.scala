@@ -346,7 +346,7 @@ lazy val unidoc =
           inDependencies(`compilerplugins-ResetEverywhere`)
         }
       },
-      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
+      addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
       scalacOptions += "-Xexperimental",
       scalacOptions ++= {
         import Ordering.Implicits._

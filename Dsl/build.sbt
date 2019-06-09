@@ -26,7 +26,7 @@ libraryDependencies ++= {
   }
 }
 
-libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.6"
+libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.7"
 
 // Improve backward compatibility for Scala 2.11
 scalacOptions += "-Ydelambdafy:method"
