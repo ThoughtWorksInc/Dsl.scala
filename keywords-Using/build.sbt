@@ -19,5 +19,3 @@ scalacOptions ++= {
     None
   }
 }
-
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-await" % "1.3.1" % Test

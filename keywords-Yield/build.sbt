@@ -24,5 +24,3 @@ libraryDependencies ++= {
     Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
   }
 }
-
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.3.1" % Test

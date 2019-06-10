@@ -13,6 +13,52 @@ import scala.runtime.NonLocalReturnControl
   */
 class YieldSpec extends FreeSpec with Matchers {
 
+  "Given a continuation that uses Yield and Each expressions" - {
+
+    def asyncFunction: Stream[String] !! Unit = _ {
+      !Yield("Entering asyncFunction")
+      val subThreadId: Int = !Each(Seq(0, 1))
+      !Yield(s"Fork sub-thread $subThreadId")
+      !Yield("Leaving asyncFunction")
+    }
+
+    "When create a generator that contains Yield, Shift, and Each expressions" - {
+
+      def generator: Stream[String] = {
+        !Yield("Entering generator")
+        val threadId = !Each(Seq(0, 1))
+        !Yield(s"Fork thread $threadId")
+        !Shift(asyncFunction)
+        Stream("Leaving generator")
+      }
+
+      "Then the generator should contains yield values" in {
+        generator should be(
+          Seq(
+            /**/ "Entering generator",
+            /****/ "Fork thread 0",
+            /******/ "Entering asyncFunction",
+            /********/ "Fork sub-thread 0",
+            /**********/ "Leaving asyncFunction",
+            /**********/ "Leaving generator",
+            /********/ "Fork sub-thread 1",
+            /**********/ "Leaving asyncFunction",
+            /**********/ "Leaving generator",
+            /****/ "Fork thread 1",
+            /******/ "Entering asyncFunction",
+            /********/ "Fork sub-thread 0",
+            /**********/ "Leaving asyncFunction",
+            /**********/ "Leaving generator",
+            /********/ "Fork sub-thread 1",
+            /**********/ "Leaving asyncFunction",
+            /**********/ "Leaving generator"
+          ))
+      }
+
+    }
+
+  }
+
   "stream" - {
 
     def shouldCompile = {

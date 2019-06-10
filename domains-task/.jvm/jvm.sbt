@@ -7,7 +7,3 @@ exampleSuperTypes := exampleSuperTypes.value.map {
   case otherTrait =>
     otherTrait
 }
-
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.3.1" % Optional
-
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-fork" % "1.3.1" % Optional

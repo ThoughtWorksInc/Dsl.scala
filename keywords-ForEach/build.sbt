@@ -10,5 +10,3 @@ scalacOptions in Compile ++= {
     case _      => Seq.empty
   }
 }
-
-libraryDependencies += "com.thoughtworks.dsl" %%% "keywords-each" % "1.3.1" % Test

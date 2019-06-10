@@ -49,11 +49,9 @@ object Using {
     *          Therefore, the final value of `n` should be `(1 + 20) * 2 = 42`.
     *
     *          {{{
-    *          import com.thoughtworks.dsl.Dsl.reset
-    *          Future {
-    *            !Await(multiplicationAfterAddition)
+    *          multiplicationAfterAddition.map { _ =>
     *            n should be(42)
-    *          }: @reset
+    *          }
     *          }}}
     *
     */
