@@ -261,23 +261,6 @@ lazy val `domains-scalaz` =
 lazy val `domains-scalazJS` = `domains-scalaz`.js
 lazy val `domains-scalazJVM` = `domains-scalaz`.jvm
 
-lazy val `domains-cats` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .settings(
-      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
-      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
-    )
-    .dependsOn(Dsl,
-               `keywords-Catch`,
-               `keywords-Monadic`,
-               `keywords-Return`,
-               `keywords-Shift` % Test,
-               `keywords-Yield` % Test)
-
-lazy val `domains-catsJVM` = `domains-cats`.jvm
-lazy val `domains-catsJS` = `domains-cats`.js
-
 lazy val comprehension =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -304,7 +287,6 @@ lazy val `package` = project
     scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
   )
   .dependsOn(
-    `domains-catsJVM`,
     `domains-scalazJVM`,
     `keywords-GetJVM`,
     `keywords-PutJVM`,
