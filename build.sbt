@@ -23,6 +23,7 @@ lazy val `domains-task` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
     .dependsOn(`keywords-Shift`,
+               `keywords-Each` % Test,
                `keywords-Fork` % Test,
                `keywords-Using` % Test,
                `keywords-Yield` % Test,
@@ -60,7 +61,7 @@ lazy val `keywords-Continue` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl)
+    .dependsOn(Dsl, `keywords-Each` % Test)
 
 lazy val `keywords-ContinueJS` = `keywords-Continue`.js
 lazy val `keywords-ContinueJVM` = `keywords-Continue`.jvm
@@ -95,7 +96,7 @@ lazy val `keywords-AsynchronousIo` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(`keywords-Shift`, `comprehension` % Test)
+    .dependsOn(`keywords-Shift`, `keywords-Each` % Test, `keywords-Using` % Test, `comprehension` % Test, `domains-task` % Test)
 lazy val `keywords-AsynchronousIoJS` = `keywords-AsynchronousIo`.js
 lazy val `keywords-AsynchronousIoJVM` = `keywords-AsynchronousIo`.jvm
 
@@ -194,7 +195,7 @@ lazy val `keywords-ForEach` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl)
+    .dependsOn(Dsl, `keywords-Each` % Test)
 lazy val `keywords-ForEachJS` = `keywords-ForEach`.js
 lazy val `keywords-ForEachJVM` = `keywords-ForEach`.jvm
 
@@ -205,7 +206,7 @@ lazy val `keywords-Each` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Continue` % Test)
+    .dependsOn(Dsl, `keywords-Shift`)
 lazy val `keywords-EachJS` = `keywords-Each`.js
 lazy val `keywords-EachJVM` = `keywords-Each`.jvm
 
@@ -233,7 +234,7 @@ lazy val `keywords-Yield` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Shift` % Test, `keywords-Continue` % Test)
+    .dependsOn(Dsl, `keywords-Shift` % Test, `keywords-Each` % Test, `keywords-Continue` % Test)
 lazy val `keywords-YieldJS` = `keywords-Yield`.js
 lazy val `keywords-YieldJVM` = `keywords-Yield`.jvm
 
@@ -289,6 +290,10 @@ lazy val comprehension =
       `keywords-FlatMap`,
       `keywords-WithFilter`,
       `keywords-Return`,
+      `keywords-Each` % Test,
+      `keywords-Yield` % Test,
+      `keywords-Using` % Test,
+      `keywords-Continue` % Test,
     )
 lazy val comprehensionJS = comprehension.js
 lazy val comprehensionJVM = comprehension.jvm
