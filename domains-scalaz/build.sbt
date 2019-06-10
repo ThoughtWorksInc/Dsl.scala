@@ -1,6 +1,6 @@
-libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.26"
+libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.27"
 
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {
@@ -9,4 +9,4 @@ scalacOptions in Compile ++= {
   }
 }
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test

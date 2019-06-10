@@ -1,6 +1,6 @@
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {
@@ -9,4 +9,4 @@ scalacOptions in Compile ++= {
   }
 }
 
-libraryDependencies += "com.thoughtworks.extractor" %%% "extractor" % "2.1.1"
+libraryDependencies += "com.thoughtworks.extractor" %%% "extractor" % "2.1.2"

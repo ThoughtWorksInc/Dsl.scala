@@ -1,8 +1,8 @@
 enablePlugins(Example)
 
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {

@@ -8,4 +8,4 @@ exampleSuperTypes := exampleSuperTypes.value.map {
     otherTrait
 }
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test

@@ -1,6 +1,6 @@
 enablePlugins(Example)
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
 
 publishArtifact := false
 
@@ -38,7 +38,7 @@ sourceGenerators in Test := {
   }
 }
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.26"
+libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.27"
 
 import scala.meta._
 
@@ -53,7 +53,7 @@ exampleSuperTypes := ctor"_root_.org.scalatest.AsyncFreeSpec" +: exampleSuperTyp
 exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
 exampleSuperTypes += ctor"_root_.com.thoughtworks.dsl.MockPingPongServer"
 
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
 scalacOptions ++= {
   import Ordering.Implicits._

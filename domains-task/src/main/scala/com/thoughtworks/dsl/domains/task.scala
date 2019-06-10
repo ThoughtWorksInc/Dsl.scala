@@ -165,7 +165,7 @@ object task {
         }
         .result
 
-      if (timeout.isFinite()) {
+      if (timeout.isFinite) {
         syncVar.take(timeout.toMillis).get
       } else {
         syncVar.take.get
