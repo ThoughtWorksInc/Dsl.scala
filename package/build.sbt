@@ -12,7 +12,7 @@ libraryDependencies ++= {
     Seq(
       "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
-      "com.typesafe.akka" %% "akka-actor" % "2.5.14" % Optional,
+      "com.typesafe.akka" %% "akka-actor" % "2.5.23" % Optional,
       "com.twitter" %% "algebird-core" % "0.13.4" % Optional,
       "com.thoughtworks.binding" %% "binding" % "11.0.1" % Optional,
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
@@ -20,7 +20,7 @@ libraryDependencies ++= {
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
       "com.lihaoyi" %% "sourcecode" % "0.1.4" % Optional,
       "io.monix" %% "monix" % "2.3.3" % Optional,
-      "com.typesafe.akka" %% "akka-stream" % "2.5.14" % Optional,
+      "com.typesafe.akka" %% "akka-stream" % "2.5.23" % Optional,
       "com.typesafe.akka" %% "akka-http" % "10.1.3" % Optional
     )
   }
