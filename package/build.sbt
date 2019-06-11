@@ -21,7 +21,7 @@ libraryDependencies ++= {
       "com.lihaoyi" %% "sourcecode" % "0.1.7" % Optional,
       "io.monix" %% "monix" % "2.3.3" % Optional,
       "com.typesafe.akka" %% "akka-stream" % "2.5.23" % Optional,
-      "com.typesafe.akka" %% "akka-http" % "10.1.3" % Optional
+      "com.typesafe.akka" %% "akka-http" % "10.1.8" % Optional
     )
   }
 }
