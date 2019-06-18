@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
-import com.thoughtworks.dsl.keywords.{Catch, Shift, Yield}
+import com.thoughtworks.dsl.keywords.{Shift, Yield}
 import org.scalatest.{FreeSpec, Matchers}
 import com.thoughtworks.dsl.domains.task._
 
@@ -30,7 +30,8 @@ final class RaiiSpec extends FreeSpec with Matchers {
     */
   def successContinuation[LeftDomain](domain: LeftDomain): (LeftDomain !! Throwable) @reset = Continuation.empty(domain)
 
-  def failureContinuation[LeftDomain](throwable: Throwable): (LeftDomain !! Throwable) @reset = Continuation.now(throwable)
+  def failureContinuation[LeftDomain](throwable: Throwable): (LeftDomain !! Throwable) @reset =
+    Continuation.now(throwable)
 
   "Given a continuation that throws an exception" - {
     object MyException extends Exception

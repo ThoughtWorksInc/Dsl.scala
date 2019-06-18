@@ -1,14 +1,12 @@
 package com.thoughtworks.dsl
 package compilerplugins
 
-import com.thoughtworks.dsl.Dsl.{ResetAnnotation, nonTypeConstraintReset, shift}
+import com.thoughtworks.dsl.Dsl.{ResetAnnotation, shift}
 import com.thoughtworks.dsl.compilerplugins.BangNotation.HasReturn
 
-import scala.annotation.tailrec
-import scala.tools.nsc.plugins.{Plugin, PluginComponent}
-import scala.tools.nsc.transform.Transform
+import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.typechecker.ContextMode
-import scala.tools.nsc.{Global, Mode, Phase}
+import scala.tools.nsc.{Global, Mode}
 private object BangNotation {
   sealed trait HasReturn
   object HasReturn {
@@ -155,17 +153,6 @@ final class BangNotation(override val global: Global) extends Plugin {
         }
       }
       tree.productIterator.exists(hasCpsAttachment)
-    }
-
-    private lazy val catchIdent: Tree = {
-      try {
-        Ident(rootMirror.staticModule("_root_.com.thoughtworks.dsl.keywords.Catch"))
-      } catch {
-        case e: ScalaReflectionException =>
-          abort("""The BangNotation compiler plug-in requires the runtime library `keywords-catch` to enable !-notation in `try` / `catch` / `finally` expressions:
-  libraryDependencies += "com.thoughtworks.dsl" %% "keywords-catch" % "latest.release"
-""")
-      }
     }
 
     private val whileName = currentUnit.freshTermName("while")
@@ -390,38 +377,56 @@ final class BangNotation(override val global: Global) extends Plugin {
             // This CaseDef tree contains some bang notations, and will be translated by enclosing Try or Match tree, not here
             EmptyTree
           case Try(block, catches, finalizer) =>
-            val finalizerName = currentUnit.freshTermName("finalizer")
             val resultName = currentUnit.freshTermName("result")
+            val handlerName = currentUnit.freshTermName("handler")
 
-            q"""
-            $catchIdent.tryCatch { ($resultName: $tpe) => ${{
-              cpsAttachment(finalizer) { finalizerValue =>
-                q"""
-                  ..${notPure(finalizerValue)}
-                  ${continue(q"$resultName")}
-                """
-              }
-            }}}.apply(
-              { $finalizerName: ${TypeTree()} => ${cpsAttachment(block) { blockValue =>
-              q"$finalizerName.apply($blockValue)"
-            }}},
-              {
-                case ..${catches.map { caseDef =>
-              atPos(caseDef.pos) {
-                treeCopy.CaseDef(
-                  caseDef,
-                  caseDef.pat,
-                  caseDef.guard,
-                  q"""{ $finalizerName: ${TypeTree()} => ${{
-                    cpsAttachment(caseDef.body) { bodyValue =>
-                      q"$finalizerName.apply($bodyValue)"
-                    }
-                  }}}"""
-                )
-              }
-            }}}
-            )
-            """
+            def transformBlock() =
+              q"""{ $handlerName: ${TypeTree()} => ${cpsAttachment(block) { blockValue =>
+                q"$handlerName.apply($blockValue)"
+              }}}"""
+
+            def transformCatches() =
+              q"""{case ..${catches.map { caseDef =>
+                atPos(caseDef.pos) {
+                  treeCopy.CaseDef(
+                    caseDef,
+                    caseDef.pat,
+                    caseDef.guard,
+                    q"""{ $handlerName: ${TypeTree()} => ${{
+                      cpsAttachment(caseDef.body) { bodyValue =>
+                        q"$handlerName.apply($bodyValue)"
+                      }
+                    }}}"""
+                  )
+                }
+              }}}"""
+
+            def transformFinalizer() =
+              q"""{ $handlerName: ${TypeTree()} =>
+              ${cpsAttachment(finalizer) { finalizerValue =>
+                q"$handlerName($finalizerValue: ${typeOf[Unit]})"
+              }}}"""
+
+            def endTry() = q"""{ ($resultName: $tpe) => ${continue(q"$resultName")}}"""
+
+            finalizer match {
+              case EmptyTree =>
+                q"""_root_.com.thoughtworks.dsl.Dsl.TryCatch.Ops(${endTry()}).apply(
+                  ${transformBlock()},
+                  ${transformCatches()}
+                )"""
+              case _ if catches.isEmpty =>
+                q"""_root_.com.thoughtworks.dsl.Dsl.TryFinally.Ops(${endTry()}).apply(
+                  ${transformBlock()},
+                  ${transformFinalizer()}
+                )"""
+              case _ =>
+                q"""_root_.com.thoughtworks.dsl.Dsl.TryCatchFinally.Ops(${endTry()}).apply(
+                  ${transformBlock()},
+                  ${transformCatches()},
+                  ${transformFinalizer()}
+                )"""
+            }
           case Assign(lhs, rhs) =>
             cpsAttachment(rhs) { rhsValue =>
               continue(treeCopy.Assign(tree, lhs, rhsValue))

@@ -332,6 +332,38 @@ package com.thoughtworks
   *          stream should be(Stream("line1", "line2", "line3"))
   *          isClosed should be(true)
   *          }}}
+  *
+  * @example `try` / `catch` / `finally` expressions are also supported in functions that return `Stream[String] !! Throwable`,
+  *          because of the [[scala.Throwable]] part in the signature.
+  *
+  *          {{{
+  *          import com.thoughtworks.dsl.Dsl.!!, keywords._
+  *          var finallyBlockInvoked = 0
+  *          class MyException extends Exception
+  *          def f: Stream[String] !! Throwable = {
+  *            while (true) {
+  *              try {
+  *                !new Yield("yield value")
+  *                if (true) {
+  *                  throw new MyException
+  *                }
+  *              } catch {
+  *                case e: RuntimeException =>
+  *                  throw new AssertionError("Should not catch an RuntimeException", e)
+  *              } finally {
+  *                finallyBlockInvoked += 1
+  *              }
+  *            }
+  *            throw new AssertionError("Unreachable code")
+  *          }
+  *
+  *          val result = f { e =>
+  *            e should be(a[MyException])
+  *            Stream.empty
+  *          }
+  *          result should be(Stream("yield value"))
+  *          finallyBlockInvoked should be(1)
+  *          }}}
   * @example If you don't need to collaborate to [[scala.Stream Stream]] or other domains,
   *          you can use `TailRec[Unit] !! Throwable !! A`
   *          or the alias [[domains.task.Task]] as the return type,
@@ -397,7 +429,7 @@ package com.thoughtworks
   *          {{{
   *          import com.thoughtworks.dsl.domains.task.Task.blockingAwait
   *
-  *          val url = new URL("http://localhost:4001/ping")
+  *          val url = new URL("http://localhost:8085/ping")
   *          val fileContent = blockingAwait(httpClient(url))
   *          fileContent should startWith("HTTP/1.1 200 OK")
   *          }}}
@@ -413,8 +445,8 @@ package com.thoughtworks
   *          import com.thoughtworks.dsl.keywords.Fork
   *          import com.thoughtworks.dsl.keywords.Return
   *          val Urls = Seq(
-  *            new URL("http://localhost:4001/ping"),
-  *            new URL("http://localhost:4001/pong")
+  *            new URL("http://localhost:8085/ping"),
+  *            new URL("http://localhost:8085/pong")
   *          )
   *          def parallelTask: Task[Seq[String]] = {
   *            val url = !Fork(Urls)
