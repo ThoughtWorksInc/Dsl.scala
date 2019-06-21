@@ -38,7 +38,7 @@ lazy val `keywords-Fork` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`, `keywords-Continue`, `keywords-ForEach`)
+    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch` % Optional, `keywords-Continue`, `keywords-ForEach`)
 lazy val `keywords-ForkJS` = `keywords-Fork`.js
 lazy val `keywords-ForkJVM` = `keywords-Fork`.jvm
 
@@ -96,7 +96,11 @@ lazy val `keywords-AsynchronousIo` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(`keywords-Shift`, `keywords-Each` % Test, `keywords-Using` % Test, `comprehension` % Test, `domains-task` % Test)
+    .dependsOn(`keywords-Shift`,
+               `keywords-Each` % Test,
+               `keywords-Using` % Test,
+               `comprehension` % Test,
+               `domains-task` % Test)
 lazy val `keywords-AsynchronousIoJS` = `keywords-AsynchronousIo`.js
 lazy val `keywords-AsynchronousIoJVM` = `keywords-AsynchronousIo`.jvm
 
@@ -111,17 +115,6 @@ lazy val `keywords-Shift` =
 lazy val `keywords-ShiftJS` = `keywords-Shift`.js
 lazy val `keywords-ShiftJVM` = `keywords-Shift`.jvm
 
-lazy val `keywords-Using` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .settings(
-      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
-      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
-    )
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch`)
-lazy val `keywords-UsingJS` = `keywords-Using`.js
-lazy val `keywords-UsingJVM` = `keywords-Using`.jvm
-
 lazy val `keywords-Catch` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -132,6 +125,17 @@ lazy val `keywords-Catch` =
     .dependsOn(Dsl, `keywords-Shift`, `keywords-Yield` % Test)
 lazy val `keywords-CatchJS` = `keywords-Catch`.js
 lazy val `keywords-CatchJVM` = `keywords-Catch`.jvm
+
+lazy val `keywords-Using` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .settings(
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
+      scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
+    )
+    .dependsOn(Dsl, `keywords-Shift`, `keywords-Catch` % Optional)
+lazy val `keywords-UsingJS` = `keywords-Using`.js
+lazy val `keywords-UsingJVM` = `keywords-Using`.jvm
 
 lazy val `keywords-Map` =
   crossProject(JSPlatform, JVMPlatform)
@@ -253,7 +257,7 @@ lazy val `domains-scalaz` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
     .dependsOn(Dsl,
-               `keywords-Catch`,
+               `keywords-Catch` % Optional,
                `keywords-Monadic`,
                `keywords-Return`,
                `keywords-Shift` % Test,
@@ -309,6 +313,27 @@ lazy val `package` = project
     `domains-taskJVM`,
     DslJVM
   )
+
+// Replace `keywords-Catch` % Optional to `keywords-Catch` for Scala 2.11
+for (catchProject <- `keywords-Catch`.projects.values.toSeq) yield {
+  Global / buildDependencies := {
+    val oldBuildDependencies = (Global / buildDependencies).value
+    val catchProjectRef = (catchProject / thisProjectRef).value
+    if (scalaBinaryVersion.value == "2.11") {
+      internal.BuildDependencies(
+        oldBuildDependencies.classpath.mapValues(_.map {
+          case ResolvedClasspathDependency(`catchProjectRef`, Some(Optional.name)) =>
+            ResolvedClasspathDependency(catchProjectRef, None)
+          case dep =>
+            dep
+        }),
+        oldBuildDependencies.aggregate
+      )
+    } else {
+      oldBuildDependencies
+    }
+  }
+}
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
