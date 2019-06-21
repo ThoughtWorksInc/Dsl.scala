@@ -27,7 +27,7 @@ trait MockPingPongServer extends BeforeAndAfterAll { this: Suite =>
           complete("PONG!")
         }
       }
-    concurrent.Await.result(akka.http.scaladsl.Http().bindAndHandle(route, "localhost", 4001), Duration.Inf)
+    concurrent.Await.result(akka.http.scaladsl.Http().bindAndHandle(route, "localhost", 8085), Duration.Inf)
   }
 
   override protected def afterAll(): Unit = {

@@ -13,6 +13,7 @@ import scala.util.control.NonFatal
 /**
   * @author 杨博 (Yang Bo)
   */
+@deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
 final case class Catch[Domain, Value](block: Domain !! Value, catcher: Catcher[Domain !! Value])
     extends Keyword[Catch[Domain, Value], Value]
 
@@ -47,6 +48,7 @@ private[keywords] trait LowPriorityCatch0 extends LowPriorityCatch1 { this: Catc
   }
 }
 
+@deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
 object Catch extends LowPriorityCatch0 {
 
   type DslCatch[InnerDomain, OuterDomain, Value] = Dsl[Catch[InnerDomain, Value], OuterDomain, Value]
