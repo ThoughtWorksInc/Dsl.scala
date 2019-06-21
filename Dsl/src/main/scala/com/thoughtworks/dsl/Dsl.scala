@@ -277,7 +277,8 @@ object Dsl extends LowPriorityDsl0 {
     * !-notation is allowed by default for `? !! Throwable` and [[scala.concurrent.Future Future]] domains,
     * with the help of this type class.
     */
-  @implicitNotFound("The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
+  @implicitNotFound(
+    "The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
   trait TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
     def tryCatchFinally(block: BlockDomain !! Value,
                         catcher: Catcher[BlockDomain !! Value],
@@ -296,26 +297,22 @@ object Dsl extends LowPriorityDsl0 {
         typeClass.tryCatchFinally(block, catcher, finalizer, outerSuccessHandler)
     }
 
-    def cpsApply[Value, OuterDomain, BlockDomain, FinalizerDomain](
-        ops: Ops[Value, OuterDomain, BlockDomain, FinalizerDomain]) = ops
-
     implicit def fromTryCatchTryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain](
         implicit tryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
         tryCatch: TryCatch[Value, BlockDomain, BlockDomain]
-    ): TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] =
-      new TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
-        def tryCatchFinally(block: BlockDomain !! Value,
-                            catcher: Catcher[BlockDomain !! Value],
-                            finalizer: FinalizerDomain !! Unit,
-                            outerSuccessHandler: Value => OuterDomain): OuterDomain = {
-          tryFinally.tryFinally({
-            tryCatch.tryCatch(block, catcher, _)
-          }, finalizer, outerSuccessHandler)
-        }
-      }
+    ): TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] = {
+      (block: BlockDomain !! Value,
+       catcher: Catcher[BlockDomain !! Value],
+       finalizer: FinalizerDomain !! Unit,
+       outerSuccessHandler: Value => OuterDomain) =>
+        tryFinally.tryFinally({
+          tryCatch.tryCatch(block, catcher, _)
+        }, finalizer, outerSuccessHandler)
+    }
   }
 
-  @implicitNotFound("The `try` ... `catch` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
+  @implicitNotFound(
+    "The `try` ... `catch` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
   trait TryCatch[Value, OuterDomain, BlockDomain] {
     def tryCatch(block: BlockDomain !! Value,
                  catcher: Catcher[BlockDomain !! Value],
@@ -325,20 +322,18 @@ object Dsl extends LowPriorityDsl0 {
   private[dsl] trait LowPriorityTryCatch {
     implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, State](
         implicit restTryCatch: TryCatch[Value, OuterDomain, BlockDomain])
-      : TryCatch[Value, State => OuterDomain, State => BlockDomain] =
-      new TryCatch[Value, State => OuterDomain, State => BlockDomain] {
-        def tryCatch(block: (State => BlockDomain) !! Value,
-                     catcher: Catcher[(State => BlockDomain) !! Value],
-                     outerSuccessHandler: Value => State => OuterDomain): State => OuterDomain = { state =>
-          def withState(blockContinuation: (State => BlockDomain) !! Value) = { blockHandler: (Value => BlockDomain) =>
-            blockContinuation { value: Value => (state: State) =>
-              blockHandler(value)
-            }(state)
-          }
-
-          restTryCatch.tryCatch(withState(block), catcher.andThen(withState _), outerSuccessHandler(_)(state))
+      : TryCatch[Value, State => OuterDomain, State => BlockDomain] = {
+      (block: (State => BlockDomain) !! Value,
+       catcher: Catcher[(State => BlockDomain) !! Value],
+       outerSuccessHandler: Value => State => OuterDomain) => (state: State) =>
+        def withState(blockContinuation: (State => BlockDomain) !! Value) = { blockHandler: (Value => BlockDomain) =>
+          blockContinuation { value: Value => (state: State) =>
+            blockHandler(value)
+          }(state)
         }
-      }
+
+        restTryCatch.tryCatch(withState(block), catcher.andThen(withState _), outerSuccessHandler(_)(state))
+    }
   }
 
   object TryCatch extends LowPriorityTryCatch {
@@ -351,95 +346,87 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-    def cpsApply[Value, OuterDomain, BlockDomain](ops: Ops[Value, OuterDomain, BlockDomain]) = ops
-
     implicit def futureTryCatch[BlockValue, OuterValue](
-        implicit executionContext: ExecutionContext): TryCatch[BlockValue, Future[OuterValue], Future[BlockValue]] =
-      new TryCatch[BlockValue, Future[OuterValue], Future[BlockValue]] {
-        def tryCatch(block: Future[BlockValue] !! BlockValue,
-                     catcher: Catcher[Future[BlockValue] !! BlockValue],
-                     outerSuccessHandler: BlockValue => Future[OuterValue]): Future[OuterValue] = {
-          catchNativeException(block)
-            .recoverWith {
-              case e: Throwable =>
-                def recover(): Future[BlockValue] = {
-                  (try {
-                    catcher.lift(e)
-                  } catch {
-                    case NonFatal(extractorException) =>
-                      return Future.failed(extractorException)
-                  }) match {
-                    case None =>
-                      Future.failed(e)
-                    case Some(recovered) =>
-                      catchNativeException(recovered)
-                  }
+        implicit executionContext: ExecutionContext): TryCatch[BlockValue, Future[OuterValue], Future[BlockValue]] = {
+      (block: Future[BlockValue] !! BlockValue,
+       catcher: Catcher[Future[BlockValue] !! BlockValue],
+       outerSuccessHandler: BlockValue => Future[OuterValue]) =>
+        catchNativeException(block)
+          .recoverWith {
+            case e: Throwable =>
+              def recover(): Future[BlockValue] = {
+                (try {
+                  catcher.lift(e)
+                } catch {
+                  case NonFatal(extractorException) =>
+                    return Future.failed(extractorException)
+                }) match {
+                  case None =>
+                    Future.failed(e)
+                  case Some(recovered) =>
+                    catchNativeException(recovered)
                 }
-                recover()
-            }
-            .flatMap(outerSuccessHandler)
-        }
-      }
+              }
+              recover()
+          }
+          .flatMap(outerSuccessHandler)
+    }
 
     implicit def throwableContinuationTryCatch[LeftDomain, Value]
       : TryCatch[Value, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
-      new TryCatch[Value, LeftDomain !! Throwable, LeftDomain !! Throwable] {
-        def tryCatch(block: LeftDomain !! Throwable !! Value,
-                     catcher: Catcher[LeftDomain !! Throwable !! Value],
-                     outerSuccessHandler: Value => LeftDomain !! Throwable): LeftDomain !! Throwable = {
-          outerFailureHandler =>
-            def innerFailureHandler(e: Throwable): LeftDomain = {
-              catcher.lift(e) match {
-                case None =>
-                  outerFailureHandler(e)
-                case Some(recovered) =>
-                  @inline
-                  def recoveredHandler(): LeftDomain = {
-                    locally {
-                      try {
-                        recovered(outerSuccessHandler)
-                      } catch {
-                        case NonFatal(nativeThrown) =>
-                          return outerFailureHandler(nativeThrown)
-                      }
-                    }(outerFailureHandler)
-                  }
 
-                  recoveredHandler()
+      (block: LeftDomain !! Throwable !! Value,
+       catcher: Catcher[LeftDomain !! Throwable !! Value],
+       outerSuccessHandler: Value => LeftDomain !! Throwable) => outerFailureHandler =>
+        def innerFailureHandler(e: Throwable): LeftDomain = {
+          catcher.lift(e) match {
+            case None =>
+              outerFailureHandler(e)
+            case Some(recovered) =>
+              @inline
+              def recoveredHandler(): LeftDomain = {
+                locally {
+                  try {
+                    recovered(outerSuccessHandler)
+                  } catch {
+                    case NonFatal(nativeThrown) =>
+                      return outerFailureHandler(nativeThrown)
+                  }
+                }(outerFailureHandler)
               }
-            }
 
-            def runBlock(): LeftDomain = {
-              (try {
-                block { a => hookedFailureHandler =>
-                  @inline
-                  def successHandler(): LeftDomain = {
-                    locally {
-                      try {
-                        outerSuccessHandler(a)
-                      } catch {
-                        case NonFatal(nativeThrown) =>
-                          return outerFailureHandler(nativeThrown)
-                      }
-                    }(outerFailureHandler)
-                  }
-
-                  successHandler()
-                }
-              } catch {
-                case NonFatal(e) =>
-                  return innerFailureHandler(e)
-              })(innerFailureHandler)
-            }
-            runBlock()
+              recoveredHandler()
+          }
         }
-      }
 
+        def runBlock(): LeftDomain = {
+          (try {
+            block { a => hookedFailureHandler =>
+              @inline
+              def successHandler(): LeftDomain = {
+                locally {
+                  try {
+                    outerSuccessHandler(a)
+                  } catch {
+                    case NonFatal(nativeThrown) =>
+                      return outerFailureHandler(nativeThrown)
+                  }
+                }(outerFailureHandler)
+              }
+
+              successHandler()
+            }
+          } catch {
+            case NonFatal(e) =>
+              return innerFailureHandler(e)
+          })(innerFailureHandler)
+        }
+        runBlock()
     }
-
   }
 
-  @implicitNotFound("The `try` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
+  @implicitNotFound(
+    "The `try` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
   trait TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
     def tryFinally(block: BlockDomain !! Value,
                    finalizer: FinalizerDomain !! Unit,
@@ -449,20 +436,18 @@ object Dsl extends LowPriorityDsl0 {
   private[dsl] trait LowPriorityTryFinally {
     implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, FinalizerDomain, State](
         implicit restTryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain])
-      : TryFinally[Value, State => OuterDomain, State => BlockDomain, State => FinalizerDomain] =
-      new TryFinally[Value, State => OuterDomain, State => BlockDomain, State => FinalizerDomain] {
-        def tryFinally(block: (State => BlockDomain) !! Value,
-                       finalizer: (State => FinalizerDomain) !! Unit,
-                       outerSuccessHandler: Value => State => OuterDomain): State => OuterDomain = { state =>
-          def withState[Domain, Value](blockContinuation: (State => Domain) !! Value) = { blockHandler: (Value => Domain) =>
-            blockContinuation { value: Value => (state: State) =>
-              blockHandler(value)
-            }(state)
-          }
-
-          restTryFinally.tryFinally(withState(block), withState(finalizer), outerSuccessHandler(_)(state))
+      : TryFinally[Value, State => OuterDomain, State => BlockDomain, State => FinalizerDomain] = {
+      (block: (State => BlockDomain) !! Value,
+       finalizer: (State => FinalizerDomain) !! Unit,
+       outerSuccessHandler: Value => State => OuterDomain) => state =>
+        def withState[Domain, Value](blockContinuation: (State => Domain) !! Value) = { blockHandler: (Value => Domain) =>
+          blockContinuation { value: Value => (state: State) =>
+            blockHandler(value)
+          }(state)
         }
-      }
+
+        restTryFinally.tryFinally(withState(block), withState(finalizer), outerSuccessHandler(_)(state))
+    }
   }
 
   object TryFinally extends LowPriorityTryFinally {
@@ -476,75 +461,64 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-    def cpsApply[Value, OuterDomain, BlockDomain, FinalizerDomain](
-        ops: Ops[Value, OuterDomain, BlockDomain, FinalizerDomain]) = ops
-
     implicit def futureTryFinally[BlockValue, OuterValue](implicit executionContext: ExecutionContext)
-      : TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] =
-      new TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] {
-        def tryFinally(block: Future[BlockValue] !! BlockValue,
-                       finalizer: Future[Unit] !! Unit,
-                       outerSuccessHandler: BlockValue => Future[OuterValue]): Future[OuterValue] = {
-          @inline
-          def injectFinalizer[A](f: Unit => Future[A]): Future[A] = {
-            catchNativeException(finalizer).flatMap(f)
-          }
-          catchNativeException(block)
-            .recoverWith {
-              case e: Throwable =>
-                injectFinalizer { _: Unit =>
-                  Future.failed(e)
-                }
-            }
-            .flatMap { a =>
-              injectFinalizer { _: Unit =>
-                outerSuccessHandler(a)
-              }
-            }
+      : TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] = {
+      (block: Future[BlockValue] !! BlockValue,
+       finalizer: Future[Unit] !! Unit,
+       outerSuccessHandler: BlockValue => Future[OuterValue]) =>
+        @inline
+        def injectFinalizer[A](f: Unit => Future[A]): Future[A] = {
+          catchNativeException(finalizer).flatMap(f)
         }
-      }
+
+        catchNativeException(block)
+          .recoverWith {
+            case e: Throwable =>
+              injectFinalizer { _: Unit =>
+                Future.failed(e)
+              }
+          }
+          .flatMap { a =>
+            injectFinalizer { _: Unit =>
+              outerSuccessHandler(a)
+            }
+          }
+    }
 
     implicit def throwableContinuationTryFinally[LeftDomain, Value]
       : TryFinally[Value, LeftDomain !! Throwable, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
-      new TryFinally[Value, LeftDomain !! Throwable, LeftDomain !! Throwable, LeftDomain !! Throwable] {
-        def tryFinally(block: LeftDomain !! Throwable !! Value,
-                       finalizer: LeftDomain !! Throwable !! Unit,
-                       outerSuccessHandler: Value => LeftDomain !! Throwable): LeftDomain !! Throwable = {
-          outerFailureHandler =>
-            @inline
-            def injectFinalizer(finalizerHandler: Unit => LeftDomain !! Throwable): LeftDomain = {
-              locally {
-                try {
-                  finalizer(finalizerHandler)
-                } catch {
-                  case NonFatal(e) =>
-                    return outerFailureHandler(e)
-                }
-              }(outerFailureHandler)
+      (block, finalizer, outerSuccessHandler) => outerFailureHandler =>
+        @inline
+        def injectFinalizer(finalizerHandler: Unit => LeftDomain !! Throwable): LeftDomain = {
+          locally {
+            try {
+              finalizer(finalizerHandler)
+            } catch {
+              case NonFatal(e) =>
+                return outerFailureHandler(e)
             }
-
-            @inline
-            def hookedFailureHandler(e: Throwable) =
-              injectFinalizer { _: Unit =>
-                _(e)
-              }
-
-            def runBlock(): LeftDomain = {
-              (try {
-                block { value => hookedFailureHandler =>
-                  injectFinalizer { _: Unit =>
-                    outerSuccessHandler(value)
-                  }
-                }
-              } catch {
-                case NonFatal(e) =>
-                  return hookedFailureHandler(e)
-              })(hookedFailureHandler)
-            }
-            runBlock()
+          }(outerFailureHandler)
         }
-      }
+
+        @inline
+        def hookedFailureHandler(e: Throwable) =
+          injectFinalizer { _: Unit =>
+            _(e)
+          }
+
+        def runBlock(): LeftDomain = {
+          (try {
+            block { value => hookedFailureHandler =>
+              injectFinalizer { _: Unit =>
+                outerSuccessHandler(value)
+              }
+            }
+          } catch {
+            case NonFatal(e) =>
+              return hookedFailureHandler(e)
+          })(hookedFailureHandler)
+        }
+        runBlock()
     }
   }
-
 }

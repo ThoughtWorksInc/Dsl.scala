@@ -200,12 +200,10 @@ object scalaz {
     }
 
   implicit def scalazReturnDsl[F[_], A, B](implicit applicative: Applicative[F],
-                                           restReturnDsl: Dsl[Return[A], B, Nothing]) =
-    new Dsl[Return[A], F[B], Nothing] {
-      def cpsApply(keyword: Return[A], handler: Nothing => F[B]): F[B] = {
-        applicative.pure(restReturnDsl.cpsApply(keyword, identity))
-      }
-    }
+                                           restReturnDsl: Dsl[Return[A], B, Nothing]) = {
+    (keyword: Return[A], handler: Nothing => F[B]) =>
+      applicative.pure(restReturnDsl.cpsApply(keyword, identity))
+  }
 
   implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](
       implicit monadTrans: MonadTrans[F],

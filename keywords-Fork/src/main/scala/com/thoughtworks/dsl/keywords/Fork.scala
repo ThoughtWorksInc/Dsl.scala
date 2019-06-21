@@ -104,10 +104,9 @@ object Fork {
       canBuildFrom: Factory[WidenElement, RightDomain],
       continueDsl: Dsl[Continue, LeftDomain, Nothing],
       tryCatchFinally: TryCatchFinally[Unit, LeftDomain, LeftDomain, LeftDomain]
-  ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] =
-    new Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] {
-      def cpsApply(fork: Fork[NarrowElement],
-                   mapper: NarrowElement => LeftDomain !! RightDomain): LeftDomain !! RightDomain = _ {
+  ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] = {
+    (fork: Fork[NarrowElement], mapper: NarrowElement => LeftDomain !! RightDomain) =>
+      _ {
         val builder: mutable.Builder[WidenElement, RightDomain] = newBuilder[WidenElement, RightDomain]
         val exceptionBuilder = Set.newBuilder[Throwable]
         val counter = new AtomicInteger(1)
@@ -148,7 +147,7 @@ object Fork {
           }
         }
       }
-    }
+  }
 
   @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
   private[Fork] def forkContinuationDsl[NarrowElement, LeftDomain, WidenElement, RightDomain](
