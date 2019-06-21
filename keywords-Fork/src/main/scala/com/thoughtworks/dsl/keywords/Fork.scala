@@ -113,15 +113,19 @@ object Fork {
           val element = !ForEach(fork.elements)
           counter.incrementAndGet()
           try {
-            builder ++= !Shift(mapper(element));
-            ()
+            val result = !Shift(mapper(element))
+            builder.synchronized[Unit] {
+              builder ++= result
+            }
           } catch {
             case MultipleException(throwableSet) =>
-              exceptionBuilder ++= throwableSet;
-              ()
+              exceptionBuilder.synchronized[Unit] {
+                exceptionBuilder ++= throwableSet
+              }
             case e: Throwable =>
-              exceptionBuilder += e;
-              ()
+              exceptionBuilder.synchronized[Unit] {
+                exceptionBuilder += e
+              }
           } finally {
             if (counter.decrementAndGet() > 0) {
               !Continue
