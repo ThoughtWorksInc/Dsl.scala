@@ -2,17 +2,17 @@ package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.Extractor._
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.!!
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
-import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans, Unapply}
+import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans}
 import com.thoughtworks.dsl.keywords.Catch.CatchDsl
-import com.thoughtworks.dsl.keywords.{Catch, Monadic, Return}
+import com.thoughtworks.dsl.keywords.{Monadic, Return}
 import com.thoughtworks.dsl.Dsl.{TryCatch, TryFinally}
 
 import scala.util.control.Exception.Catcher
-import scala.util.control.{ControlThrowable, NonFatal}
+import scala.util.control.NonFatal
 
 /** Contains interpreters to enable [[Dsl.Keyword#unary_$bang !-notation]]
   * for [[keywords.Monadic Monadic]] and other keywords
