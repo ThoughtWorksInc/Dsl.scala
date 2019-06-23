@@ -4,6 +4,8 @@ libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
 
 publishArtifact := false
 
+libraryDependencies += "com.thoughtworks.dsl" %% "domains-cats" % "1.4.0" % Optional
+
 libraryDependencies ++= {
   import Ordering.Implicits._
   if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
