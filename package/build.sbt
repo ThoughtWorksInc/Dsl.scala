@@ -4,14 +4,13 @@ libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
 
 publishArtifact := false
 
-libraryDependencies += "com.thoughtworks.dsl" %% "domains-cats" % "1.4.0" % Optional
-
 libraryDependencies ++= {
   import Ordering.Implicits._
   if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
     Nil
   } else {
     Seq(
+      "com.thoughtworks.dsl" %% "domains-cats" % "1.4.0" % Optional,
       "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
       "com.typesafe.akka" %% "akka-actor" % "2.5.23" % Optional,
