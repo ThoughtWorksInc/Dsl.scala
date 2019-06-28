@@ -39,7 +39,7 @@ sourceGenerators in Test := {
   }
 }
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.27"
+libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.28"
 
 import scala.meta._
 
