@@ -38,7 +38,7 @@ import scala.language.higherKinds
   */
 final case class Yield[Element](element: Element) extends AnyVal with Keyword[Yield[Element], Unit]
 
-private[keywords] trait LowPriorityYield2 {
+private[keywords] trait LowPriorityYield3 {
 
   def apply[A](elements: A*) = {
     From(elements)
@@ -66,7 +66,7 @@ private[keywords] object YieldScalaVersions {
   @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
   object Scala211Or212 {
 
-    trait LowPriorityYield1 extends LowPriorityYield2 {
+    trait LowPriorityYield1 extends LowPriorityYield3 {
 
       implicit def seqViewYieldFromDsl[A, FromCollection <: Traversable[A], Coll1, Coll2](
           implicit canBuildFrom: CanBuildFrom[SeqView[A, Coll1], A, SeqView[A, Coll2]])
@@ -112,7 +112,7 @@ private[keywords] object YieldScalaVersions {
   @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
   object Scala213 {
 
-    trait LowPriorityYield1 extends LowPriorityYield2 {
+    trait LowPriorityYield2 extends LowPriorityYield3 {
 
       implicit def viewYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A]]
         : Dsl[From[FromCollection], View[A], Unit] =
@@ -144,7 +144,7 @@ private[keywords] object YieldScalaVersions {
         }
     }
 
-    trait LowPriorityYield0 extends LowPriorityYield1 {
+    trait LowPriorityYield1 extends LowPriorityYield2 {
       implicit def seqYieldFromDsl[A,
                                    FromCollection <: View.SomeIterableOps[A],
                                    Collection[X] <: SeqOps[X, Collection, Collection[X]]]
@@ -162,7 +162,32 @@ private[keywords] object YieldScalaVersions {
             keyword.element +: generateTail(())
           }
         }
+    }
 
+    trait LowPriorityYield0 extends LowPriorityYield1 {
+
+      implicit def lazyListYieldFromDsl[A, FromCollection <: Iterable[A]]
+        : Dsl[From[FromCollection], LazyList[A], Unit] =
+        new Dsl[From[FromCollection], LazyList[A], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => LazyList[A]): LazyList[A] = {
+            keyword.elements.to(LazyList) #::: generateTail(())
+          }
+        }
+
+      implicit def lazyListYieldDsl[Element, That >: Element]: Dsl[Yield[Element], LazyList[That], Unit] =
+        new Dsl[Yield[Element], LazyList[That], Unit] {
+          def cpsApply(keyword: Yield[Element], generateTail: Unit => LazyList[That]): LazyList[That] = {
+            keyword.element #:: generateTail(())
+          }
+        }
+
+      implicit def futureLazyListYieldDsl[Element, That >: Element]: Dsl[Yield[Element], LazyList[Future[That]], Unit] =
+        new Dsl[Yield[Element], LazyList[Future[That]], Unit] {
+          def cpsApply(keyword: Yield[Element],
+                       generateTail: Unit => LazyList[Future[That]]): LazyList[Future[That]] = {
+            Future.successful(keyword.element) #:: generateTail(())
+          }
+        }
     }
   }
 
