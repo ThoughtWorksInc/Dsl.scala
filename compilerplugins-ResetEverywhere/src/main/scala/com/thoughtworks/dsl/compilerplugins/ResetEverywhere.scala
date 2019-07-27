@@ -100,6 +100,8 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
           body.mapConserve {
             case valDef: ValDef if !valDef.mods.isParamAccessor =>
               transformRootValDef(valDef)
+            case defDef: DefDef if defDef.mods.hasFlag(Flag.MACRO) =>
+              defDef
             case initializer: TermTree =>
               annotatedReset(initializer)
             case stat =>
