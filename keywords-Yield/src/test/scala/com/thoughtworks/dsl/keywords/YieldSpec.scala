@@ -13,6 +13,17 @@ import scala.runtime.NonLocalReturnControl
   */
 class YieldSpec extends FreeSpec with Matchers {
 
+  {
+    !Yield(1)
+
+    def nested(): Stream[Int] = {
+      !Yield(2)
+      Stream.empty[Int]
+    }
+
+    nested()
+  } // Should compile
+
   "Given a continuation that uses Yield and Each expressions" - {
 
     def asyncFunction: Stream[String] !! Unit = _ {

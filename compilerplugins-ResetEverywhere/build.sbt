@@ -7,3 +7,5 @@ scalacOptions ++= {
     Seq()
   }
 }
+
+scalacOptions in Test += raw"""-Xplugin:${(packageBin in Compile).value}"""
