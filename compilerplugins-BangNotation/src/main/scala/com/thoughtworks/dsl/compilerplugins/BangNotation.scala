@@ -51,7 +51,7 @@ final class BangNotation(override val global: Global) extends Plugin {
 
   private trait Deactable extends AnalyzerPlugin {
     override def isActive(): Boolean = {
-      active && phase.id < currentRun.picklerPhase.id
+      active && phase.id <= currentRun.typerPhase.id
     }
   }
 
@@ -92,13 +92,15 @@ final class BangNotation(override val global: Global) extends Plugin {
 //          reporter.info(tree.pos, s"Translating to continuation-passing style: $cpsTree", true)
           deactAnalyzerPlugins {
             typer.context.withMode(ContextMode.ReTyping) {
-              typer.typed(cpsTree, Mode.EXPRmode)
+              typer.typed(Block(Nil, cpsTree), Mode.EXPRmode)
             }
           }
       } match {
         case Some(typedCpsTree) =>
 //          reporter.info(tree.pos, s"Translating to continuation-passing style: $typedCpsTree", true)
           typedCpsTree.modifyType(_.filterAnnotations(!_.matches(resetAnnotationSymbol)))
+          typedCpsTree.removeAttachment[CpsAttachment]
+          typedCpsTree
         case None =>
           tree
       }
@@ -141,6 +143,11 @@ final class BangNotation(override val global: Global) extends Plugin {
     }
 
     private def isCpsTree(tree: Tree) = {
+      tree match {
+        case defDef: DefDef if defDef.name.toString == "randomInt" =>
+          reporter.info(tree.pos, show(tree), true)
+        case _ =>
+      }
       def hasCpsAttachment(child: Any): Boolean = {
         child match {
           case list: List[_]                => list.exists(hasCpsAttachment)
