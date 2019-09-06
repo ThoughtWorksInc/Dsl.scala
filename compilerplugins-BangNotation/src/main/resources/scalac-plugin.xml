@@ -1,0 +1,4 @@
+<plugin>
+    <name>BangNotation</name>
+    <classname>com.thoughtworks.dsl.compilerplugins.BangNotation</classname>
+</plugin>
