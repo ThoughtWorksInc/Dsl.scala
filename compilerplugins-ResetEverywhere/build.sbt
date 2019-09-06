@@ -9,3 +9,5 @@ scalacOptions ++= {
 }
 
 scalacOptions in Test += raw"""-Xplugin:${(packageBin in Compile).value}"""
+
+classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat

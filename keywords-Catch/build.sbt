@@ -10,3 +10,5 @@ scalacOptions in Compile ++= {
 }
 
 libraryDependencies += "com.thoughtworks.extractor" %%% "extractor" % "2.1.2"
+
+classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat

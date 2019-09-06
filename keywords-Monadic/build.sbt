@@ -1,0 +1,2 @@
+
+classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat

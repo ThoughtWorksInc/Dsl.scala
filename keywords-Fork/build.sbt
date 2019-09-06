@@ -27,3 +27,5 @@ scalacOptions ++= {
     None
   }
 }
+
+classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat

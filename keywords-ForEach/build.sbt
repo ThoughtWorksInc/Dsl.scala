@@ -10,3 +10,5 @@ scalacOptions in Compile ++= {
     case _      => Seq.empty
   }
 }
+
+classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
