@@ -19,3 +19,5 @@ libraryDependencies ++= {
     Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
   }
 }
+
+classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
