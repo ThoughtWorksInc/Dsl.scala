@@ -10,7 +10,7 @@ libraryDependencies ++= {
     Nil
   } else {
     Seq(
-      "com.thoughtworks.dsl" %% "domains-cats" % "1.4.0" % Optional,
+      "com.thoughtworks.dsl" %% "domains-cats" % "2.0.0" % Optional,
       "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
       "com.typesafe.akka" %% "akka-actor" % "2.5.25" % Optional,
