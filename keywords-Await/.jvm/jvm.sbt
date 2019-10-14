@@ -7,7 +7,7 @@ libraryDependencies ++= {
     Seq(
       "com.typesafe.akka" %% "akka-actor" % "2.5.25" % Test,
       "com.typesafe.akka" %% "akka-stream" % "2.5.25" % Test,
-      "com.typesafe.akka" %% "akka-http" % "10.1.9" % Test
+      "com.typesafe.akka" %% "akka-http" % "10.1.10" % Test
     )
   }
 }
