@@ -16,6 +16,6 @@ sourceGenerators in Test := {
 import scala.meta._
 exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.28" % Optional
+libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.29" % Optional
 
 libraryDependencies += "com.thoughtworks.tryt" %% "invariant" % "2.1.1" % Optional
