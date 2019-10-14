@@ -20,7 +20,7 @@ libraryDependencies ++= {
       "org.scalacheck" %% "scalacheck" % "1.14.2" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
       "com.lihaoyi" %% "sourcecode" % "0.1.7" % Optional,
-      "io.monix" %% "monix" % "2.3.3" % Optional,
+      "io.monix" %% "monix" % "3.0.0" % Optional,
       "com.typesafe.akka" %% "akka-stream" % "2.5.25" % Optional,
       "com.typesafe.akka" %% "akka-http" % "10.1.10" % Optional
     )
