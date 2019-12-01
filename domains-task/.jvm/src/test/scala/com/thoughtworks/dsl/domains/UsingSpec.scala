@@ -3,12 +3,14 @@ package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.{Using, Yield}
-import org.scalatest.{Assertion, FreeSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
   */
-class UsingSpec extends FreeSpec with Matchers {
+class UsingSpec extends AnyFreeSpec with Matchers {
 
   def successContinuation[Domain](domain: Domain): (Domain !! Throwable) @reset = Continuation.empty(domain)
 

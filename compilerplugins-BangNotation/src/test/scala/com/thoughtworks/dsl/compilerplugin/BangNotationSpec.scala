@@ -1,12 +1,13 @@
 package com.thoughtworks.dsl.compilerplugin
 
 import com.thoughtworks.dsl.Dsl.shift
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
   */
-class BangNotationSpec extends FreeSpec with Matchers {
+class BangNotationSpec extends AnyFreeSpec with Matchers {
 
   "printf problem" in {
 

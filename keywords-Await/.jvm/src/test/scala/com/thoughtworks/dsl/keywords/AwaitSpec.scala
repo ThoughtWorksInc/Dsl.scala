@@ -8,11 +8,13 @@ import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import com.thoughtworks.dsl.Dsl.reset
-import org.scalatest.{AsyncFreeSpec, BeforeAndAfterAll, Matchers}
+import org.scalatest.BeforeAndAfterAll
 //import org.scalamock.scalatest.MockFactory
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import org.scalatest.freespec.AsyncFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)

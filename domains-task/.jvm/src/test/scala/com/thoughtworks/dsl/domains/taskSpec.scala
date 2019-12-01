@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, reset}
-import org.scalatest.{Assertion, AsyncFreeSpec, Matchers}
+import org.scalatest.Assertion
 
 import com.thoughtworks.dsl.keywords.{Using, Each, Fork}
 import com.thoughtworks.dsl.domains.task._
@@ -11,6 +11,8 @@ import com.thoughtworks.dsl.keywords.Shift.implicitShift
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.TailCalls
 import scala.util.{Failure, Success}
+import org.scalatest.freespec.AsyncFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
