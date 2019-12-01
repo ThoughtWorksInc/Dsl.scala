@@ -1,6 +1,6 @@
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Optional
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.0" % Optional
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {

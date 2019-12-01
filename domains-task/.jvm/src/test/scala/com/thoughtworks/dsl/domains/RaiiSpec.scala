@@ -3,15 +3,16 @@ package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.{Shift, Yield}
-import org.scalatest.{FreeSpec, Matchers}
 import com.thoughtworks.dsl.domains.task._
 
 import scala.util.control.NonFatal
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
   */
-final class RaiiSpec extends FreeSpec with Matchers {
+final class RaiiSpec extends AnyFreeSpec with Matchers {
 
   @inline
   private def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain)(
