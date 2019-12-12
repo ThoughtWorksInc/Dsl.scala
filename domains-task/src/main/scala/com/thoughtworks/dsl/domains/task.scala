@@ -55,7 +55,7 @@ object task {
     *          A [[Task]] can be then converted to [[scala.concurrent.Future]] via [[Task.toFuture]],
     *          in order to integrate into other frameworks.
     *
-    *          In this example, it's a `Future[Assertion]` required by [[org.scalatest.AsyncFreeSpec]].
+    *          In this example, it's a `Future[Assertion]` required by [[org.scalatest.freespec.AsyncFreeSpec]].
     *
     *          {{{
     *          val mockUrls = List(new URL("http://example.com/file1"), new URL("http://example.com/file2"))
