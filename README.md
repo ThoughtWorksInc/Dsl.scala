@@ -87,6 +87,9 @@ The call to `xorshiftRandomGenerator` does not throw a `StackOverflowError` beca
 ## Links and related works
 
 * Check the [Documentation](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html) to find examples about using or creating DSLs.
+* [Dsl.scala-akka-actor](https://github.com/Atry/Dsl.scala-akka-actor) provides the [Akka](https://akka.io/) Actor support for Dsl.scala. It is an alternative to [Akka FSM](https://doc.akka.io/docs/akka/current/fsm.html), for building actors with complex states from simple native Scala control flows.
+* [Dsl.scala-akka-http](https://github.com/ThoughtWorksInc/Dsl.scala-akka-http/) contains utilities to integrate Akka HTTP with Dsl.scala.
+* [dsl-domains-cats](https://github.com/ThoughtWorksInc/dsl-domains-cats) contains utilities to integrate Cats with Dsl.scala. It provides the `!`-notation for creating Cats monadic expressions.
 * See [MVNRepository](http://mvnrepository.com/artifact/com.thoughtworks.dsl?sort=newest) or [Scaladex](https://index.scala-lang.org/thoughtworksinc/dsl.scala) for the settings of each built-in DSLs for your build tools.
 * [Benchmarks: Dsl.scala vs Monix vs Cats Effect vs Scalaz Concurrent vs Scala Async vs Scala Continuation](https://github.com/ThoughtWorksInc/Dsl.scala/wiki/Benchmarks:-Dsl.scala-vs-Monix-vs-Cats-Effect-vs-Scalaz-Concurrent-vs-Scala-Async-vs-Scala-Continuation)
 * [Control.Dsl](https://github.com/Atry/Control.Dsl) is the Haskell port of this library.
