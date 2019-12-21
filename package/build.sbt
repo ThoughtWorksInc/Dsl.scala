@@ -19,7 +19,7 @@ libraryDependencies ++= {
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
       "org.scalacheck" %% "scalacheck" % "1.14.2" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
-      "com.lihaoyi" %% "sourcecode" % "0.1.8" % Optional,
+      "com.lihaoyi" %% "sourcecode" % "0.1.9" % Optional,
       "io.monix" %% "monix" % "3.1.0" % Optional,
       "com.typesafe.akka" %% "akka-stream" % "2.5.27" % Optional,
       "com.typesafe.akka" %% "akka-http" % "10.1.11" % Optional
