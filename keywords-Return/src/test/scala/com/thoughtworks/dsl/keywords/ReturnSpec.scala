@@ -1,11 +1,12 @@
 package com.thoughtworks.dsl.keywords
-import org.scalatest.{FreeSpec, Matchers}
 import com.thoughtworks.dsl.Dsl.!!
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
   */
-final class ReturnSpec extends FreeSpec with Matchers {
+final class ReturnSpec extends AnyFreeSpec with Matchers {
 
   "return a Stream" in {
     def stream: Stream[Int] = !Return[Int](1)

@@ -17,7 +17,7 @@ We also provide some built-in keywords, including:
  * The `AsynchronousIo.Connect`, `AsynchronousIo.Accept`, `AsynchronousIo.Read` and `AsynchronousIo.Write` keywords for performing I/O on an asynchronous channel.
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
  * The `Each` keyword for iterating on a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
- * The `Continue` keyword LDK for skipping an element in a `Each` collection comprehension, similar to the native `continue` keyword in C/C++ or the `mzero` in Haskell.
+ * The `Continue` keyword LDK for skipping an element in an `Each` collection comprehension, similar to the native `continue` keyword in C/C++ or the `mzero` in Haskell.
  * The `Fork` keyword for duplicating current context, similar to the `fork` system call in POSIX.
  * The `Return` keyword for early returning, similar to the native `return` keyword in Scala.
  * The `Using` keyword to automatically close resources when exiting a scope, similar to the native `using` keyword in C#.
@@ -79,7 +79,9 @@ The call to `xorshiftRandomGenerator` does not throw a `StackOverflowError` beca
 ## Showcases
 
 * [sbt-ammonite-classpath](https://github.com/ThoughtWorksInc/sbt-ammonite-classpath) is an sbt plug-in that [uses `Each` keywords to iterate through configuations and keys](https://github.com/ThoughtWorksInc/sbt-ammonite-classpath/blob/793bc20/src/main/scala/com/thoughtworks/deeplearning/sbtammoniteclasspath/AmmoniteClasspath.scala#L23), as an alternative syntax of `for` comprehensions.
-* [Dsl.scala-akka-http](https://github.com/ThoughtWorksInc/Dsl.scala-akka-http) contains utilities to integrate Akka HTTP with Dsl.scala.
+* [Dsl.scala-akka-actor](https://github.com/Atry/Dsl.scala-akka-actor) provides the [Akka](https://akka.io/) Actor support for Dsl.scala. It is an alternative to [Akka FSM](https://doc.akka.io/docs/akka/current/fsm.html), for building actors with complex states from simple native Scala control flows.
+* [Dsl.scala-akka-http](https://github.com/ThoughtWorksInc/Dsl.scala-akka-http/) contains utilities to integrate Akka HTTP with Dsl.scala.
+* [dsl-domains-cats](https://github.com/ThoughtWorksInc/dsl-domains-cats) contains utilities to integrate Cats with Dsl.scala. It provides the `!`-notation for creating Cats monadic expressions.
 
   
 (Feel free to add your project here)

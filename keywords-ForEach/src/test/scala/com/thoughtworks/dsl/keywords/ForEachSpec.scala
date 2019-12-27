@@ -1,12 +1,13 @@
 package com.thoughtworks.dsl.keywords
 
-import org.scalatest.{FreeSpec, Matchers}
 import com.thoughtworks.dsl.Dsl.{!!, reset}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
   */
-class ForEachSpec extends FreeSpec with Matchers {
+class ForEachSpec extends AnyFreeSpec with Matchers {
 
   "foreach" - {
 

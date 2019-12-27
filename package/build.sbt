@@ -1,6 +1,6 @@
 enablePlugins(Example)
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.0" % Test
 
 publishArtifact := false
 
@@ -13,16 +13,16 @@ libraryDependencies ++= {
       "com.thoughtworks.dsl" %% "domains-cats" % "2.0.0" % Optional,
       "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
-      "com.typesafe.akka" %% "akka-actor" % "2.5.25" % Optional,
-      "com.twitter" %% "algebird-core" % "0.13.4" % Optional,
+      "com.typesafe.akka" %% "akka-actor" % "2.5.27" % Optional,
+      "com.twitter" %% "algebird-core" % "0.13.6" % Optional,
       "com.thoughtworks.binding" %% "binding" % "11.0.1" % Optional,
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
-      "org.scalacheck" %% "scalacheck" % "1.14.0" % Optional,
+      "org.scalacheck" %% "scalacheck" % "1.14.3" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
-      "com.lihaoyi" %% "sourcecode" % "0.1.7" % Optional,
-      "io.monix" %% "monix" % "2.3.3" % Optional,
-      "com.typesafe.akka" %% "akka-stream" % "2.5.25" % Optional,
-      "com.typesafe.akka" %% "akka-http" % "10.1.9" % Optional
+      "com.lihaoyi" %% "sourcecode" % "0.1.9" % Optional,
+      "io.monix" %% "monix" % "3.1.0" % Optional,
+      "com.typesafe.akka" %% "akka-stream" % "2.5.27" % Optional,
+      "com.typesafe.akka" %% "akka-http" % "10.1.11" % Optional
     )
   }
 }
@@ -39,18 +39,18 @@ sourceGenerators in Test := {
   }
 }
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.28"
+libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.30"
 
 import scala.meta._
 
-exampleSuperTypes := exampleSuperTypes.value.filter {
-  case ctor"_root_.org.scalatest.FreeSpec" =>
-    false
-  case _ =>
-    true
+
+exampleSuperTypes := exampleSuperTypes.value.map {
+  case ctor"_root_.org.scalatest.freespec.AnyFreeSpec" =>
+    ctor"_root_.org.scalatest.freespec.AsyncFreeSpec"
+  case otherTrait =>
+    otherTrait
 }
 
-exampleSuperTypes := ctor"_root_.org.scalatest.AsyncFreeSpec" +: exampleSuperTypes.value
 exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
 exampleSuperTypes += ctor"_root_.com.thoughtworks.dsl.MockPingPongServer"
 

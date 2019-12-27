@@ -1,17 +1,18 @@
 package com.thoughtworks.dsl.domains
 
 import com.thoughtworks.dsl.Dsl.!!
-import org.scalatest.{FreeSpec, Matchers}
 import _root_.scalaz.OptionT
 import _root_.scalaz.concurrent.Task
 import _root_.scalaz.std.stream._
 import com.thoughtworks.dsl.domains.scalaz._
 import com.thoughtworks.dsl.keywords.{Monadic, Shift, Yield}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
   */
-class scalazSpec extends FreeSpec with Matchers {
+class scalazSpec extends AnyFreeSpec with Matchers {
 
   "MonadError" in {
     def task: Task[Int] = Task.now {

@@ -2,8 +2,8 @@ enablePlugins(Example)
 
 import meta._
 exampleSuperTypes := exampleSuperTypes.value.map {
-  case ctor"_root_.org.scalatest.FreeSpec" =>
-    ctor"_root_.org.scalatest.AsyncFreeSpec"
+  case ctor"_root_.org.scalatest.freespec.AnyFreeSpec" =>
+    ctor"_root_.org.scalatest.freespec.AsyncFreeSpec"
   case otherTrait =>
     otherTrait
 }
@@ -15,4 +15,4 @@ scalacOptions in Compile ++= {
   }
 }
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.0" % Test

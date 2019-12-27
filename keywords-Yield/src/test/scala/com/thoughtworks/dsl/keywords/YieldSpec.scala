@@ -2,16 +2,17 @@ package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.enableMembersIf
-import org.scalatest.{FreeSpec, Matchers}
 
 import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
 import scala.runtime.NonLocalReturnControl
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
   */
-class YieldSpec extends FreeSpec with Matchers {
+class YieldSpec extends AnyFreeSpec with Matchers {
 
   {
     !Yield(1)
