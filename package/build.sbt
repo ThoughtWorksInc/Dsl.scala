@@ -15,7 +15,7 @@ libraryDependencies ++= {
       "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
       "com.typesafe.akka" %% "akka-actor" % "2.5.27" % Optional,
       "com.twitter" %% "algebird-core" % "0.13.6" % Optional,
-      "com.thoughtworks.binding" %% "binding" % "11.0.1" % Optional,
+      "com.thoughtworks.binding" %% "binding" % "11.9.0" % Optional,
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
       "org.scalacheck" %% "scalacheck" % "1.14.3" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
