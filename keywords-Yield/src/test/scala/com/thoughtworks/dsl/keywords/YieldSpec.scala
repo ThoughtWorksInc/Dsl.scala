@@ -7,12 +7,13 @@ import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
 import scala.runtime.NonLocalReturnControl
 import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.Assertions
 import org.scalatest.matchers.should.Matchers
 
 /**
   * @author 杨博 (Yang Bo)
   */
-class YieldSpec extends AnyFreeSpec with Matchers {
+class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
   {
     !Yield(1)
@@ -303,9 +304,28 @@ class YieldSpec extends AnyFreeSpec with Matchers {
 
   "view" - {
 
-    def shouldCompile = {
-      !Yield("naked")
-      Vector.empty[String].view
+    "indexed seq view" in {
+      def generator = {
+        !Yield("naked")
+        Vector.empty[String].view
+      }
+      assert(generator.toList == List("naked"))
+    }
+
+    "yield from indexed seq view" in {
+      def generator = {
+        !Yield(100, 101)
+        Vector.empty[Int].view
+      }
+      assert(generator.toList == List(100, 101))
+    }
+
+    "yield from seq view" in {
+      def generator = {
+        !Yield(100, 101)
+        Seq.empty[Int].view
+      }
+      assert(generator.toList == List(100, 101))
     }
 
     "local method" in {

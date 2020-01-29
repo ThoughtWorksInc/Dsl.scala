@@ -3,6 +3,7 @@ package com.thoughtworks.dsl.keywords
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Keyword
 import com.thoughtworks.dsl.keywords.Yield.From
+import com.thoughtworks.enableIf
 import com.thoughtworks.enableMembersIf
 
 import scala.collection._
@@ -68,6 +69,17 @@ private[keywords] object YieldScalaVersions {
 
     trait LowPriorityYield1 extends LowPriorityYield3 {
 
+      @enableIf(scala.util.Properties.versionNumberString.matches("""^2\.11\..*$"""))
+      implicit def seqViewYieldFromDsl[A, FromCollection <: Traversable[A], Coll1, Coll2](
+          implicit canBuildFrom: CanBuildFrom[SeqView[A, Coll1], A, SeqView[A, Coll2]])
+        : Dsl[From[FromCollection], SeqView[A, Coll1], Unit] =
+        new Dsl[From[FromCollection], SeqView[A, Coll1], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => SeqView[A, Coll1]): SeqView[A, Coll1] = {
+            (keyword.elements.toSeq.view ++: generateTail(()))(canBuildFrom).asInstanceOf[SeqView[A, Coll1]]
+          }
+        }
+
+      @enableIf(scala.util.Properties.versionNumberString.matches("""^2\.12\..*$"""))
       implicit def seqViewYieldFromDsl[A, FromCollection <: Traversable[A], Coll1, Coll2](
           implicit canBuildFrom: CanBuildFrom[SeqView[A, Coll1], A, SeqView[A, Coll2]])
         : Dsl[From[FromCollection], SeqView[A, Coll1], Unit] =
@@ -122,6 +134,34 @@ private[keywords] object YieldScalaVersions {
           }
         }
 
+      implicit def indexedSeqViewYieldFromIterableDsl[A, FromCollection <: View.SomeIterableOps[A]]: Dsl[From[FromCollection], IndexedSeqView[A], Unit] =
+        new Dsl[From[FromCollection], IndexedSeqView[A], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => IndexedSeqView[A]): IndexedSeqView[A] = {
+            new IndexedSeqView.Concat(collection.IndexedSeq.from(keyword.elements), generateTail(()))
+          }
+        }
+
+      implicit def indexedSeqViewYieldFromDsl[A, FromCollection <: IndexedSeqOps[A, CC, C], CC[_], C]: Dsl[From[FromCollection], IndexedSeqView[A], Unit] =
+        new Dsl[From[FromCollection], IndexedSeqView[A], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => IndexedSeqView[A]): IndexedSeqView[A] = {
+            new IndexedSeqView.Concat(keyword.elements, generateTail(()))
+          }
+        }
+
+      implicit def seqViewYieldFromIterableDsl[A, FromCollection <: View.SomeIterableOps[A]]: Dsl[From[FromCollection], SeqView[A], Unit] =
+        new Dsl[From[FromCollection], SeqView[A], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => SeqView[A]): SeqView[A] = {
+            new SeqView.Concat(collection.Seq.from(keyword.elements), generateTail(()))
+          }
+        }
+
+      implicit def seqViewYieldFromDsl[A, FromCollection <: SeqOps[A, CC, C], CC[_], C]: Dsl[From[FromCollection], SeqView[A], Unit] =
+        new Dsl[From[FromCollection], SeqView[A], Unit] {
+          def cpsApply(keyword: From[FromCollection], generateTail: Unit => SeqView[A]): SeqView[A] = {
+            new SeqView.Concat(keyword.elements, generateTail(()))
+          }
+        }
+
       implicit def seqViewYieldDsl[A, B >: A]: Dsl[Yield[A], SeqView[B], Unit] =
         new Dsl[Yield[A], SeqView[B], Unit] {
           def cpsApply(keyword: Yield[A], generateTail: Unit => SeqView[B]): SeqView[B] = {
@@ -166,7 +206,7 @@ private[keywords] object YieldScalaVersions {
 
     trait LowPriorityYield0 extends LowPriorityYield1 {
 
-      implicit def lazyListYieldFromDsl[A, FromCollection <: Iterable[A]]
+      implicit def lazyListYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A]]
         : Dsl[From[FromCollection], LazyList[A], Unit] =
         new Dsl[From[FromCollection], LazyList[A], Unit] {
           def cpsApply(keyword: From[FromCollection], generateTail: Unit => LazyList[A]): LazyList[A] = {
