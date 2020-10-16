@@ -5,8 +5,8 @@ libraryDependencies ++= {
     Nil
   } else {
     Seq(
-      "com.typesafe.akka" %% "akka-actor" % "2.5.31" % Test,
-      "com.typesafe.akka" %% "akka-stream" % "2.5.31" % Test,
+      "com.typesafe.akka" %% "akka-actor" % "2.5.32" % Test,
+      "com.typesafe.akka" %% "akka-stream" % "2.5.32" % Test,
       "com.typesafe.akka" %% "akka-http" % "10.1.12" % Test
     )
   }
