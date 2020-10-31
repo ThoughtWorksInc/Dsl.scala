@@ -17,7 +17,7 @@ libraryDependencies ++= {
       "com.twitter" %% "algebird-core" % "0.13.6" % Optional,
       "com.thoughtworks.binding" %% "binding" % "11.9.0" % Optional,
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
-      "org.scalacheck" %% "scalacheck" % "1.14.3" % Optional,
+      "org.scalacheck" %% "scalacheck" % "1.15.0" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
       "com.lihaoyi" %% "sourcecode" % "0.2.1" % Optional,
       "io.monix" %% "monix" % "3.2.2" % Optional,
