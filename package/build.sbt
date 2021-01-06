@@ -1,6 +1,6 @@
 enablePlugins(Example)
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.1" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.4" % Test
 
 publishArtifact := false
 
@@ -13,16 +13,16 @@ libraryDependencies ++= {
       "com.thoughtworks.dsl" %% "domains-cats" % "2.0.0" % Optional,
       "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
-      "com.typesafe.akka" %% "akka-actor" % "2.5.32" % Optional,
-      "com.twitter" %% "algebird-core" % "0.13.6" % Optional,
+      "com.typesafe.akka" %% "akka-actor" % "2.5.31" % Optional,
+      "com.twitter" %% "algebird-core" % "0.13.7" % Optional,
       "com.thoughtworks.binding" %% "binding" % "11.9.0" % Optional,
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
-      "org.scalacheck" %% "scalacheck" % "1.14.3" % Optional,
+      "org.scalacheck" %% "scalacheck" % "1.15.2" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
       "com.lihaoyi" %% "sourcecode" % "0.2.1" % Optional,
-      "io.monix" %% "monix" % "3.2.2" % Optional,
-      "com.typesafe.akka" %% "akka-stream" % "2.5.32" % Optional,
-      "com.typesafe.akka" %% "akka-http" % "10.1.12" % Optional
+      "io.monix" %% "monix" % "3.3.0" % Optional,
+      "com.typesafe.akka" %% "akka-stream" % "2.5.31" % Optional,
+      "com.typesafe.akka" %% "akka-http" % "10.1.13" % Optional
     )
   }
 }
