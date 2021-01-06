@@ -20,12 +20,14 @@ lazy val `domains-task` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(`keywords-Shift`,
-               `keywords-Each` % Test,
-               `keywords-Fork` % Test,
-               `keywords-Using` % Test,
-               `keywords-Yield` % Test,
-               `comprehension` % Test)
+    .dependsOn(
+      `keywords-Shift`,
+      `keywords-Each` % Test,
+      `keywords-Fork` % Test,
+      `keywords-Using` % Test,
+      `keywords-Yield` % Test,
+      `comprehension` % Test
+    )
 
 lazy val `keywords-Fork` =
   crossProject(JSPlatform, JVMPlatform)
@@ -79,11 +81,13 @@ lazy val `keywords-AsynchronousIo` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(`keywords-Shift`,
-               `keywords-Each` % Test,
-               `keywords-Using` % Test,
-               `comprehension` % Test,
-               `domains-task` % Test)
+    .dependsOn(
+      `keywords-Shift`,
+      `keywords-Each` % Test,
+      `keywords-Using` % Test,
+      `comprehension` % Test,
+      `domains-task` % Test
+    )
 
 lazy val `keywords-Shift` =
   crossProject(JSPlatform, JVMPlatform)
@@ -182,12 +186,13 @@ lazy val `keywords-Await` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl,
-               `domains-task` % Test,
-               `keywords-Catch` % Test,
-               `keywords-Get` % Test,
-               `keywords-Return` % Test,
-               `keywords-Yield` % Test,
+    .dependsOn(
+      Dsl,
+      `domains-task` % Test,
+      `keywords-Catch` % Test,
+      `keywords-Get` % Test,
+      `keywords-Return` % Test,
+      `keywords-Yield` % Test
     )
 
 lazy val `keywords-Yield` =
@@ -211,12 +216,14 @@ lazy val `domains-scalaz` =
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-BangNotation` in Compile).value}""",
       scalacOptions += raw"""-Xplugin:${(packageBin in `compilerplugins-ResetEverywhere` in Compile).value}"""
     )
-    .dependsOn(Dsl,
-               `keywords-Catch` % Optional,
-               `keywords-Monadic`,
-               `keywords-Return`,
-               `keywords-Shift` % Test,
-               `keywords-Yield` % Test)
+    .dependsOn(
+      Dsl,
+      `keywords-Catch` % Optional,
+      `keywords-Monadic`,
+      `keywords-Return`,
+      `keywords-Shift` % Test,
+      `keywords-Yield` % Test
+    )
 
 lazy val comprehension =
   crossProject(JSPlatform, JVMPlatform)
@@ -233,7 +240,7 @@ lazy val comprehension =
       `keywords-Each` % Test,
       `keywords-Yield` % Test,
       `keywords-Using` % Test,
-      `keywords-Continue` % Test,
+      `keywords-Continue` % Test
     )
 
 lazy val `package` = project
@@ -307,15 +314,17 @@ lazy val unidoc =
           // Workaround for https://github.com/scala/bug/issues/11045
           (
             inDependencies(`package`) ||
-            inDependencies(`compilerplugins-BangNotation`) ||
-            inDependencies(`compilerplugins-ResetEverywhere`)
+              inDependencies(`compilerplugins-BangNotation`) ||
+              inDependencies(`compilerplugins-ResetEverywhere`)
           ) --
-            inProjects(Dsl.jvm,
-                       `keywords-Continue`.jvm,
-                       `keywords-Yield`.jvm,
-                       `domains-task`.jvm,
-                       `keywords-Each`.jvm,
-                       `keywords-Fork`.jvm)
+            inProjects(
+              Dsl.jvm,
+              `keywords-Continue`.jvm,
+              `keywords-Yield`.jvm,
+              `domains-task`.jvm,
+              `keywords-Each`.jvm,
+              `keywords-Fork`.jvm
+            )
         } else {
           inDependencies(`package`) ||
           inDependencies(`compilerplugins-BangNotation`) ||

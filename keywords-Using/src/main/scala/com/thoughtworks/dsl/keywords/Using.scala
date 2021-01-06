@@ -54,19 +54,18 @@ object Using {
     *            n should be(42)
     *          }
     *          }}}
-    *
     */
   def scopeExit(r: => ScopeExitHandler) = new Using(r _)
 
-  def apply[R <: AutoCloseable](r: => R)(
-      implicit dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit): Using[R] = new Using(r _)
+  def apply[R <: AutoCloseable](r: => R)(implicit
+      dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+  ): Using[R] = new Using(r _)
 
   @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
-  private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](
-      implicit catchDsl: DslCatch[Domain, Domain, Value],
+  private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
+      catchDsl: DslCatch[Domain, Domain, Value],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
-  )
-    : Dsl[Using[R], Domain !! Value, R] = {
+  ): Dsl[Using[R], Domain !! Value, R] = {
     (keyword: Using[R], handler: R => Domain !! Value) => (outerHandler: Value => Domain) =>
       val r = keyword.open()
       Catch
@@ -74,17 +73,19 @@ object Using {
           r.close()
           outerHandler(value)
         }
-        .apply(Shift(handler(r)).cpsApply(_), {
-          case NonFatal(e) =>
+        .apply(
+          Shift(handler(r)).cpsApply(_),
+          { case NonFatal(e) =>
             r.close()
             _ {
               throw e
             }
-        })
+          }
+        )
   }
 
-  implicit def continuationUsingDsl[Domain, Value, R <: AutoCloseable](
-      implicit tryFinally: TryFinally[Value, Domain, Domain, Domain],
+  implicit def continuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
+      tryFinally: TryFinally[Value, Domain, Domain, Domain],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
   ): Dsl[Using[R], Domain !! Value, R] = { (keyword: Using[R], handler: R => Domain !! Value) =>
     _ {
@@ -98,16 +99,19 @@ object Using {
   }
 
   @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.2.0")
-  private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](
-      implicit catchDsl: CatchDsl[Domain, Domain, Value],
+  private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
+      catchDsl: CatchDsl[Domain, Domain, Value],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
   ): Dsl[Using[R], Domain !! Value, R] = {
-    throwableContinuationUsingDsl(catchDsl: DslCatch[Domain, Domain, Value],
-                                  shiftDsl: Dsl[Shift[Domain, Value], Domain, Value])
+    throwableContinuationUsingDsl(
+      catchDsl: DslCatch[Domain, Domain, Value],
+      shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
+    )
   }
 
-  implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](implicit executionContext: ExecutionContext)
-    : Dsl[Using[R], Future[A], R] = { (keyword: Using[R], handler: R => Future[A]) =>
+  implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](implicit
+      executionContext: ExecutionContext
+  ): Dsl[Using[R], Future[A], R] = { (keyword: Using[R], handler: R => Future[A]) =>
     Future(keyword.open()).flatMap { r: R =>
       def onFailure(e: Throwable): Future[Nothing] = {
         try {
@@ -130,17 +134,16 @@ object Using {
       }
 
       def returnableBlock(): Future[A] = {
-        val fa: Future[A] = try {
-          handler(r)
-        } catch {
-          case NonFatal(e) =>
-            return onFailure(e)
-        }
-        fa.recoverWith {
+        val fa: Future[A] =
+          try {
+            handler(r)
+          } catch {
             case NonFatal(e) =>
-              onFailure(e)
+              return onFailure(e)
           }
-          .flatMap(onSuccess)
+        fa.recoverWith { case NonFatal(e) =>
+          onFailure(e)
+        }.flatMap(onSuccess)
       }
       returnableBlock()
     }

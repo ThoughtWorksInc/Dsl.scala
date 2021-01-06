@@ -134,10 +134,13 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
           case valDef: ValDef if valDef.mods.hasDefault =>
             transformRootValDef(valDef)
           case Match(EmptyTree, cases) =>
-            treeCopy.Match(tree, EmptyTree, cases.mapConserve {
-              case caseDef @ CaseDef(pat, guard, body) =>
+            treeCopy.Match(
+              tree,
+              EmptyTree,
+              cases.mapConserve { case caseDef @ CaseDef(pat, guard, body) =>
                 treeCopy.CaseDef(caseDef, pat, guard, annotatedReset(body))
-            })
+              }
+            )
           case q"${Ident(termNames.CONSTRUCTOR)}(...$argss)" =>
             annotateArgsAsReset(tree)
           case q"super.${termNames.CONSTRUCTOR}(...$argss)" =>

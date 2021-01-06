@@ -89,31 +89,39 @@ object AsynchronousIo {
   final case class Accept(socket: AsynchronousServerSocketChannel)
       extends AnyVal
       with AsynchronousIo[AsynchronousSocketChannel] {
-    protected def start[Attachment](attachment: Attachment,
-                                    handler: CompletionHandler[AsynchronousSocketChannel, _ >: Attachment]): Unit = {
+    protected def start[Attachment](
+        attachment: Attachment,
+        handler: CompletionHandler[AsynchronousSocketChannel, _ >: Attachment]
+    ): Unit = {
       socket.accept(attachment, handler)
     }
   }
 
   final case class ReadFile(channel: AsynchronousFileChannel, destination: ByteBuffer, position: Long)
       extends AsynchronousIo[Integer] {
-    protected def start[Attachment](attachment: Attachment,
-                                    handler: CompletionHandler[Integer, _ >: Attachment]): Unit = {
+    protected def start[Attachment](
+        attachment: Attachment,
+        handler: CompletionHandler[Integer, _ >: Attachment]
+    ): Unit = {
       channel.read(destination, position, attachment, handler)
     }
   }
 
   final case class WriteFile(channel: AsynchronousFileChannel, source: ByteBuffer, position: Long)
       extends AsynchronousIo[Integer] {
-    protected def start[Attachment](attachment: Attachment,
-                                    handler: CompletionHandler[Integer, _ >: Attachment]): Unit = {
+    protected def start[Attachment](
+        attachment: Attachment,
+        handler: CompletionHandler[Integer, _ >: Attachment]
+    ): Unit = {
       channel.write(source, position, attachment, handler)
     }
   }
 
   final case class Read(channel: AsynchronousByteChannel, destination: ByteBuffer) extends AsynchronousIo[Integer] {
-    protected def start[Attachment](attachment: Attachment,
-                                    handler: CompletionHandler[Integer, _ >: Attachment]): Unit = {
+    protected def start[Attachment](
+        attachment: Attachment,
+        handler: CompletionHandler[Integer, _ >: Attachment]
+    ): Unit = {
       channel.read(destination, attachment, handler)
     }
   }
@@ -121,8 +129,10 @@ object AsynchronousIo {
   final case class Write(channel: AsynchronousByteChannel, source: ByteBuffer) extends AsynchronousIo[Integer] {
     private[dsl] def destination = source
 
-    protected def start[Attachment](attachment: Attachment,
-                                    handler: CompletionHandler[Integer, _ >: Attachment]): Unit = {
+    protected def start[Attachment](
+        attachment: Attachment,
+        handler: CompletionHandler[Integer, _ >: Attachment]
+    ): Unit = {
       channel.write(source, attachment, handler)
     }
   }
@@ -134,13 +144,14 @@ object AsynchronousIo {
       }
 
       def completed(result: Value, failureHandler: Throwable => Unit): Unit = {
-        val protectedContinuation = try {
-          successHandler(result)
-        } catch {
-          case NonFatal(e) =>
-            val () = failureHandler(e)
-            return
-        }
+        val protectedContinuation =
+          try {
+            successHandler(result)
+          } catch {
+            case NonFatal(e) =>
+              val () = failureHandler(e)
+              return
+          }
         protectedContinuation(failureHandler)
       }
     }

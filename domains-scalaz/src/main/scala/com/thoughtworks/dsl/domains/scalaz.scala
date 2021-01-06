@@ -144,8 +144,9 @@ object scalaz {
       }
     }
 
-  @inline private def catchNativeException[F[_], A](continuation: F[A] !! A)(
-      implicit monadThrowable: MonadThrowable[F]): F[A] = {
+  @inline private def catchNativeException[F[_], A](
+      continuation: F[A] !! A
+  )(implicit monadThrowable: MonadThrowable[F]): F[A] = {
     try {
       continuation(monadThrowable.pure(_))
     } catch {
@@ -154,8 +155,9 @@ object scalaz {
     }
   }
 
-  implicit def scalazTryFinally[F[_], A, B](
-      implicit monadError: MonadThrowable[F]): TryFinally[A, F[B], F[A], F[Unit]] =
+  implicit def scalazTryFinally[F[_], A, B](implicit
+      monadError: MonadThrowable[F]
+  ): TryFinally[A, F[B], F[A], F[Unit]] =
     new TryFinally[A, F[B], F[A], F[Unit]] {
       def tryFinally(block: F[A] !! A, finalizer: F[Unit] !! Unit, outerSuccessHandler: A => F[B]): F[B] = {
         @inline
@@ -199,15 +201,17 @@ object scalaz {
       }
     }
 
-  implicit def scalazReturnDsl[F[_], A, B](implicit applicative: Applicative[F],
-                                           restReturnDsl: Dsl[Return[A], B, Nothing]) = {
-    (keyword: Return[A], handler: Nothing => F[B]) =>
-      applicative.pure(restReturnDsl.cpsApply(keyword, identity))
+  implicit def scalazReturnDsl[F[_], A, B](implicit
+      applicative: Applicative[F],
+      restReturnDsl: Dsl[Return[A], B, Nothing]
+  ) = { (keyword: Return[A], handler: Nothing => F[B]) =>
+    applicative.pure(restReturnDsl.cpsApply(keyword, identity))
   }
 
-  implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](
-      implicit monadTrans: MonadTrans[F],
-      rest: ScalazTransformerDsl[H, G, A, B]): ScalazTransformerDsl[H, F[G, ?], A, B] =
+  implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](implicit
+      monadTrans: MonadTrans[F],
+      rest: ScalazTransformerDsl[H, G, A, B]
+  ): ScalazTransformerDsl[H, F[G, ?], A, B] =
     new ScalazTransformerDsl[H, F[G, ?], A, B] {
 
       def monad: Monad[F[G, ?]] = monadTrans(rest.monad)
@@ -216,9 +220,10 @@ object scalaz {
 
     }
 
-  implicit def scalazMonadTransformerDsl0[F[_[_], _], G[_], A, B](
-      implicit monadTrans: MonadTrans[F],
-      monad0: Monad[G]): ScalazTransformerDsl[G, F[G, ?], A, B] =
+  implicit def scalazMonadTransformerDsl0[F[_[_], _], G[_], A, B](implicit
+      monadTrans: MonadTrans[F],
+      monad0: Monad[G]
+  ): ScalazTransformerDsl[G, F[G, ?], A, B] =
     new ScalazTransformerDsl[G, F[G, ?], A, B] {
       def monad = monadTrans(monad0)
 

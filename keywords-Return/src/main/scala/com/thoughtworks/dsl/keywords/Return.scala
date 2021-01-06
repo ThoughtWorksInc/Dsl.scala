@@ -53,7 +53,6 @@ import scala.language.implicitConversions
   *          r should be < 100
   *          r % 10 should not be r / 10
   *          }}}
-  *
   */
 final case class Return[ReturnValue](returnValue: ReturnValue) extends AnyVal with Keyword[Return[ReturnValue], Nothing]
 

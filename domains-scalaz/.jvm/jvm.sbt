@@ -1,6 +1,5 @@
 enablePlugins(Example)
 
-
 sourceGenerators in Test := {
   (sourceGenerators in Test).value.filterNot { sourceGenerator =>
     import Ordering.Implicits._

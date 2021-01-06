@@ -16,8 +16,7 @@ import scala.concurrent.duration._
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with Directives {
   implicit val system = ActorSystem()
@@ -52,25 +51,28 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
   }
 
   "download two pages" in {
-    downloadTwoPages().map {
-      case (bytes1, bytes2) =>
-        bytes1.decodeString(io.Codec.UTF8.charSet) should be("PING!")
-        bytes2.decodeString(io.Codec.UTF8.charSet) should be("PONG!")
+    downloadTwoPages().map { case (bytes1, bytes2) =>
+      bytes1.decodeString(io.Codec.UTF8.charSet) should be("PING!")
+      bytes2.decodeString(io.Codec.UTF8.charSet) should be("PONG!")
     }
   }
 
   private def pingUri = Future {
-    Uri.from(scheme = "http",
-             host = (!Await(mockServer)).localAddress.getHostName,
-             port = (!Await(mockServer)).localAddress.getPort,
-             path = "/ping")
+    Uri.from(
+      scheme = "http",
+      host = (!Await(mockServer)).localAddress.getHostName,
+      port = (!Await(mockServer)).localAddress.getPort,
+      path = "/ping"
+    )
   }
 
   private def pongUri = Future {
-    Uri.from(scheme = "http",
-             host = (!Await(mockServer)).localAddress.getHostName,
-             port = (!Await(mockServer)).localAddress.getPort,
-             path = "/pong")
+    Uri.from(
+      scheme = "http",
+      host = (!Await(mockServer)).localAddress.getHostName,
+      port = (!Await(mockServer)).localAddress.getPort,
+      path = "/pong"
+    )
   }
 
   "http get" in ({

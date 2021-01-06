@@ -72,8 +72,12 @@ final class BangNotation(override val global: Global) extends Plugin {
         override def transform(tree: global.Tree): global.Tree = {
           tree match {
             case UnApply(
-                Apply(Select(prefix, termNames.unapply | termNames.unapplySeq), List(Ident(termNames.SELECTOR_DUMMY))),
-                args) =>
+                  Apply(
+                    Select(prefix, termNames.unapply | termNames.unapplySeq),
+                    List(Ident(termNames.SELECTOR_DUMMY))
+                  ),
+                  args
+                ) =>
               pq"$prefix(..${transformTrees(args)})"
             case _ =>
               super.transform(tree)
@@ -370,11 +374,15 @@ final class BangNotation(override val global: Global) extends Plugin {
               atPos(tree.pos) {
                 Match(
                   selectorValue,
-                  cases.map {
-                    case caseDef @ CaseDef(pat, guard, body) =>
-                      treeCopy.CaseDef(caseDef, pat, guard, cpsAttachment(body) { bodyValue =>
+                  cases.map { case caseDef @ CaseDef(pat, guard, body) =>
+                    treeCopy.CaseDef(
+                      caseDef,
+                      pat,
+                      guard,
+                      cpsAttachment(body) { bodyValue =>
                         q"$endMatchName.apply($bodyValue)"
-                      })
+                      }
+                    )
                   }
                 )
               }
