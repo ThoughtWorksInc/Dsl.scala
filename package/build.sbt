@@ -16,7 +16,7 @@ libraryDependencies ++= {
       "com.typesafe.akka" %% "akka-actor" % "2.5.32" % Optional,
       "com.twitter" %% "algebird-core" % "0.13.7" % Optional,
       "com.thoughtworks.binding" %% "binding" % "11.9.0" % Optional,
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.0.0" % Optional,
       "org.scalacheck" %% "scalacheck" % "1.15.2" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
       "com.lihaoyi" %% "sourcecode" % "0.2.1" % Optional,
