@@ -2,7 +2,7 @@ enablePlugins(Example)
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.4" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.9" % Test
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {
