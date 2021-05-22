@@ -14,7 +14,7 @@ libraryDependencies ++= {
       "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
       "com.typesafe.akka" %% "akka-actor" % "2.5.32" % Optional,
-      "com.twitter" %% "algebird-core" % "0.13.7" % Optional,
+      "com.twitter" %% "algebird-core" % "0.13.8" % Optional,
       "com.thoughtworks.binding" %% "binding" % "11.9.0" % Optional,
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
       "org.scalacheck" %% "scalacheck" % "1.15.2" % Optional,
