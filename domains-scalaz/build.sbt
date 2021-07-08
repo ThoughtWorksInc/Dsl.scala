@@ -1,4 +1,4 @@
-libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.30"
+libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.33"
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
