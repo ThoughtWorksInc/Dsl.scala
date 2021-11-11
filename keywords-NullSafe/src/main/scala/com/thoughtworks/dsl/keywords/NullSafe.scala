@@ -169,7 +169,7 @@ object NullSafe {
   }
 
   /** @template */
-  type ? = reset
+  type `?` = reset
 
   implicit def implicitNullSafe[A <: AnyRef](nullable: A @ ?) = new NullSafe[A](nullable)
 
