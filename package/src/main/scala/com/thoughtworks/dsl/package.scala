@@ -491,7 +491,6 @@ package com.thoughtworks
   *            }
   *          }
   *
-  *
   *          val countCurrentSourceFile = countMonadic(new File(sourcecode.File()))
   *
   *          inside(countCurrentSourceFile) {
@@ -512,7 +511,6 @@ package com.thoughtworks
   *
   *          For example, you can extract each element from an [[scala.Array Array]],
   *          even when the return type (or the domain) is a [[scala.collection.immutable.Stream Stream]].
-  *
   *
   *          {{{
   *          import java.io.File
@@ -536,7 +534,6 @@ package com.thoughtworks
   *            }
   *          }
   *
-  *
   *          val countCurrentSourceFile = countEach(new File(sourcecode.File()))
   *
   *          inside(countCurrentSourceFile) {
@@ -550,7 +547,7 @@ package com.thoughtworks
   *          Dsl.scala allows non-monadic keywords like [[com.thoughtworks.dsl.keywords.Each Each]] works along with
   *          monads.
   * @example Dsl.scala also supports [[scalaz.MonadTrans]].
-  *          
+  *
   *          Considering the line counter implemented in previous example may be failed for some files,
   *          due to permission issue or other IO problem,
   *          you can use [[scalaz.OptionT]] monad transformer to mark those failed file as a [[scala.None None]].
@@ -577,7 +574,6 @@ package com.thoughtworks
   *            }
   *          }
   *
-  *
   *          val countCurrentSourceFile = countLift(new File(sourcecode.File())).run
   *
   *          inside(countCurrentSourceFile) {
@@ -585,7 +581,6 @@ package com.thoughtworks
   *              lineCount should be > 0
   *          }
   *          }}}
-  *
   *
   *          Note that our keywords are adaptive to the domain it belongs to.
   *          Thus, instead of explicit `!Monadic(OptionT.optionTMonadTrans.liftM(Stream(children: _*)))`,
@@ -595,16 +590,12 @@ package com.thoughtworks
   * @see [[Dsl]] for the guideline to create your custom DSL.
   * @see [[domains.scalaz]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[scalaz]].
   * @see [[domains.cats]] for using [[Dsl.Keyword#unary_$bang !-notation]] with [[cats]].
-  *
-  *
   */
 package object dsl
 
 package dsl {
 
   /** Contains built-in domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]]s and their corresponding interpreters.
-    *
-    *
     */
   package object keywords
 }

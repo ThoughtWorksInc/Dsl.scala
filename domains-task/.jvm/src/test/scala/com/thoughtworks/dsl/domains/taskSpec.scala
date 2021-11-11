@@ -14,8 +14,7 @@ import scala.util.{Failure, Success}
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
@@ -55,13 +54,14 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     }
 
     val task2 = Task.apply {
-      val v = try {
-        !task1
-        "no exception"
-      } catch {
-        case myException: MyException =>
-          "my exception"
-      }
+      val v =
+        try {
+          !task1
+          "no exception"
+        } catch {
+          case myException: MyException =>
+            "my exception"
+        }
 
       s"try: $v"
     }
@@ -179,17 +179,20 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
     Task
       .toFuture(
-        composeTask(Task.now(
-          1 to 2 map { i =>
-            Task.now(1 to 3 map { j =>
-              Task.now(1 to 4 map { k =>
-                Task.now(1 to 5 map { l =>
-                  (i * 1000 + j * 100 + k * 10 + l).toFloat
+        composeTask(
+          Task.now(
+            1 to 2 map { i =>
+              Task.now(1 to 3 map { j =>
+                Task.now(1 to 4 map { k =>
+                  Task.now(1 to 5 map { l =>
+                    (i * 1000 + j * 100 + k * 10 + l).toFloat
+                  })
                 })
               })
-            })
-          }
-        )))
+            }
+          )
+        )
+      )
       .map { s =>
         s should be(
           1 to 2 map { i =>

@@ -5,8 +5,7 @@ import org.scalatest.{AsyncTestSuite, BeforeAndAfterAll, Suite}
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
 trait MockPingPongServer extends BeforeAndAfterAll { this: Suite =>

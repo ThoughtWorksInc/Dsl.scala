@@ -10,8 +10,7 @@ import Shift.implicitShift
 
 import scala.collection.mutable.Builder
 
-/**
-  * Iterates though each element in [[elements]].
+/** Iterates though each element in [[elements]].
   * @author 杨博 (Yang Bo)
   *
   * @example [[Each]] keywords can be used to calculate cartesian product.
@@ -32,7 +31,8 @@ object Each {
     @inline
     def flatMapBreakOut[Element, Domain, DomainElement](
         fa: Traversable[Element],
-        f: Element => GenTraversableOnce[DomainElement])(implicit factory: Factory[DomainElement, Domain]): Domain = {
+        f: Element => GenTraversableOnce[DomainElement]
+    )(implicit factory: Factory[DomainElement, Domain]): Domain = {
       fa.flatMap(f)(collection.breakOut(factory))
     }
 
@@ -49,7 +49,8 @@ object Each {
     @inline
     def flatMapBreakOut[Element, Domain, DomainElement](
         fa: Traversable[Element],
-        f: Element => GenTraversableOnce[DomainElement])(implicit factory: Factory[DomainElement, Domain]): Domain = {
+        f: Element => GenTraversableOnce[DomainElement]
+    )(implicit factory: Factory[DomainElement, Domain]): Domain = {
       factory.fromSpecific(new View.FlatMap(fa, f))
     }
 
@@ -65,8 +66,8 @@ object Each {
 
   implicit def implicitEach[Element](elements: Traversable[Element]): Each[Element] = Each[Element](elements)
 
-  implicit def eachDsl[Element, Domain, DomainElement](
-      implicit thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),
+  implicit def eachDsl[Element, Domain, DomainElement](implicit
+      thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),
       factory: Factory[DomainElement, Domain]
   ): Dsl[Each[Element], Domain, Element] =
     new Dsl[Each[Element], Domain, Element] {
@@ -82,15 +83,18 @@ object Each {
       }
     }
 
-  implicit def continuationEachDsl[Element, LeftDomain, RightDomain, DomainElement](
-      implicit rightDomainIsTraversableOnce: (Element => LeftDomain !! RightDomain) => (
-          Element => LeftDomain !! TraversableOnce[DomainElement]),
+  implicit def continuationEachDsl[Element, LeftDomain, RightDomain, DomainElement](implicit
+      rightDomainIsTraversableOnce: (Element => LeftDomain !! RightDomain) => (
+          Element => LeftDomain !! TraversableOnce[DomainElement]
+      ),
       factory: Factory[DomainElement, RightDomain],
       shiftDsl: Dsl[Shift[LeftDomain, TraversableOnce[DomainElement]], LeftDomain, TraversableOnce[DomainElement]]
   ): Dsl[Each[Element], LeftDomain !! RightDomain, Element] = {
     new Dsl[Each[Element], LeftDomain !! RightDomain, Element] {
-      def cpsApply(keyword: Each[Element],
-                   handler0: Element => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
+      def cpsApply(
+          keyword: Each[Element],
+          handler0: Element => LeftDomain !! RightDomain
+      ): LeftDomain !! RightDomain = {
         val i = keyword.elements.toIterator
         val builder = newBuilder[DomainElement, RightDomain]
         val handler = rightDomainIsTraversableOnce(handler0)

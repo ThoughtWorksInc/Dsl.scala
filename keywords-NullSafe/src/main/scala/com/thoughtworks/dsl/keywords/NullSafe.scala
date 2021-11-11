@@ -99,7 +99,6 @@ import scala.annotation.compileTimeOnly
   * @author 杨博 (Yang Bo)
   *
   * @define qmark ?
-  *
   */
 final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
 
@@ -114,7 +113,8 @@ final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
 
   @shift
   @compileTimeOnly(
-    """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@reset`.""")
+    """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@reset`."""
+  )
   final def ? : NotNull[A] = {
     throw new IllegalAccessException(
       """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@reset`."""
@@ -136,8 +136,7 @@ object NullSafe {
     private[NullSafe] def toNotNull[A](a: A) = a
   }
 
-  /**
-    * @usecase type NotNull[+A] <: A
+  /** @usecase type NotNull[+A] <: A
     */
   type NotNull[+A] = OpaqueTypes.NotNull[A]
 

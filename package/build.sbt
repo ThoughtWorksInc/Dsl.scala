@@ -43,7 +43,6 @@ libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.30"
 
 import scala.meta._
 
-
 exampleSuperTypes := exampleSuperTypes.value.map {
   case ctor"_root_.org.scalatest.freespec.AnyFreeSpec" =>
     ctor"_root_.org.scalatest.freespec.AsyncFreeSpec"

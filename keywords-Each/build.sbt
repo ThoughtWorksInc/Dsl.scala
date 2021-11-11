@@ -30,4 +30,3 @@ libraryDependencies ++= {
 }
 
 libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.7"
-

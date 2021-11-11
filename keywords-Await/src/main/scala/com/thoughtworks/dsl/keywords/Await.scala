@@ -107,8 +107,9 @@ object Await {
 
   implicit def implicitAwait[Value](future: Future[Value]): Await[Value] = Await[Value](future)
 
-  implicit def streamAwaitDsl[Value, That](
-      implicit executionContext: ExecutionContext): Dsl[Await[Value], Stream[Future[That]], Value] =
+  implicit def streamAwaitDsl[Value, That](implicit
+      executionContext: ExecutionContext
+  ): Dsl[Await[Value], Stream[Future[That]], Value] =
     new Dsl[Await[Value], Stream[Future[That]], Value] {
       def cpsApply(keyword: Await[Value], handler: Value => Stream[Future[That]]): Stream[Future[That]] = {
         import keyword.future
@@ -117,16 +118,18 @@ object Await {
       }
     }
 
-  implicit def awaitDsl[Value, That](
-      implicit executionContext: ExecutionContext): Dsl[Await[Value], Future[That], Value] =
+  implicit def awaitDsl[Value, That](implicit
+      executionContext: ExecutionContext
+  ): Dsl[Await[Value], Future[That], Value] =
     new Dsl[Await[Value], Future[That], Value] {
       def cpsApply(keyword: Await[Value], handler: Value => Future[That]): Future[That] = {
         keyword.future.flatMap(handler)
       }
     }
 
-  implicit def continuationAwaitDsl[Value](
-      implicit executionContext: ExecutionContext): Dsl[Await[Value], Unit !! Throwable, Value] =
+  implicit def continuationAwaitDsl[Value](implicit
+      executionContext: ExecutionContext
+  ): Dsl[Await[Value], Unit !! Throwable, Value] =
     new Dsl[Await[Value], Unit !! Throwable, Value] {
       def cpsApply(keyword: Await[Value], handler: Value => Unit !! Throwable): Unit !! Throwable =
         !!.fromTryContinuation(keyword.future.onComplete)(handler)

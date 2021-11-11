@@ -4,8 +4,7 @@ import com.thoughtworks.dsl.Dsl.shift
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 class BangNotationSpec extends AnyFreeSpec with Matchers {
 
