@@ -41,22 +41,18 @@ final class ResetEverywhere(override val global: Global) extends Plugin {
 
   private type CpsAttachment = (Tree => Tree) => Tree
 
-  private var nonTypeConstraintResetSymbol: Symbol = _ // = symbolOf[nonTypeConstraintReset]
-
-  override def init(options: List[String], error: String => Unit): Boolean = {
-    super.init(options, error) && {
-      try {
-        nonTypeConstraintResetSymbol = symbolOf[nonTypeConstraintReset]
-        true
-      } catch {
-        case e: ScalaReflectionException =>
-          error("""This compiler plug-in requires the runtime library:
-  libraryDependencies += "com.thoughtworks.dsl" %% "dsl" % "latest.release"
+  private lazy val nonTypeConstraintResetSymbol: Symbol = {
+    try {
+      symbolOf[nonTypeConstraintReset]
+    } catch {
+      case e: ScalaReflectionException =>
+        error("""This compiler plug-in requires the runtime library:
+libraryDependencies += "com.thoughtworks.dsl" %% "dsl" % "latest.release"
 """)
-          false
-      }
+        throw e
     }
   }
+
   val name: String = "ResetEverywhere"
 
   private final class ResetAnnotationCreator extends PluginComponent with Transform {
