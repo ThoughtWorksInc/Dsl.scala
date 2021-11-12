@@ -14,15 +14,19 @@ jobs:
       matrix:
         scala:
         - 2.11.12
-        - 2.12.11
+        - 2.12.15
         - 2.13.7
         sbt-args:
         - --addPluginSbtFile=project/plugins.sbt.scalajs06
         - ''
         exclude:
+        - scala: 2.12.15
+          sbt-args: --addPluginSbtFile=project/plugins.sbt.scalajs06
         - scala: 2.13.7
           sbt-args: --addPluginSbtFile=project/plugins.sbt.scalajs06
         include:
+        - scala: 2.12.13
+          sbt-args: --addPluginSbtFile=project/plugins.sbt.scalajs06
         - scala: 2.13.4
           sbt-args: --addPluginSbtFile=project/plugins.sbt.scalajs06
 
