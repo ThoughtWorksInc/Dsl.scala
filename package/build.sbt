@@ -44,14 +44,14 @@ libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.30"
 import scala.meta._
 
 exampleSuperTypes := exampleSuperTypes.value.map {
-  case ctor"_root_.org.scalatest.freespec.AnyFreeSpec" =>
-    ctor"_root_.org.scalatest.freespec.AsyncFreeSpec"
+  case init"_root_.org.scalatest.freespec.AnyFreeSpec" =>
+    init"_root_.org.scalatest.freespec.AsyncFreeSpec"
   case otherTrait =>
     otherTrait
 }
 
-exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
-exampleSuperTypes += ctor"_root_.com.thoughtworks.dsl.MockPingPongServer"
+exampleSuperTypes += init"_root_.org.scalatest.Inside"
+exampleSuperTypes += init"_root_.com.thoughtworks.dsl.MockPingPongServer"
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
