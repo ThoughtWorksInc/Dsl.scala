@@ -2,7 +2,8 @@ package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.enableMembersIf
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.Matchers
 
 import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
@@ -11,7 +12,7 @@ import scala.runtime.NonLocalReturnControl
 /**
   * @author 杨博 (Yang Bo)
   */
-class YieldSpec213 extends FreeSpec with Matchers {
+class YieldSpec213 extends AnyFreeSpec with Matchers {
 
   "lazylist" - {
 
