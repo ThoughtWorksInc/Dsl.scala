@@ -2,8 +2,8 @@ enablePlugins(Example)
 
 import meta._
 exampleSuperTypes := exampleSuperTypes.value.map {
-  case ctor"_root_.org.scalatest.FreeSpec" =>
-    ctor"_root_.org.scalatest.AsyncFreeSpec"
+  case init"_root_.org.scalatest.FreeSpec" =>
+    init"_root_.org.scalatest.AsyncFreeSpec"
   case otherTrait =>
     otherTrait
 }
