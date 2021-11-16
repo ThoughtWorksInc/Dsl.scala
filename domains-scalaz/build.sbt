@@ -1,4 +1,8 @@
-libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.33"
+if (VersionNumber(scalaJSVersion).numbers < Seq(1)) {
+  libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.31"
+} else {
+  libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.33"
+}
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
