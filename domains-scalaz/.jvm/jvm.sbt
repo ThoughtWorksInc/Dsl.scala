@@ -1,9 +1,8 @@
 enablePlugins(Example)
 
-
+import Ordering.Implicits._
 sourceGenerators in Test := {
   (sourceGenerators in Test).value.filterNot { sourceGenerator =>
-    import Ordering.Implicits._
     VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L) &&
     sourceGenerator.info
       .get(taskDefinitionKey)
@@ -16,8 +15,7 @@ sourceGenerators in Test := {
 import scala.meta._
 exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
 
-import Ordering.Implicits._
-if (VersionNumber(scalaJSVersion).numbers < Seq(1)) {
+if (VersionNumber(scalaJSVersion).numbers < Seq(1L)) {
   libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.31" % Optional
 } else {
   libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.33" % Optional
