@@ -27,9 +27,9 @@ libraryDependencies ++= {
   }
 }
 
+import Ordering.Implicits._
 sourceGenerators in Test := {
   (sourceGenerators in Test).value.filterNot { sourceGenerator =>
-    import Ordering.Implicits._
     VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L) &&
     sourceGenerator.info
       .get(taskDefinitionKey)
@@ -39,7 +39,7 @@ sourceGenerators in Test := {
   }
 }
 
-if (VersionNumber(scalaJSVersion).numbers < Seq(1)) {
+if (VersionNumber(scalaJSVersion).numbers < Seq(1L)) {
   libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.31"
 } else {
   libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.33"
