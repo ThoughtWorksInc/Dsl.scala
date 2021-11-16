@@ -24,7 +24,6 @@ import scala.util.control.TailCalls.TailRec
   *
   *           - Defining their domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   *           - Implementing this [[Dsl]] type class, which is an interpreter for an [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
-  *
   */
 @implicitNotFound("The keyword ${Keyword} is not supported inside a function that returns ${Domain}.")
 trait Dsl[-Keyword, Domain, +Value] {
@@ -40,8 +39,8 @@ private[dsl] trait LowPriorityDsl2 {
   import Scala211Or212._
   import Scala213._
 
-  implicit def nothingCollectionDsl[Keyword, Element, Collection[_]](
-      implicit factory: Factory[Element, Collection[Element]],
+  implicit def nothingCollectionDsl[Keyword, Element, Collection[_]](implicit
+      factory: Factory[Element, Collection[Element]],
       restDsl: Dsl[Keyword, Element, Nothing]
   ): Dsl[Keyword, Collection[Element], Nothing] = { (keyword, handler) =>
     singleton(resetDomain(keyword))
@@ -50,8 +49,8 @@ private[dsl] trait LowPriorityDsl2 {
 
 private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 
-  implicit def derivedFunction1Dsl[Keyword, State, Domain, Value](
-      implicit restDsl: Dsl[Keyword, Domain, Value]
+  implicit def derivedFunction1Dsl[Keyword, State, Domain, Value](implicit
+      restDsl: Dsl[Keyword, Domain, Value]
   ): Dsl[Keyword, State => Domain, Value] = { (keyword, handler) =>
     val restDsl1 = restDsl
     locally { state: State =>
@@ -80,19 +79,20 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 //    }
 //  }
 
-  implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](
-      implicit restDsl: Dsl[Keyword, LeftDomain, Value]
+  implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
+      restDsl: Dsl[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! Throwable, Value] = { (keyword, handler) => continue =>
     restDsl.cpsApply(
       keyword,
       new (Value => LeftDomain) {
         def apply(value: Value): LeftDomain = {
-          val protectedContinuation = try {
-            handler(value)
-          } catch {
-            case NonFatal(e) =>
-              return continue(e)
-          }
+          val protectedContinuation =
+            try {
+              handler(value)
+            } catch {
+              case NonFatal(e) =>
+                return continue(e)
+            }
           // FIXME: Shift[Domain, Throwable]
           protectedContinuation(continue)
         }
@@ -129,41 +129,52 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   @inline
-  private[dsl] def resetDomain[Keyword, Domain](keyword: Keyword)(
-      implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
+  private[dsl] def resetDomain[Keyword, Domain](
+      keyword: Keyword
+  )(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
     dsl.cpsApply(keyword, implicitly)
   }
 
-  implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](
-      implicit restDsl: Dsl[Keyword, RightDomain, Nothing]): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] = {
-    (keyword, handler) =>
-      _(resetDomain(keyword))
+  implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](implicit
+      restDsl: Dsl[Keyword, RightDomain, Nothing]
+  ): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] = { (keyword, handler) =>
+    _(resetDomain(keyword))
   }
 
-  implicit def nothingFutureDsl[Keyword, Domain](
-      implicit restDsl: Dsl[Keyword, Domain, Nothing]): Dsl[Keyword, Future[Domain], Nothing] = { (keyword, handler) =>
+  implicit def nothingFutureDsl[Keyword, Domain](implicit
+      restDsl: Dsl[Keyword, Domain, Nothing]
+  ): Dsl[Keyword, Future[Domain], Nothing] = { (keyword, handler) =>
     Future.successful(resetDomain(keyword))
   }
 
-  implicit def derivedTailRecDsl[Keyword, Domain, Value](
-      implicit restDsl: Dsl[Keyword, Domain, Value]): Dsl[Keyword, TailRec[Domain], Value] = { (keyword, handler) =>
+  implicit def derivedTailRecDsl[Keyword, Domain, Value](implicit
+      restDsl: Dsl[Keyword, Domain, Value]
+  ): Dsl[Keyword, TailRec[Domain], Value] = { (keyword, handler) =>
     TailCalls.done {
-      restDsl.cpsApply(keyword, { value =>
-        handler(value).result
-      })
+      restDsl.cpsApply(
+        keyword,
+        { value =>
+          handler(value).result
+        }
+      )
     }
   }
 
-  implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](
-      implicit restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value])
-    : Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] = { (keyword, handler) => tailRecFailureHandler =>
-    TailCalls.done(restDsl.cpsApply(keyword, { value => failureHandler =>
-      handler(value) { e =>
-        TailCalls.done(failureHandler(e))
-      }.result
-    }) { e =>
-      tailRecFailureHandler(e).result
-    })
+  implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
+      restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value]
+  ): Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] = { (keyword, handler) => tailRecFailureHandler =>
+    TailCalls.done(
+      restDsl.cpsApply(
+        keyword,
+        { value => failureHandler =>
+          handler(value) { e =>
+            TailCalls.done(failureHandler(e))
+          }.result
+        }
+      ) { e =>
+        tailRecFailureHandler(e).result
+      }
+    )
   }
 
   type Continuation[R, +A] = (A => R @reset) => R
@@ -181,8 +192,9 @@ object Dsl extends LowPriorityDsl0 {
     @inline
     def apply[R, A](a: => A): (R !! A) @reset = delay(a _)
 
-    def toTryContinuation[LeftDomain, Value](task: LeftDomain !! Throwable !! Value)(
-        handler: Try[Value] => LeftDomain): LeftDomain = {
+    def toTryContinuation[LeftDomain, Value](
+        task: LeftDomain !! Throwable !! Value
+    )(handler: Try[Value] => LeftDomain): LeftDomain = {
       task { a => failureHandler =>
         handler(Success(a))
       } { e =>
@@ -190,19 +202,21 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-    def fromTryContinuation[LeftDomain, Value](continuation: LeftDomain !! Try[Value])(
-        successHandler: Value => LeftDomain !! Throwable)(failureHandler: Throwable => LeftDomain): LeftDomain = {
+    def fromTryContinuation[LeftDomain, Value](
+        continuation: LeftDomain !! Try[Value]
+    )(successHandler: Value => LeftDomain !! Throwable)(failureHandler: Throwable => LeftDomain): LeftDomain = {
       continuation(
         new (Try[Value] => LeftDomain) {
           def apply(result: Try[Value]): LeftDomain = {
             result match {
               case Success(a) =>
-                val protectedContinuation = try {
-                  successHandler(a)
-                } catch {
-                  case NonFatal(e) =>
-                    return failureHandler(e)
-                }
+                val protectedContinuation =
+                  try {
+                    successHandler(a)
+                  } catch {
+                    case NonFatal(e) =>
+                      return failureHandler(e)
+                  }
                 protectedContinuation(failureHandler)
               case Failure(e) =>
                 failureHandler(e)
@@ -233,9 +247,7 @@ object Dsl extends LowPriorityDsl0 {
   def apply[Keyword, Domain, Value](implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
     typeClass
 
-  /**
-    *
-    * @tparam Self the self type
+  /** @tparam Self the self type
     * @see [[https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern Curiously recurring template pattern]]
     *      for the reason why we need the `Self` type parameter
     */
@@ -243,7 +255,8 @@ object Dsl extends LowPriorityDsl0 {
 
     @shift
     @compileTimeOnly(
-      """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@reset`.""")
+      """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@reset`."""
+    )
     final def unary_! : Value = {
       throw new IllegalAccessException(
         """This method requires the compiler plugin: `addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")` and must only be called inside a code block annotated as `@reset`."""
@@ -278,54 +291,71 @@ object Dsl extends LowPriorityDsl0 {
     * with the help of this type class.
     */
   @implicitNotFound(
-    "The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
+    "The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
+  )
   trait TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
-    def tryCatchFinally(block: BlockDomain !! Value,
-                        catcher: Catcher[BlockDomain !! Value],
-                        finalizer: FinalizerDomain !! Unit,
-                        outerSuccessHandler: Value => OuterDomain): OuterDomain
+    def tryCatchFinally(
+        block: BlockDomain !! Value,
+        catcher: Catcher[BlockDomain !! Value],
+        finalizer: FinalizerDomain !! Unit,
+        outerSuccessHandler: Value => OuterDomain
+    ): OuterDomain
   }
 
   object TryCatchFinally {
     implicit final class Ops[Value, OuterDomain, BlockDomain, FinalizerDomain](
-        outerSuccessHandler: Value => OuterDomain)(
-        implicit typeClass: TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]
+        outerSuccessHandler: Value => OuterDomain
+    )(implicit
+        typeClass: TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]
     ) {
-      def apply(block: BlockDomain !! Value,
-                catcher: Catcher[BlockDomain !! Value],
-                finalizer: FinalizerDomain !! Unit): OuterDomain =
+      def apply(
+          block: BlockDomain !! Value,
+          catcher: Catcher[BlockDomain !! Value],
+          finalizer: FinalizerDomain !! Unit
+      ): OuterDomain =
         typeClass.tryCatchFinally(block, catcher, finalizer, outerSuccessHandler)
     }
 
-    implicit def fromTryCatchTryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain](
-        implicit tryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
+    implicit def fromTryCatchTryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain](implicit
+        tryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
         tryCatch: TryCatch[Value, BlockDomain, BlockDomain]
     ): TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] = {
-      (block: BlockDomain !! Value,
-       catcher: Catcher[BlockDomain !! Value],
-       finalizer: FinalizerDomain !! Unit,
-       outerSuccessHandler: Value => OuterDomain) =>
-        tryFinally.tryFinally({
-          tryCatch.tryCatch(block, catcher, _)
-        }, finalizer, outerSuccessHandler)
+      (
+          block: BlockDomain !! Value,
+          catcher: Catcher[BlockDomain !! Value],
+          finalizer: FinalizerDomain !! Unit,
+          outerSuccessHandler: Value => OuterDomain
+      ) =>
+        tryFinally.tryFinally(
+          {
+            tryCatch.tryCatch(block, catcher, _)
+          },
+          finalizer,
+          outerSuccessHandler
+        )
     }
   }
 
   @implicitNotFound(
-    "The `try` ... `catch` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
+    "The `try` ... `catch` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
+  )
   trait TryCatch[Value, OuterDomain, BlockDomain] {
-    def tryCatch(block: BlockDomain !! Value,
-                 catcher: Catcher[BlockDomain !! Value],
-                 outerSuccessHandler: Value => OuterDomain): OuterDomain
+    def tryCatch(
+        block: BlockDomain !! Value,
+        catcher: Catcher[BlockDomain !! Value],
+        outerSuccessHandler: Value => OuterDomain
+    ): OuterDomain
   }
 
   private[dsl] trait LowPriorityTryCatch {
-    implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, State](
-        implicit restTryCatch: TryCatch[Value, OuterDomain, BlockDomain])
-      : TryCatch[Value, State => OuterDomain, State => BlockDomain] = {
-      (block: (State => BlockDomain) !! Value,
-       catcher: Catcher[(State => BlockDomain) !! Value],
-       outerSuccessHandler: Value => State => OuterDomain) => (state: State) =>
+    implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, State](implicit
+        restTryCatch: TryCatch[Value, OuterDomain, BlockDomain]
+    ): TryCatch[Value, State => OuterDomain, State => BlockDomain] = {
+      (
+          block: (State => BlockDomain) !! Value,
+          catcher: Catcher[(State => BlockDomain) !! Value],
+          outerSuccessHandler: Value => State => OuterDomain
+      ) => (state: State) =>
         def withState(blockContinuation: (State => BlockDomain) !! Value) = { blockHandler: (Value => BlockDomain) =>
           blockContinuation { value: Value => (state: State) =>
             blockHandler(value)
@@ -338,46 +368,50 @@ object Dsl extends LowPriorityDsl0 {
 
   object TryCatch extends LowPriorityTryCatch {
 
-    implicit final class Ops[Value, OuterDomain, BlockDomain](outerSuccessHandler: Value => OuterDomain)(
-        implicit typeClass: TryCatch[Value, OuterDomain, BlockDomain]
+    implicit final class Ops[Value, OuterDomain, BlockDomain](outerSuccessHandler: Value => OuterDomain)(implicit
+        typeClass: TryCatch[Value, OuterDomain, BlockDomain]
     ) {
       def apply(block: BlockDomain !! Value, catcher: Catcher[BlockDomain !! Value]) = {
         typeClass.tryCatch(block, catcher, outerSuccessHandler)
       }
     }
 
-    implicit def futureTryCatch[BlockValue, OuterValue](
-        implicit executionContext: ExecutionContext): TryCatch[BlockValue, Future[OuterValue], Future[BlockValue]] = {
-      (block: Future[BlockValue] !! BlockValue,
-       catcher: Catcher[Future[BlockValue] !! BlockValue],
-       outerSuccessHandler: BlockValue => Future[OuterValue]) =>
+    implicit def futureTryCatch[BlockValue, OuterValue](implicit
+        executionContext: ExecutionContext
+    ): TryCatch[BlockValue, Future[OuterValue], Future[BlockValue]] = {
+      (
+          block: Future[BlockValue] !! BlockValue,
+          catcher: Catcher[Future[BlockValue] !! BlockValue],
+          outerSuccessHandler: BlockValue => Future[OuterValue]
+      ) =>
         catchNativeException(block)
-          .recoverWith {
-            case e: Throwable =>
-              def recover(): Future[BlockValue] = {
-                (try {
-                  catcher.lift(e)
-                } catch {
-                  case NonFatal(extractorException) =>
-                    return Future.failed(extractorException)
-                }) match {
-                  case None =>
-                    Future.failed(e)
-                  case Some(recovered) =>
-                    catchNativeException(recovered)
-                }
+          .recoverWith { case e: Throwable =>
+            def recover(): Future[BlockValue] = {
+              (try {
+                catcher.lift(e)
+              } catch {
+                case NonFatal(extractorException) =>
+                  return Future.failed(extractorException)
+              }) match {
+                case None =>
+                  Future.failed(e)
+                case Some(recovered) =>
+                  catchNativeException(recovered)
               }
-              recover()
+            }
+            recover()
           }
           .flatMap(outerSuccessHandler)
     }
 
     implicit def throwableContinuationTryCatch[LeftDomain, Value]
-      : TryCatch[Value, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
+        : TryCatch[Value, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
 
-      (block: LeftDomain !! Throwable !! Value,
-       catcher: Catcher[LeftDomain !! Throwable !! Value],
-       outerSuccessHandler: Value => LeftDomain !! Throwable) => outerFailureHandler =>
+      (
+          block: LeftDomain !! Throwable !! Value,
+          catcher: Catcher[LeftDomain !! Throwable !! Value],
+          outerSuccessHandler: Value => LeftDomain !! Throwable
+      ) => outerFailureHandler =>
         def innerFailureHandler(e: Throwable): LeftDomain = {
           catcher.lift(e) match {
             case None =>
@@ -426,24 +460,30 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   @implicitNotFound(
-    "The `try` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}.")
+    "The `try` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
+  )
   trait TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
-    def tryFinally(block: BlockDomain !! Value,
-                   finalizer: FinalizerDomain !! Unit,
-                   outerSuccessHandler: Value => OuterDomain): OuterDomain
+    def tryFinally(
+        block: BlockDomain !! Value,
+        finalizer: FinalizerDomain !! Unit,
+        outerSuccessHandler: Value => OuterDomain
+    ): OuterDomain
   }
 
   private[dsl] trait LowPriorityTryFinally {
-    implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, FinalizerDomain, State](
-        implicit restTryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain])
-      : TryFinally[Value, State => OuterDomain, State => BlockDomain, State => FinalizerDomain] = {
-      (block: (State => BlockDomain) !! Value,
-       finalizer: (State => FinalizerDomain) !! Unit,
-       outerSuccessHandler: Value => State => OuterDomain) => state =>
-        def withState[Domain, Value](blockContinuation: (State => Domain) !! Value) = { blockHandler: (Value => Domain) =>
-          blockContinuation { value: Value => (state: State) =>
-            blockHandler(value)
-          }(state)
+    implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, FinalizerDomain, State](implicit
+        restTryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]
+    ): TryFinally[Value, State => OuterDomain, State => BlockDomain, State => FinalizerDomain] = {
+      (
+          block: (State => BlockDomain) !! Value,
+          finalizer: (State => FinalizerDomain) !! Unit,
+          outerSuccessHandler: Value => State => OuterDomain
+      ) => state =>
+        def withState[Domain, Value](blockContinuation: (State => Domain) !! Value) = {
+          blockHandler: (Value => Domain) =>
+            blockContinuation { value: Value => (state: State) =>
+              blockHandler(value)
+            }(state)
         }
 
         restTryFinally.tryFinally(withState(block), withState(finalizer), outerSuccessHandler(_)(state))
@@ -452,31 +492,33 @@ object Dsl extends LowPriorityDsl0 {
 
   object TryFinally extends LowPriorityTryFinally {
 
-    implicit final class Ops[Value, OuterDomain, BlockDomain, FinalizerDomain] @inline()(
-        outerSuccessHandler: Value => OuterDomain)(
-        implicit typeClass: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]) {
+    implicit final class Ops[Value, OuterDomain, BlockDomain, FinalizerDomain] @inline() (
+        outerSuccessHandler: Value => OuterDomain
+    )(implicit typeClass: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]) {
       @inline
       def apply(block: BlockDomain !! Value, finalizer: FinalizerDomain !! Unit): OuterDomain = {
         typeClass.tryFinally(block, finalizer, outerSuccessHandler)
       }
     }
 
-    implicit def futureTryFinally[BlockValue, OuterValue](implicit executionContext: ExecutionContext)
-      : TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] = {
-      (block: Future[BlockValue] !! BlockValue,
-       finalizer: Future[Unit] !! Unit,
-       outerSuccessHandler: BlockValue => Future[OuterValue]) =>
+    implicit def futureTryFinally[BlockValue, OuterValue](implicit
+        executionContext: ExecutionContext
+    ): TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] = {
+      (
+          block: Future[BlockValue] !! BlockValue,
+          finalizer: Future[Unit] !! Unit,
+          outerSuccessHandler: BlockValue => Future[OuterValue]
+      ) =>
         @inline
         def injectFinalizer[A](f: Unit => Future[A]): Future[A] = {
           catchNativeException(finalizer).flatMap(f)
         }
 
         catchNativeException(block)
-          .recoverWith {
-            case e: Throwable =>
-              injectFinalizer { _: Unit =>
-                Future.failed(e)
-              }
+          .recoverWith { case e: Throwable =>
+            injectFinalizer { _: Unit =>
+              Future.failed(e)
+            }
           }
           .flatMap { a =>
             injectFinalizer { _: Unit =>
@@ -486,7 +528,7 @@ object Dsl extends LowPriorityDsl0 {
     }
 
     implicit def throwableContinuationTryFinally[LeftDomain, Value]
-      : TryFinally[Value, LeftDomain !! Throwable, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
+        : TryFinally[Value, LeftDomain !! Throwable, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
       (block, finalizer, outerSuccessHandler) => outerFailureHandler =>
         @inline
         def injectFinalizer(finalizerHandler: Unit => LeftDomain !! Throwable): LeftDomain = {

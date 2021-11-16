@@ -9,25 +9,25 @@ import scala.util.control.NonFatal
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 final class RaiiSpec extends AnyFreeSpec with Matchers {
 
   @inline
-  private def jvmCatch[Domain](eh: => Domain !! Throwable)(failureHandler: Throwable => Domain)(
-      implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
-    val protectedContinuation: Domain !! Throwable = try {
-      eh
-    } catch {
-      case NonFatal(e) =>
-        return failureHandler(e)
-    }
+  private def jvmCatch[Domain](eh: => Domain !! Throwable)(
+      failureHandler: Throwable => Domain
+  )(implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
+    val protectedContinuation: Domain !! Throwable =
+      try {
+        eh
+      } catch {
+        case NonFatal(e) =>
+          return failureHandler(e)
+      }
     shiftDsl.cpsApply(protectedContinuation, failureHandler)
   }
 
-  /**
-    * Exit the current scope then hang up
+  /** Exit the current scope then hang up
     */
   def successContinuation[LeftDomain](domain: LeftDomain): (LeftDomain !! Throwable) @reset = Continuation.empty(domain)
 
@@ -65,13 +65,14 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
   "try/catch" - {
     "yield and catch" in {
       def continuation: Stream[Int] !! Throwable !! String = _ {
-        val tryResult = try {
-          0 / 0
-        } catch {
-          case e: ArithmeticException =>
-            !Yield(3)
-            "catch"
-        }
+        val tryResult =
+          try {
+            0 / 0
+          } catch {
+            case e: ArithmeticException =>
+              !Yield(3)
+              "catch"
+          }
         "returns " + tryResult
       }
       continuation { result: String =>
@@ -136,10 +137,11 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
 
     "empty finally" in {
       def continuation: Stream[Int] !! Throwable !! String = _ {
-        val tryResult = try {
-          0 / 0
-          !Yield(-1)
-        } finally {}
+        val tryResult =
+          try {
+            0 / 0
+            !Yield(-1)
+          } finally {}
         "returns " + tryResult
       }
 
@@ -152,13 +154,14 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
     }
     "rethrow" in {
       def continuation: Stream[Int] !! Throwable !! String = _ {
-        val tryResult = try {
-          0 / 0
-        } catch {
-          case e: ArithmeticException =>
-            !Yield(42)
-            throw e
-        }
+        val tryResult =
+          try {
+            0 / 0
+          } catch {
+            case e: ArithmeticException =>
+              !Yield(42)
+              throw e
+          }
         "returns " + tryResult
       }
       continuation { result: String =>
@@ -172,27 +175,28 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
     "complex" in {
       def continuation: Stream[Int] !! Throwable !! String = _ {
         !Yield(0)
-        val tryResult = try {
-          !Yield(1)
-          try {} catch {
+        val tryResult =
+          try {
+            !Yield(1)
+            try {} catch {
+              case e: ArithmeticException =>
+                !Yield(2)
+            }
+            !Yield(3)
+
+            0 / 0
+            !Yield(4)
+            "try"
+          } catch {
             case e: ArithmeticException =>
-              !Yield(2)
+              !Yield(5)
+              "catch"
+          } finally {
+            !Yield(6)
+
+            def ignoredFinalResult = "finally"
+            ignoredFinalResult
           }
-          !Yield(3)
-
-          0 / 0
-          !Yield(4)
-          "try"
-        } catch {
-          case e: ArithmeticException =>
-            !Yield(5)
-            "catch"
-        } finally {
-          !Yield(6)
-
-          def ignoredFinalResult = "finally"
-          ignoredFinalResult
-        }
         !Yield(7)
         "returns " + tryResult
       }

@@ -1,6 +1,6 @@
 enablePlugins(Example)
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.4" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.10" % Test
 
 publishArtifact := false
 
@@ -14,15 +14,15 @@ libraryDependencies ++= {
       "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
       "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
       "com.typesafe.akka" %% "akka-actor" % "2.5.32" % Optional,
-      "com.twitter" %% "algebird-core" % "0.13.7" % Optional,
+      "com.twitter" %% "algebird-core" % "0.13.9" % Optional,
       "com.thoughtworks.binding" %% "binding" % "11.9.0" % Optional,
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
       "org.scalacheck" %% "scalacheck" % "1.15.2" % Optional,
       "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
-      "com.lihaoyi" %% "sourcecode" % "0.2.1" % Optional,
+      "com.lihaoyi" %% "sourcecode" % "0.2.7" % Optional,
       "io.monix" %% "monix" % "3.3.0" % Optional,
       "com.typesafe.akka" %% "akka-stream" % "2.5.32" % Optional,
-      "com.typesafe.akka" %% "akka-http" % "10.1.13" % Optional
+      "com.typesafe.akka" %% "akka-http" % "10.1.14" % Optional
     )
   }
 }
@@ -48,14 +48,14 @@ if (VersionNumber(scalaJSVersion).numbers < Seq(1L)) {
 import scala.meta._
 
 exampleSuperTypes := exampleSuperTypes.value.map {
-  case ctor"_root_.org.scalatest.freespec.AnyFreeSpec" =>
-    ctor"_root_.org.scalatest.freespec.AsyncFreeSpec"
+  case init"_root_.org.scalatest.freespec.AnyFreeSpec" =>
+    init"_root_.org.scalatest.freespec.AsyncFreeSpec"
   case otherTrait =>
     otherTrait
 }
 
-exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
-exampleSuperTypes += ctor"_root_.com.thoughtworks.dsl.MockPingPongServer"
+exampleSuperTypes += init"_root_.org.scalatest.Inside"
+exampleSuperTypes += init"_root_.com.thoughtworks.dsl.MockPingPongServer"
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 

@@ -7,7 +7,6 @@ scalacOptions ++= {
   }
 }
 
-
 scalacOptions ++= {
   import Ordering.Implicits._
   if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {

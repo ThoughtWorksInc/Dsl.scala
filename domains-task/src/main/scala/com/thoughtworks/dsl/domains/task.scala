@@ -14,8 +14,7 @@ import scala.util.control.{NonFatal, TailCalls}
 import scala.util.{Failure, Success, Try}
 import scala.util.control.TailCalls.TailRec
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 object task {
 
@@ -105,12 +104,13 @@ object task {
 
         @inline
         private def stackSafeRun(): TailRec[Unit] = {
-          val protectedContinuation = try {
-            continue(())
-          } catch {
-            case NonFatal(e) =>
-              return failureHandler(e)
-          }
+          val protectedContinuation =
+            try {
+              continue(())
+            } catch {
+              case NonFatal(e) =>
+                return failureHandler(e)
+            }
           protectedContinuation(failureHandler)
         }
 

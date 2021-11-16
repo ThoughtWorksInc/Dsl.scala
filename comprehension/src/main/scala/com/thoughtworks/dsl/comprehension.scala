@@ -7,13 +7,13 @@ import com.thoughtworks.dsl.keywords._
 private[dsl] sealed trait LowPriorityComprehension0 {
   import com.thoughtworks.dsl.comprehension._
 
-  implicit def comprehensionOps[From, Keyword, Value](from: From)(
-      implicit asKeyword: From => Dsl.Keyword[Keyword, Value] with Keyword): ComprehensionOps[Keyword, Value] =
+  implicit def comprehensionOps[From, Keyword, Value](from: From)(implicit
+      asKeyword: From => Dsl.Keyword[Keyword, Value] with Keyword
+  ): ComprehensionOps[Keyword, Value] =
     new ComprehensionOps[Keyword, Value](from)
 }
 
 /** Provides utilities to perform `for`-comprehension on [[Dsl.Keyword]].
-  *
   *
   * Add the following import statement to enable `for`-comprehension on keywords:
   *
@@ -114,7 +114,6 @@ private[dsl] sealed trait LowPriorityComprehension0 {
   *          }
   *          gccFlagBuilder3("main.c", "lib1/include", "lib2/include").to[Stream] should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
   *          }}}
-  *
   */
 object comprehension extends LowPriorityComprehension0 {
 
@@ -129,30 +128,40 @@ object comprehension extends LowPriorityComprehension0 {
 
     def map[MapResult](mapper: Value => MapResult): Map[Keyword, Value, MapResult] = Map(keyword, mapper)
 
-    def flatMap[MapResult, NestedKeyword, NestedValue](mapper: Value => MapResult)(
-        implicit asKeywordMapper: (
-            Value => MapResult) => Value => Dsl.Keyword[NestedKeyword, NestedValue] with NestedKeyword)
-      : FlatMap[Keyword, Value, NestedKeyword, NestedValue] = FlatMap(keyword, mapper)
+    def flatMap[MapResult, NestedKeyword, NestedValue](mapper: Value => MapResult)(implicit
+        asKeywordMapper: (Value => MapResult) => Value => Dsl.Keyword[NestedKeyword, NestedValue] with NestedKeyword
+    ): FlatMap[Keyword, Value, NestedKeyword, NestedValue] = FlatMap(keyword, mapper)
 
     def withFilter(condition: Value => Boolean): WithFilter[Keyword, Value] = WithFilter(keyword, condition)
 
-    def to[Output[_]](implicit dsl: Dsl[Keyword, Output[Value], Value],
-                      returnDsl: Dsl[Return[Value], Output[Value], Nothing]): Output[Value] = {
-      dsl.cpsApply(keyword, { value: Value =>
-        resetDomain(Return(value))
-      })
+    def to[Output[_]](implicit
+        dsl: Dsl[Keyword, Output[Value], Value],
+        returnDsl: Dsl[Return[Value], Output[Value], Nothing]
+    ): Output[Value] = {
+      dsl.cpsApply(
+        keyword,
+        { value: Value =>
+          resetDomain(Return(value))
+        }
+      )
     }
-    def as[Domain](implicit dsl: Dsl[Keyword, Domain, Value],
-                   returnDsl: Dsl[Return[Value], Domain, Nothing]): Domain = {
-      dsl.cpsApply(keyword, { value: Value =>
-        resetDomain(Return(value))
-      })
+    def as[Domain](implicit
+        dsl: Dsl[Keyword, Domain, Value],
+        returnDsl: Dsl[Return[Value], Domain, Nothing]
+    ): Domain = {
+      dsl.cpsApply(
+        keyword,
+        { value: Value =>
+          resetDomain(Return(value))
+        }
+      )
     }
 
   }
 
-  implicit def nothingComprehensionOps[From, Keyword](from: From)(
-      implicit asKeyword: From => Dsl.Keyword[Keyword, Nothing] with Keyword): ComprehensionOps[Keyword, Nothing] =
+  implicit def nothingComprehensionOps[From, Keyword](from: From)(implicit
+      asKeyword: From => Dsl.Keyword[Keyword, Nothing] with Keyword
+  ): ComprehensionOps[Keyword, Nothing] =
     new ComprehensionOps[Keyword, Nothing](from)
 
 }

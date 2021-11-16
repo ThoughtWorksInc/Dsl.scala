@@ -10,8 +10,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.Assertions
 import org.scalatest.matchers.should.Matchers
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
@@ -49,23 +48,56 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
         generator should be(
           Seq(
             /**/ "Entering generator",
-            /****/ "Fork thread 0",
-            /******/ "Entering asyncFunction",
-            /********/ "Fork sub-thread 0",
-            /**********/ "Leaving asyncFunction",
-            /**********/ "Leaving generator",
-            /********/ "Fork sub-thread 1",
-            /**********/ "Leaving asyncFunction",
-            /**********/ "Leaving generator",
-            /****/ "Fork thread 1",
-            /******/ "Entering asyncFunction",
-            /********/ "Fork sub-thread 0",
-            /**********/ "Leaving asyncFunction",
-            /**********/ "Leaving generator",
-            /********/ "Fork sub-thread 1",
-            /**********/ "Leaving asyncFunction",
-            /**********/ "Leaving generator"
-          ))
+            /** *
+              */
+            "Fork thread 0",
+            /** ***
+              */
+            "Entering asyncFunction",
+            /** *****
+              */
+            "Fork sub-thread 0",
+            /** *******
+              */
+            "Leaving asyncFunction",
+            /** *******
+              */
+            "Leaving generator",
+            /** *****
+              */
+            "Fork sub-thread 1",
+            /** *******
+              */
+            "Leaving asyncFunction",
+            /** *******
+              */
+            "Leaving generator",
+            /** *
+              */
+            "Fork thread 1",
+            /** ***
+              */
+            "Entering asyncFunction",
+            /** *****
+              */
+            "Fork sub-thread 0",
+            /** *******
+              */
+            "Leaving asyncFunction",
+            /** *******
+              */
+            "Leaving generator",
+            /** *****
+              */
+            "Fork sub-thread 1",
+            /** *******
+              */
+            "Leaving asyncFunction",
+            /** *******
+              */
+            "Leaving generator"
+          )
+        )
       }
 
     }
@@ -269,18 +301,16 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
     "partial function" - {
       "empty" in {
-        Seq.empty[Any].flatMap {
-          case i: Int =>
-            !Yield(100)
-            Stream(42)
+        Seq.empty[Any].flatMap { case i: Int =>
+          !Yield(100)
+          Stream(42)
         } should be(empty)
       }
 
       "flatMap" in {
-        Seq(100, 200).flatMap {
-          case i: Int =>
-            !Yield(100)
-            Stream(42 + i)
+        Seq(100, 200).flatMap { case i: Int =>
+          !Yield(100)
+          Stream(42 + i)
         } should be(Seq(100, 142, 100, 242))
       }
     }

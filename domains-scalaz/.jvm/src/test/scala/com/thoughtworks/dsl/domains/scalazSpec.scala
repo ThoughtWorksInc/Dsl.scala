@@ -9,8 +9,7 @@ import com.thoughtworks.dsl.keywords.{Monadic, Shift, Yield}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 class scalazSpec extends AnyFreeSpec with Matchers {
 
@@ -52,23 +51,56 @@ class scalazSpec extends AnyFreeSpec with Matchers {
         generator should be(
           Seq(
             /**/ "Entering generator",
-            /****/ "Fork thread 0",
-            /******/ "Entering asyncFunction",
-            /********/ "Fork sub-thread 0",
-            /**********/ "Leaving asyncFunction",
-            /**********/ "Leaving generator",
-            /********/ "Fork sub-thread 1",
-            /**********/ "Leaving asyncFunction",
-            /**********/ "Leaving generator",
-            /****/ "Fork thread 1",
-            /******/ "Entering asyncFunction",
-            /********/ "Fork sub-thread 0",
-            /**********/ "Leaving asyncFunction",
-            /**********/ "Leaving generator",
-            /********/ "Fork sub-thread 1",
-            /**********/ "Leaving asyncFunction",
-            /**********/ "Leaving generator"
-          ))
+            /** *
+              */
+            "Fork thread 0",
+            /** ***
+              */
+            "Entering asyncFunction",
+            /** *****
+              */
+            "Fork sub-thread 0",
+            /** *******
+              */
+            "Leaving asyncFunction",
+            /** *******
+              */
+            "Leaving generator",
+            /** *****
+              */
+            "Fork sub-thread 1",
+            /** *******
+              */
+            "Leaving asyncFunction",
+            /** *******
+              */
+            "Leaving generator",
+            /** *
+              */
+            "Fork thread 1",
+            /** ***
+              */
+            "Entering asyncFunction",
+            /** *****
+              */
+            "Fork sub-thread 0",
+            /** *******
+              */
+            "Leaving asyncFunction",
+            /** *******
+              */
+            "Leaving generator",
+            /** *****
+              */
+            "Fork sub-thread 1",
+            /** *******
+              */
+            "Leaving asyncFunction",
+            /** *******
+              */
+            "Leaving generator"
+          )
+        )
       }
 
     }
@@ -108,7 +140,8 @@ class scalazSpec extends AnyFreeSpec with Matchers {
           Some("Fork thread 2-30-100"),
           Some("Fork thread 2-30-200"),
           None
-        ))
+        )
+      )
     }
 
   }

@@ -9,8 +9,7 @@ import scala.language.implicitConversions
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 final case class Shift[Domain, Value](continuation: Domain !! Value)
     extends AnyVal
@@ -30,9 +29,9 @@ private[keywords] trait LowPriorityShift1 {
 private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
 
   @inline
-  implicit def stackSafeShiftDsl[Domain, NewDomain, Value](
-      implicit stackSafeShiftDsl: StackSafeShiftDsl[Domain, NewDomain, Value])
-    : Dsl[Shift[Domain, Value], NewDomain, Value] = {
+  implicit def stackSafeShiftDsl[Domain, NewDomain, Value](implicit
+      stackSafeShiftDsl: StackSafeShiftDsl[Domain, NewDomain, Value]
+  ): Dsl[Shift[Domain, Value], NewDomain, Value] = {
     stackSafeShiftDsl
   }
 
@@ -76,19 +75,21 @@ object Shift extends LowPriorityShift0 {
     }
 
     final def apply(handler: Throwable => LeftDomain): LeftDomain = {
-      val protectedContinuation: LeftDomain !! Throwable = try {
-        last()
-      } catch {
-        case NonFatal(e) =>
-          return handler(e)
-      }
+      val protectedContinuation: LeftDomain !! Throwable =
+        try {
+          last()
+        } catch {
+          case NonFatal(e) =>
+            return handler(e)
+        }
       protectedContinuation(handler)
     }
   }
 
   private def suspend[LeftDomain, Value](
       continuation: LeftDomain !! Throwable !! Value,
-      handler: Value => LeftDomain !! Throwable): TrampolineContinuation[LeftDomain] =
+      handler: Value => LeftDomain !! Throwable
+  ): TrampolineContinuation[LeftDomain] =
     new TrampolineContinuation[LeftDomain] {
       protected def step() = continuation(handler)
     }
@@ -97,15 +98,18 @@ object Shift extends LowPriorityShift0 {
   implicit def stackSafeThrowableShiftDsl[LeftDomain, Value] =
     new SameDomainStackSafeShiftDsl[LeftDomain !! Throwable, Value] {
 
-      def cpsApply(keyword: Shift[LeftDomain !! Throwable, Value],
-                    handler: Value => LeftDomain !! Throwable): !![LeftDomain, Throwable] =
+      def cpsApply(
+          keyword: Shift[LeftDomain !! Throwable, Value],
+          handler: Value => LeftDomain !! Throwable
+      ): !![LeftDomain, Throwable] =
         suspend(keyword.continuation, handler)
     }
 
   private def flatMapTrampoline[LeftDomain, RightDomain, Value](
       handler: Value => LeftDomain !! Throwable !! RightDomain,
       value: Value,
-      continue: RightDomain => LeftDomain !! Throwable): TrampolineContinuation[LeftDomain] =
+      continue: RightDomain => LeftDomain !! Throwable
+  ): TrampolineContinuation[LeftDomain] =
     new TrampolineContinuation[LeftDomain] {
       protected def step() = {
         handler(value)(continue)
@@ -114,14 +118,14 @@ object Shift extends LowPriorityShift0 {
 
   private def taskFlatMap[LeftDomain, RightDomain, Value](
       task: LeftDomain !! Throwable !! Value,
-      handler0: Value => LeftDomain !! Throwable !! RightDomain): LeftDomain !! Throwable !! RightDomain = {
-    continue0 =>
-      val handler1 = handler0
-      task { value =>
-        val handler = handler1
-        val continue = continue0
-        flatMapTrampoline(handler, value, continue)
-      }
+      handler0: Value => LeftDomain !! Throwable !! RightDomain
+  ): LeftDomain !! Throwable !! RightDomain = { continue0 =>
+    val handler1 = handler0
+    task { value =>
+      val handler = handler1
+      val continue = continue0
+      flatMapTrampoline(handler, value, continue)
+    }
   }
 
   @inline
@@ -129,7 +133,8 @@ object Shift extends LowPriorityShift0 {
     new StackSafeShiftDsl[LeftDomain !! Throwable, LeftDomain !! Throwable !! RightDomain, Value] {
       def cpsApply(
           keyword: Shift[!![LeftDomain, Throwable], Value],
-          handler: Value => !![!![LeftDomain, Throwable], RightDomain]): !![!![LeftDomain, Throwable], RightDomain] =
+          handler: Value => !![!![LeftDomain, Throwable], RightDomain]
+      ): !![!![LeftDomain, Throwable], RightDomain] =
         taskFlatMap(keyword.continuation, handler)
     }
 
