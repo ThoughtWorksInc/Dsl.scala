@@ -16,6 +16,7 @@ sourceGenerators in Test := {
 import scala.meta._
 exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
 
+import Ordering.Implicits._
 if (VersionNumber(scalaJSVersion).numbers < Seq(1)) {
   libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.31" % Optional
 } else {
