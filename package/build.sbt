@@ -39,10 +39,13 @@ sourceGenerators in Test := {
   }
 }
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.33"
+if (VersionNumber(scalaJSVersion).numbers < Seq(1)) {
+  libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.31"
+} else {
+  libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.33"
+}
 
 import scala.meta._
-
 
 exampleSuperTypes := exampleSuperTypes.value.map {
   case ctor"_root_.org.scalatest.freespec.AnyFreeSpec" =>
