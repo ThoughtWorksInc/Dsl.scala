@@ -1,3 +1,4 @@
+import Ordering.Implicits._
 if (VersionNumber(scalaJSVersion).numbers < Seq(1)) {
   libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.31"
 } else {
