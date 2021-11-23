@@ -588,13 +588,19 @@ object bangnotation {
             given quoted.Type[K] = keywordTpe
             given quoted.Type[V] = valueTpe
             var innerKeywordTreeOption: Option[KeywordTree] = None
-            val flatMapperTerm = '{ (x: $valueTpe) =>
-              ${
-                val innerKeywordTree = flatMapper('x.asTerm)
-                innerKeywordTreeOption = Some(innerKeywordTree)
-                innerKeywordTree.keywordTerm.asExpr
+            def flatMapperExpr[X]: quoted.Expr[V => X] = {
+              val anyFunction = '{ (dslValue: V) =>
+                ${
+                  val innerKeywordTree = flatMapper('dslValue.asTerm)
+                  innerKeywordTreeOption = Some(innerKeywordTree)
+                  innerKeywordTree.keywordTerm.asExpr
+                }
               }
-            }.asTerm
+              val Some(innerKeywordTree) = innerKeywordTreeOption
+              given quoted.Type[X] = innerKeywordTree.keywordTerm.tpe.asType.asInstanceOf[quoted.Type[X]]
+              '{$anyFunction.asInstanceOf[V => X]}
+            }
+            val flatMapperTerm = flatMapperExpr.asTerm
             val Some(innerKeywordTree) = innerKeywordTreeOption
             val flatMapObject = '{keywords.FlatMap}.asTerm
             Apply(TypeApply(Select.unique(flatMapObject, "apply"), List(
