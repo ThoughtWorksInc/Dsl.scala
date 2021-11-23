@@ -2,7 +2,7 @@ import Ordering.Implicits._
 if (VersionNumber(scalaJSVersion).numbers < Seq(1L)) {
   libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.31"
 } else {
-  libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.33"
+  libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.3.5"
 }
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
