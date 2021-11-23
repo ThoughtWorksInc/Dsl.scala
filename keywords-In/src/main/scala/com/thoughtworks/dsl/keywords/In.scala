@@ -3,31 +3,29 @@ package keywords
 import Dsl.IsKeyword
 import Dsl.Typed
 
-
 opaque type In[Element] <: Any = Iterable[Element]
 object In {
   @inline def cast[Element]: Iterable[Element] <:< In[Element] = implicitly
   def apply[Element](iterable: Iterable[Element]): In[Element] = iterable
 
-  given[Element]: IsKeyword[In[Element], Element]
+  given [Element]: IsKeyword[In[Element], Element] with {}
 
-  given[Element, Domain, DomainElement](
-    given
-    conversion: Domain => IterableOnce[DomainElement],
-    factory: collection.Factory[DomainElement, Domain],
-  ): Dsl[In[Element], Domain, Element] {
+  given [Element, Domain, DomainElement](using
+      conversion: Domain => IterableOnce[DomainElement],
+      factory: collection.Factory[DomainElement, Domain]
+  ): Dsl[In[Element], Domain, Element] with {
     def cpsApply(keyword: In[Element], handler: Element => Domain): Domain = {
       factory.fromSpecific(new collection.View.FlatMap(keyword, handler.andThen(conversion)))
     }
   }
 
   private class OptimizedDrop[Element](
-    underlying: collection.SeqOps[Element, [x] =>> Any, _],
-    n: Int
+      underlying: collection.SeqOps[Element, [x] =>> Any, _],
+      n: Int
   ) extends collection.SeqView.Drop[Element](
-    underlying,
-    n
-  ) {
+        underlying,
+        n
+      ) {
     override def drop(n: Int): OptimizedDrop[Element] = new OptimizedDrop(underlying, this.n + n)
   }
 
@@ -91,20 +89,19 @@ object In {
   // }
 
   import Dsl.!!
-  given[Element, Output[DomainElement], OuterDomain, DomainElement](
-    given
-    conversion: Output[DomainElement] => IterableOnce[DomainElement],
-    // lift: Lift[Output[DomainElement], OuterDomain],
-    factory: collection.Factory[DomainElement, Output[DomainElement]],
-  ): Dsl[In[Element], OuterDomain !! Output[DomainElement], Element] {
+  given [Element, Output[DomainElement], OuterDomain, DomainElement](using
+      conversion: Output[DomainElement] => IterableOnce[DomainElement],
+      // lift: Lift[Output[DomainElement], OuterDomain],
+      factory: collection.Factory[DomainElement, Output[DomainElement]]
+  ): Dsl[In[Element], OuterDomain !! Output[DomainElement], Element] with {
     // type InnerDomain = OuterDomain !! Output[DomainElement]
     def cpsApply(
-      keyword: In[Element],
-      handler: Element => OuterDomain !! Output[DomainElement]
+        keyword: In[Element],
+        handler: Element => OuterDomain !! Output[DomainElement]
     ): OuterDomain !! Output[DomainElement] = { join =>
       @inline def loop(
-        seqOps: SeqOrSeqView[Element],
-        accumulator: List[Output[DomainElement]]
+          seqOps: SeqOrSeqView[Element],
+          accumulator: List[Output[DomainElement]]
       ): OuterDomain = {
         seqOps.headOption match {
           case None =>
@@ -118,26 +115,26 @@ object In {
         }
       }
       loop(toLinearSeqOps(keyword), Nil)
-      // keyword.view.map(handler).reduce(???)
-      // match {
-      //   case (head: Element) +: tail =>
-      //     handler(head) ++ tail.cpsApply(handler)
-      // }
-      // val i = keyword.elements.toIterator
-      // val builder = newBuilder[DomainElement, RightDomain]
-      // val handler = rightDomainIsTraversableOnce(handler0)
-      // @inline
-      // def loop(continue: RightDomain => LeftDomain): LeftDomain = {
-      //   if (i.hasNext) {
-      //     builder ++= !handler(i.next())
-      //     loop(continue)
-      //   } else {
-      //     continue(builder.result())
-      //   }
-      // }
-      // loop
+    // keyword.view.map(handler).reduce(???)
+    // match {
+    //   case (head: Element) +: tail =>
+    //     handler(head) ++ tail.cpsApply(handler)
+    // }
+    // val i = keyword.elements.toIterator
+    // val builder = newBuilder[DomainElement, RightDomain]
+    // val handler = rightDomainIsTraversableOnce(handler0)
+    // @inline
+    // def loop(continue: RightDomain => LeftDomain): LeftDomain = {
+    //   if (i.hasNext) {
+    //     builder ++= !handler(i.next())
+    //     loop(continue)
+    //   } else {
+    //     continue(builder.result())
+    //   }
+    // }
+    // loop
 
-      // ???
+    // ???
     }
   }
 

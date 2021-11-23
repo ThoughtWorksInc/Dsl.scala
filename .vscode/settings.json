@@ -1,5 +1,10 @@
 {
     "files.watcherExclude": {
         "**/target": true
-    }
+    },
+    "cSpell.words": [
+        "elsep",
+        "qctx",
+        "thenp"
+    ]
 }

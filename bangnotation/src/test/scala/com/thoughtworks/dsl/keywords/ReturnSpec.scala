@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package keywords
 import com.thoughtworks.dsl.Dsl.!!
 import bangnotation.{_, given}
-import utest.{* => _, _}
+import utest.{TestSuite, Tests, given}
 import Dsl.Run
 import scala.language.implicitConversions
 import Dsl.IsKeyword
@@ -22,11 +22,11 @@ object ReturnSpec extends TestSuite {
       val stream3 = *[LazyList].apply { 1 }
       val stream4: LazyList[Int] = *[LazyList].apply { !Return[Int](1) : Int }
       summon[stream1.type <:< LazyList[Int]]
-      summon[implicits.Not[stream1.type <:< Int]]
+      summon[util.NotGiven[stream1.type <:< Int]]
       summon[stream2.type <:< LazyList[Int]]
-      summon[implicits.Not[stream2.type <:< Nothing]]
+      summon[util.NotGiven[stream2.type <:< Nothing]]
       summon[stream3.type  <:< LazyList[Int]]
-      summon[implicits.Not[stream3.type <:< LazyList[Nothing]]]
+      summon[util.NotGiven[stream3.type <:< LazyList[Nothing]]]
       assert(stream1 == LazyList(1))
       assert(stream2 == LazyList(1))
       assert(stream3 == LazyList(1))

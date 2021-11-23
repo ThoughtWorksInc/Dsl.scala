@@ -3,46 +3,36 @@ package com.thoughtworks.dsl
 import keywords._
 import Dsl._
 
-given comprehension[Keyword, Value]: AnyRef {
-
-  @inline def[Domain[?]](keyword: Keyword)to(
-    given erased
-    isKeyword: IsKeyword[Keyword, Value],
-  )(
-    given
+extension [Keyword, Value](keyword: Keyword)
+  @inline def to[Domain[_]](
+      using /* erased */
+      isKeyword: IsKeyword[Keyword, Value]
+  )(using
       run: Run[Keyword, Domain[Value], Value]
   ): Domain[Value] = {
     run(keyword)
   }
 
-  @inline def[Domain](keyword: Keyword)as(
-    given erased
-    isKeyword: IsKeyword[Keyword, Value],
-  )(
-    given
-    run: Run[Keyword, Domain, Value]
+  @inline def as[Domain](
+      using /* erased */
+      isKeyword: IsKeyword[Keyword, Value]
+  )(using
+      run: Run[Keyword, Domain, Value]
   ): Domain = {
     run(keyword)
   }
-
-  @inline def[MappedValue](
-    upstream: Keyword
-  )map(
-    given erased IsKeyword[Keyword, Value]
+  @inline def map[MappedValue](
+      using /*erased*/ IsKeyword[Keyword, Value]
   )(
-    mapper: Value => MappedValue
-  ) : FlatMap[Keyword, Value, Pure[MappedValue]] =
-    FlatMap(upstream, Pure.cast.liftCo(mapper))
+      mapper: Value => MappedValue
+  ): FlatMap[Keyword, Value, Pure[MappedValue]] =
+    FlatMap(keyword, Pure.cast.liftCo(mapper))
 
-  @inline def[Keyword, Value, Mapped, MappedValue](
-    upstream: Keyword
-  )flatMap(
-    given erased IsKeyword[Keyword, Value]
+  @inline def flatMap[Mapped, MappedValue](
+      using /*erased*/ IsKeyword[Keyword, Value]
   )(
-    flatMapper: Value => Mapped
+      flatMapper: Value => Mapped
   )(
-    given erased IsKeyword[Mapped, MappedValue]
-  ) : FlatMap[Keyword, Value, Mapped] =
-    FlatMap(upstream, flatMapper)
-
-}
+      using /*erased*/ IsKeyword[Mapped, MappedValue]
+  ): FlatMap[Keyword, Value, Mapped] =
+    FlatMap(keyword, flatMapper)

@@ -6,7 +6,7 @@ import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
 import scala.runtime.NonLocalReturnControl
 import scala.language.implicitConversions
-import utest.{* => _, _}
+import utest.{TestSuite, Tests, test, given}
 
 /**
   * @author 杨博 (Yang Bo)
@@ -21,6 +21,10 @@ object YieldSpec extends TestSuite {
 
       def nested(): Stream[Int] = reset {
         !Yield(2)
+        Stream.empty[Int]
+      }
+      def nested2(): Stream[Int] = reset {
+        Yield(2)
         Stream.empty[Int]
       }
 

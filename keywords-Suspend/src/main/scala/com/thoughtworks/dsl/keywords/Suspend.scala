@@ -9,9 +9,9 @@ object Suspend {
   @inline def cast[Keyword]: (() => Keyword) =:= Suspend[Keyword] = implicitly
   def apply[Keyword, Value](keywordFunction: () => Keyword): Suspend[Keyword] = keywordFunction
 
-  given[Upstream, UpstreamValue](given upstreamIsKeyword: => IsKeyword[Upstream, UpstreamValue]): IsKeyword[Suspend[Upstream], UpstreamValue]
+  given[Upstream, UpstreamValue](using upstreamIsKeyword: => IsKeyword[Upstream, UpstreamValue]): IsKeyword[Suspend[Upstream], UpstreamValue] with {}
 
-  given[Keyword, Domain, Value](given Dsl[Keyword, Domain, Value]): Dsl[Suspend[Keyword], Domain, Value] {
+  given[Keyword, Domain, Value](using Dsl[Keyword, Domain, Value]): Dsl[Suspend[Keyword], Domain, Value] with {
     def cpsApply(keyword: Suspend[Keyword], handler: Value => Domain): Domain = {
       keyword().cpsApply(handler)          
     }

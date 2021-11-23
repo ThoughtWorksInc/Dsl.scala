@@ -3,12 +3,10 @@ package keywords
 import Dsl.IsKeyword
 import Dsl.Typed
 
-
-
-opaque type Monadic[Functor[?], Value] <: Any = Functor[Value]
+opaque type Monadic[Functor[_], Value] <: Any = Functor[Value]
 object Monadic {
-  @inline def cast[Functor[?], Value]: Functor[Value] =:= Monadic[Functor, Value] = implicitly
-  @inline def apply[Functor[?], Value](f: Functor[Value]): Monadic[Functor, Value] = f
+  @inline def cast[Functor[_], Value]: Functor[Value] =:= Monadic[Functor, Value] = implicitly
+  @inline def apply[Functor[_], Value](f: Functor[Value]): Monadic[Functor, Value] = f
 
-  given[Functor[?], Value]: IsKeyword[Monadic[Functor, Value], Value]
+  given [Functor[_], Value]: IsKeyword[Monadic[Functor, Value], Value] with {}
 }

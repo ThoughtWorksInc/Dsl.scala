@@ -11,11 +11,11 @@ final case class If[ConditionKeyword, ThenKeyword, ElseKeyword](
 
 object If {
   given[ConditionKeyword, ThenKeyword, ElseKeyword, Domain, Value](
-    given
+    using
     Dsl[ConditionKeyword, Domain, Boolean],
     Dsl[ThenKeyword, Domain, Value],
     Dsl[ElseKeyword, Domain, Value],
-  ): Dsl[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] {
+  ): Dsl[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] with {
     def cpsApply(keyword: If[ConditionKeyword, ThenKeyword, ElseKeyword], handler: Value => Domain): Domain = {
       keyword.cond.cpsApply{
         case true =>

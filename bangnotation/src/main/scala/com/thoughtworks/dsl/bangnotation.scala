@@ -4,34 +4,36 @@ import keywords._
 import com.thoughtworks.dsl.keywords._, Match._
 import Dsl.IsKeyword
 import Dsl.Typed.given
-import scala.quoted._
+import scala.quoted.Quotes
 import collection.immutable.Queue
 import Dsl.given
 import scala.util.control.Exception.Catcher
 object bangnotation {
 
-  private class Macros[Q <: QuoteContext](resetDescendant: Boolean)(given val qctx: Q) {
-    import qctx.tasty.{_, given}
+  private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
+    import qctx.reflect.{_, given}
 
-    def reify(body: Expr[_]): Expr[_] = {
-      val bodyTerm = body.unseal
+    def reify(body: quoted.Expr[_]): quoted.Expr[_] = {
+      val bodyTerm = body.asTerm.underlyingArgument
       val reifiedTerm = KeywordTree(bodyTerm).keywordTerm
-      bodyTerm.tpe.usingType { [V] => (given _: quoted.Type[V]) =>
-        reifiedTerm.usingExpr { [K] => (k: Expr[K]) => (given _: quoted.Type[K]) =>
-          '{Dsl.Typed.cast[K, V]($k)}: Expr[_]
+      bodyTerm.tpe.usingType { [V] => ( tv: quoted.Type[V]) =>
+        given quoted.Type[V] = tv
+        reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) =>
+          given quoted.Type[K] = tk
+          '{Dsl.Typed.cast[K, V]($k)}: quoted.Expr[_]
         }
       }
     }
 
     def resetDefDef(defDef: DefDef): DefDef = {
-      val DefDef(name, typeParams, paramss, tpt, rhsOption) = defDef
+      val DefDef(name, typeParamsAndParams, tpt, rhsOption) = defDef
       rhsOption match {
         case Some(rhs) if resetDescendant =>
           rhs match {
-            case matchTree @ qctx.tasty.Match(scrutinee, cases) =>
+            case matchTree @ qctx.reflect.Match(scrutinee, cases) =>
               DefDef.copy(defDef)(
-                name, typeParams, paramss, tpt, Some(
-                  qctx.tasty.Match.copy(matchTree)(
+                name, typeParamsAndParams, tpt, Some(
+                  qctx.reflect.Match.copy(matchTree)(
                     scrutinee,
                     cases.map {
                       case caseDef @ CaseDef(pattern, guard, caseRhs) =>
@@ -42,7 +44,7 @@ object bangnotation {
               )
             case _ =>
               DefDef.copy(defDef)(
-                name, typeParams, paramss, tpt, Some(resetTerm(rhs))
+                name, typeParamsAndParams, tpt, Some(resetTerm(rhs))
               )
           }
         case _ =>
@@ -51,58 +53,67 @@ object bangnotation {
     }
 
     def resetTerm(term: Term): Term = {
-      term.usingExpr { [Value] => (body: Expr[Value]) => (given _: quoted.Type[Value]) =>
-        reset[Value, Value](body).unseal
+      term.usingExpr { [Value] => (body: quoted.Expr[Value]) => (tv: quoted.Type[Value]) =>
+        given quoted.Type[Value] = tv
+        reset[Value, Value](body).asTerm
       }
     }
 
-    def reset[Value, Domain](body: Expr[Value])(given valueType: quoted.Type[Value], domainType: quoted.Type[Domain]): Expr[Domain] = {
-      KeywordTree(body.unseal) match {
-        case Pure(pure, _) if valueType.unseal.tpe <:< domainType.unseal.tpe =>
-          pure.seal.cast[Domain]
+    def reset[Value, Domain](body: quoted.Expr[Value])(using valueType: quoted.Type[Value], domainType: quoted.Type[Domain]): quoted.Expr[Domain] = {
+      KeywordTree(body.asTerm.underlyingArgument) match {
+        case Pure(pure, _) if TypeRepr.of[Value] <:< TypeRepr.of[Domain] =>
+          pure.asExprOf[Domain]
         case keywordTree =>
           val reifiedTerm = keywordTree.keywordTerm
-          reifiedTerm.usingExpr { [K] => (k: Expr[K]) => (given keywordType: quoted.Type[K]) =>
+          reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => ( keywordType: quoted.Type[K]) =>
             {
-              searchImplicit('[Dsl.Run[K, Domain, Value]].unseal.tpe) match {
+              given quoted.Type[K] = keywordType
+
+              Implicits.search(TypeRepr.of[Dsl.Run[K, Domain, Value]]) match {
                 case success: ImplicitSearchSuccess =>
                   '{
-                    ${success.tree.seal.cast[Dsl.Run[K, Domain, Value]]}.apply($k)
+                    ${success.tree.asExprOf[Dsl.Run[K, Domain, Value]]}.apply($k)
                   }
                 case failure: ImplicitSearchFailure =>
-                  error(s"The keyword ${keywordType.show} is not supported in a `reset` block that returns ${summon[quoted.Type[Domain]].show}\n${failure.explanation}", rootPosition)
-                  body.cast[Domain]
+                  report.error(s"The keyword ${quoted.Type.show[K]} is not supported in a `reset` block that returns ${quoted.Type.show[Domain]}\n${failure.explanation}")
+                  body.asTerm.asExprOf[Domain]
               }
             }
           }
         }
     }
 
-    def[B, Bound](tpe: Type)usingType(f: [A <: Bound] => (given quoted.Type[A]) => B): B = {
-      f(given tpe.seal.asInstanceOf)
-    }
-
-    def[B, UpperBound](term: Term)usingExpr(f: [A <: UpperBound] => Expr[A] => (given quoted.Type[A]) => B): B = {
-      def helper[A <: UpperBound] = {
-        implicit val tpe: quoted.Type[A] = term.tpe.seal.asInstanceOf[quoted.Type[A]]
-        f[A](term.seal.cast[A])(given tpe)
+    extension (tpe: TypeRepr)
+      def usingType[B, Bound](f: [A <: Bound] => (ta : quoted.Type[A]) => B): B = {
+        f(/*given*/ tpe.asType.asInstanceOf)
       }
-      helper
-    }
 
-    val bangSymbols = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").method("unary_!").toSet
+    extension (term: Term)
+      def usingExpr[B, UpperBound](f: [A <: UpperBound] => quoted.Expr[A] => (ta: quoted.Type[A]) => B): B = {
+        def helper[A <: UpperBound] = {
+          implicit val tpe: quoted.Type[A] = term.tpe.asType.asInstanceOf[quoted.Type[A]]
+          f[A](term.asExprOf[A])(/*given*/ tpe)
+        }
+        helper
+      }
+
+    val bangSymbols = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").declaredMethod("unary_!").toSet
 
     sealed trait KeywordTree {
       def keywordTerm: Term
-      def valueType: Type
+      def valueType: TypeRepr
 
-      def where(blockTemplate: qctx.tasty.Block, statement: Statement): KeywordTree = Let(blockTemplate, statement, this)
+      def where(blockTemplate: qctx.reflect.Block, statement: Statement): KeywordTree = Let(blockTemplate, statement, this)
       def block: KeywordTree = Block(this)
-      def usingKeyword[B, Bound](f: [K, V <: Bound] => Expr[K] => (given quoted.Type[K], quoted.Type[V]) => B): B = {
-        keywordTerm.usingExpr[B, Any]{ [K] => (keyword: Expr[K]) => (given keywordType: quoted.Type[K]) =>
+      def usingKeyword[B, Bound](f: [K, V <: Bound] => quoted.Expr[K] => (tk: quoted.Type[K], tv: quoted.Type[V]) => B): B = {
+        // given quoted.Type[K] = tk
+        // given quoted.Type[V] = tv
+        keywordTerm.usingExpr[B, Any]{ [K] => (keyword: quoted.Expr[K]) => ( keywordType: quoted.Type[K]) =>
           {
-            valueType.usingType[B, Bound]{ [V <: Bound] => (given valueType: quoted.Type[V]) =>
-              f(keyword)(given keywordType, valueType)
+            given quoted.Type[K] = keywordType
+            valueType.usingType[B, Bound]{ [V <: Bound] => (valueType: quoted.Type[V]) =>
+              given quoted.Type[V] = valueType
+              f(keyword)(/*given*/ keywordType, valueType)
             }
           }
         }
@@ -168,21 +179,21 @@ object bangnotation {
             }
           case selectOuter @ SelectOuter(qualifier, levels, tpe) =>
             KeywordTree(qualifier).flatMap { pureQualifier =>
-              Pure(SelectOuter.copy(selectOuter)(pureQualifier, tpe.typeSymbol.name, levels), term.tpe)
+              Pure(SelectOuter.copy(selectOuter)(pureQualifier, levels, tpe), term.tpe)
             }
           case (_: Literal) | (_: Ident) | (_: New) | (_: This) | (_: Super) | (_: Closure) =>
             Pure(term, term.tpe)
-          case block @ qctx.tasty.Block(
+          case block @ qctx.reflect.Block(
             List(
               defDef: DefDef
             ),
             closure @ Closure(ident: Ident, _)
           ) if (ident.name == defDef.name) =>
-            Pure(qctx.tasty.Block.copy(block)(
+            Pure(qctx.reflect.Block.copy(block)(
               List(resetDefDef(defDef)),
               closure,
             ), term.tpe)
-          case block @ qctx.tasty.Block(stats, expr) =>
+          case block @ qctx.reflect.Block(stats, expr) =>
             def loop(stats: List[Statement] = stats): KeywordTree = {
               stats match {
                 case Nil =>
@@ -203,14 +214,14 @@ object bangnotation {
               }
             }
             loop().block
-          case qctx.tasty.If(cond, thenp, elsep) =>
+          case qctx.reflect.If(cond, thenp, elsep) =>
             If(
               KeywordTree(cond),
               Suspend(KeywordTree(thenp)),
               Suspend(KeywordTree(elsep)),
               term.tpe
             )
-          case qctx.tasty.Match(upstream, cases) =>
+          case qctx.reflect.Match(upstream, cases) =>
             Match(
               KeywordTree(upstream),
               cases.map {
@@ -244,10 +255,10 @@ object bangnotation {
               KeywordTree(finalizer),
               term.tpe
             )
-          case typed @ qctx.tasty.Typed(expr, tpt) =>
+          case typed @ qctx.reflect.Typed(expr, tpt) =>
             // Typed(KeywordTree(expr), typed)
             KeywordTree(expr).flatMap { pureExpr =>
-              Pure(qctx.tasty.Typed.copy(typed)(pureExpr, tpt), term.tpe)
+              Pure(qctx.reflect.Typed.copy(typed)(pureExpr, tpt), term.tpe)
             }
           case assign @ Assign(lhs, rhs) =>
             KeywordTree(lhs).flatMap { pureLhs =>
@@ -255,15 +266,15 @@ object bangnotation {
                 Pure(Assign.copy(assign)(pureLhs, pureRhs), term.tpe)
               }
             }
-          case whileTerm @ qctx.tasty.While(cond, body) =>
+          case whileTerm @ qctx.reflect.While(cond, body) =>
             While(Suspend(KeywordTree(cond)), Suspend(KeywordTree(body)))
-          case returnTree @ qctx.tasty.Return(expr) =>
+          case returnTree @ qctx.reflect.Return(expr, _from) =>
             KeywordTree(expr).flatMap { pureExpr =>
               Return(pureExpr, expr.tpe)
             }
-          // case returnTree @ qctx.tasty.Return(expr) =>
+          // case returnTree @ qctx.reflect.Return(expr, from) =>
           //   KeywordTree(expr).flatMap { pureExpr =>
-          //     Pure(qctx.tasty.Return.copy(returnTree)(pureExpr), term.tpe)
+          //     Pure(qctx.reflect.Return.copy(returnTree)(pureExpr, from), term.tpe)
           //   }
         }
       }
@@ -271,43 +282,43 @@ object bangnotation {
     }
 
     private def usingCases[R, A](
-      cases: Seq[(CaseDef, KeywordTree)], caseValueType: Type
+      cases: Seq[(CaseDef, KeywordTree)], caseValueType: TypeRepr
     )(
-      f: [Set, Value] => Expr[PartialFunction[A, Set]] => (given quoted.Type[Set], quoted.Type[Value]) => R
+      f: [Set, Value] => quoted.Expr[PartialFunction[A, Set]] => (ts: quoted.Type[Set], tv: quoted.Type[Value]) => R
     )(
-      given quoted.Type[A]
-    ) = {
+      using quoted.Type[A]
+    ): R = {
       // val keywordTerms = cases.map { (caseDef, keywordTree) =>
       //   caseDef -> keywordTree.keywordTerm
       // }
-      val caseSetType = cases.view.zipWithIndex.foldRight('[Nothing].unseal.tpe) {
+      val caseSetType = cases.view.zipWithIndex.foldRight(TypeRepr.of[Nothing]) {
         case (((caseDef, keywordTree), i), accumulator) =>
-          val indexType = Expr(i).unseal.tpe
-          val AppliedType(withIndex, _) = '[WithIndex[_, _]].unseal.tpe
-          val AppliedType(ccons, _) = '[Any +: Nothing].unseal.tpe
-          AppliedType(
-            ccons,
+          val indexType = quoted.Expr(i).asTerm.tpe
+          val AppliedType(withIndex, _) = TypeRepr.of[WithIndex[_, _]]
+          val AppliedType(ccons, _) = TypeRepr.of[Any +: Nothing]
+          ccons.appliedTo(
             List(
-              AppliedType(
-                withIndex,
+              withIndex.appliedTo(
                 List(indexType, keywordTree.keywordTerm.tpe)
               ),
               accumulator
             )
           )          
       }
-      caseValueType.usingType { [Value] => (given valueTpe: quoted.Type[Value]) =>
-        caseSetType.usingType { [Set] => (given setTpe: quoted.Type[Set]) =>
+      caseValueType.usingType { [Value] => ( valueTpe: quoted.Type[Value]) =>
+        given quoted.Type[Value] = valueTpe
+        caseSetType.usingType { [Set] => (setTpe : quoted.Type[Set]) =>
+          given quoted.Type[Set] = setTpe
           '{
             {
               case e: Throwable if false => ???
             }: PartialFunction[A, Set]
-          }.underlyingArgument.unseal match {
-            case qctx.tasty.Typed(
-              pfBlock @ qctx.tasty.Block(
+          }.asTerm.underlyingArgument match {
+            case qctx.reflect.Typed(
+              pfBlock @ qctx.reflect.Block(
                 List(
-                  defDef @ DefDef(name, typeParams, paramss, returnTpt, Some(
-                    matchTree @ qctx.tasty.Match(
+                  defDef @ DefDef(name, typeParamsAndParams, returnTpt, Some(
+                    matchTree @ qctx.reflect.Match(
                       scrutinee,
                       List(caseDefTemplate)
                     )
@@ -321,9 +332,12 @@ object bangnotation {
                 case ((caseDef, caseKeywordTree), i) =>
                   caseKeywordTree.usingKeyword {
                     [BodyKeyword, BodyValue] =>
-                    (bodyExpr: Expr[BodyKeyword]) =>
-                    (given bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
-                    Expr(i).unseal.usingExpr[CaseDef, Int] { [Index <: Int] => (indexExpr: Expr[Index]) => (given indexType: quoted.Type[Index]) =>
+                    (bodyExpr: quoted.Expr[BodyKeyword]) =>
+                    ( bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
+                    given quoted.Type[BodyKeyword] = bodyKeywordTpe
+                    given quoted.Type[BodyValue] = bodyValueTpe
+                    quoted.Expr(i).asTerm.usingExpr[CaseDef, Int] { [Index <: Int] => (indexExpr: quoted.Expr[Index]) => (indexType: quoted.Type[Index]) =>
+                      given quoted.Type[Index] = indexType
                       CaseDef.copy(caseDef)(
                         caseDef.pattern match {
                           case Bind(name, pattern) =>
@@ -332,129 +346,155 @@ object bangnotation {
                             otherPattern
                         },
                         caseDef.guard,
-                        '{WithIndex[Index, BodyKeyword]($indexExpr, $bodyExpr).asInstanceOf[Set]}.unseal
+                        '{WithIndex[Index, BodyKeyword]($indexExpr, $bodyExpr).asInstanceOf[Set]}.asTerm
                       )
                     }
                   }
               }.toList
-              val pfTerm = qctx.tasty.Block.copy(pfBlock)(List(DefDef.copy(defDef)(name, typeParams, paramss, returnTpt, Some(qctx.tasty.Match.copy(matchTree)(scrutinee, newCases)))), closure)
-              f[Set, Value](pfTerm.seal.cast[PartialFunction[A, Set]])
+              val pfTerm = qctx.reflect.Block.copy(pfBlock)(List(DefDef.copy(defDef)(name, typeParamsAndParams, returnTpt, Some(qctx.reflect.Match.copy(matchTree)(scrutinee, newCases)))), closure)
+              f[Set, Value](pfTerm.asExprOf[PartialFunction[A, Set]])(setTpe, valueTpe)
           }
         }
       }
     }
 
-    case class If(cond: KeywordTree, thenp: KeywordTree, elsep: KeywordTree, valueType: Type) extends KeywordTree {
+    case class If(cond: KeywordTree, thenp: KeywordTree, elsep: KeywordTree, valueType: TypeRepr) extends KeywordTree {
       lazy val keywordTerm = cond.usingKeyword[Term, Boolean] {
         [CondKeyword, CondValue <: Boolean] =>
-        (condExpr: Expr[CondKeyword]) =>
-        (given condKeywordType: quoted.Type[CondKeyword], condValueType: quoted.Type[CondValue]) =>
+        (condExpr: quoted.Expr[CondKeyword]) =>
+        ( condKeywordType: quoted.Type[CondKeyword], condValueType: quoted.Type[CondValue]) =>
+        given quoted.Type[CondKeyword] = condKeywordType
+        given quoted.Type[CondValue] = condValueType
         thenp.usingKeyword[Term, Boolean] {
           [ThenpKeyword, ThenpValue <: Boolean] =>
-          (thenpExpr: Expr[ThenpKeyword]) =>
-          (given thenpKeywordType: quoted.Type[ThenpKeyword], thenpValueType: quoted.Type[ThenpValue]) =>
+          (thenpExpr: quoted.Expr[ThenpKeyword]) =>
+          (thenpKeywordType: quoted.Type[ThenpKeyword], thenpValueType: quoted.Type[ThenpValue]) =>
+          given quoted.Type[ThenpKeyword] = thenpKeywordType
+          given quoted.Type[ThenpValue] = thenpValueType
           elsep.usingKeyword[Term, Boolean] {
             [ElsepKeyword, ElsepValue <: Boolean] =>
-            (elsepExpr: Expr[ElsepKeyword]) =>
-            (given elsepKeywordType: quoted.Type[ElsepKeyword], elsepValueType: quoted.Type[ElsepValue]) =>
-            valueType.usingType { [Result] => (given resultType: quoted.Type[Result]) =>
+            (elsepExpr: quoted.Expr[ElsepKeyword]) =>
+            (elsepKeywordType: quoted.Type[ElsepKeyword], elsepValueType: quoted.Type[ElsepValue]) =>
+            given quoted.Type[ElsepKeyword] = elsepKeywordType
+            given quoted.Type[ElsepValue] = elsepValueType
+            valueType.usingType { [Result] => (resultType: quoted.Type[Result]) =>
+              given quoted.Type[Result] = resultType
               '{
                 com.thoughtworks.dsl.keywords.If(
                   $condExpr,
                   $thenpExpr,
                   $elsepExpr,
                 )
-              }.unseal
+              }.asTerm
             }
           }
         }
       }
     }
 
-    case class Match(expr: KeywordTree, cases: Seq[(CaseDef, KeywordTree)], valueType: Type) extends KeywordTree {
+    case class Match(expr: KeywordTree, cases: Seq[(CaseDef, KeywordTree)], valueType: TypeRepr) extends KeywordTree {
       lazy val keywordTerm = {
         expr.usingKeyword { [K, V] =>
-          (exprKeywordExpr: Expr[K]) =>
-          (given exprKeywordType: quoted.Type[K], exprValueType: quoted.Type[V]) =>
+          (exprKeywordExpr: quoted.Expr[K]) =>
+          (exprKeywordType: quoted.Type[K], exprValueType: quoted.Type[V]) =>
+          given quoted.Type[K] = exprKeywordType
+          given quoted.Type[V] = exprValueType
           usingCases[Term, V](cases, valueType) {
             [CaseSet, CaseValue] => 
-            (pf: Expr[PartialFunction[V, CaseSet]]) =>
-            (given caseSetType: quoted.Type[CaseSet], caseValueType: quoted.Type[CaseValue]) =>
+            (pf: quoted.Expr[PartialFunction[V, CaseSet]]) =>
+            (caseSetType: quoted.Type[CaseSet], caseValueType: quoted.Type[CaseValue]) =>
+            given quoted.Type[CaseSet] = caseSetType
+            given quoted.Type[CaseValue] = caseValueType
             '{
               com.thoughtworks.dsl.keywords.Match(
                 $exprKeywordExpr,
                 $pf
               )
-            }.unseal
+            }.asTerm
           }
         }
       }
     }
 
-    case class TryCatchFinally(expr: KeywordTree, cases: Seq[(CaseDef, KeywordTree)], finalizer: KeywordTree, valueType: Type) extends KeywordTree {
+    case class TryCatchFinally(expr: KeywordTree, cases: Seq[(CaseDef, KeywordTree)], finalizer: KeywordTree, valueType: TypeRepr) extends KeywordTree {
       lazy val keywordTerm = {
         usingCases[Term, Throwable](cases, valueType) {
           [Set, Value] => 
-          (pf: Expr[PartialFunction[Throwable, Set]]) =>
-          (given setType: quoted.Type[Set], valueType: quoted.Type[Value]) =>
+          (pf: quoted.Expr[PartialFunction[Throwable, Set]]) =>
+          (setType: quoted.Type[Set], valueType: quoted.Type[Value]) =>
+          given quoted.Type[Set] = setType
+          given quoted.Type[Value] = valueType
           expr.usingKeyword[Term, Value] { [K, V <: Value] =>
-            (tryKeywordExpr: Expr[K]) =>
-            (given tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
+            (tryKeywordExpr: quoted.Expr[K]) =>
+            (tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
+            given quoted.Type[K] = tryKeywordTpe
+            given quoted.Type[V] = tryValueTpe
             finalizer.usingKeyword {
               [FinalizerKeyword, FinalizerValue] =>
-              (finalizerKeywordExpr: Expr[FinalizerKeyword]) =>
-              (given finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
+              (finalizerKeywordExpr: quoted.Expr[FinalizerKeyword]) =>
+              (finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
+              given quoted.Type[FinalizerKeyword] = finalizerKeywordType
+              given quoted.Type[FinalizerValue] = finalizerValueType
               '{
                 com.thoughtworks.dsl.keywords.TryCatchFinally(
                   $tryKeywordExpr,
                   $pf,
                   $finalizerKeywordExpr
                 )
-              }.unseal
+              }.asTerm
             }
           }
         }
       }
     }
 
-    case class TryFinally(expr: KeywordTree, finalizer: KeywordTree, valueType: Type) extends KeywordTree {
+    case class TryFinally(expr: KeywordTree, finalizer: KeywordTree, valueType: TypeRepr) extends KeywordTree {
       lazy val keywordTerm = {
-        valueType.usingType { [Value] => (given _: quoted.Type[Value]) =>
+        valueType.usingType { [Value] => (tv: quoted.Type[Value]) =>
+          given  quoted.Type[Value] = tv
           expr.usingKeyword[Term, Value] {
             [K, V <: Value] =>
-            (tryKeywordExpr: Expr[K]) =>
-            (given tryKeywordType: quoted.Type[K], tryValueType: quoted.Type[V]) =>
+            (tryKeywordExpr: quoted.Expr[K]) =>
+            (tryKeywordType: quoted.Type[K], tryValueType: quoted.Type[V]) =>
+            given quoted.Type[K] = tryKeywordType
+            given quoted.Type[V] = tryValueType
             finalizer.usingKeyword {
               [FinalizerKeyword, FinalizerValue] =>
-              (finalizerKeywordExpr: Expr[FinalizerKeyword]) =>
-              (given finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
+              (finalizerKeywordExpr: quoted.Expr[FinalizerKeyword]) =>
+              (finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
+              given quoted.Type[FinalizerKeyword] = finalizerKeywordType
+              given quoted.Type[FinalizerValue] = finalizerValueType
               '{
                 com.thoughtworks.dsl.keywords.TryFinally(
                   $tryKeywordExpr,
                   $finalizerKeywordExpr
                 )
-              }.unseal
+              }.asTerm
             }
           }
         }
       }
     }
 
-    case class TryCatch(expr: KeywordTree, cases: Seq[(CaseDef, KeywordTree)], valueType: Type) extends KeywordTree {
+    case class TryCatch(expr: KeywordTree, cases: Seq[(CaseDef, KeywordTree)], valueType: TypeRepr) extends KeywordTree {
       lazy val keywordTerm = {
         usingCases[Term, Throwable](cases, valueType) {
           [Set, Value] => 
-          (pf: Expr[PartialFunction[Throwable, Set]]) =>
-          (given setType: quoted.Type[Set], _: quoted.Type[Value]) =>
+          (pf: quoted.Expr[PartialFunction[Throwable, Set]]) =>
+          (setType: quoted.Type[Set], vt: quoted.Type[Value]) =>
+          given quoted.Type[Set] = setType
+          given quoted.Type[Value] = vt
           expr.usingKeyword[Term, Value] { [K, V <: Value] =>
-            (tryKeywordExpr: Expr[K]) =>
-            (given tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
+            (tryKeywordExpr: quoted.Expr[K]) =>
+            ( tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
+            given quoted.Type[K] = tryKeywordTpe
+            given quoted.Type[V] = tryValueTpe
             '{
               com.thoughtworks.dsl.keywords.TryCatch[K, Set](
                 $tryKeywordExpr,
                 $pf
               )
-            }.unseal
+            }.asTerm
           }
         }
       }
@@ -464,54 +504,62 @@ object bangnotation {
       export body.valueType
       lazy val keywordTerm = body.usingKeyword {
         [BodyKeyword, BodyValue] =>
-        (bodyExpr: Expr[BodyKeyword]) =>
-        (given bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
+        (bodyExpr: quoted.Expr[BodyKeyword]) =>
+        (bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
+        given quoted.Type[BodyKeyword] = bodyKeywordTpe
+        given quoted.Type[BodyValue] = bodyValueTpe
         '{
           com.thoughtworks.dsl.keywords.Suspend(() => $bodyExpr)
-        }.unseal
+        }.asTerm
       }
     }
 
     case class While(cond: KeywordTree, body: KeywordTree) extends KeywordTree {
-      export defn.{UnitType => valueType}
+      def valueType = TypeRepr.of[Unit]
       lazy val keywordTerm = {
         cond.usingKeyword{
           [CondKeyword, CondValue] =>
-          (condExpr: Expr[CondKeyword]) =>
-          (given condKeywordTpe: quoted.Type[CondKeyword], condValueTpe: quoted.Type[CondValue]) =>
+          (condExpr: quoted.Expr[CondKeyword]) =>
+          ( condKeywordTpe: quoted.Type[CondKeyword], condValueTpe: quoted.Type[CondValue]) =>
+          given quoted.Type[CondKeyword] = condKeywordTpe
+          given quoted.Type[CondValue] = condValueTpe
           body.usingKeyword {
             [BodyKeyword, BodyValue] =>
-            (bodyExpr: Expr[BodyKeyword]) =>
-            (given bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
+            (bodyExpr: quoted.Expr[BodyKeyword]) =>
+            (bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
+            given quoted.Type[BodyKeyword] = bodyKeywordTpe
+            given quoted.Type[BodyValue] = bodyValueTpe
             '{
               com.thoughtworks.dsl.keywords.While($condExpr, $bodyExpr)
-            }.unseal          
+            }.asTerm          
           }
         }
       }
     }
 
-    case class Return(returnValue: Term, returnValueType: Type) extends KeywordTree {
-      export defn.{NothingType => valueType}
+    case class Return(returnValue: Term, returnValueType: TypeRepr) extends KeywordTree {
+      def valueType = TypeRepr.of[Nothing]
       lazy val keywordTerm = {
-        returnValueType.usingType { [A0] => (given tpe: quoted.Type[A0]) =>
-          returnValue.usingExpr[Term, A0] { [A <: A0] => (expr: Expr[A]) => (given tpe: quoted.Type[A]) =>
+        returnValueType.usingType { [A0] => (tpe0: quoted.Type[A0]) =>
+          given quoted.Type[A0] = tpe0
+          returnValue.usingExpr[Term, A0] { [A <: A0] => (expr: quoted.Expr[A]) => (tpe: quoted.Type[A]) =>
+            given quoted.Type[A] = tpe
             '{
               com.thoughtworks.dsl.keywords.Return[A0]($expr)
-            }.unseal
+            }.asTerm
           }
         }
       }
     }
 
     case class Block(body: KeywordTree) extends KeywordTree {
-      export body.valueType
+      def valueType = body.valueType
       lazy val keywordTerm = {
         body.keywordTerm
       }
     }
 
-    case class Let(blockTemplate: qctx.tasty.Block, stat: Statement, rest: KeywordTree) extends KeywordTree {
+    case class Let(blockTemplate: qctx.reflect.Block, stat: Statement, rest: KeywordTree) extends KeywordTree {
       export rest.valueType
       lazy val keywordTerm = {
         @annotation.tailrec
@@ -520,7 +568,7 @@ object bangnotation {
             case Let(`blockTemplate`, head, tail) =>
               loop(stats :+ head, tail)
             case otherKeyword =>
-              qctx.tasty.Block.copy(blockTemplate)(stats.toList, otherKeyword.keywordTerm)
+              qctx.reflect.Block.copy(blockTemplate)(stats.toList, otherKeyword.keywordTerm)
           }
         }
         loop(Queue(stat), rest)
@@ -534,24 +582,26 @@ object bangnotation {
       lazy val (keywordTerm, valueType) = {
         upstream.usingKeyword {
           [K, V] =>
-          (keywordExpr: Expr[K]) =>
-          (given keywordTpe: quoted.Type[K], valueTpe: quoted.Type[V]) =>
+          (keywordExpr: quoted.Expr[K]) =>
+          (keywordTpe: quoted.Type[K], valueTpe: quoted.Type[V]) =>
           {
+            given quoted.Type[K] = keywordTpe
+            given quoted.Type[V] = valueTpe
             var innerKeywordTreeOption: Option[KeywordTree] = None
             val flatMapperTerm = '{ (x: $valueTpe) =>
               ${
-                val innerKeywordTree = flatMapper('x.unseal)
+                val innerKeywordTree = flatMapper('x.asTerm)
                 innerKeywordTreeOption = Some(innerKeywordTree)
-                innerKeywordTree.keywordTerm.seal
+                innerKeywordTree.keywordTerm.asExpr
               }
-            }.unseal
+            }.asTerm
             val Some(innerKeywordTree) = innerKeywordTreeOption
-            val flatMapObject = '{keywords.FlatMap}.unseal
+            val flatMapObject = '{keywords.FlatMap}.asTerm
             Apply(TypeApply(Select.unique(flatMapObject, "apply"), List(
-              keywordTpe.unseal,
-              valueTpe.unseal,
+              TypeTree.of[K],
+              TypeTree.of[V],
               Inferred(innerKeywordTree.keywordTerm.tpe),
-            )), List(keywordExpr.unseal, flatMapperTerm)) -> innerKeywordTree.valueType
+            )), List(keywordExpr.asTerm, flatMapperTerm)) -> innerKeywordTree.valueType
           }
         }
       }
@@ -563,35 +613,36 @@ object bangnotation {
       }
     }
 
-    // case class Typed(originalTree: KeywordTree, template: qctx.tasty.Typed) extends KeywordTree {
+    // case class Typed(originalTree: KeywordTree, template: qctx.reflect.Typed) extends KeywordTree {
     //   def valueType = template.tpe
     //   override def flatMap(flatMapper: Term => KeywordTree): KeywordTree = {
     //     originalTree.flatMap { term =>
-    //       flatMapper(qctx.tasty.Typed.copy(template)(term, template.tpt))
+    //       flatMapper(qctx.reflect.Typed.copy(template)(term, template.tpt))
     //     }
     //   }
     //   lazy val keywordTerm = {
-    //     val typedObject = '{Dsl.Typed}.unseal
+    //     val typedObject = '{Dsl.Typed}.asTerm
     //     Apply(TypeApply(Select.unique(typedObject, "apply"), List(Inferred(originalTree.keywordTerm.tpe), Inferred(valueType))), List(originalTree.keywordTerm))
     //   }
     // }
 
-    case class Keyword(keywordTerm: Term, valueType: Type) extends KeywordTree
+    case class Keyword(keywordTerm: Term, valueType: TypeRepr) extends KeywordTree
 
-    case class Pure(term: Term, valueType: Type) extends KeywordTree {
+    case class Pure(term: Term, valueType: TypeRepr) extends KeywordTree {
       override def flatMap(flatMapper: Term => KeywordTree) = flatMapper(term)
 
-      // override def where(blockTemplate: qctx.tasty.Block, statement: Statement) = {
-      //   Pure(qctx.tasty.Block.copy(blockTemplate)(List(statement), term))
+      // override def where(blockTemplate: qctx.reflect.Block, statement: Statement) = {
+      //   Pure(qctx.reflect.Block.copy(blockTemplate)(List(statement), term))
       // }
 
       override def block = this
 
       def keywordTerm: Term = {
-        term.usingExpr { [A] => (expr: Expr[A]) => (given _: quoted.Type[A]) =>
+        term.usingExpr { [A] => (expr: quoted.Expr[A]) => (ta: quoted.Type[A]) =>
+          given quoted.Type[A] = ta
           '{
             keywords.Pure.cast($expr)
-          }.unseal
+          }.asTerm
         }
       }
     }
@@ -600,36 +651,37 @@ object bangnotation {
   }
 
   object Macros {
-    def reify(body: Expr[_])(given qctx: QuoteContext): Expr[_] = {
-      Macros[qctx.type](resetDescendant = false).reify(body.underlyingArgument)
+    def reify(body: quoted.Expr[_])(using qctx: Quotes): quoted.Expr[_] = {
+      Macros[qctx.type](resetDescendant = false).reify(body/*.underlyingArgument*/)
     }
 
-    def reset[From, To](body: Expr[From])(given qctx: QuoteContext, fromType: Type[From], toType: Type[To]): Expr[To] = {
-      import qctx.tasty.{_, given}
-      val result: Expr[To] = Macros[qctx.type](resetDescendant = false).reset(body.underlyingArgument)
-      // warning(result.unseal.show, rootPosition)
-      // warning(result.unseal.showExtractors, rootPosition)
+    def reset[From, To](body: quoted.Expr[From])(using qctx: Quotes, fromType: quoted.Type[From], toType: quoted.Type[To]): quoted.Expr[To] = {
+      import qctx.reflect.{_, given}
+      val result: quoted.Expr[To] = Macros[qctx.type](resetDescendant = false).reset(body/*.underlyingArgument*/)
+      // report.warning(result.asTerm.show)
+      // report.warning(result.asTerm.showExtractors)
       result
     }
 
   }
 
-  inline def reify(value: => Any) <: Any = ${
+  transparent inline def reify(inline value: => Any): Any = ${
     Macros.reify('value)
   }
 
-  class *[Functor[?]] {
-    inline def apply[Value](value: => Value): Functor[Value] = ${
+  class *[Functor[_]] {
+    inline def apply[Value](inline value: => Value): Functor[Value] = ${
       Macros.reset[Value, Functor[Value]]('value)
     }
   }
   inline def *[Domain[_]]: *[Domain] = new *[Domain]
 
-  inline def reset[Value](value: => Value): Value = ${
+  inline def reset[Value](inline value: => Value): Value = ${
     Macros.reset[Value, Value]('value)
   }
 
-  @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
-  def[Keyword, Value](keyword: Keyword)unary_!(given IsKeyword[Keyword, Value]): Value = ???
+  extension [Keyword, Value](keyword: Keyword)
+    @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
+    def unary_!(using IsKeyword[Keyword, Value]): Value = ???
 
 }        
