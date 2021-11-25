@@ -13,17 +13,14 @@ object bangnotation {
   private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
     import qctx.reflect.{_, given}
 
-    def reify(body: quoted.Expr[_]): quoted.Expr[_] = {
+    def reify[V](body: quoted.Expr[_])(using valueType: quoted.Type[V]): quoted.Expr[_] = {
       val bodyTerm = body.asTerm.underlyingArgument
       val reifiedTerm = KeywordTree(bodyTerm).keywordTerm
-      bodyTerm.tpe.usingType { [V] => ( tv: quoted.Type[V]) =>
-        given quoted.Type[V] = tv
         reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) =>
           given quoted.Type[K] = tk
           '{Dsl.Typed.cast[K, V]($k)}: quoted.Expr[_]
         }
       }
-    }
 
     def resetDefDef(defDef: DefDef): DefDef = {
       val DefDef(name, typeParamsAndParams, tpt, rhsOption) = defDef
@@ -657,8 +654,8 @@ object bangnotation {
   }
 
   object Macros {
-    def reify(body: quoted.Expr[_])(using qctx: Quotes): quoted.Expr[_] = {
-      Macros[qctx.type](resetDescendant = false).reify(body/*.underlyingArgument*/)
+    def reify[V](body: quoted.Expr[_])(using qctx: Quotes, tv: quoted.Type[V]): quoted.Expr[_] = {
+      Macros[qctx.type](resetDescendant = false).reify[V](body/*.underlyingArgument*/)
     }
 
     def reset[From, To](body: quoted.Expr[From])(using qctx: Quotes, fromType: quoted.Type[From], toType: quoted.Type[To]): quoted.Expr[To] = {
@@ -671,8 +668,8 @@ object bangnotation {
 
   }
 
-  transparent inline def reify(inline value: Any): Any = ${
-    Macros.reify('value)
+  transparent inline def reify[Value](inline value: Value): Any = ${
+    Macros.reify[Value]('value)
   }
 
   class *[Functor[_]] {

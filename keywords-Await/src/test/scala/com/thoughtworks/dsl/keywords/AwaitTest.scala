@@ -138,18 +138,18 @@ class AwaitTest {
 
   @Test
   def test1: Unit = {
-    val refied = reify(1)
+    val refied = reify[1](1)
     summon[refied.type <:< Typed[Pure[1], 1]]
     assertEquals(1, refied)
   }
 
   @Test
   def test2: Unit = {
-    val refied = reify {1}
+    val refied = reify[1] {1}
     summon[refied.type <:< Typed[Pure[1], 1]]
     assertEquals(1, refied)
     
-    val refied2 = reify(!refied)
+    val refied2 = reify[1](!refied)
     // summon[refied2.type <:< Typed[Typed[Pure[1], 1], 1]]
     summon[refied2.type <:< Typed[refied.type, 1]]
     assertEquals(1, refied2)
