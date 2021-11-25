@@ -15,6 +15,18 @@ import scala.language.dynamics
 import org.hamcrest.CoreMatchers.instanceOf
 
 class AwaitTest {
+
+  @Test
+  def testReturnIf: Unit = { 
+    val reified = reify {
+      if (true) {
+        !Return(!Await(Future(42)))
+      }
+      -1
+    }
+    assertEquals(42, result(reified.to[Future], Duration.Inf))
+  }
+
   type Id[A] = A
 
   @Test
