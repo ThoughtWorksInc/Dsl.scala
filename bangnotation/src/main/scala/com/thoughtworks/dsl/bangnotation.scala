@@ -75,7 +75,7 @@ object bangnotation {
                     ${success.tree.asExprOf[Dsl.Run[K, Domain, Value]]}.apply($k)
                   }
                 case failure: ImplicitSearchFailure =>
-                  report.error(s"The keyword ${quoted.Type.show[K]} is not supported in a `reset` block that returns ${quoted.Type.show[Domain]}\n${failure.explanation}")
+                  report.error(s"The keyword ${k.show},\nwhose type is ${quoted.Type.show[K]}\nand value type is ${quoted.Type.show[Value]},\nis not supported in a `reset` block that returns ${quoted.Type.show[Domain]}\n${failure.explanation}", body.asTerm.underlyingArgument.pos)
                   body.asTerm.asExprOf[Domain]
               }
             }

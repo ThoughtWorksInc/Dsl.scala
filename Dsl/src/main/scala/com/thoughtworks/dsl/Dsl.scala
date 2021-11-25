@@ -17,7 +17,7 @@ import concurrent.ExecutionContext
   *   - Implementing this [[Dsl]] type class, which is an interpreter for an
   *     [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   */
-@annotation.implicitNotFound("The keyword ${Keyword} is not supported inside a function that returns ${Domain}.")
+@annotation.implicitNotFound("The keyword:\n ${Keyword}\nis not supported inside a function that returns:\n${Domain}.")
 trait Dsl[-Keyword, Domain, +Value] {
 
   /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
