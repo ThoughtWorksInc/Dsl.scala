@@ -255,25 +255,25 @@ class AwaitTest {
 
   @Test
   def testReturn2: Unit = {
-    val refied = reify {
+    val refied = reify[Nothing] {
       return !Await(Future(()))
     }
     // summon[refied.type <:<
     //   com.thoughtworks.dsl.Dsl.Typed[
     //    FlatMap[
     //      Await[Unit]
-    //     , Unit,Return[Unit]]
+    //     , Unit,Pure[Nothing]]
     //   , Nothing]
     // ]
     assertEquals((), result(refied.as[Future[Unit]], Duration.Inf))
   }
 
-  inline def x = 42
+  inline val x = 42
 
   @Test
   def testInline: Unit = {
     val rr = reify {
-      reify {
+      reify[x.type] {
         x
       }
     }
@@ -484,7 +484,7 @@ class AwaitTest {
     ]
     assertEquals(3L, result(refied.to[Future], Duration.Inf))
 
-    assertEquals(3L, result(refied.as[Int => Future[Long]].apply(1), Duration.Inf))
+    assertEquals(3L, result(refied.as[Double => Future[Long]].apply(1.0), Duration.Inf))
   }
 
   @Test
@@ -529,7 +529,7 @@ class AwaitTest {
         ]
       , Object]
     ]
-    assertEquals("x", result(comprehension.to[Future](refied), Duration.Inf))
+    assertEquals("x", result(refied.to[Future], Duration.Inf))
   }
 
   @Test
