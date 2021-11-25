@@ -671,18 +671,18 @@ object bangnotation {
 
   }
 
-  transparent inline def reify(inline value: => Any): Any = ${
+  transparent inline def reify(inline value: Any): Any = ${
     Macros.reify('value)
   }
 
   class *[Functor[_]] {
-    inline def apply[Value](inline value: => Value): Functor[Value] = ${
+    inline def apply[Value](inline value: Value): Functor[Value] = ${
       Macros.reset[Value, Functor[Value]]('value)
     }
   }
   inline def *[Domain[_]]: *[Domain] = new *[Domain]
 
-  inline def reset[Value](inline value: => Value): Value = ${
+  inline def reset[Value](inline value: Value): Value = ${
     Macros.reset[Value, Value]('value)
   }
 
