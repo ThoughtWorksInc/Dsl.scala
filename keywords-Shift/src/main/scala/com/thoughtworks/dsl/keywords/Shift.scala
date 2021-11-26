@@ -4,7 +4,7 @@ import Dsl.IsKeyword
 import Dsl.Typed
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Continuation, Keyword}
+import com.thoughtworks.dsl.Dsl.{!!, Continuation}
 import com.thoughtworks.dsl.keywords.Shift.{SameDomainStackSafeShiftDsl, StackSafeShiftDsl}
 
 import scala.annotation.tailrec
@@ -12,7 +12,8 @@ import scala.language.implicitConversions
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 opaque type Shift[R, A] = Dsl.Continuation[R, A]
 
@@ -45,7 +46,7 @@ object Shift extends LowPriorityShift0 {
   private type SameDomainStackSafeShiftDsl[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
 
   @inline
-  implicit def implicitShift[Domain, Value](fa: Domain !! Value): Shift[Domain, Value] = new Shift[Domain, Value](fa)
+  implicit def implicitShift[Domain, Value](fa: Domain !! Value): Shift[Domain, Value] = fa
 
   private def shiftTailRec[R, Value](continuation: TailRec[R] !! Value, handler: Value => TailRec[R]) = {
     continuation { a =>
@@ -96,7 +97,8 @@ object Shift extends LowPriorityShift0 {
     }
 
   @inline
-  implicit def stackSafeThrowableShiftDsl[LeftDomain, Value] =
+  implicit def stackSafeThrowableShiftDsl[LeftDomain, Value]
+      : SameDomainStackSafeShiftDsl[LeftDomain !! Throwable, Value] =
     new SameDomainStackSafeShiftDsl[LeftDomain !! Throwable, Value] {
 
       def cpsApply(
@@ -130,7 +132,8 @@ object Shift extends LowPriorityShift0 {
   }
 
   @inline
-  implicit def taskStackSafeShiftDsl[LeftDomain, RightDomain, Value] =
+  implicit def taskStackSafeShiftDsl[LeftDomain, RightDomain, Value]
+      : StackSafeShiftDsl[LeftDomain !! Throwable, LeftDomain !! Throwable !! RightDomain, Value] =
     new StackSafeShiftDsl[LeftDomain !! Throwable, LeftDomain !! Throwable !! RightDomain, Value] {
       def cpsApply(
           keyword: Shift[!![LeftDomain, Throwable], Value],
@@ -139,6 +142,8 @@ object Shift extends LowPriorityShift0 {
         taskFlatMap(keyword.continuation, handler)
     }
 
-  def apply[R, A](continuation: Dsl.Continuation[R, A]): Shift[R, A] = continuation
+  def apply[R, A](continuation: Continuation[R, A]): Shift[R, A] = continuation
+
+  extension [R, A](shift: Shift[R, A]) def continuation: Continuation[R, A] = shift
 
 }
