@@ -39,12 +39,6 @@ sourceGenerators in Test := {
   }
 }
 
-if (VersionNumber(scalaJSVersion).numbers < Seq(1L)) {
-  libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.31"
-} else {
-  libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.33"
-}
-
 import scala.meta._
 
 exampleSuperTypes := exampleSuperTypes.value.map {
@@ -57,22 +51,3 @@ exampleSuperTypes := exampleSuperTypes.value.map {
 exampleSuperTypes += init"_root_.org.scalatest.Inside"
 exampleSuperTypes += init"_root_.com.thoughtworks.dsl.MockPingPongServer"
 
-addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
-
-scalacOptions ++= {
-  import Ordering.Implicits._
-  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
-    Seq("-Ymacro-annotations")
-  } else {
-    Nil
-  }
-}
-
-libraryDependencies ++= {
-  import Ordering.Implicits._
-  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
-    Nil
-  } else {
-    Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
-  }
-}
