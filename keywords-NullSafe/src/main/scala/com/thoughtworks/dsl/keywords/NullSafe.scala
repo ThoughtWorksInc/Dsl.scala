@@ -104,22 +104,21 @@ import scala.annotation.compileTimeOnly
   * @define qmark
   *   ?
   */
-final case class NullSafe[A](nullable: A | Null) extends AnyVal {
-
-  transparent inline def ? : A = {
-    !this
-  }
-
-}
+opaque type NullSafe[A] = A | Null
 
 object NullSafe {
 
+  extension [A](keyword: NullSafe[A])
+    transparent inline def ? : A = {
+      !keyword
+    }
+
   given [A]: IsKeyword[NullSafe[A], A] with {}
 
-  implicit def implicitNullSafe[A](nullable: A | Null): NullSafe[A] = new NullSafe[A](nullable)
+  implicit def implicitNullSafe[A](nullable: A | Null): NullSafe[A] = nullable
 
   given [A, Domain]: Dsl[NullSafe[A], Domain | Null, A] = { (keyword: NullSafe[A], handler: A => Domain | Null) =>
-    keyword.nullable match {
+    keyword match {
       case null =>
         null
       case notNull: A =>
