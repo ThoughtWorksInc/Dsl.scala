@@ -4,9 +4,10 @@ import com.thoughtworks.dsl.Dsl
 final case class WithFilter[UpstreamKeyword, UpstreamValue](
     upstream: UpstreamKeyword,
     condition: UpstreamValue => Boolean
-) extends Dsl.Keyword[WithFilter[UpstreamKeyword, UpstreamValue], UpstreamValue]
+)
 
 object WithFilter {
+  given [UpstreamKeyword, UpstreamValue]:Dsl.IsKeyword[WithFilter[UpstreamKeyword, UpstreamValue], UpstreamValue] with {}
   implicit def withFilterDsl[UpstreamKeyword, Domain, UpstreamValue](implicit
       upstreamDsl: Dsl[UpstreamKeyword, Domain, UpstreamValue],
       continueDsl: Dsl[Continue, Domain, Nothing]
