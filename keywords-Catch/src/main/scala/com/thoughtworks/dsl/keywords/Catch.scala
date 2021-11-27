@@ -1,8 +1,7 @@
 package com.thoughtworks.dsl.keywords
 
-import com.thoughtworks.Extractor._
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Continuation, Keyword}
+import com.thoughtworks.dsl.Dsl.{!!, Continuation, IsKeyword}
 import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
 
 import scala.annotation.implicitNotFound
@@ -14,7 +13,6 @@ import scala.util.control.NonFatal
   */
 @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
 final case class Catch[Domain, Value](block: Domain !! Value, catcher: Catcher[Domain !! Value])
-    extends Keyword[Catch[Domain, Value], Value]
 
 private[keywords] trait LowPriorityCatch1 { this: Catch.type =>
   @deprecated("Use Dsl[Catch[...], ...] as implicit parameters instead of CatchDsl[...]", "Dsl.scala 1.2.0")
@@ -49,6 +47,7 @@ private[keywords] trait LowPriorityCatch0 extends LowPriorityCatch1 { this: Catc
 
 @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
 object Catch extends LowPriorityCatch0 {
+  given [Domain, Value]: IsKeyword[Catch[Domain, Value], Value] with {}
 
   type DslCatch[InnerDomain, OuterDomain, Value] = Dsl[Catch[InnerDomain, Value], OuterDomain, Value]
 
@@ -126,7 +125,7 @@ object Catch extends LowPriorityCatch0 {
 
             def recover(e: Throwable): LeftDomain = {
               e match {
-                case catcher.extract(recovered) =>
+                case catcher(recovered) =>
                   val outerContinuation =
                     try {
                       recovered(handler)
@@ -179,11 +178,11 @@ object Catch extends LowPriorityCatch0 {
       leftCatchDsl.cpsApply(
         Catch(
           block = block(Continuation.now),
-          catcher = { case catcher.extract(recoveredValueContinuation) =>
+          catcher = { case catcher(recoveredValueContinuation) =>
             recoveredValueContinuation(Continuation.now)
           }
         ),
-        handler = { value: Value =>
+        handler = { (value: Value) =>
           handler(value)(outerHandler)
         }
       )
@@ -201,18 +200,18 @@ object Catch extends LowPriorityCatch0 {
       leftCatchDsl.cpsApply(
         Catch(
           block = { (continue: Value => InnerDomain) =>
-            block { value: Value => _ =>
+            block { (value: Value) => _ =>
               continue(value)
             }(state)
           },
-          catcher = { case catcher.extract(recoveredValueContinuation) =>
+          catcher = { case catcher(recoveredValueContinuation) =>
             continue =>
-              recoveredValueContinuation { value: Value => _ =>
+              recoveredValueContinuation { (value: Value) => _ =>
                 continue(value)
               }(state)
           }
         ),
-        handler = handler(_)(state)
+        handler = { (value: Value) => handler(value)(state) }
       )
     }
   }
