@@ -8,6 +8,54 @@ import scala.quoted.Quotes
 import collection.immutable.Queue
 import Dsl.given
 import scala.util.control.Exception.Catcher
+/**
+  * @example
+  *   Suppose you are generating a random integer less than 100, whose first digit and second digit is different. A
+  *   solution is generating integers in an infinite loop, and [[Return]] from the loop when the generated integer
+  *   conforms with requirements.
+  *
+  * {{{
+  * import scala.util.Random
+  * import scala.util.control.TailCalls
+  * import scala.util.control.TailCalls.TailRec
+  * import com.thoughtworks.dsl.bangnotation.reset
+  * def randomInt(): TailRec[Int] = reset {
+  *   while (true) {
+  *     val r = Random.nextInt(100)
+  *     if (r % 10 != r / 10) {
+  *       !Return(TailCalls.done(r))
+  *     }
+  *   }
+  *   throw new AssertionError("Unreachable code");
+  * }
+  *
+  * val r = randomInt().result
+  * r should be < 100
+  * r % 10 should not be r / 10
+  * }}}
+  *
+  * @example
+  *   Since the [[Return]] keyword can automatically lift the return type, `TailCalls.done` can be omitted.
+  *
+  * {{{
+  * import scala.util.Random
+  * import scala.util.control.TailCalls
+  * import scala.util.control.TailCalls.TailRec
+  * def randomInt(): TailRec[Int] = reset {
+  *   while (true) {
+  *     val r = Random.nextInt(100)
+  *     if (r % 10 != r / 10) {
+  *       !Return(r)
+  *     }
+  *   }
+  *   throw new AssertionError("Unreachable code");
+  * }
+  *
+  * val r = randomInt().result
+  * r should be < 100
+  * r % 10 should not be r / 10
+  * }}}
+  */
 object bangnotation {
 
   private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
