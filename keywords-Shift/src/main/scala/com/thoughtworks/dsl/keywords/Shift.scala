@@ -40,6 +40,7 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
 }
 
 object Shift extends LowPriorityShift0 {
+  given [Domain, Value]: IsKeyword[Shift[Domain, Value], Value] with {}
 
   trait StackSafeShiftDsl[Domain, NewDomain, Value] extends Dsl[Shift[Domain, Value], NewDomain, Value]
 
