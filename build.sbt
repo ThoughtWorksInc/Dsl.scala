@@ -136,7 +136,7 @@ lazy val `keywords-Catch` =
 lazy val `keywords-Using` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, bangnotation % Test, `keywords-Shift`, `keywords-Catch` % Optional)
+    .dependsOn(Dsl, bangnotation, `keywords-Shift`, `keywords-Catch` % Optional)
 
 lazy val `keywords-Map` =
   crossProject(JSPlatform, JVMPlatform)
