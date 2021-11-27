@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
 
 import scala.language.implicitConversions
 import scala.language.higherKinds
@@ -13,7 +13,7 @@ import scala.collection._
   *
   * @see The [[Continue$ Continue]] object, which is the only instance of this [[Continue]] class.
   */
-sealed class Continue extends Keyword[Continue, Nothing]
+sealed class Continue
 
 /** A keyword to skip the current iteration in a collection comprehension block.
   *
@@ -40,7 +40,9 @@ sealed class Continue extends Keyword[Continue, Nothing]
   *          }}}
   * @author 杨博 (Yang Bo)
   */
-case object Continue extends Continue with Keyword[Continue, Nothing] {
+case object Continue extends Continue {
+  given IsKeyword[Continue, Nothing] with {}
+  given IsKeyword[Continue.type, Nothing] with {}
 
   implicit def continueUnitDsl[Value]: Dsl[Continue, Unit, Value] = new Dsl[Continue, Unit, Value] {
     def cpsApply(keyword: Continue, handler: Value => Unit): Unit = ()
@@ -55,7 +57,6 @@ case object Continue extends Continue with Keyword[Continue, Nothing] {
 
   }
 
-  import Scala211Or212._
   import Scala213._
 
   implicit def collectionContinueDsl[Value, Element, Collection[_]](implicit
