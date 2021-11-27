@@ -6,7 +6,6 @@ import scala.collection._
 import scala.language.implicitConversions
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.Keyword
 import com.thoughtworks.dsl.keywords.Yield.From
 
 import scala.collection._
@@ -101,6 +100,8 @@ object Yield extends LowPriorityYield0 {
 
   given [Element]: IsKeyword[Yield[Element], Unit] with {}
   def cast[Element]: Element <:< Yield[Element] = implicitly
+  extension [Element](keyword: Yield[Element])
+    def element: Element = keyword
 
   def apply[Element](element: Element): Yield[Element] = cast(element)
 
@@ -113,7 +114,12 @@ object Yield extends LowPriorityYield0 {
     given [FromCollection <: TraversableOnce[_]]: IsKeyword[From[FromCollection], Unit] with {}
 
     def apply[FromCollection <: TraversableOnce[_]](elements: FromCollection): From[FromCollection] = elements
+    extension [FromCollection <: TraversableOnce[_]](keyword: From[FromCollection])
+      def elements: FromCollection = keyword
+
   }
+
+
 
   implicit def viewYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A]]
       : Dsl[From[FromCollection], View[A], Unit] =
@@ -204,6 +210,7 @@ object Yield extends LowPriorityYield0 {
       : Dsl[From[FromCollection], Stream[Future[A]], Unit] =
     new Dsl[From[FromCollection], Stream[Future[A]], Unit] {
       def cpsApply(keyword: From[FromCollection], generateTail: Unit => Stream[Future[A]]): Stream[Future[A]] = {
+        import From.elements
         keyword.elements.toStream.map(Future.successful).append(generateTail(()))
       }
     }
