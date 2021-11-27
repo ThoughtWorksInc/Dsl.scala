@@ -6,7 +6,6 @@ import com.thoughtworks.dsl.Dsl.!!
 import scala.language.higherKinds
 import scala.language.implicitConversions
 import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans}
-import com.thoughtworks.dsl.keywords.Catch.CatchDsl
 import com.thoughtworks.dsl.keywords.{Monadic, Return}
 import com.thoughtworks.dsl.Dsl.{TryCatch, TryFinally}
 
@@ -127,21 +126,6 @@ import scala.util.control.NonFatal
 object scalaz {
 
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
-
-  private[dsl] def scalazCatchDsl[F[_], A, B](implicit monadError: MonadThrowable[F]): CatchDsl[F[A], F[B], A] =
-    new CatchDsl[F[A], F[B], A] {
-      def tryCatch(block: F[A] !! A, catcher: Catcher[F[A] !! A], handler: A => F[B]): F[B] = {
-        import _root_.scalaz.syntax.all._
-        val fa = monadError.bind(monadError.pure(block))(_(monadError.pure(_)))
-        val protectedFa = monadError.handleError(fa) {
-          case catcher(recovered) =>
-            recovered(monadError.pure(_))
-          case e =>
-            monadError.raiseError[A](e)
-        }
-        monadError.bind(protectedFa)(handler)
-      }
-    }
 
   @inline private def catchNativeException[F[_], A](
       continuation: F[A] !! A

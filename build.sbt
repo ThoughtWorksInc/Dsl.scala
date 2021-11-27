@@ -39,10 +39,10 @@ lazy val `keywords-Fork` =
     .crossType(CrossType.Pure)
     .dependsOn(
       Dsl,
-      bangnotation % Test,
+      bangnotation,
       `keywords-Shift`,
-      `keywords-Catch` % Optional,
       `keywords-Continue`,
+      `keywords-ForEach`,
       `keywords-In`
     )
 
@@ -128,15 +128,10 @@ lazy val `keywords-Shift` =
     .crossType(CrossType.Pure)
     .dependsOn(Dsl)
 
-lazy val `keywords-Catch` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, bangnotation % Test, `keywords-Shift`, `keywords-Yield` % Test)
-
 lazy val `keywords-Using` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, bangnotation, `keywords-Shift`, `keywords-Catch` % Optional)
+    .dependsOn(Dsl, bangnotation, `keywords-Shift`)
 
 lazy val `keywords-Map` =
   crossProject(JSPlatform, JVMPlatform)
@@ -181,7 +176,6 @@ lazy val `keywords-Await` =
       comprehension % Test,
       bangnotation % Test,
       `domains-task` % Test,
-      `keywords-Catch` % Test,
       `keywords-In` % Test,
       `keywords-Get` % Test,
       `keywords-Return` % Test,
@@ -239,7 +233,6 @@ lazy val `domains-scalaz` =
     .dependsOn(
       Dsl,
       bangnotation % Test,
-      `keywords-Catch` % Optional,
       `keywords-Monadic`,
       `keywords-Return`,
       `keywords-Shift` % Test,

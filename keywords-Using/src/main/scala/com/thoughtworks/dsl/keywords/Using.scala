@@ -5,8 +5,8 @@ import com.thoughtworks.dsl.bangnotation.{ `*`, reify, reset, unary_!}
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.Dsl.IsKeyword
-import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
-import com.thoughtworks.dsl.Dsl.TryFinally
+// import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
+import com.thoughtworks.dsl.keywords.TryFinally
 import com.thoughtworks.dsl.Dsl.cpsApply
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,29 +65,6 @@ object Using {
       dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
   ): Using[R] = new Using(() => r)
 
-  @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
-  private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
-      catchDsl: DslCatch[Domain, Domain, Value],
-      shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
-  ): Dsl[Using[R], Domain !! Value, R] = {
-    (keyword: Using[R], handler: R => Domain !! Value) => (outerHandler: Value => Domain) =>
-      val r = keyword.open()
-      Catch
-        .tryCatch { (value: Value) =>
-          r.close()
-          outerHandler(value)
-        }
-        .apply(
-          Shift(handler(r)).cpsApply(_),
-          { case NonFatal(e) =>
-            r.close()
-            _ {
-              throw e
-            }
-          }
-        )
-  }
-
   implicit def continuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
       tryFinally: TryFinally[Value, Domain, Domain, Domain],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
@@ -100,17 +77,6 @@ object Using {
         r.close()
       }
     }
-  }
-
-  @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.2.0")
-  private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
-      catchDsl: CatchDsl[Domain, Domain, Value],
-      shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
-  ): Dsl[Using[R], Domain !! Value, R] = {
-    throwableContinuationUsingDsl(
-      catchDsl: DslCatch[Domain, Domain, Value],
-      shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
-    )
   }
 
   implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](implicit
