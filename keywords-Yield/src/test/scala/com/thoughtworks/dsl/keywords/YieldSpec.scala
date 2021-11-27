@@ -408,7 +408,6 @@ object YieldSpec extends TestSuite {
 }
 
 import com.thoughtworks.dsl.Dsl.!!
-import com.thoughtworks.enableMembersIf
 
 import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
@@ -774,20 +773,12 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
       generator.toList should be(List(100))
     }
 
-    @enableMembersIf(scala.util.Properties.versionNumberString.startsWith("2.11."))
-    object Scala211 {
-      def ignoreInScala211(title: String)(f: => Any) = {
-        title ignore f
-      }
-    }
-    @enableMembersIf(!scala.util.Properties.versionNumberString.startsWith("2.11."))
     object Scala212And213 {
       def ignoreInScala211(title: String)(f: => Any) = {
         title in f
       }
     }
     import Scala212And213._
-    import Scala211._
 
     ignoreInScala211("yield from") {
       def generator = {

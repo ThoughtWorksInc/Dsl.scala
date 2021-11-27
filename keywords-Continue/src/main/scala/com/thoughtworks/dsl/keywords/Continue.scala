@@ -2,7 +2,6 @@ package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
-import com.thoughtworks.enableMembersIf
 
 import scala.language.implicitConversions
 import scala.language.higherKinds
@@ -47,18 +46,6 @@ case object Continue extends Continue with Keyword[Continue, Nothing] {
     def cpsApply(keyword: Continue, handler: Value => Unit): Unit = ()
   }
 
-  @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
-  private[dsl] object Scala211Or212 {
-    type Factory[-A, +C] = scala.collection.generic.CanBuildFrom[Nothing, A, C]
-
-    @inline
-    def empty[A, C](implicit factory: Factory[A, C]): C = {
-      factory().result()
-    }
-
-  }
-
-  @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
   private[dsl] object Scala213 {
 
     @inline

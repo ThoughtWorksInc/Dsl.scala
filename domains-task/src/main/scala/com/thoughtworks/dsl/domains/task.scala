@@ -3,7 +3,6 @@ package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
 import com.thoughtworks.dsl.keywords.Shift
-import com.thoughtworks.{enableIf, enableMembersIf}
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -69,7 +68,7 @@ object task {
     */
   type Task[+A] = TaskDomain !! A
 
-  object Task {
+  object Task extends TaskPlatformSpecificFunctions {
 
     @inline
     def now[A](a: A): Task[A] = _(a)
@@ -119,18 +118,7 @@ object task {
       })
       TailCalls.done(())
     }
-    @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
-    private[task] object Scala211Or212 {
-      type Factory[-A, +C] = scala.collection.generic.CanBuildFrom[Nothing, A, C]
 
-      @inline
-      def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
-        factory()
-      }
-
-    }
-
-    @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
     private[task] object Scala213 {
 
       @inline
@@ -140,7 +128,6 @@ object task {
 
     }
 
-    import Scala211Or212._
     import Scala213._
 
     def join[Element, That](element: Element)(implicit factory: Factory[Element, That]): Task[That] @reset = now {
@@ -153,23 +140,6 @@ object task {
           TailCalls.done(continue(result))
         }
         .result
-    }
-
-    @enableIf(c => !c.compilerSettings.exists(_.matches("""^-Xplugin:.*scalajs-compiler_.*\.jar$""")))
-    def blockingAwait[A](task: Task[A], timeout: Duration = Duration.Inf): A = {
-      val syncVar = new SyncVar[Try[A]]
-      Continuation
-        .toTryContinuation(task) { result =>
-          syncVar.put(result)
-          TailCalls.done(())
-        }
-        .result
-
-      if (timeout.isFinite) {
-        syncVar.take(timeout.toMillis).get
-      } else {
-        syncVar.take.get
-      }
     }
 
     /** Converts a [[Task]] to a [[scala.concurrent.Future]].

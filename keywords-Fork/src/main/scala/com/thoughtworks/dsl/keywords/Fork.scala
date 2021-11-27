@@ -7,7 +7,6 @@ import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, Keyword}
 import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
 import com.thoughtworks.dsl.Dsl.{TryCatch, TryCatchFinally, TryFinally}
-import com.thoughtworks.enableMembersIf
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -18,27 +17,6 @@ import scala.util.control.NonFatal
 final case class Fork[Element](elements: Traversable[Element]) extends AnyVal with Keyword[Fork[Element], Element]
 
 object Fork {
-
-  @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.1(1|2)\..*$"""))
-  private[Fork] object Scala211Or212 {
-    type Factory[-A, +C] = scala.collection.generic.CanBuildFrom[Nothing, A, C]
-
-    @inline
-    def flatMapBreakOut[Element, Domain, DomainElement](
-        fa: Traversable[Element],
-        f: Element => GenTraversableOnce[DomainElement]
-    )(implicit factory: Factory[DomainElement, Domain]): Domain = {
-      fa.flatMap(f)(collection.breakOut(factory))
-    }
-
-    @inline
-    def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
-      factory()
-    }
-
-  }
-
-  @enableMembersIf(scala.util.Properties.versionNumberString.matches("""^2\.13\..*$"""))
   private[Fork] object Scala213 {
 
     @inline

@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl.!!
-import com.thoughtworks.enableMembersIf
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
