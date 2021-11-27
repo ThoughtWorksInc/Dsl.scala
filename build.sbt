@@ -231,7 +231,7 @@ lazy val `keywords-ForEach` =
 lazy val `keywords-Each` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, bangnotation % Test, `keywords-Shift`)
+    .dependsOn(Dsl, bangnotation, `keywords-Shift`)
 
 lazy val `domains-scalaz` =
   crossProject(JSPlatform, JVMPlatform)

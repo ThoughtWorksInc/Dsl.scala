@@ -1,7 +1,8 @@
 package com.thoughtworks.dsl.keywords
 
+import com.thoughtworks.dsl.bangnotation.{reset, unary_!}
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
 
 import scala.collection._
 import scala.language.implicitConversions
@@ -20,8 +21,9 @@ import scala.collection.mutable.Builder
   *          }}}
   * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
   */
-final case class Each[Element](elements: Traversable[Element]) extends Keyword[Each[Element], Element]
+final case class Each[Element](elements: Traversable[Element])
 object Each {
+  given [Element]: IsKeyword[Each[Element], Element] with {}
   private[Each] object Scala213 {
 
     @inline
@@ -39,7 +41,6 @@ object Each {
 
   }
 
-  import Scala211Or212._
   import Scala213._
 
   implicit def implicitEach[Element](elements: Traversable[Element]): Each[Element] = Each[Element](elements)
@@ -50,7 +51,7 @@ object Each {
   ): Dsl[Each[Element], Domain, Element] =
     new Dsl[Each[Element], Domain, Element] {
       def cpsApply(keyword: Each[Element], handler: Element => Domain): Domain = {
-        flatMapBreakOut(keyword.elements, handler)
+        flatMapBreakOut(keyword.elements, thatIsTraversableOnce(handler))
       }
     }
 
@@ -73,13 +74,13 @@ object Each {
           keyword: Each[Element],
           handler0: Element => LeftDomain !! RightDomain
       ): LeftDomain !! RightDomain = {
-        val i = keyword.elements.toIterator
+        val i = keyword.elements.iterator
         val builder = newBuilder[DomainElement, RightDomain]
         val handler = rightDomainIsTraversableOnce(handler0)
         @inline
-        def loop(continue: RightDomain => LeftDomain): LeftDomain = {
+        def loop(continue: RightDomain => LeftDomain): LeftDomain = reset {
           if (i.hasNext) {
-            builder ++= !handler(i.next())
+            builder ++= !Shift(handler(i.next()))
             loop(continue)
           } else {
             continue(builder.result())
