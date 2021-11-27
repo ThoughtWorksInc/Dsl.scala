@@ -1,10 +1,13 @@
 package com.thoughtworks.dsl
 package keywords
 
+import com.thoughtworks.dsl.bangnotation.{ `*`, reify, reset, unary_!}
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.!!
+import com.thoughtworks.dsl.Dsl.IsKeyword
 import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
 import com.thoughtworks.dsl.Dsl.TryFinally
+import com.thoughtworks.dsl.Dsl.cpsApply
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -16,11 +19,12 @@ import scala.util.control.NonFatal
   * @author 杨博 (Yang Bo)
   * @see [[dsl]] for usage of this [[Using]] keyword in continuations
   */
-final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal with Keyword[Using[R], R]
+final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal
 
 object Using {
+  given [R <: AutoCloseable]: IsKeyword[Using[R], R] with {}
 
-  implicit def implicitUsing[R <: AutoCloseable](r: => R): Using[R] = Using[R](r _)
+  implicit def implicitUsing[R <: AutoCloseable](r: => R): Using[R] = Using[R](() => r)
 
   trait ScopeExitHandler extends AutoCloseable
 
@@ -55,11 +59,11 @@ object Using {
     *          }
     *          }}}
     */
-  def scopeExit(r: => ScopeExitHandler) = new Using(r _)
+  def scopeExit(r: => ScopeExitHandler) = new Using(() => r)
 
   def apply[R <: AutoCloseable](r: => R)(implicit
       dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
-  ): Using[R] = new Using(r _)
+  ): Using[R] = new Using(() => r)
 
   @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
   private[Using] def throwableContinuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
@@ -69,7 +73,7 @@ object Using {
     (keyword: Using[R], handler: R => Domain !! Value) => (outerHandler: Value => Domain) =>
       val r = keyword.open()
       Catch
-        .tryCatch { value: Value =>
+        .tryCatch { (value: Value) =>
           r.close()
           outerHandler(value)
         }
@@ -88,10 +92,10 @@ object Using {
       tryFinally: TryFinally[Value, Domain, Domain, Domain],
       shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
   ): Dsl[Using[R], Domain !! Value, R] = { (keyword: Using[R], handler: R => Domain !! Value) =>
-    _ {
+    *[[X] =>> Domain !! X] {
       val r = keyword.open()
       try {
-        !Shift(handler(r))
+        !Shift[Domain, Value](handler(r))
       } finally {
         r.close()
       }
@@ -112,7 +116,7 @@ object Using {
   implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](implicit
       executionContext: ExecutionContext
   ): Dsl[Using[R], Future[A], R] = { (keyword: Using[R], handler: R => Future[A]) =>
-    Future(keyword.open()).flatMap { r: R =>
+    Future(keyword.open()).flatMap { (r: R) =>
       def onFailure(e: Throwable): Future[Nothing] = {
         try {
           r.close()
