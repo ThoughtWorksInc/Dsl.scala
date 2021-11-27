@@ -1,6 +1,5 @@
 package com.thoughtworks.dsl.domains
 
-import com.thoughtworks.Extractor._
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
 
@@ -135,7 +134,7 @@ object scalaz {
         import _root_.scalaz.syntax.all._
         val fa = monadError.bind(monadError.pure(block))(_(monadError.pure(_)))
         val protectedFa = monadError.handleError(fa) {
-          case catcher.extract(recovered) =>
+          case catcher(recovered) =>
             recovered(monadError.pure(_))
           case e =>
             monadError.raiseError[A](e)
@@ -164,12 +163,12 @@ object scalaz {
         def injectFinalizer[A](f: Unit => F[A]): F[A] = {
           monadError.bind(catchNativeException(finalizer))(f)
         }
-        monadError.bind(monadError.handleError(catchNativeException(block)) { e: Throwable =>
-          injectFinalizer { _: Unit =>
+        monadError.bind(monadError.handleError(catchNativeException(block)) { (e: Throwable) =>
+          injectFinalizer { (_: Unit) =>
             monadError.raiseError(e)
           }
         }) { a =>
-          injectFinalizer { _: Unit =>
+          injectFinalizer { (_: Unit) =>
             outerSuccessHandler(a)
           }
         }
@@ -204,17 +203,17 @@ object scalaz {
   implicit def scalazReturnDsl[F[_], A, B](implicit
       applicative: Applicative[F],
       restReturnDsl: Dsl[Return[A], B, Nothing]
-  ) = { (keyword: Return[A], handler: Nothing => F[B]) =>
+  ): Dsl[Return[A], F[B], Nothing] = { (keyword: Return[A], handler: Nothing => F[B]) =>
     applicative.pure(restReturnDsl.cpsApply(keyword, identity))
   }
 
   implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](implicit
       monadTrans: MonadTrans[F],
       rest: ScalazTransformerDsl[H, G, A, B]
-  ): ScalazTransformerDsl[H, F[G, ?], A, B] =
-    new ScalazTransformerDsl[H, F[G, ?], A, B] {
+  ): ScalazTransformerDsl[H, [X] =>> F[G, X], A, B] =
+    new ScalazTransformerDsl[H, [X] =>> F[G, X], A, B] {
 
-      def monad: Monad[F[G, ?]] = monadTrans(rest.monad)
+      def monad: Monad[[X] =>> F[G, X]] = monadTrans(rest.monad)
 
       def lift(fa: H[A]): F[G, A] = monadTrans.liftM(rest.lift(fa))(rest.monad)
 
@@ -223,8 +222,8 @@ object scalaz {
   implicit def scalazMonadTransformerDsl0[F[_[_], _], G[_], A, B](implicit
       monadTrans: MonadTrans[F],
       monad0: Monad[G]
-  ): ScalazTransformerDsl[G, F[G, ?], A, B] =
-    new ScalazTransformerDsl[G, F[G, ?], A, B] {
+  ): ScalazTransformerDsl[G, [X] =>> F[G, X], A, B] =
+    new ScalazTransformerDsl[G, [X] =>> F[G, X], A, B] {
       def monad = monadTrans(monad0)
 
       def lift(fa: G[A]): F[G, A] = monadTrans.liftM(fa)
@@ -234,7 +233,7 @@ object scalaz {
   implicit def scalazMonadicDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[Monadic[F, A], F[B], A] =
     new Dsl[Monadic[F, A], F[B], A] {
       def cpsApply(keyword: Monadic[F, A], handler: A => F[B]): F[B] = {
-        bind.bind(keyword.fa)(handler)
+        bind.bind(Monadic.cast.flip(keyword))(handler)
       }
     }
 
@@ -244,7 +243,7 @@ object scalaz {
     def lift(fa: F[A]): G[A]
 
     final def cpsApply(keyword: Monadic[F, A], handler: A => G[B]): G[B] = {
-      monad.bind(lift(keyword.fa))(handler)
+      monad.bind(lift(Monadic.cast.flip(keyword)))(handler)
     }
 
   }
