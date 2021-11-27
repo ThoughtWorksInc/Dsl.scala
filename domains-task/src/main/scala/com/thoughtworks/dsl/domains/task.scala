@@ -77,7 +77,7 @@ object task {
     def delay[A](f: () => A): Task[A] = _(f())
 
     @inline
-    def apply[A](a: => A): Task[A] @reset = delay(a _)
+    def apply[A](a: => A): Task[A] = delay(() => a)
 
     /** Returns a task that does nothing but let the succeeding tasks run on `executionContext`
       *
@@ -130,7 +130,7 @@ object task {
 
     import Scala213._
 
-    def join[Element, That](element: Element)(implicit factory: Factory[Element, That]): Task[That] @reset = now {
+    def join[Element, That](element: Element)(implicit factory: Factory[Element, That]): Task[That] = now {
       (newBuilder[Element, That] += element).result()
     }
 
