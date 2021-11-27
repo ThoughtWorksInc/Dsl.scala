@@ -12,6 +12,7 @@ final case class If[ConditionKeyword, ThenKeyword, ElseKeyword](
 object If {
   given[ConditionKeyword, ThenKeyword, ElseKeyword, Domain, Value](
     using
+    util.NotGiven[Dsl.Derived[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value]],
     Dsl[ConditionKeyword, Domain, Boolean],
     Dsl[ThenKeyword, Domain, Value],
     Dsl[ElseKeyword, Domain, Value],

@@ -18,6 +18,11 @@ object TryCatchFinally {
       Domain,
       Value
   ](using
+      not: util.NotGiven[Dsl.Derived[
+        TryCatchFinally[TryKeyword, CaseSet, FinalizerKeyword],
+        Domain,
+        Value,
+      ]],
       tryFinallyDsl: Dsl[
         TryFinally[TryCatch[TryKeyword, CaseSet], FinalizerKeyword],
         Domain,

@@ -17,6 +17,11 @@ object While {
       BodyKeyword,
       Domain
   ](using
+      not: util.NotGiven[Dsl.Derived[
+        While[ConditionKeyword, BodyKeyword],
+        Domain,
+        Unit
+      ]],
       conditionDsl: Dsl[ConditionKeyword, Domain, Boolean],
       bodyDsl: Dsl[BodyKeyword, Domain, Any]
   ): Dsl[

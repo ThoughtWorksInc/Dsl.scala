@@ -6,6 +6,7 @@ import scala.collection._
 import scala.collection.mutable.Builder
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
+import scala.util.NotGiven
 import scala.util.control.Exception.Catcher
 import scala.util.{Failure, Success, Try}
 import scala.util.control.{NonFatal, TailCalls}
@@ -34,23 +35,11 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 }
 
-private[dsl] trait LowPriorityDsl2 {
-
-  import Dsl._
-
-  implicit def nothingCollectionDsl[Keyword, Element, Collection[_]](implicit
-      factory: Factory[Element, Collection[Element]],
-      restDsl: Dsl[Keyword, Element, Nothing]
-  ): Dsl[Keyword, Collection[Element], Nothing] = { (keyword, handler) =>
-    factory.fromSpecific(resetDomain(keyword) :: Nil)
-  }
-}
-
-private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
+private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
   implicit def derivedFunction1Dsl[Keyword, State, Domain, Value](implicit
       restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, State => Domain, Value] = { (keyword, handler) =>
+  ): Derived[Keyword, State => Domain, Value] = { (keyword: Keyword, handler: Value => State => Domain) =>
     val restDsl1 = restDsl
     locally { (state: State) =>
       val handler1 = handler
@@ -61,7 +50,7 @@ private[dsl] trait LowPriorityDsl1 extends LowPriorityDsl2 {
 
 }
 
-private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
+private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
@@ -80,7 +69,7 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 
   implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Dsl[Keyword, LeftDomain !! Throwable, Value] = { (keyword, handler) => continue =>
+  ): Derived[Keyword, LeftDomain !! Throwable, Value] = { (keyword, handler) => continue =>
     restDsl.cpsApply(
       keyword,
       new (Value => LeftDomain) {
@@ -102,29 +91,11 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 {
 }
 
 object Dsl extends LowPriorityDsl0 {
-
-  @inline
-  private[dsl] def resetDomain[Keyword, Domain](
-      keyword: Keyword
-  )(implicit dsl: Dsl[Keyword, Domain, Domain]): Domain = {
-    dsl.cpsApply(keyword, implicitly)
-  }
-
-  implicit def nothingContinuationDsl[Keyword, LeftDomain, RightDomain](implicit
-      restDsl: Dsl[Keyword, RightDomain, Nothing]
-  ): Dsl[Keyword, LeftDomain !! RightDomain, Nothing] = { (keyword, handler) =>
-    _(resetDomain(keyword))
-  }
-
-  implicit def nothingFutureDsl[Keyword, Domain](implicit
-      restDsl: Dsl[Keyword, Domain, Nothing]
-  ): Dsl[Keyword, Future[Domain], Nothing] = { (keyword, handler) =>
-    Future.successful(resetDomain(keyword))
-  }
+  trait Derived[-Keyword, Domain, +Value] extends Dsl[Keyword, Domain, Value]
 
   implicit def derivedTailRecDsl[Keyword, Domain, Value](implicit
       restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, TailRec[Domain], Value] = { (keyword, handler) =>
+  ): Derived[Keyword, TailRec[Domain], Value] = { (keyword, handler) =>
     TailCalls.done {
       restDsl.cpsApply(
         keyword,
@@ -137,7 +108,7 @@ object Dsl extends LowPriorityDsl0 {
 
   implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value]
-  ): Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] = { (keyword, handler) => tailRecFailureHandler =>
+  ): Derived[Keyword, TailRec[LeftDomain] !! Throwable, Value] = { (keyword, handler) => tailRecFailureHandler =>
     TailCalls.done(
       restDsl.cpsApply(
         keyword,
@@ -152,7 +123,7 @@ object Dsl extends LowPriorityDsl0 {
     )
   }
 
-  type Continuation[R, +A] = (A => R @reset) => R
+  type Continuation[R, +A] = (A => R) => R
 
   object Continuation {
     @inline
@@ -165,7 +136,7 @@ object Dsl extends LowPriorityDsl0 {
     def delay[R, A](a: () => A): R !! A = _(a())
 
     @inline
-    def apply[R, A](a: => A): (R !! A) @reset = delay(() => a)
+    def apply[R, A](a: => A): (R !! A) = delay(() => a)
 
     def toTryContinuation[LeftDomain, Value](
         task: LeftDomain !! Throwable !! Value
@@ -238,7 +209,7 @@ object Dsl extends LowPriorityDsl0 {
 
   /** The type class to support `try` ... `catch` ... `finally` expression for `OutputDomain`.
     *
-    * !-notation is allowed by default for `? !! Throwable` and [[scala.Future Future]] domains, with the help of this
+    * !-notation is allowed by default for `? !! Throwable` and [[scala.concurrent.Future Future]] domains, with the help of this
     * type class.
     */
   @implicitNotFound(
@@ -548,8 +519,8 @@ object Dsl extends LowPriorityDsl0 {
     }
 
     given [From, Intermediate, To](using
-        step1: /*=>*/ OneStep[Intermediate, To],
-        step0: /*=>*/ Lift[From, Intermediate]
+        step1: => OneStep[Intermediate, To],
+        step0: => Lift[From, Intermediate]
     ): Lift[From, To] with {
       def apply(from: From): To = {
         step1(step0(from))
@@ -558,6 +529,9 @@ object Dsl extends LowPriorityDsl0 {
 
     import Dsl.!!
     given [LeftDomain, RightDomain]: OneStep[RightDomain, LeftDomain !! RightDomain] = r => _(r)
+    given [R, F, A](using
+        isFunction: (A => R) <:< F
+    ): OneStep[R, F] = { r => isFunction(Function.const(r)) }
 
     given [Element](using
         ExecutionContext

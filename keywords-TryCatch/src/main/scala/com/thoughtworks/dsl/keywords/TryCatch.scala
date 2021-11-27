@@ -25,6 +25,11 @@ object TryCatch {
   }
 
   given [TryKeyword, TryValue <: Value, CaseSet, DomainValue, CaseValue <: Value, Value](using
+      not: util.NotGiven[Dsl.Derived[
+        TryCatch[TryKeyword, CaseSet],
+        Future[DomainValue],
+        Value
+      ]],
       executionContext: ExecutionContext,
       tryDsl: Dsl[TryKeyword, Future[TryValue], TryValue],
       caseDsl: Dsl[CaseSet, Future[CaseValue], CaseValue]

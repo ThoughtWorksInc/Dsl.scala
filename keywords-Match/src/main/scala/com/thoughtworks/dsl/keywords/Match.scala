@@ -15,6 +15,7 @@ object Match {
       Domain,
       LastValue
   ](using
+      not: util.NotGiven[Dsl.Derived[WithIndex[Index, Keyword] +: Nothing, Domain, LastValue]],
       dsl: Dsl[Keyword, Domain, LastValue],
       valueOfIndex: ValueOf[Index]
   ): Dsl[WithIndex[Index, Keyword] +: Nothing, Domain, LastValue] with {
@@ -35,6 +36,7 @@ object Match {
       Domain,
       Value
   ](using
+      not: util.NotGiven[Dsl.Derived[WithIndex[Index, LeftKeyword] +: RestKeyword, Domain, Value]],
       leftDsl: Dsl[LeftKeyword, Domain, Value],
       valueOfIndex: ValueOf[Index],
       restDsl: Dsl[RestKeyword, Domain, Value]

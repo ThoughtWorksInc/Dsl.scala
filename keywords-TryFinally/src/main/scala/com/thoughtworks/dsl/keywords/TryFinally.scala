@@ -26,6 +26,11 @@ object TryFinally {
     }
   }
   given [TryKeyword, FinalizerKeyword, State, Domain, Value](using
+      not: util.NotGiven[Dsl.Derived[
+        TryFinally[TryKeyword, FinalizerKeyword],
+        State => Domain,
+        Value
+      ]],
       restDsl: Dsl[
         TryFinally[Shift[Domain, Value], Shift[Domain, Any]],
         Domain,
