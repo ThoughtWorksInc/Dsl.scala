@@ -4,7 +4,7 @@ import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels._
 
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
 
 import scala.util.control.NonFatal
 
@@ -72,14 +72,14 @@ import scala.util.control.NonFatal
   *          })
   *          }}}
   */
-trait AsynchronousIo[Value] extends Any with Keyword[AsynchronousIo[Value], Value] {
+trait AsynchronousIo[Value] extends Any {
 
   /** Starts the asynchronous operations */
   protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Value, _ >: Attachment]): Unit
 }
 
 object AsynchronousIo {
-
+  given [Value]: IsKeyword[AsynchronousIo[Value], Value] with {}
   final case class Connect(socket: AsynchronousSocketChannel, remote: SocketAddress) extends AsynchronousIo[Void] {
     protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Void, _ >: Attachment]): Unit = {
       socket.connect(remote, attachment, handler)
