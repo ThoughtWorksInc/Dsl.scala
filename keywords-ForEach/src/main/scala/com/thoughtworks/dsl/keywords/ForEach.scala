@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Keyword}
+import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
 
 import scala.collection._
 import scala.language.implicitConversions
@@ -9,8 +9,9 @@ import scala.language.implicitConversions
 import scala.collection.mutable.Builder
 
 /** Iterates though each element in [[elements]]. */
-final case class ForEach[Element](elements: Traversable[Element]) extends Keyword[ForEach[Element], Element]
+final case class ForEach[Element](elements: Traversable[Element])
 object ForEach {
+  given [Element]: IsKeyword[ForEach[Element], Element] with {}
 
   implicit def implicitForEach[Element](elements: Traversable[Element]): ForEach[Element] = ForEach[Element](elements)
 
