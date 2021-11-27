@@ -161,7 +161,7 @@ lazy val `keywords-NoneSafe` =
 lazy val `keywords-NullSafe` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, bangnotation % Test)
+    .dependsOn(Dsl, bangnotation)
 
 lazy val `keywords-For` =
   crossProject(JSPlatform, JVMPlatform)
