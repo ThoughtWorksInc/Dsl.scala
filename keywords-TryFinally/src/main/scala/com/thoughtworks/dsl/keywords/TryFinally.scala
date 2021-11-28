@@ -15,86 +15,18 @@ case class TryFinally[TryKeyword, FinalizerKeyword](
 
 object TryFinally {
 
-  private def catchNativeException[Keyword, Value](
-      keyword: Keyword
-  )(using dsl: Dsl[Keyword, Future[Value], Value]): Future[Value] = {
-    try {
-      keyword.cpsApply(Future.successful)
-    } catch {
-      case NonFatal(e) =>
-        Future.failed(e)
-    }
-  }
-  given [TryKeyword, FinalizerKeyword, State, Domain, Value](using
-      not: util.NotGiven[Dsl.Derived[
-        TryFinally[TryKeyword, FinalizerKeyword],
-        State => Domain,
-        Value
-      ]],
-      restDsl: Dsl[
-        TryFinally[Shift[Domain, Value], Shift[Domain, Any]],
-        Domain,
-        Value
-      ],
-      blockDsl: Dsl[
-        TryKeyword,
-        State => Domain,
-        Value
-      ],
-      finalizerDsl: Dsl[
-        FinalizerKeyword,
-        State => Domain,
-        Any
-      ]
-  ): Dsl[
-    TryFinally[TryKeyword, FinalizerKeyword],
-    State => Domain,
-    Value
-  ] with {
-    def cpsApply(
-        keyword: TryFinally[TryKeyword, FinalizerKeyword],
-        handler: Value => State => Domain
-    ): State => Domain = { state =>
-      import Typed.given
-      def withState[Keyword, Value](block: Keyword)(using Dsl[Keyword, State => Domain, Value]) = Shift {
-        (blockHandler: Value => Domain) =>
-          block.cpsApply { (value: Value) => (state: State) =>
-            blockHandler(value)
-          }(state)
-      }
-      restDsl.cpsApply(
-        TryFinally(withState(keyword.block), withState(keyword.finalizer)),
-        handler(_)(state)
+  given [Value, OuterDomain, BlockKeyword, BlockDomain, FinalizerKeyword, FinalizerDomain](using
+      not: util.NotGiven[Dsl.Derived[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value]],
+      dslTryFinally: Dsl.TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
+      blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
+      finalizerDsl: Dsl[FinalizerKeyword, FinalizerDomain, Unit]
+  ): Dsl[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = {
+    case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
+      dslTryFinally.tryFinally(
+        blockDsl.cpsApply(blockKeyword, _),
+        finalizerDsl.cpsApply(finalizerKeyword, _),
+        handler
       )
-    }
   }
 
-  // TODO: Lift
-  given [
-      TryKeyword,
-      FinalizerKeyword,
-      DomainValue,
-      Value
-  ](using
-      ExecutionContext,
-      Dsl[TryKeyword, Future[Value], Value],
-      Dsl[FinalizerKeyword, Future[Any], Any]
-  ): Dsl[TryFinally[TryKeyword, FinalizerKeyword], Future[DomainValue], Value] with {
-    def cpsApply(
-        keyword: TryFinally[TryKeyword, FinalizerKeyword],
-        handler: Value => Future[DomainValue]
-    ): Future[DomainValue] = {
-      catchNativeException(keyword.block)
-        .recoverWith { case e: Throwable =>
-          catchNativeException(keyword.finalizer).flatMap { _ =>
-            Future.failed(e)
-          }
-        }
-        .flatMap { a =>
-          catchNativeException(keyword.finalizer).flatMap { _ =>
-            handler(a)
-          }
-        }
-    }
-  }
 }

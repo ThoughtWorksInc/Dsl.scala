@@ -209,13 +209,12 @@ object Dsl extends LowPriorityDsl0 {
 
   /** The type class to support `try` ... `catch` ... `finally` expression for `OutputDomain`.
     *
-    * !-notation is allowed by default for `? !! Throwable` and [[scala.concurrent.Future Future]] domains, with the help of this
-    * type class.
+    * !-notation is allowed by default for `? !! Throwable` and [[scala.concurrent.Future Future]] domains, with the
+    * help of this type class.
     */
   @implicitNotFound(
     "The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
   )
-  @deprecated("Use com.thoughtworks.dsl.keywords.TryCatchFinally instead", "Dsl.scala 2.0.0")
   trait TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
     def tryCatchFinally(
         block: BlockDomain !! Value,
@@ -225,15 +224,13 @@ object Dsl extends LowPriorityDsl0 {
     ): OuterDomain
   }
 
-  @deprecated("Use com.thoughtworks.dsl.keywords.TryCatchFinally instead", "Dsl.scala 2.0.0")
   object TryCatchFinally {
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryCatchFinally instead", "Dsl.scala 2.0.0")
     implicit final class Ops[Value, OuterDomain, BlockDomain, FinalizerDomain](
         outerSuccessHandler: Value => OuterDomain
     )(implicit
         typeClass: TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]
     ) {
-      @deprecated("Use com.thoughtworks.dsl.keywords.TryCatchFinally instead", "Dsl.scala 2.0.0")
+
       def apply(
           block: BlockDomain !! Value,
           catcher: Catcher[BlockDomain !! Value],
@@ -242,7 +239,6 @@ object Dsl extends LowPriorityDsl0 {
         typeClass.tryCatchFinally(block, catcher, finalizer, outerSuccessHandler)
     }
 
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryCatchFinally instead", "Dsl.scala 2.0.0")
     implicit def fromTryCatchTryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain](implicit
         tryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
         tryCatch: TryCatch[Value, BlockDomain, BlockDomain]
@@ -266,7 +262,6 @@ object Dsl extends LowPriorityDsl0 {
   @implicitNotFound(
     "The `try` ... `catch` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
   )
-  @deprecated("Use com.thoughtworks.dsl.keywords.TryCatch instead", "Dsl.scala 2.0.0")
   trait TryCatch[Value, OuterDomain, BlockDomain] {
     def tryCatch(
         block: BlockDomain !! Value,
@@ -275,9 +270,7 @@ object Dsl extends LowPriorityDsl0 {
     ): OuterDomain
   }
 
-  @deprecated("Use com.thoughtworks.dsl.keywords.TryCatch instead", "Dsl.scala 2.0.0")
   private[dsl] trait LowPriorityTryCatch {
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryCatch instead", "Dsl.scala 2.0.0")
     implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, State](implicit
         restTryCatch: TryCatch[Value, OuterDomain, BlockDomain]
     ): TryCatch[Value, State => OuterDomain, State => BlockDomain] = {
@@ -296,10 +289,8 @@ object Dsl extends LowPriorityDsl0 {
     }
   }
 
-  @deprecated("Use com.thoughtworks.dsl.keywords.TryCatch instead", "Dsl.scala 2.0.0")
   object TryCatch extends LowPriorityTryCatch {
 
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryCatch instead", "Dsl.scala 2.0.0")
     implicit final class Ops[Value, OuterDomain, BlockDomain](outerSuccessHandler: Value => OuterDomain)(implicit
         typeClass: TryCatch[Value, OuterDomain, BlockDomain]
     ) {
@@ -308,7 +299,6 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryCatch instead", "Dsl.scala 2.0.0")
     implicit def futureTryCatch[BlockValue, OuterValue](implicit
         executionContext: ExecutionContext
     ): TryCatch[BlockValue, Future[OuterValue], Future[BlockValue]] = {
@@ -337,7 +327,6 @@ object Dsl extends LowPriorityDsl0 {
           .flatMap(outerSuccessHandler)
     }
 
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryCatch instead", "Dsl.scala 2.0.0")
     implicit def throwableContinuationTryCatch[LeftDomain, Value]
         : TryCatch[Value, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
 
@@ -396,7 +385,6 @@ object Dsl extends LowPriorityDsl0 {
   @implicitNotFound(
     "The `try` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
   )
-  @deprecated("Use com.thoughtworks.dsl.keywords.TryFinally instead", "Dsl.scala 2.0.0")
   trait TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
     def tryFinally(
         block: BlockDomain !! Value,
@@ -406,7 +394,6 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   private[dsl] trait LowPriorityTryFinally {
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryCatch instead", "Dsl.scala 2.0.0")
     implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, FinalizerDomain, State](implicit
         restTryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]
     ): TryFinally[Value, State => OuterDomain, State => BlockDomain, State => FinalizerDomain] = {
@@ -426,21 +413,17 @@ object Dsl extends LowPriorityDsl0 {
     }
   }
 
-  @deprecated("Use com.thoughtworks.dsl.keywords.TryFinally instead", "Dsl.scala 2.0.0")
   object TryFinally extends LowPriorityTryFinally {
 
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryFinally instead", "Dsl.scala 2.0.0")
     implicit final class Ops[Value, OuterDomain, BlockDomain, FinalizerDomain] @inline() (
         outerSuccessHandler: Value => OuterDomain
     )(implicit typeClass: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]) {
       @inline
-      @deprecated("Use com.thoughtworks.dsl.keywords.TryFinally instead", "Dsl.scala 2.0.0")
       def apply(block: BlockDomain !! Value, finalizer: FinalizerDomain !! Unit): OuterDomain = {
         typeClass.tryFinally(block, finalizer, outerSuccessHandler)
       }
     }
 
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryFinally instead", "Dsl.scala 2.0.0")
     implicit def futureTryFinally[BlockValue, OuterValue](implicit
         executionContext: ExecutionContext
     ): TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] = {
@@ -467,7 +450,6 @@ object Dsl extends LowPriorityDsl0 {
           }
     }
 
-    @deprecated("Use com.thoughtworks.dsl.keywords.TryFinally instead", "Dsl.scala 2.0.0")
     implicit def throwableContinuationTryFinally[LeftDomain, Value]
         : TryFinally[Value, LeftDomain !! Throwable, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
       (block, finalizer, outerSuccessHandler) => outerFailureHandler =>

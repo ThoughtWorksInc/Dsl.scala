@@ -5,43 +5,28 @@ import Dsl.!!
 import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 
-case class TryCatchFinally[TryKeyword, CaseSet, FinalizerKeyword](
-    block: TryKeyword,
-    cases: Catcher[CaseSet],
+case class TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword](
+    block: BlockKeyword,
+    cases: Catcher[CaseKeyword],
     finalizer: FinalizerKeyword
 )
 object TryCatchFinally {
-  given [
-      TryKeyword,
-      CaseSet,
-      FinalizerKeyword,
-      Domain,
-      Value
-  ](using
-      not: util.NotGiven[Dsl.Derived[
-        TryCatchFinally[TryKeyword, CaseSet, FinalizerKeyword],
-        Domain,
-        Value,
-      ]],
-      tryFinallyDsl: Dsl[
-        TryFinally[TryCatch[TryKeyword, CaseSet], FinalizerKeyword],
-        Domain,
-        Value,
-      ]
-  ): Dsl[
-    TryCatchFinally[TryKeyword, CaseSet, FinalizerKeyword],
-    Domain,
-    Value,
-  ] with {
-    def cpsApply(keyword: TryCatchFinally[TryKeyword, CaseSet, FinalizerKeyword], handler: Value => Domain): Domain = {
-      import Typed.given
-      tryFinallyDsl.cpsApply(
-        TryFinally(
-          TryCatch(keyword.block, keyword.cases),
-          keyword.finalizer
-        ),
+
+  given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword, FinalizerKeyword, FinalizerDomain](
+      using
+      not: util.NotGiven[Dsl.Derived[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value]],
+      dslTryCatchFinally: Dsl.TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
+      blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
+      caseDsl: Dsl[CaseKeyword, BlockDomain, Value],
+      finalizerDsl: Dsl[FinalizerKeyword, FinalizerDomain, Unit]
+  ): Dsl[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value] = {
+    case (TryCatchFinally(blockKeyword, cases, finalizerKeyword), handler) =>
+      dslTryCatchFinally.tryCatchFinally(
+        blockDsl.cpsApply(blockKeyword, _),
+        cases.andThen { caseKeyword => caseDsl.cpsApply(caseKeyword, _) },
+        finalizerDsl.cpsApply(finalizerKeyword, _),
         handler
       )
-    }
   }
+
 }
