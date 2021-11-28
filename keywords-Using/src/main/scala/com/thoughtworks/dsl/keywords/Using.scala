@@ -66,8 +66,8 @@ object Using {
   ): Using[R] = new Using(() => r)
 
   implicit def continuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
-      tryFinally: TryFinally[Value, Domain, Domain, Domain],
-      shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
+      tryFinallyDsl: Dsl[TryFinally[Suspend[Shift[Domain, Value]], Pure[scala.Unit]], Domain !! Value, Value],
+      // shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
   ): Dsl[Using[R], Domain !! Value, R] = { (keyword: Using[R], handler: R => Domain !! Value) =>
     *[[X] =>> Domain !! X] {
       val r = keyword.open()
