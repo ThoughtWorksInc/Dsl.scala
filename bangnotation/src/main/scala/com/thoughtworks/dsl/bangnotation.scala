@@ -384,15 +384,10 @@ object bangnotation {
                     quoted.Expr(i).asTerm.usingExpr[CaseDef, Int] { [Index <: Int] => (indexExpr: quoted.Expr[Index]) => (indexType: quoted.Type[Index]) =>
                       given quoted.Type[Index] = indexType
                       CaseDef.copy(caseDef)(
-                        caseDef.pattern match {
-                          case Bind(name, pattern) =>
-                            Bind.copy(caseDefTemplate.pattern)(name, pattern)
-                          case otherPattern =>
-                            otherPattern
-                        },
+                        caseDef.pattern,
                         caseDef.guard,
                         '{WithIndex[Index, BodyKeyword]($indexExpr, $bodyExpr).asInstanceOf[Set]}.asTerm
-                      )
+                      ).changeOwner(defDef.symbol)
                     }
                   }
               }.toList
