@@ -491,17 +491,8 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   @FunctionalInterface
-  trait Lift[From, To] extends (From => To)
-
-  object Lift {
-    @FunctionalInterface
-    trait OneStep[From, To] extends Lift[From, To]
-
-    given [CastFrom, CastTo >: CastFrom]: Lift[CastFrom, CastTo] with {
-      def apply(from: CastFrom): CastTo = {
-        from
-      }
-    }
+  trait Lift[From, +To] extends (From => To)
+  private[dsl] trait LowPriorityLift0 { this: Lift.type =>
 
     given [From, Intermediate, To](using
         step1: => OneStep[Intermediate, To],
@@ -512,11 +503,27 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-    import Dsl.!!
-    given [LeftDomain, RightDomain]: OneStep[RightDomain, LeftDomain !! RightDomain] = r => _(r)
+  }
+  object Lift extends LowPriorityLift0 {
+    @FunctionalInterface
+    trait OneStep[From, +To] extends Lift[From, To]
+
+    given [CastFrom, CastTo >: CastFrom]: Lift[CastFrom, CastTo] with {
+      def apply(from: CastFrom): CastTo = {
+        from
+      }
+    }
+
+    private[Lift] trait LowPriorityOneStep0 { this: OneStep.type =>
     given [R, F, A](using
         isFunction: (A => R) <:< F
     ): OneStep[R, F] = { r => isFunction(Function.const(r)) }
+    }
+
+    object OneStep extends LowPriorityOneStep0 {
+
+      import Dsl.!!
+      given [LeftDomain, RightDomain]: OneStep[RightDomain, LeftDomain !! RightDomain] = r => _(r)
 
     given [Element](using
         ExecutionContext
@@ -543,6 +550,7 @@ object Dsl extends LowPriorityDsl0 {
 
     given [Collection[a] >: List[a], Element]: OneStep[Element, Collection[Element]] = { element =>
       element :: Nil
+    }
     }
 
   }
