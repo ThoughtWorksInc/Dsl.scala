@@ -578,21 +578,7 @@ object Dsl extends LowPriorityDsl0 {
 
   object Run {
 
-    trait RunThenLift[Keyword, Domain, Value] extends Run[Keyword, Domain, Value]
-
-    given [Keyword, FromDomain, ToDomain, Value](using
-        lift: /*=>*/ Lift.OneStep[FromDomain, ToDomain],
-        run: /*=>*/ Run[Keyword, FromDomain, Value]
-    ): RunThenLift[Keyword, ToDomain, Value] with {
-      @inline def apply(typedKeyword: Keyword): ToDomain = {
-        lift(run(typedKeyword))
-      }
-    }
-
-    given [Keyword, Domain, Value](
-        using /* erased */
-        not: util.NotGiven[RunThenLift[Keyword, Domain, Value]]
-    )(using
+    given [Keyword, Domain, Value](using
         dsl: /*=>*/ Dsl[Keyword, Domain, Value],
         lift: /*=>*/ Lift[Value, Domain]
     ): Run[Keyword, Domain, Value] with {
