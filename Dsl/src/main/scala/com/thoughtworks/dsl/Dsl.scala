@@ -37,15 +37,18 @@ trait Dsl[-Keyword, Domain, +Value] {
 
 private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
-  implicit def derivedFunction1Dsl[Keyword, State, Domain, Value](implicit
+  given [Keyword, FunctionDomain, State, Domain, Value](using
+      isFunctionDomain: FunctionDomain =:= (State => Domain),
       restDsl: Dsl[Keyword, Domain, Value]
-  ): Derived[Keyword, State => Domain, Value] = { (keyword: Keyword, handler: Value => State => Domain) =>
+  ): Derived[Keyword, FunctionDomain, Value] = {
+    isFunctionDomain.substituteContra[[X] =>> Derived[Keyword, X, Value]] {
+      (keyword: Keyword, handler: Value => State => Domain) =>
     val restDsl1 = restDsl
     locally { (state: State) =>
       val handler1 = handler
       restDsl1.cpsApply(keyword, handler1(_)(state))
     }
-
+    }
   }
 
 }
