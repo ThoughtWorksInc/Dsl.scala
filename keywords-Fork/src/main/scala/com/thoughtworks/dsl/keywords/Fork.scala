@@ -3,10 +3,10 @@ package com.thoughtworks.dsl.keywords
 import java.io.{PrintStream, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.thoughtworks.dsl.bangnotation.{`*`, unary_!}
+import com.thoughtworks.dsl.bangnotation.{`*`, reify, unary_!}
+import com.thoughtworks.dsl.to
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
-import com.thoughtworks.dsl.Dsl.{TryCatch, TryCatchFinally, TryFinally}
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -83,7 +83,7 @@ object Fork {
       isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
       canBuildFrom: Factory[WidenElement, RightDomain],
       continueDsl: Dsl[Continue, LeftDomain, Nothing],
-      tryCatchFinally: TryCatchFinally[Unit, LeftDomain, LeftDomain, LeftDomain]
+      tryCatchFinally: Dsl.TryCatchFinally[Unit, LeftDomain, LeftDomain, LeftDomain]
   ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] = {
     (fork: Fork[NarrowElement], mapper: NarrowElement => LeftDomain !! RightDomain) =>
       *[[X] =>> LeftDomain !! X] {
