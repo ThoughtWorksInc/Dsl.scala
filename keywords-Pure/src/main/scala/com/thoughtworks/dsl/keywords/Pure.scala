@@ -4,7 +4,7 @@ package keywords
 import Dsl.IsKeyword
 
 
-opaque type Pure[Value] = Value
+opaque type Pure[+Value] = Value
 object Pure {
   given[Domain, Value]: Dsl[Pure[Value], Domain, Value] with {
     def cpsApply(keyword: Pure[Value], handler: Value => Domain): Domain = {
