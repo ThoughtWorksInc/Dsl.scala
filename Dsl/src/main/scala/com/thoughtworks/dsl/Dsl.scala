@@ -524,12 +524,6 @@ object Dsl extends LowPriorityDsl0 {
       Future.successful
     }
 
-    given [State, Element](using
-        ExecutionContext
-    ): OneStep[Element, State => Element] = {
-      Function.const
-    }
-
     given [Element, Collection <: IterableOnce[Element] | Array[Element]](using
         factory: collection.Factory[Element, Collection]
     ): OneStep[Element, Collection] = { element =>
