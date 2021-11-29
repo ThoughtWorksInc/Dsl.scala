@@ -78,6 +78,19 @@ object ReturnSpec extends TestSuite {
           43
         } == 43)
       }
+
+      "condition" - {
+        val continuation = *[[X] =>> Double !! X] {
+          val b = true
+          if (b) {
+            3.14
+          } else {
+            6.28
+          }
+        }
+
+        assert(continuation(identity) == 3.14)
+      }
     }
 
   }
