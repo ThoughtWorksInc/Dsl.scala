@@ -608,7 +608,9 @@ object Dsl extends LowPriorityDsl0 {
   opaque type Typed[Keyword, Value] = Keyword
   object Typed {
     given [Keyword, Value]: IsKeyword[Typed[Keyword, Value], Value] with {}
-    given [Keyword, Domain, Value](using dsl: Dsl[Keyword, Domain, Value]): Dsl[Typed[Keyword, Value], Domain, Value] =
+    given [Keyword, Domain, Value](using util.NotGiven[Dsl.Derived[Typed[Keyword, Value], Domain, Value]])(using
+        dsl: Dsl[Keyword, Domain, Value]
+    ): Dsl[Typed[Keyword, Value], Domain, Value] =
       dsl
 
     // TODO: Remove
