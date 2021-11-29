@@ -4,7 +4,6 @@ import java.io.{PrintStream, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.thoughtworks.dsl.bangnotation.{`*`, reify, unary_!}
-import com.thoughtworks.dsl.to
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
 
