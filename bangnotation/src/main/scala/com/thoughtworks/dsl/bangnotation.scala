@@ -684,10 +684,11 @@ object bangnotation {
       override def block = this
 
       def keywordTerm: Term = {
-        term.usingExpr { [A] => (expr: quoted.Expr[A]) => (ta: quoted.Type[A]) =>
+        // We don't need widenTermRefByName because Pure is covariant, so it could be widen automatically as needed
+        valueType/*.widenTermRefByName*/.usingType { [A] => (ta: quoted.Type[A]) =>
           given quoted.Type[A] = ta
           '{
-            keywords.Pure.cast($expr)
+            keywords.Pure.cast[A](${term.asExprOf[A]})
           }.asTerm
         }
       }
