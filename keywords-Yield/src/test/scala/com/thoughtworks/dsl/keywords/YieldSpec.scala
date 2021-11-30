@@ -10,7 +10,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.Assertions
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 

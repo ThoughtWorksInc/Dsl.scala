@@ -3,7 +3,8 @@ import com.thoughtworks.dsl.Dsl.!!
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 final class ReturnSpec extends AnyFreeSpec with Matchers {
 

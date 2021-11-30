@@ -16,7 +16,8 @@ import scala.concurrent.duration._
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with Directives {
   implicit val system = ActorSystem()
