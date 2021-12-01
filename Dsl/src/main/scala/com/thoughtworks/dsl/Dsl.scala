@@ -523,8 +523,8 @@ object Dsl extends LowPriorityDsl0 {
   private[dsl] trait LowPriorityLift0 { this: Lift.type =>
 
     given [From, Intermediate, To](using
-        step1: => OneStep[Intermediate, To],
-        step0: => Lift[From, Intermediate]
+        step1: OneStep[Intermediate, To],
+        step0: Lift[From, Intermediate]
     ): Lift[From, To] with {
       def apply(from: From): To = {
         step1(step0(from))
