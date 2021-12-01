@@ -94,7 +94,36 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 }
 
 object Dsl extends LowPriorityDsl0 {
+
   trait Derived[-Keyword, Domain, +Value] extends Dsl[Keyword, Domain, Value]
+
+  // TODO: Move this instance to another package to make it optional
+  given [Keyword, Domain, Value](using
+      restDsl: Dsl[Keyword, TailRec[Unit] !! Throwable, Value]
+  ): Derived[Keyword, Future[Domain], Value] = { (keyword, handler) =>
+    val promise = scala.concurrent.Promise[Domain]()
+    restDsl
+      .cpsApply(
+        keyword,
+        { (value: Value) => failureHandler =>
+          @inline def complete(): Unit = {
+            promise.completeWith(try {
+              handler(value)
+            } catch {
+              case NonFatal(e) =>
+                return promise.failure(e)
+            })
+          }
+          complete()
+          TailCalls.done(())
+        }
+      ) { e =>
+        promise.failure(e)
+        TailCalls.done(())
+      }
+      .result
+    promise.future
+  }
 
   implicit def derivedTailRecDsl[Keyword, Domain, Value](implicit
       restDsl: Dsl[Keyword, Domain, Value]
@@ -201,15 +230,6 @@ object Dsl extends LowPriorityDsl0 {
   def apply[Keyword, Domain, Value](implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
     typeClass
 
-  private def catchNativeException[A](futureContinuation: Future[A] !! A): Future[A] = {
-    try {
-      futureContinuation(Future.successful)
-    } catch {
-      case NonFatal(e) =>
-        Future.failed(e)
-    }
-  }
-
   /** The type class to support `try` ... `catch` ... `finally` expression for `OutputDomain`.
     *
     * !-notation is allowed by default for `? !! Throwable` and [[scala.concurrent.Future Future]] domains, with the
@@ -302,33 +322,6 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-    implicit def futureTryCatch[BlockValue, OuterValue](implicit
-        executionContext: ExecutionContext
-    ): TryCatch[BlockValue, Future[OuterValue], Future[BlockValue]] = {
-      (
-          block: Future[BlockValue] !! BlockValue,
-          catcher: Catcher[Future[BlockValue] !! BlockValue],
-          outerSuccessHandler: BlockValue => Future[OuterValue]
-      ) =>
-        catchNativeException(block)
-          .recoverWith { case e: Throwable =>
-            def recover(): Future[BlockValue] = {
-              (try {
-                catcher.lift(e)
-              } catch {
-                case NonFatal(extractorException) =>
-                  return Future.failed(extractorException)
-              }) match {
-                case None =>
-                  Future.failed(e)
-                case Some(recovered) =>
-                  catchNativeException(recovered)
-              }
-            }
-            recover()
-          }
-          .flatMap(outerSuccessHandler)
-    }
 
     implicit def throwableContinuationTryCatch[LeftDomain, Value]
         : TryCatch[Value, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
@@ -425,32 +418,6 @@ object Dsl extends LowPriorityDsl0 {
       def apply(block: BlockDomain !! Value, finalizer: FinalizerDomain !! Unit): OuterDomain = {
         typeClass.tryFinally(block, finalizer, outerSuccessHandler)
       }
-    }
-
-    implicit def futureTryFinally[BlockValue, OuterValue](implicit
-        executionContext: ExecutionContext
-    ): TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] = {
-      (
-          block: Future[BlockValue] !! BlockValue,
-          finalizer: Future[Unit] !! Unit,
-          outerSuccessHandler: BlockValue => Future[OuterValue]
-      ) =>
-        @inline
-        def injectFinalizer[A](f: Unit => Future[A]): Future[A] = {
-          catchNativeException(finalizer).flatMap(f)
-        }
-
-        catchNativeException(block)
-          .recoverWith { case e: Throwable =>
-            injectFinalizer { (_: Unit) =>
-              Future.failed(e)
-            }
-          }
-          .flatMap { a =>
-            injectFinalizer { (_: Unit) =>
-              outerSuccessHandler(a)
-            }
-          }
     }
 
     implicit def throwableContinuationTryFinally[LeftDomain, Value]

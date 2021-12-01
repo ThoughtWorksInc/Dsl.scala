@@ -206,15 +206,6 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  implicit def futureStreamYieldFromDsl[A, FromCollection <: Iterable[A]]
-      : Dsl[From[FromCollection], Stream[Future[A]], Unit] =
-    new Dsl[From[FromCollection], Stream[Future[A]], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Stream[Future[A]]): Stream[Future[A]] = {
-        import From.elements
-        keyword.elements.toStream.map(Future.successful).append(generateTail(()))
-      }
-    }
-
   implicit def implicitYield[Element](element: Element): Yield[Element] = Yield[Element](element)
 
   implicit def streamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
@@ -224,10 +215,4 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  implicit def futureStreamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[Future[That]], Unit] =
-    new Dsl[Yield[Element], Stream[Future[That]], Unit] {
-      def cpsApply(keyword: Yield[Element], generateTail: Unit => Stream[Future[That]]): Stream[Future[That]] = {
-        new Stream.Cons(Future.successful(keyword.element), generateTail(()))
-      }
-    }
 }

@@ -90,9 +90,10 @@ class AwaitTest {
 
     import FlatMap.given
 
+    // assertEquals(Vector(100, 101, 102), result(ast1.as[Future[Vector[Int]]], Duration.Inf))
     assertEquals(Vector(100, 101, 102), result(ast1.as[Future[Vector[Int]] !! Vector[Int]].apply(Future.successful), Duration.Inf))
-
-    assertArrayEquals(Array(100, 101, 102), result(ast1.as[Future[Future[Array[Int]] !! Array[Int]]].flatMap(_(Future.successful)), Duration.Inf))
+    assertArrayEquals(Array(100, 101, 102), result(ast1.as[Future[Array[Int]] !! Array[Int]].apply(Future.successful), Duration.Inf))
+    // assertArrayEquals(Array(100, 101, 102), result(ast1.as[Future[Future[Array[Int]] !! Array[Int]]].flatMap(_(Future.successful)), Duration.Inf))
   }
 
   @Test
