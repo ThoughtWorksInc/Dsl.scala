@@ -23,10 +23,9 @@ object FlatMap {
       MappedValue,
       Domain
   ](using
-      not: NotGiven[Dsl.Derived[FlatMap[Upstream, UpstreamValue, Mapped], Domain, MappedValue]],
-      upstreamDsl: Dsl[Upstream, Domain, UpstreamValue],
-      nestedDsl: Dsl[Mapped, Domain, MappedValue]
-  ): Dsl[FlatMap[Upstream, UpstreamValue, Mapped], Domain, MappedValue] with {
+      upstreamDsl: Dsl.PolyCont[Upstream, Domain, UpstreamValue],
+      nestedDsl: Dsl.PolyCont[Mapped, Domain, MappedValue]
+  ): Dsl.PolyCont[FlatMap[Upstream, UpstreamValue, Mapped], Domain, MappedValue] with {
     def cpsApply(
         keyword: FlatMap[Upstream, UpstreamValue, Mapped],
         handler: MappedValue => Domain

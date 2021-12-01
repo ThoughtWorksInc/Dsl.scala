@@ -28,26 +28,21 @@ import scala.util.control.TailCalls.TailRec
   *     [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   */
 @implicitNotFound("The keyword:\n ${Keyword}\nis not supported inside a function that returns:\n${Domain}.")
-trait Dsl[-Keyword, Domain, +Value] {
-
-  /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
-  def cpsApply(keyword: Keyword, handler: Value => Domain): Domain
-
-}
+trait Dsl[-Keyword, Domain, +Value] extends Dsl.PolyCont[Keyword, Domain, Value] 
 
 private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
   given [Keyword, FunctionDomain, State, Domain, Value](using
       isFunctionDomain: FunctionDomain =:= (State => Domain),
       restDsl: Dsl[Keyword, Domain, Value]
-  ): Derived[Keyword, FunctionDomain, Value] = {
-    isFunctionDomain.substituteContra[[X] =>> Derived[Keyword, X, Value]] {
+  ): Dsl[Keyword, FunctionDomain, Value] = {
+    isFunctionDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
       (keyword: Keyword, handler: Value => State => Domain) =>
-    val restDsl1 = restDsl
-    locally { (state: State) =>
-      val handler1 = handler
-      restDsl1.cpsApply(keyword, handler1(_)(state))
-    }
+        val restDsl1 = restDsl
+        locally { (state: State) =>
+          val handler1 = handler
+          restDsl1.cpsApply(keyword, handler1(_)(state))
+        }
     }
   }
 
@@ -72,7 +67,7 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
   implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Derived[Keyword, LeftDomain !! Throwable, Value] = { (keyword, handler) => continue =>
+  ): Dsl[Keyword, LeftDomain !! Throwable, Value] = { (keyword, handler) => continue =>
     restDsl.cpsApply(
       keyword,
       new (Value => LeftDomain) {
@@ -95,12 +90,11 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 object Dsl extends LowPriorityDsl0 {
 
-  trait Derived[-Keyword, Domain, +Value] extends Dsl[Keyword, Domain, Value]
 
   // TODO: Move this instance to another package to make it optional
   given [Keyword, Domain, Value](using
       restDsl: Dsl[Keyword, TailRec[Unit] !! Throwable, Value]
-  ): Derived[Keyword, Future[Domain], Value] = { (keyword, handler) =>
+  ): Dsl[Keyword, Future[Domain], Value] = { (keyword, handler) =>
     val promise = scala.concurrent.Promise[Domain]()
     restDsl
       .cpsApply(
@@ -127,7 +121,7 @@ object Dsl extends LowPriorityDsl0 {
 
   implicit def derivedTailRecDsl[Keyword, Domain, Value](implicit
       restDsl: Dsl[Keyword, Domain, Value]
-  ): Derived[Keyword, TailRec[Domain], Value] = { (keyword, handler) =>
+  ): Dsl[Keyword, TailRec[Domain], Value] = { (keyword, handler) =>
     TailCalls.done {
       restDsl.cpsApply(
         keyword,
@@ -140,7 +134,7 @@ object Dsl extends LowPriorityDsl0 {
 
   implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value]
-  ): Derived[Keyword, TailRec[LeftDomain] !! Throwable, Value] = { (keyword, handler) => tailRecFailureHandler =>
+  ): Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] = { (keyword, handler) => tailRecFailureHandler =>
     TailCalls.done(
       restDsl.cpsApply(
         keyword,
@@ -482,9 +476,9 @@ object Dsl extends LowPriorityDsl0 {
     }
 
     private[Lift] trait LowPriorityOneStep0 { this: OneStep.type =>
-    given [R, F, A](using
-        isFunction: (A => R) <:< F
-    ): OneStep[R, F] = { r => isFunction(Function.const(r)) }
+      given [R, F, A](using
+          isFunction: (A => R) <:< F
+      ): OneStep[R, F] = { r => isFunction(Function.const(r)) }
     }
 
     object OneStep extends LowPriorityOneStep0 {
@@ -492,32 +486,32 @@ object Dsl extends LowPriorityDsl0 {
       import Dsl.!!
       given [LeftDomain, RightDomain]: OneStep[RightDomain, LeftDomain !! RightDomain] = r => _(r)
 
-    given [Element](using
-        ExecutionContext
-    ): OneStep[Element, Future[Element]] = {
-      Future.successful
-    }
+      given [Element](using
+          ExecutionContext
+      ): OneStep[Element, Future[Element]] = {
+        Future.successful
+      }
 
-    given [Element, Collection <: IterableOnce[Element] | Array[Element]](using
-        factory: collection.Factory[Element, Collection]
-    ): OneStep[Element, Collection] = { element =>
-      factory.fromSpecific(element :: Nil)
-    }
+      given [Element, Collection <: IterableOnce[Element] | Array[Element]](using
+          factory: collection.Factory[Element, Collection]
+      ): OneStep[Element, Collection] = { element =>
+        factory.fromSpecific(element :: Nil)
+      }
 
-    // given[Element, Array <: scala.Array[Element]](
-    //   given factory: collection.Factory[Element, Array]
-    // ): OneStep[Element, Array] = { element =>
-    //   factory.fromSpecific(element :: Nil)
-    // }
-    // given[Collection[_], Element](
-    //   given factory: collection.Factory[Element, Collection[Element]]
-    // ): OneStep[Element, Collection[Element]] = { element =>
-    //   factory.fromSpecific(element :: Nil)
-    // }
+      // given[Element, Array <: scala.Array[Element]](
+      //   given factory: collection.Factory[Element, Array]
+      // ): OneStep[Element, Array] = { element =>
+      //   factory.fromSpecific(element :: Nil)
+      // }
+      // given[Collection[_], Element](
+      //   given factory: collection.Factory[Element, Collection[Element]]
+      // ): OneStep[Element, Collection[Element]] = { element =>
+      //   factory.fromSpecific(element :: Nil)
+      // }
 
-    given [Collection[a] >: List[a], Element]: OneStep[Element, Collection[Element]] = { element =>
-      element :: Nil
-    }
+      given [Collection[a] >: List[a], Element]: OneStep[Element, Collection[Element]] = { element =>
+        element :: Nil
+      }
     }
 
   }
@@ -541,12 +535,20 @@ object Dsl extends LowPriorityDsl0 {
     }
   })
 
+  trait PolyCont[-Keyword, Domain, +Value] {
+
+    /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
+    def cpsApply(keyword: Keyword, handler: Value => Domain): Domain
+
+  }
+
+
   trait Run[Keyword, Domain, Value] extends (Keyword => Domain)
 
   object Run {
 
     given [Keyword, Domain, Value](using
-        dsl: /*=>*/ Dsl[Keyword, Domain, Value],
+        dsl: /*=>*/ PolyCont[Keyword, Domain, Value],
         lift: /*=>*/ Lift[Value, Domain]
     ): Run[Keyword, Domain, Value] with {
       @inline def apply(keyword: Keyword): Domain = {
@@ -561,9 +563,9 @@ object Dsl extends LowPriorityDsl0 {
   opaque type Typed[Keyword, Value] = Keyword
   object Typed {
     given [Keyword, Value]: IsKeyword[Typed[Keyword, Value], Value] with {}
-    given [Keyword, Domain, Value](using util.NotGiven[Dsl.Derived[Typed[Keyword, Value], Domain, Value]])(using
-        dsl: Dsl[Keyword, Domain, Value]
-    ): Dsl[Typed[Keyword, Value], Domain, Value] =
+    given [Keyword, Domain, Value](using
+        dsl: Dsl.PolyCont[Keyword, Domain, Value]
+    ): Dsl.PolyCont[Typed[Keyword, Value], Domain, Value] =
       dsl
 
     // TODO: Remove
@@ -591,7 +593,7 @@ object Dsl extends LowPriorityDsl0 {
 
   extension [Keyword, Domain, Value](keyword: Keyword)
     @inline def cpsApply(using
-        dsl: Dsl[Keyword, Domain, Value]
+        dsl: PolyCont[Keyword, Domain, Value]
     )(handler: Value => Domain)(using DummyImplicit): Domain = {
       dsl.cpsApply(keyword, handler)
     }

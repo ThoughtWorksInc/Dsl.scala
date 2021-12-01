@@ -13,11 +13,10 @@ object TryCatch {
 
   given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword](
       using
-      not: util.NotGiven[Dsl.Derived[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value]],
       dslTryCatch: Dsl.TryCatch[Value, OuterDomain, BlockDomain],
-      blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
-      caseDsl: Dsl[CaseKeyword, BlockDomain, Value],
-  ): Dsl[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value] = {
+      blockDsl: Dsl.PolyCont[BlockKeyword, BlockDomain, Value],
+      caseDsl: Dsl.PolyCont[CaseKeyword, BlockDomain, Value],
+  ): Dsl.PolyCont[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value] = {
     case (TryCatch(blockKeyword, cases), handler) =>
       dslTryCatch.tryCatch(
         blockDsl.cpsApply(blockKeyword, _),

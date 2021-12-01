@@ -16,11 +16,10 @@ case class TryFinally[TryKeyword, FinalizerKeyword](
 object TryFinally {
 
   given [Value, OuterDomain, BlockKeyword, BlockDomain, FinalizerKeyword, FinalizerDomain](using
-      not: util.NotGiven[Dsl.Derived[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value]],
       dslTryFinally: Dsl.TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
-      blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
-      finalizerDsl: Dsl[FinalizerKeyword, FinalizerDomain, Unit]
-  ): Dsl[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = {
+      blockDsl: Dsl.PolyCont[BlockKeyword, BlockDomain, Value],
+      finalizerDsl: Dsl.PolyCont[FinalizerKeyword, FinalizerDomain, Unit]
+  ): Dsl.PolyCont[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = {
     case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
       dslTryFinally.tryFinally(
         blockDsl.cpsApply(blockKeyword, _),

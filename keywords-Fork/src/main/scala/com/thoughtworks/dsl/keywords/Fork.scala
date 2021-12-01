@@ -82,8 +82,8 @@ object Fork {
       isTraversableOnce: RightDomain => TraversableOnce[WidenElement],
       canBuildFrom: Factory[WidenElement, RightDomain],
       continueDsl: Dsl[Continue, LeftDomain, Nothing],
-      tryCatchFinally: Dsl.TryCatchFinally[Unit, LeftDomain, LeftDomain, LeftDomain]
-  ): Dsl[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] = {
+      tryCatchFinally: Dsl.TryCatchFinally[Unit, LeftDomain !! RightDomain, LeftDomain !! RightDomain, LeftDomain !! RightDomain]
+  ): Dsl.PolyCont[Fork[NarrowElement], LeftDomain !! RightDomain, NarrowElement] = {
     (fork: Fork[NarrowElement], mapper: NarrowElement => LeftDomain !! RightDomain) =>
       *[[X] =>> LeftDomain !! X] {
         val builder: mutable.Builder[WidenElement, RightDomain] = newBuilder[WidenElement, RightDomain]

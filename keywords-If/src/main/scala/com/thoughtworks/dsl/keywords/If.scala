@@ -12,11 +12,10 @@ final case class If[ConditionKeyword, ThenKeyword, ElseKeyword](
 object If {
   given[ConditionKeyword, ThenKeyword, ElseKeyword, Domain, Value](
     using
-    util.NotGiven[Dsl.Derived[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value]],
-    Dsl[ConditionKeyword, Domain, Boolean],
-    Dsl[ThenKeyword, Domain, Value],
-    Dsl[ElseKeyword, Domain, Value],
-  ): Dsl[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] with {
+    Dsl.PolyCont[ConditionKeyword, Domain, Boolean],
+    Dsl.PolyCont[ThenKeyword, Domain, Value],
+    Dsl.PolyCont[ElseKeyword, Domain, Value],
+  ): Dsl.PolyCont[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] with {
     def cpsApply(keyword: If[ConditionKeyword, ThenKeyword, ElseKeyword], handler: Value => Domain): Domain = {
       keyword.cond.cpsApply{
         case true =>

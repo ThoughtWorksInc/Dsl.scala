@@ -14,12 +14,11 @@ object TryCatchFinally {
 
   given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword, FinalizerKeyword, FinalizerDomain](
       using
-      not: util.NotGiven[Dsl.Derived[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value]],
       dslTryCatchFinally: Dsl.TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
-      blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
-      caseDsl: Dsl[CaseKeyword, BlockDomain, Value],
-      finalizerDsl: Dsl[FinalizerKeyword, FinalizerDomain, Unit]
-  ): Dsl[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value] = {
+      blockDsl: Dsl.PolyCont[BlockKeyword, BlockDomain, Value],
+      caseDsl: Dsl.PolyCont[CaseKeyword, BlockDomain, Value],
+      finalizerDsl: Dsl.PolyCont[FinalizerKeyword, FinalizerDomain, Unit]
+  ): Dsl.PolyCont[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value] = {
     case (TryCatchFinally(blockKeyword, cases, finalizerKeyword), handler) =>
       dslTryCatchFinally.tryCatchFinally(
         blockDsl.cpsApply(blockKeyword, _),

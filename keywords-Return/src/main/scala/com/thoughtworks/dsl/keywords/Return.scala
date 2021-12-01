@@ -23,7 +23,6 @@ object Return {
   extension [ReturnValue](keyword: Return[ReturnValue]) def returnValue: ReturnValue = keyword
 
   given [ReturnValue, Domain](using
-      not: util.NotGiven[Dsl.Derived[Return[ReturnValue], Domain, Nothing]],
       lift: Lift[ReturnValue, Domain]
   ): Dsl[Return[ReturnValue], Domain, Nothing] with {
     def cpsApply(keyword: Return[ReturnValue], handler: Nothing => Domain): Domain = {
