@@ -65,9 +65,10 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 //    }
 //  }
 
-  implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
+  implicit def throwableContinuationDsl[Keyword, ThrowableContinuationDomain, LeftDomain, Value](implicit
+      isThrowableContinuationDomain: ThrowableContinuationDomain =:= (LeftDomain !! Throwable),
       restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Dsl[Keyword, LeftDomain !! Throwable, Value] = { (keyword, handler) => continue =>
+  ): Dsl[Keyword, ThrowableContinuationDomain, Value] = isThrowableContinuationDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]]  { (keyword, handler) => continue =>
     restDsl.cpsApply(
       keyword,
       new (Value => LeftDomain) {
@@ -92,9 +93,10 @@ object Dsl extends LowPriorityDsl0 {
 
 
   // TODO: Move this instance to another package to make it optional
-  given [Keyword, Domain, Value](using
-      restDsl: Dsl[Keyword, TailRec[Unit] !! Throwable, Value]
-  ): Dsl[Keyword, Future[Domain], Value] = { (keyword, handler) =>
+  given [Keyword, FutureDomain, Domain, Value](using
+    isFutureDomain: FutureDomain =:= Future[Domain],
+    restDsl: Dsl[Keyword, TailRec[Unit] !! Throwable, Value],
+  ): Dsl[Keyword, FutureDomain, Value] = isFutureDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) =>
     val promise = scala.concurrent.Promise[Domain]()
     restDsl
       .cpsApply(
@@ -119,9 +121,10 @@ object Dsl extends LowPriorityDsl0 {
     promise.future
   }
 
-  implicit def derivedTailRecDsl[Keyword, Domain, Value](implicit
+  implicit def derivedTailRecDsl[Keyword, TailRecDomain, Domain, Value](implicit
+      isTailRecDomain: TailRecDomain =:= TailRec[Domain],
       restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, TailRec[Domain], Value] = { (keyword, handler) =>
+  ): Dsl[Keyword, TailRecDomain, Value] = isTailRecDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) =>
     TailCalls.done {
       restDsl.cpsApply(
         keyword,
@@ -132,9 +135,10 @@ object Dsl extends LowPriorityDsl0 {
     }
   }
 
-  implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
+  implicit def derivedThrowableTailRecDsl[Keyword, TaskDomain, LeftDomain, Value](implicit
+      isTaskDomain: TaskDomain =:= (TailRec[LeftDomain] !! Throwable),
       restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value]
-  ): Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] = { (keyword, handler) => tailRecFailureHandler =>
+  ): Dsl[Keyword, TaskDomain, Value] = isTaskDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) => tailRecFailureHandler =>
     TailCalls.done(
       restDsl.cpsApply(
         keyword,
@@ -223,6 +227,15 @@ object Dsl extends LowPriorityDsl0 {
 
   def apply[Keyword, Domain, Value](implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
     typeClass
+
+  private def catchNativeException[A](futureContinuation: Future[A] !! A): Future[A] = {
+    try {
+      futureContinuation(Future.successful)
+    } catch {
+      case NonFatal(e) =>
+        Future.failed(e)
+    }
+  }
 
   /** The type class to support `try` ... `catch` ... `finally` expression for `OutputDomain`.
     *
@@ -370,6 +383,34 @@ object Dsl extends LowPriorityDsl0 {
         }
         runBlock()
     }
+
+    implicit def futureTryCatch[BlockValue, OuterValue](implicit
+        executionContext: ExecutionContext
+    ): TryCatch[BlockValue, Future[OuterValue], Future[BlockValue]] = {
+      (
+          block: Future[BlockValue] !! BlockValue,
+          catcher: Catcher[Future[BlockValue] !! BlockValue],
+          outerSuccessHandler: BlockValue => Future[OuterValue]
+      ) =>
+        catchNativeException(block)
+          .recoverWith { case e: Throwable =>
+            def recover(): Future[BlockValue] = {
+              (try {
+                catcher.lift(e)
+              } catch {
+                case NonFatal(extractorException) =>
+                  return Future.failed(extractorException)
+              }) match {
+                case None =>
+                  Future.failed(e)
+                case Some(recovered) =>
+                  catchNativeException(recovered)
+              }
+            }
+            recover()
+          }
+          .flatMap(outerSuccessHandler)
+    }
   }
 
   @implicitNotFound(
@@ -412,6 +453,32 @@ object Dsl extends LowPriorityDsl0 {
       def apply(block: BlockDomain !! Value, finalizer: FinalizerDomain !! Unit): OuterDomain = {
         typeClass.tryFinally(block, finalizer, outerSuccessHandler)
       }
+    }
+
+    implicit def futureTryFinally[BlockValue, OuterValue](implicit
+        executionContext: ExecutionContext
+    ): TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] = {
+      (
+          block: Future[BlockValue] !! BlockValue,
+          finalizer: Future[Unit] !! Unit,
+          outerSuccessHandler: BlockValue => Future[OuterValue]
+      ) =>
+        @inline
+        def injectFinalizer[A](f: Unit => Future[A]): Future[A] = {
+          catchNativeException(finalizer).flatMap(f)
+        }
+
+        catchNativeException(block)
+          .recoverWith { case e: Throwable =>
+            injectFinalizer { (_: Unit) =>
+              Future.failed(e)
+            }
+          }
+          .flatMap { a =>
+            injectFinalizer { (_: Unit) =>
+              outerSuccessHandler(a)
+            }
+          }
     }
 
     implicit def throwableContinuationTryFinally[LeftDomain, Value]
