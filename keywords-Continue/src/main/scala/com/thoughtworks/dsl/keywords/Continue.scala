@@ -22,14 +22,15 @@ sealed class Continue
   * @example [[Each]] and [[Continue$ Continue]] can be used to calculate composite numbers and prime numbers.
   *
   *          {{{
-  *          def compositeNumbersBelow(maxNumber: Int) = collection.immutable.HashSet {
+  *          import com.thoughtworks.dsl.bangnotation._
+  *          def compositeNumbersBelow(maxNumber: Int) = *[collection.immutable.HashSet] {
   *            val factor = !Each(2 until math.ceil(math.sqrt(maxNumber)).toInt)
   *            !Each(2 * factor until maxNumber by factor)
   *          }
   *
   *          compositeNumbersBelow(13) should be(Set(4, 6, 8, 9, 10, 12))
   *
-  *          def primeNumbersBelow(maxNumber: Int) = Seq {
+  *          def primeNumbersBelow(maxNumber: Int) = *[Seq] {
   *            val compositeNumbers = compositeNumbersBelow(maxNumber)
   *            val i = !Each(2 until maxNumber)
   *            if (compositeNumbers(i)) !Continue
