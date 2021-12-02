@@ -135,6 +135,30 @@ object Await {
   @inline def cast[Result]: concurrent.Future[Result] <:< Await[Result] = implicitly
   given [Result]: IsKeyword[Await[Result], Result] with {}
 
+  implicit def streamAwaitDsl[Value, That](implicit
+      executionContext: ExecutionContext
+  ): Dsl[Await[Value], Stream[Future[That]], Value] =
+    new Dsl[Await[Value], Stream[Future[That]], Value] {
+      def cpsApply(keyword: Await[Value], handler: Value => Stream[Future[That]]): Stream[Future[That]] = {
+        val futureOfStream = keyword.future.map(handler)
+        new Stream.Cons(futureOfStream.flatMap(_.head), result(futureOfStream, Duration.Inf).tail)
+      }
+    }
+
+  implicit def awaitDsl[Value, That](implicit
+      executionContext: ExecutionContext
+  ): Dsl[Await[Value], Future[That], Value] =
+    new Dsl[Await[Value], Future[That], Value] {
+      def cpsApply(keyword: Await[Value], handler: Value => Future[That]): Future[That] = {
+        keyword.future.flatMap(handler)
+      }
+    }
+
+  // // TODO: 
+  // implicit def tailRecContinuationAwaitDsl[Value](implicit
+  //     executionContext: ExecutionContext
+  // ): Dsl[Await[Value], TailRec[Unit] !! Throwable, Value]
+
   implicit def continuationAwaitDsl[Value](implicit
       executionContext: ExecutionContext
   ): Dsl[Await[Value], Unit !! Throwable, Value] =

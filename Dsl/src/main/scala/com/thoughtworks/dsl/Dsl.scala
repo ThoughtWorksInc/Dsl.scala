@@ -91,36 +91,6 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 object Dsl extends LowPriorityDsl0 {
 
-
-  // TODO: Move this instance to another package to make it optional
-  given [Keyword, FutureDomain, Domain, Value](using
-    isFutureDomain: FutureDomain =:= Future[Domain],
-    restDsl: Dsl[Keyword, TailRec[Unit] !! Throwable, Value],
-  ): Dsl[Keyword, FutureDomain, Value] = isFutureDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) =>
-    val promise = scala.concurrent.Promise[Domain]()
-    restDsl
-      .cpsApply(
-        keyword,
-        { (value: Value) => failureHandler =>
-          @inline def complete(): Unit = {
-            promise.completeWith(try {
-              handler(value)
-            } catch {
-              case NonFatal(e) =>
-                return promise.failure(e)
-            })
-          }
-          complete()
-          TailCalls.done(())
-        }
-      ) { e =>
-        promise.failure(e)
-        TailCalls.done(())
-      }
-      .result
-    promise.future
-  }
-
   implicit def derivedTailRecDsl[Keyword, TailRecDomain, Domain, Value](implicit
       isTailRecDomain: TailRecDomain =:= TailRec[Domain],
       restDsl: Dsl[Keyword, Domain, Value]
