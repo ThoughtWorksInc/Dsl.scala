@@ -1,11 +1,14 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.Dsl.{!!, reset}
+import com.thoughtworks.dsl.bangnotation._
+import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
+import scala.language.implicitConversions
 
 import com.thoughtworks.dsl.keywords.{Using, Each, Fork}
 import com.thoughtworks.dsl.domains.task._
+import com.thoughtworks.dsl.keywords.Shift
 import com.thoughtworks.dsl.keywords.Shift.implicitShift
 
 import scala.collection.mutable.ArrayBuffer
@@ -18,45 +21,45 @@ import org.scalatest.matchers.should.Matchers
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
-  "tailRecurision" in Task.toFuture(Task.apply {
-    def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = _ {
+  "tailRecurision" in Task.toFuture(*[Task] {
+    def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = *[task.Task] {
       if (i < 1000) {
-        !loop(i + 1, accumulator + i)
+        !Shift(loop(i + 1, accumulator + i))
       } else {
         accumulator
       }
     }
 
-    val result = !loop()
+    val result = !Shift(loop())
     result should be(499500)
   })
 
-  "taskToFuture" in Task.toFuture(Task.apply {
+  "taskToFuture" in Task.toFuture(*[Task] {
     succeed
   })
 
-  "loop" in Task.toFuture(Task.apply {
+  "loop" in Task.toFuture(*[Task] {
 
     val task1: Task[Int] = Task.now(1)
 
     val ts = Task.join {
-      !Fork(0 until 10) + !task1
+      !Fork(0 until 10) + !Shift(task1)
     }
 
-    !ts should be(1 until 11)
+    !Shift(ts) should be(1 until 11)
 
   })
 
-  "try" in Task.toFuture(Task.apply {
+  "try" in Task.toFuture(*[Task] {
     class MyException extends Exception
-    val task1: Task[Int] = Task.apply {
+    val task1: Task[Int] = *[Task] {
       throw new MyException
     }
 
-    val task2 = Task.apply {
+    val task2 = *[Task] {
       val v =
         try {
-          !task1
+          !Shift(task1)
           "no exception"
         } catch {
           case myException: MyException =>
@@ -66,7 +69,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       s"try: $v"
     }
 
-    !task2 should be("try: my exception")
+    !Shift(task2) should be("try: my exception")
   })
 
   "empty try" in {
@@ -79,14 +82,14 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       throw new MyException
     }
 
-    val task2: Task[String] = _ {
+    val task2: Task[String] = *[Task] {
       try {
         "no exception"
       } catch {
         case myException: MyException =>
           "my exception"
       }
-      !task1
+      !Shift(task1)
     }
 
     Task.onComplete(task2) {
@@ -103,7 +106,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
   "autoClose" in {
     val logs = ArrayBuffer.empty[Int]
 
-    val task: Task[Unit] = Task.apply {
+    val task: Task[Unit] = *[Task] {
 
       logs += 0
 
@@ -126,7 +129,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
         }
       })
 
-      !Task.apply {
+      !Shift(*[Task] {
         logs += 3
 
         !Using(new AutoCloseable {
@@ -149,7 +152,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
         })
 
         logs += 6
-      }
+      })
 
       logs += 7
 
@@ -166,14 +169,14 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     def composeTask(t0: Task[Seq[Task[Seq[Task[Seq[Task[Seq[Float]]]]]]]]): Task[Seq[Seq[Seq[Seq[Float]]]]] = {
       // TODO: remove explicit type parameters when https://github.com/scala/bug/issues/11068 is fixed
       Task.join[Seq[Seq[Seq[Float]]], Seq[Seq[Seq[Seq[Float]]]]] {
-        val t1 = !Each(!t0)
-        !Task.join[Seq[Seq[Float]], Seq[Seq[Seq[Float]]]] {
-          val t2 = !Each(!t1)
-          !Task.join[Seq[Float], Seq[Seq[Float]]] {
-            val t3 = !Each(!t2)
-            !t3
-          }
-        }
+        val t1 = !Each(!Shift(t0))
+        !Shift(Task.join[Seq[Seq[Float]], Seq[Seq[Seq[Float]]]] {
+          val t2 = !Each(!Shift(t1))
+          !Shift(Task.join[Seq[Float], Seq[Seq[Float]]] {
+            val t3 = !Each(!Shift(t2))
+            !Shift(t3)
+          })
+        })
       }
     }
 

@@ -28,7 +28,8 @@ object task {
     *          For example, the above `concatenateRemoteData` downloads and concatenates data from multiple URLs.
     *
     *          {{{
-    *          import com.thoughtworks.dsl.comprehension._
+    *          import com.thoughtworks.dsl.bangnotation._
+    *          import com.thoughtworks.dsl._
     *          import com.thoughtworks.dsl.keywords._
     *          import com.thoughtworks.dsl.keywords.Shift._
     *          import com.thoughtworks.dsl.domains.task.Task
@@ -36,7 +37,7 @@ object task {
     *          def concatenateRemoteData(urls: List[URL], downloader: URL => Task[Vector[Byte]]): Task[Vector[Byte]] = {
     *            for {
     *              url <- Fork(urls)
-    *              data <- downloader(url)
+    *              data <- Shift(downloader(url))
     *              byte <- Each(data)
     *            } yield byte
     *          }.as[Task[Vector[Byte]]]
@@ -59,8 +60,8 @@ object task {
     *          val mockUrls = List(new URL("http://example.com/file1"), new URL("http://example.com/file2"))
     *
     *          import org.scalatest.Assertion
-    *          def assertion: Task[Assertion] = Task {
-    *            !concatenateRemoteData(mockUrls, mockDownloader) should be("mock data\nmock data\n".getBytes.toVector)
+    *          def assertion: Task[Assertion] = *[Task] {
+    *            !Shift(concatenateRemoteData(mockUrls, mockDownloader)) should be("mock data\nmock data\n".getBytes.toVector)
     *          }
     *
     *          Task.toFuture(assertion)
@@ -83,13 +84,14 @@ object task {
       *
       * @example All the code after a `!switchExecutionContext` should be executed on `executionContext`
       *          {{{
+      *          import com.thoughtworks.dsl.bangnotation._
       *          import com.thoughtworks.dsl.domains.task.Task
       *          import org.scalatest.Assertion
       *          import scala.concurrent.ExecutionContext
-      *          import com.thoughtworks.dsl.keywords.Shift.implicitShift
-      *          def myTask: Task[Assertion] = _ {
+      *          import com.thoughtworks.dsl.keywords.Shift
+      *          def myTask: Task[Assertion] = *[Task] {
       *            val originalThread = Thread.currentThread
-      *            !Task.switchExecutionContext(ExecutionContext.global)
+      *            !Shift(Task.switchExecutionContext(ExecutionContext.global))
       *            Thread.currentThread should not be originalThread
       *          }
       *
@@ -130,9 +132,9 @@ object task {
 
     import Scala213._
 
-    def join[Element, That](element: Element)(implicit factory: Factory[Element, That]): Task[That] = now {
+    inline def join[Element, That](inline element: Element)(implicit factory: Factory[Element, That]): Task[That] = bangnotation.reset(now {
       (newBuilder[Element, That] += element).result()
-    }
+    })
 
     def onComplete[A](task: Task[A])(continue: Try[A] => Unit) = {
       Continuation

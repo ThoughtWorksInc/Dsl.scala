@@ -1,9 +1,10 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
+import com.thoughtworks.dsl.Dsl.{!!, Continuation}
 import com.thoughtworks.dsl.keywords.{Shift, Yield}
 import com.thoughtworks.dsl.domains.task._
+import com.thoughtworks.dsl.bangnotation._
 
 import scala.util.control.NonFatal
 import org.scalatest.freespec.AnyFreeSpec
@@ -29,9 +30,9 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
 
   /** Exit the current scope then hang up
     */
-  def successContinuation[LeftDomain](domain: LeftDomain): (LeftDomain !! Throwable) @reset = Continuation.empty(domain)
+  def successContinuation[LeftDomain](domain: LeftDomain): (LeftDomain !! Throwable) = Continuation.empty(domain)
 
-  def failureContinuation[LeftDomain](throwable: Throwable): (LeftDomain !! Throwable) @reset =
+  def failureContinuation[LeftDomain](throwable: Throwable): (LeftDomain !! Throwable) =
     Continuation.now(throwable)
 
   "Given a continuation that throws an exception" - {
@@ -40,7 +41,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
     "Given a generator" - {
 
       object MyException extends Exception
-      def generator: Stream[Int] !! Throwable = {
+      def generator: Stream[Int] !! Throwable = reset {
         !Yield(1)
         throw {
           !Yield(2)
@@ -51,7 +52,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
       }
 
       "When catching exception thrown from the generator" - {
-        val catching = generator { e: Throwable =>
+        val catching = generator { (e: Throwable) =>
           e should be(MyException)
           Stream(100)
         }
@@ -64,7 +65,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
   }
   "try/catch" - {
     "yield and catch" in {
-      def continuation: Stream[Int] !! Throwable !! String = _ {
+      def continuation: Stream[Int] !! Throwable !! String = *[[X] =>> Stream[Int] !! Throwable !! X] {
         val tryResult =
           try {
             0 / 0
@@ -75,7 +76,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
           }
         "returns " + tryResult
       }
-      continuation { result: String =>
+      continuation { (result: String) =>
         result should be("returns catch")
         successContinuation(Stream.empty)
       } { e =>
@@ -87,20 +88,22 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
 
       object MyException extends Exception
       def generator: Stream[String] !! Throwable !! Int = { continue =>
-        try {
-          !Yield("before catch")
-          continue(43)
-        } catch {
-          case e: Throwable =>
-            e should be(MyException)
-            !Yield("catch")
-            continue(42)
+        reset {
+          try {
+            !Yield("before catch")
+            continue(43)
+          } catch {
+            case e: Throwable =>
+              e should be(MyException)
+              !Yield("catch")
+              continue(42)
+          }
         }
       }
 
       object MyException2 extends Exception
 
-      def generator2: Stream[String] !! Throwable = {
+      def generator2: Stream[String] !! Throwable = reset {
         import Throwable._
         val i = !Shift(generator)
         !Yield(i.toString)
@@ -117,16 +120,18 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
 
     "issue 2" in {
       def continuation: Stream[Int] !! Throwable !! String = { continue =>
-        !Yield(1)
-        try {} catch {
-          case e: ArithmeticException =>
-            !Yield(2)
+        reset {
+          !Yield(1)
+          try {} catch {
+            case e: ArithmeticException =>
+              !Yield(2)
+          }
+          !Yield(3)
+          failureContinuation(new ArithmeticException)
         }
-        !Yield(3)
-        failureContinuation(new ArithmeticException)
       }
 
-      continuation { result: String =>
+      continuation { (result: String) =>
         failureContinuation(new AssertionError())
       } { e =>
         e should be(a[ArithmeticException])
@@ -136,7 +141,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
     }
 
     "empty finally" in {
-      def continuation: Stream[Int] !! Throwable !! String = _ {
+      def continuation: Stream[Int] !! Throwable !! String = *[[X] =>> Stream[Int] !! Throwable !! X] {
         val tryResult =
           try {
             0 / 0
@@ -145,7 +150,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
         "returns " + tryResult
       }
 
-      jvmCatch(continuation { result: String =>
+      jvmCatch(continuation { (result: String) =>
         failureContinuation(new AssertionError())
       }) { e =>
         e should be(a[ArithmeticException])
@@ -153,7 +158,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
       } should be(Seq())
     }
     "rethrow" in {
-      def continuation: Stream[Int] !! Throwable !! String = _ {
+      def continuation: Stream[Int] !! Throwable !! String = *[[X] =>> Stream[Int] !! Throwable !! X] {
         val tryResult =
           try {
             0 / 0
@@ -164,7 +169,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
           }
         "returns " + tryResult
       }
-      continuation { result: String =>
+      continuation { (result: String) =>
         failureContinuation(new AssertionError())
       } { e =>
         e should be(a[ArithmeticException])
@@ -173,7 +178,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
     }
 
     "complex" in {
-      def continuation: Stream[Int] !! Throwable !! String = _ {
+      def continuation: Stream[Int] !! Throwable !! String = *[[X] =>> Stream[Int] !! Throwable !! X] {
         !Yield(0)
         val tryResult =
           try {
@@ -201,7 +206,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
         "returns " + tryResult
       }
 
-      continuation { result: String =>
+      continuation { (result: String) =>
         result should be("returns catch")
         successContinuation(Stream.empty)
       } { e =>

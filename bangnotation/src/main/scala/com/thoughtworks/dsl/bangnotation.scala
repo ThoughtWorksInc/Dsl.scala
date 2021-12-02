@@ -311,6 +311,12 @@ object bangnotation {
                 Pure(Assign.copy(assign)(pureLhs, pureRhs), term.tpe)
               }
             }
+          case Inlined(Some(typeTree: TypeTree), _, term) =>
+            KeywordTree(term).flatMap { pureExpr =>
+              Pure(qctx.reflect.Typed(pureExpr, typeTree), typeTree.tpe)
+            }
+          case Inlined(_, _, term) =>
+            KeywordTree(term)
           case whileTerm @ qctx.reflect.While(cond, body) =>
             While(Suspend(KeywordTree(cond)), Suspend(KeywordTree(body)))
           case returnTree @ qctx.reflect.Return(expr, _from) =>

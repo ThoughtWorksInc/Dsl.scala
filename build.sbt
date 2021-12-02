@@ -26,9 +26,10 @@ lazy val `domains-task` =
     .crossType(CrossType.Pure)
     .dependsOn(
       `keywords-Shift`,
-      bangnotation % Test,
+      bangnotation,
       `keywords-In` % Test,
       `keywords-Fork` % Test,
+      `keywords-Each` % Test,
       `keywords-Using` % Test,
       `keywords-Yield` % Test,
       comprehension % Test
@@ -118,6 +119,7 @@ lazy val `keywords-AsynchronousIo` =
     .dependsOn(
       `keywords-Shift`,
       `keywords-In` % Test,
+      `keywords-Each` % Test,
       `keywords-Using` % Test,
       comprehension % Test,
       `domains-task` % Test
