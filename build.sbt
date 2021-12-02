@@ -153,11 +153,6 @@ lazy val `keywords-NoneSafe` =
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, bangnotation % Test, `keywords-Return`)
 
-lazy val `keywords-NullSafe` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, bangnotation)
-
 lazy val `keywords-For` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -252,7 +247,6 @@ lazy val `package` = project
     `keywords-Yield`.jvm,
     `keywords-Fork`.jvm,
     `keywords-NoneSafe`.jvm,
-    `keywords-NullSafe`.jvm,
     `keywords-Await`.jvm,
     `keywords-AsynchronousIo`.jvm,
     `keywords-Using`.jvm,
