@@ -1,11 +1,15 @@
 package com.thoughtworks.dsl.domains
 
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.Dsl.!!
+import _root_.scalaz.\/
+import _root_.scalaz.\/-
 import _root_.scalaz.OptionT
-import _root_.scalaz.concurrent.Task
+import _root_.scalaz.std.either._
 import _root_.scalaz.std.stream._
-import com.thoughtworks.dsl.domains.scalaz._
+import com.thoughtworks.dsl.domains.scalaz.{_, given}
 import com.thoughtworks.dsl.keywords.{Monadic, Shift, Yield}
+import com.thoughtworks.dsl.keywords.Monadic.given
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -14,23 +18,22 @@ import org.scalatest.matchers.should.Matchers
 class scalazSpec extends AnyFreeSpec with Matchers {
 
   "MonadError" in {
-    def task: Task[Int] = Task.now {
-      import com.thoughtworks.dsl.keywords.Monadic._
+    def task: Either[Throwable, Int] = *[[X] =>> Either[Throwable, X]] {
       try {
         0 / 0
       } catch {
         case e: ArithmeticException =>
           42
       } finally {
-        !Task.now(())
+        !Monadic(*[[X] =>> Either[Throwable, X]](()))
       }
     }
-    task.unsafePerformSync should be(42)
+    task should be(Right(42))
   }
 
   "Given a continuation that uses Yield and Monadic expressions" - {
 
-    def asyncFunction: Stream[String] !! Unit = _ {
+    def asyncFunction: Stream[String] !! Unit = *[[X] =>> Stream[String] !! X] {
       !Yield("Entering asyncFunction")
       val subThreadId = !Monadic(Stream(0, 1))
       !Yield(s"Fork sub-thread $subThreadId")
@@ -39,7 +42,7 @@ class scalazSpec extends AnyFreeSpec with Matchers {
 
     "When create a generator that contains Yield, Shift, and Monadic expressions" - {
 
-      def generator: Stream[String] = {
+      def generator: Stream[String] = reset {
         !Yield("Entering generator")
         val threadId = !Monadic(Stream(0, 1))
         !Yield(s"Fork thread $threadId")
@@ -108,7 +111,7 @@ class scalazSpec extends AnyFreeSpec with Matchers {
   }
 
   "Given a monadic expression that contains a Scalaz OptionT" - {
-    def myOptionalList: OptionT[Stream, String] = {
+    def myOptionalList: OptionT[Stream, String] = reset {
       // TODO: Is it possible to have `Yield` expressions here?
       val threadId = !Monadic(Stream(0, 1, 2))
       val subThreadId = !Monadic(OptionT(Stream(Some(10), None, Some(30))))

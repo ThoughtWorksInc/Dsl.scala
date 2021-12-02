@@ -24,15 +24,16 @@ import scala.util.control.NonFatal
   *          {{{
   *          import _root_.scalaz.Trampoline
   *          import _root_.scalaz.Free.Trampoline
+  *          import com.thoughtworks.dsl.keywords.Monadic
   *          import com.thoughtworks.dsl.keywords.Monadic._
   *          import com.thoughtworks.dsl.domains.scalaz._
-  *          import com.thoughtworks.dsl.Dsl.reset
+  *          import com.thoughtworks.dsl.bangnotation._
   *
   *          val trampoline3 = Trampoline.done(3)
   *
-  *          def dslSquare = Trampoline.delay {
-  *            s"This string is produced by a trampoline: ${!trampoline3 * !trampoline3}"
-  *          }: @reset
+  *          def dslSquare = reset(Trampoline.delay {
+  *            s"This string is produced by a trampoline: ${!Monadic(trampoline3) * !Monadic(trampoline3)}"
+  *          })
   *
   *          dslSquare.run should be("This string is produced by a trampoline: 9")
   *          }}}
@@ -65,24 +66,28 @@ import scala.util.control.NonFatal
   *          whose return type is `TryT[Trampoline, ?]`.
   *
   *          {{{
-  *          import com.thoughtworks.tryt.invariant.TryT, TryT._
-  *          import scala.util.{Try, Success}
+  *          import scala.util.Try
+  *          import _root_.scalaz.\/-
+  *          import _root_.scalaz.EitherT
+  *          import _root_.scalaz.syntax.std.`try`.given
+  *          import _root_.scalaz.syntax.monad.given
+  *          type TryT[M[_], A] = EitherT[Throwable, M, A]
   *          type TryTTransfomredTrampoline[A] = TryT[Trampoline, A]
   *
-  *          val trampolineSuccess0: TryTTransfomredTrampoline[Int] = TryT(Trampoline.done(Try(0)))
+  *          val trampolineSuccess0: TryTTransfomredTrampoline[Int] = EitherT(Trampoline.done(\/-(0)))
   *
-  *          def dslTryCatch: TryTTransfomredTrampoline[String] = TryT(Trampoline.delay(Try {
+  *          def dslTryCatch: TryTTransfomredTrampoline[String] = reset(EitherT(Trampoline.delay(\/- {
   *            try {
-  *              s"Division result: ${!trampoline3 / !trampolineSuccess0}"
+  *              s"Division result: ${!Monadic(trampoline3) / !Monadic(trampolineSuccess0)}"
   *            } catch {
   *              case e: ArithmeticException =>
-  *                s"Cannot divide ${!trampoline3} by ${!trampolineSuccess0}"
+  *                s"Cannot divide ${!Monadic(trampoline3)} by ${!Monadic(trampolineSuccess0)}"
   *            }
-  *          })): @reset
+  *          })))
   *
   *          inside(dslTryCatch) {
-  *            case TryT(trampoline) =>
-  *              trampoline.run should be(Success("Cannot divide 3 by 0"))
+  *            case EitherT(trampoline) =>
+  *              trampoline.run should be(\/-("Cannot divide 3 by 0"))
   *          }
   *          }}}
   *
@@ -101,13 +106,13 @@ import scala.util.control.NonFatal
   *            import _root_.scalaz.syntax.monadError._
   *            trampoline3.liftM[TryT].flatMap { tmp0 =>
   *              trampolineSuccess0.flatMap { tmp1 =>
-  *                 TryT(Trampoline.delay(Try(s"Division result: ${tmp0 / tmp1}")))
+  *                 EitherT(Trampoline.delay(Try(s"Division result: ${tmp0 / tmp1}").toDisjunction))
   *              }
   *            }.handleError {
   *              case e: ArithmeticException =>
   *                trampoline3.liftM[TryT].flatMap { tmp2 =>
   *                  trampolineSuccess0.flatMap { tmp3 =>
-  *                     TryT(Trampoline.delay(Try(s"Cannot divide ${tmp2} by ${tmp3}")))
+  *                     EitherT(Trampoline.delay(\/-(s"Cannot divide ${tmp2} by ${tmp3}")))
   *                  }
   *                }
   *              case e =>
@@ -116,8 +121,8 @@ import scala.util.control.NonFatal
   *          }
   *
   *          inside(scalazSyntaxTryCatch) {
-  *            case TryT(trampoline) =>
-  *              trampoline.run should be(Success("Cannot divide 3 by 0"))
+  *            case EitherT(trampoline) =>
+  *              trampoline.run should be(\/-("Cannot divide 3 by 0"))
   *          }
   *          }}}
   *
@@ -184,12 +189,10 @@ object scalaz {
       }
     }
 
-  implicit def scalazReturnDsl[F[_], A, B](implicit
+  implicit def scalazLift[F[_], A, B](implicit
       applicative: Applicative[F],
-      restReturnDsl: Dsl[Return[A], B, Nothing]
-  ): Dsl[Return[A], F[B], Nothing] = { (keyword: Return[A], handler: Nothing => F[B]) =>
-    applicative.pure(restReturnDsl.cpsApply(keyword, identity))
-  }
+  ): Dsl.Lift.OneStep[A, F[A]] =
+    applicative.pure
 
   implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](implicit
       monadTrans: MonadTrans[F],
