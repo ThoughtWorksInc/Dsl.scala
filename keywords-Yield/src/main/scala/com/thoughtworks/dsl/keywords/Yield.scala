@@ -19,12 +19,14 @@ import scala.language.higherKinds
   *          or it will not compile.
   *
   *          {{{
+  *          import com.thoughtworks.dsl.bangnotation._
   *          "def f(): Int = !Yield(1)" shouldNot compile
   *          }}}
   *
   * @example [[Yield]] keywords can be used together with other keywords.
   *          {{{
-  *          def gccFlagBuilder(sourceFile: String, includes: String*): Stream[String] = {
+  *          import com.thoughtworks.dsl.bangnotation._
+  *          def gccFlagBuilder(sourceFile: String, includes: String*) = reset[Stream[String]] {
   *            !Yield("gcc")
   *            !Yield("-c")
   *            !Yield(sourceFile)
@@ -68,7 +70,7 @@ private[keywords] object YieldScalaVersions {
   object Scala213 {
 
 
-    trait LowPriorityYield1 {
+    trait LowPriorityYield1 extends LowPriorityYield3 {
       implicit def seqYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A], Collection[X] <: SeqOps[
         X,
         Collection,

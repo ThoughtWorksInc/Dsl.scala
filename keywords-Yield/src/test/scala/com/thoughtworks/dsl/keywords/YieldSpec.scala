@@ -8,8 +8,8 @@ import scala.runtime.NonLocalReturnControl
 import scala.language.implicitConversions
 import utest.{TestSuite, Tests, test, given}
 
-/**
-  * @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 @deprecated("This test suite contains test cases for Stream, which is deprecated")
 object YieldSpec extends TestSuite {
@@ -108,7 +108,7 @@ object YieldSpec extends TestSuite {
           (id[Unit] _)(!Yield(100))
           Stream.empty[Int]
         }
-        assert(generator ==Stream(100))
+        assert(generator == Stream(100))
       }
 
       "do/while" - {
@@ -120,7 +120,7 @@ object YieldSpec extends TestSuite {
             } do ()
             Stream.empty[Int]
           }
-          assert(generator ==Stream(100))
+          assert(generator == Stream(100))
         }
 
         "false" - {
@@ -131,7 +131,7 @@ object YieldSpec extends TestSuite {
             } do ()
             Stream.empty[Int]
           }
-          assert(generator ==Stream(100))
+          assert(generator == Stream(100))
         }
 
         "with var" - {
@@ -144,10 +144,10 @@ object YieldSpec extends TestSuite {
               }
               !Yield(-i)
               i > 0
-            } do()
+            } do ()
             Stream.empty[Int]
           }
-          assert(generator ==Stream(5, -4, 4, -3, 3, -2, 2, -1, 1, 0))
+          assert(generator == Stream(5, -4, 4, -3, 3, -2, 2, -1, 1, 0))
         }
       }
 
@@ -201,7 +201,7 @@ object YieldSpec extends TestSuite {
           if (true) {
             !Yield(1)
           }
-          if ({ !Yield(2); false }) {
+          if { !Yield(2); false } then {
             !Yield(3)
           } else {
             !Yield(4)
@@ -212,29 +212,29 @@ object YieldSpec extends TestSuite {
         "Then the generator should contains values in selected branches" - {
           assert(generator == Seq(1, 2, 4))
 
-    //   "Given a continuation that uses Yield" - {
+          //   "Given a continuation that uses Yield" - {
 
-    //     def yield4243: Stream[Int] !! Unit = _ {
-    //       !Yield(42)
-    //       !Yield(43)
-    //     }
+          //     def yield4243: Stream[Int] !! Unit = _ {
+          //       !Yield(42)
+          //       !Yield(43)
+          //     }
 
-    //     "when create a generator that contains multiple Yield expression followed by a bang notation and a Stream.empty" - {
+          //     "when create a generator that contains multiple Yield expression followed by a bang notation and a Stream.empty" - {
 
-    //       def generator: Stream[Int] = {
-    //         !Yield(0)
-    //         !Shift(yield4243)
-    //         !Yield(1)
-    //         Stream.empty[Int]
-    //       }
+          //       def generator: Stream[Int] = {
+          //         !Yield(0)
+          //         !Shift(yield4243)
+          //         !Yield(1)
+          //         Stream.empty[Int]
+          //       }
 
-    //       "Then the generator should contains yield values" - {
-    //         assert(generator ==Seq(0, 42, 43, 1))
-    //       }
+          //       "Then the generator should contains yield values" - {
+          //         assert(generator ==Seq(0, 42, 43, 1))
+          //       }
 
-    //     }
+        }
 
-    //   }
+      }
 
       "apply" - {
         def generator = reset[Stream[Int]] {
@@ -269,22 +269,20 @@ object YieldSpec extends TestSuite {
       }
       "partial function" - {
         "empty" - {
-          assert(Seq.empty[Any].flatMap {
-            case i: Int =>
-              reset {
-                !Yield(100)
-                Stream(42)
-              }
+          assert(Seq.empty[Any].flatMap { case i: Int =>
+            reset {
+              !Yield(100)
+              Stream(42)
+            }
           } == Seq.empty)
         }
 
         "flatMap" - {
-          def flatMapReset = Seq(100, 200).flatMap {
-            case i: Int =>
-              reset {
-                !Yield(100)
-                Stream(42 + i)
-              }
+          def flatMapReset = Seq(100, 200).flatMap { case i: Int =>
+            reset {
+              !Yield(100)
+              Stream(42 + i)
+            }
           }
           assert(flatMapReset == Seq(100, 142, 100, 242))
         }
@@ -316,7 +314,7 @@ object YieldSpec extends TestSuite {
         }
         assert(generator.toList == List("naked"))
       }
-  
+
       "yield from indexed seq view" - {
         def generator = reset {
           !Yield(100, 101)
@@ -324,7 +322,7 @@ object YieldSpec extends TestSuite {
         }
         assert(generator.toList == List(100, 101))
       }
-  
+
       "yield from seq view" - {
         def generator = reset {
           !Yield(100, 101)
@@ -416,14 +414,15 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.Assertions
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
-  {
+  reset {
     !Yield(1)
 
-    def nested(): Stream[Int] = {
+    def nested(): Stream[Int] = reset {
       !Yield(2)
       Stream.empty[Int]
     }
@@ -433,7 +432,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
   "Given a continuation that uses Yield and Each expressions" - {
 
-    def asyncFunction: Stream[String] !! Unit = _ {
+    def asyncFunction: Stream[String] !! Unit = *[[X] =>> Stream[String] !! X] {
       !Yield("Entering asyncFunction")
       val subThreadId: Int = !Each(Seq(0, 1))
       !Yield(s"Fork sub-thread $subThreadId")
@@ -442,7 +441,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
     "When create a generator that contains Yield, Shift, and Each expressions" - {
 
-      def generator: Stream[String] = {
+      def generator: Stream[String] = reset {
         !Yield("Entering generator")
         val threadId = !Each(Seq(0, 1))
         !Yield(s"Fork thread $threadId")
@@ -512,13 +511,13 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
   "stream" - {
 
-    def shouldCompile = {
+    def shouldCompile = reset {
       !Yield("naked")
       Stream.empty[String]
     }
 
     "local method" in {
-      def generator: Stream[Int] = {
+      def generator: Stream[Int] = reset {
         def id[A](a: A) = a
         id(!Yield(100))
         Stream.empty[Int]
@@ -527,16 +526,16 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
 
     "yield from" in {
-      def generator: Stream[Int] = {
+      def generator: Stream[Int] = reset {
         def id[A](a: A) = a
         id(!Yield(100, 200))
-        Stream.empty
+        Stream.empty[Int]
       }
       generator should be(Stream(100, 200))
     }
 
     "local function" in {
-      def generator: Stream[Int] = {
+      def generator: Stream[Int] = reset {
         def id[A](a: A) = a
         (id[Unit] _)(!Yield(100))
         Stream.empty[Int]
@@ -546,38 +545,38 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
     "do/while" - {
       "empty body" in {
-        def generator: Stream[Int] = {
-          do {} while ({
+        def generator = reset {
+          while {
             !Yield(100)
             false
-          })
+          } do ()
           Stream.empty[Int]
         }
         generator should be(Stream(100))
       }
 
       "false" in {
-        def generator: Stream[Int] = {
-          do {
+        def generator: Stream[Int] = reset {
+          while {
             !Yield(100)
-          } while (false)
+            false
+          } do ()
           Stream.empty[Int]
         }
         generator should be(Stream(100))
       }
 
       "with var" in {
-        def generator: Stream[Int] = {
+        def generator: Stream[Int] = reset {
           var i = 5
-          do {
+          while {
             i -= {
               !Yield(i)
               1
             }
-          } while ({
             !Yield(-i)
             i > 0
-          })
+          } do ()
           Stream.empty[Int]
         }
         generator should be(Stream(5, -4, 4, -3, 3, -2, 2, -1, 1, 0))
@@ -586,7 +585,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
     "while" - {
       "false" in {
-        def whileFalse: Stream[Int] = {
+        def whileFalse: Stream[Int] = reset {
           while (false) {
             !Yield(100)
           }
@@ -599,7 +598,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
     "match/case" in {
 
-      def loop(i: Int): Stream[Int] = {
+      def loop(i: Int): Stream[Int] = reset {
         i match {
           case 100 =>
             Stream.empty
@@ -614,7 +613,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
 
     "recursive" in {
-      def loop(i: Int): Stream[Int] = {
+      def loop(i: Int): Stream[Int] = reset {
         if (i < 100) {
           !Yield(i)
           loop(i + 1)
@@ -628,14 +627,14 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
 
     "Given a generator that contains conditional Yield" - {
-      def generator = {
+      def generator = reset {
         if (false) {
           !Yield(0)
         }
         if (true) {
           !Yield(1)
         }
-        if ({ !Yield(2); false }) {
+        if { !Yield(2); false } then {
           !Yield(3)
         } else {
           !Yield(4)
@@ -651,14 +650,14 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
     "Given a continuation that uses Yield" - {
 
-      def yield4243: Stream[Int] !! Unit = _ {
+      def yield4243: Stream[Int] !! Unit = *[[X] =>> Stream[Int] !! X] {
         !Yield(42)
         !Yield(43)
       }
 
       "when create a generator that contains multiple Yield expression followed by a bang notation and a Stream.empty" - {
 
-        def generator: Stream[Int] = {
+        def generator: Stream[Int] = reset {
           !Yield(0)
           !Shift(yield4243)
           !Yield(1)
@@ -674,7 +673,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
 
     "apply" in {
-      def generator: Stream[Int] = {
+      def generator: Stream[Int] = reset {
         val f = {
           !Yield(1)
 
@@ -693,7 +692,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
 
     "return" in {
-      def generator: Stream[Int] = {
+      def generator: Stream[Int] = reset {
         if (true) {
           return {
             !Yield(100)
@@ -708,28 +707,32 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     "partial function" - {
       "empty" in {
         Seq.empty[Any].flatMap { case i: Int =>
-          !Yield(100)
-          Stream(42)
+          reset {
+            !Yield(100)
+            Stream(42)
+          }
         } should be(empty)
       }
 
       "flatMap" in {
         Seq(100, 200).flatMap { case i: Int =>
-          !Yield(100)
-          Stream(42 + i)
+          reset {
+            !Yield(100)
+            Stream(42 + i)
+          }
         } should be(Seq(100, 142, 100, 242))
       }
     }
 
     "nested function call" - {
       "call by value" in {
-        def nested() = {
+        def nested() = reset {
           "foo" +: !Yield("bar") +: Stream.empty[Any]
         }
         nested() should be(Stream("bar", "foo", ()))
       }
       "call by name" in {
-        def nested() = {
+        def nested() = reset {
           "foo" #:: !Yield("bar") #:: Stream.empty[Any]
         }
         nested() should be(Stream("bar", "foo", ()))
@@ -741,7 +744,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
   "view" - {
 
     "indexed seq view" in {
-      def generator = {
+      def generator = reset {
         !Yield("naked")
         Vector.empty[String].view
       }
@@ -749,7 +752,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
 
     "yield from indexed seq view" in {
-      def generator = {
+      def generator = reset {
         !Yield(100, 101)
         Vector.empty[Int].view
       }
@@ -757,7 +760,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
 
     "yield from seq view" in {
-      def generator = {
+      def generator = reset {
         !Yield(100, 101)
         Seq.empty[Int].view
       }
@@ -765,7 +768,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     }
 
     "local method" in {
-      def generator = {
+      def generator = reset {
         def id[A](a: A) = a
         id(!Yield(100))
         Seq.empty[Int].view
@@ -781,7 +784,7 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     import Scala212And213._
 
     ignoreInScala211("yield from") {
-      def generator = {
+      def generator = reset {
         def id[A](a: A) = a
         id(!Yield(100, 200))
         Seq.empty[Int].view ++ Nil
@@ -793,25 +796,25 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
   "iterator" - {
 
-    def shouldCompile: Iterator[String] = {
+    def shouldCompile: Iterator[String] = reset {
       !Yield("naked")
-      Iterator.empty
+      Iterator.empty[String]
     }
 
     "local method" in {
-      def generator: Iterator[Int] = {
+      def generator: Iterator[Int] = reset {
         def id[A](a: A) = a
         id(!Yield(100))
-        Iterator.empty
+        Iterator.empty[Int]
       }
       generator.toList should be(List(100))
     }
 
     "yield from" in {
-      def generator: Iterator[Int] = {
+      def generator: Iterator[Int] = reset {
         def id[A](a: A) = a
         id(!Yield(100, 200))
-        Iterator.empty
+        Iterator.empty[Int]
       }
       generator.toList should be(List(100, 200))
     }
@@ -819,25 +822,25 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
   "seq" - {
 
-    def shouldCompile: LinearSeq[String] = {
+    def shouldCompile: LinearSeq[String] = reset {
       !Yield("naked")
       LinearSeq.empty[String]
     }
 
     "local method" in {
-      def generator: LinearSeq[Int] = {
+      def generator: LinearSeq[Int] = reset {
         def id[A](a: A) = a
         id(!Yield(100))
-        LinearSeq.empty
+        LinearSeq.empty[Int]
       }
       generator should be(LinearSeq(100))
     }
 
     "yield from" in {
-      def generator: LinearSeq[Int] = {
+      def generator: LinearSeq[Int] = reset {
         def id[A](a: A) = a
         id(!Yield(100, 200))
-        LinearSeq.empty
+        LinearSeq.empty[Int]
       }
       generator should be(LinearSeq(100, 200))
     }
