@@ -32,7 +32,7 @@ trait Dsl[-Keyword, Domain, +Value] extends Dsl.PolyCont[Keyword, Domain, Value]
 
 private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
-  given [Keyword, FunctionDomain, State, Domain, Value](using
+  given deriveFunction1Dsl[Keyword, FunctionDomain, State, Domain, Value](using
       isFunctionDomain: FunctionDomain =:= (State => Domain),
       restDsl: Dsl[Keyword, Domain, Value]
   ): Dsl[Keyword, FunctionDomain, Value] = {
@@ -553,24 +553,6 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
-  given [Keyword, Domain, State, InnerDomain, Value](using
-      // Return Dsl[Keyword, Domain, Value] instead of more specific Dsl[Keyword, State => InnerDomain, Value], in order to lower down the priority
-      isFunctionDsl: Dsl[Keyword, State => InnerDomain, Value] <:< Dsl[Keyword, Domain, Value],
-      restDsl: => Dsl[Keyword, InnerDomain, Value]
-  ): Dsl[Keyword, Domain, Value] = isFunctionDsl(new Dsl[Keyword, State => InnerDomain, Value] {
-    def cpsApply(keyword: Keyword, handler: Value => State => InnerDomain): State => InnerDomain = {
-      val restDsl1 = restDsl
-      locally { state =>
-        val handler1 = handler
-        restDsl1.cpsApply(
-          keyword,
-          { value =>
-            handler1.apply(value).apply(state)
-          }
-        )
-      }
-    }
-  })
 
   trait PolyCont[-Keyword, Domain, +Value] {
 
