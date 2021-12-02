@@ -16,7 +16,8 @@ import scala.collection.mutable.Builder
   * @example [[Each]] keywords can be used to calculate cartesian product.
   *
   *          {{{
-  *          def cartesianProduct = List(!Each(Array(1, 2, 3)) * !Each(Vector(1, 10, 100, 1000)))
+  *          import com.thoughtworks.dsl.bangnotation._
+  *          def cartesianProduct = reset (List(!Each(Array(1, 2, 3)) * !Each(Vector(1, 10, 100, 1000))))
   *          cartesianProduct should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
   *          }}}
   * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
