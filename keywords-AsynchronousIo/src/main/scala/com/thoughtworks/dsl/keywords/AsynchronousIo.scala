@@ -15,13 +15,14 @@ import scala.util.control.NonFatal
   *
   *          {{{
   *          import java.nio._, file._, channels._
+  *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl.domains.task.Task
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo.ReadFile
   *          import scala.collection.mutable.ArrayBuffer
   *          import scala.io.Codec
-  *          def readAll(channel: AsynchronousFileChannel, temporaryBufferSize: Int = 4096): Task[ArrayBuffer[CharBuffer]] = Task {
+  *          def readAll(channel: AsynchronousFileChannel, temporaryBufferSize: Int = 4096): Task[ArrayBuffer[CharBuffer]] = *[Task] {
   *            val charBuffers = ArrayBuffer.empty[CharBuffer]
   *            val decoder = Codec.UTF8.decoder
   *            val byteBuffer = ByteBuffer.allocate(temporaryBufferSize)
@@ -46,7 +47,8 @@ import scala.util.control.NonFatal
   *          and finally converts the return type [[comprehension.ComprehensionOps.as as]] a `Task[Vector[Char]]`.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.comprehension._
+  *          import com.thoughtworks.dsl._
+  *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.domains.task.Task
@@ -55,7 +57,7 @@ import scala.util.control.NonFatal
   *            for {
   *              path <- Each(paths)
   *              channel <- Using(AsynchronousFileChannel.open(path))
-  *              charBuffers <- readAll(channel)
+  *              charBuffers <- Shift(readAll(channel))
   *              charBuffer <- Each(charBuffers)
   *              char <- Each(charBuffer.toString)
   *            } yield char
@@ -65,8 +67,8 @@ import scala.util.control.NonFatal
   *          Then the `cat` function is used to concatenate files from this project, as shown below:
   *
   *          {{{
-  *          Task.toFuture(Task {
-  *            (!cat(Paths.get(".sbtopts"), Paths.get(".scalafmt.conf"))).mkString should be(
+  *          Task.toFuture(*[Task] {
+  *            (!Shift(cat(Paths.get(".sbtopts"), Paths.get(".scalafmt.conf")))).mkString should be(
   *              "-J-XX:MaxMetaspaceSize=512M\n-J-Xmx5G\n-J-Xss6M\nversion = \"1.5.1\"\nmaxColumn = 120"
   *            )
   *          })
@@ -79,7 +81,7 @@ trait AsynchronousIo[Value] extends Any {
 }
 
 object AsynchronousIo {
-  given [Value]: IsKeyword[AsynchronousIo[Value], Value] with {}
+  given [Keyword <: AsynchronousIo[Value], Value]: IsKeyword[Keyword, Value] with {}
   final case class Connect(socket: AsynchronousSocketChannel, remote: SocketAddress) extends AsynchronousIo[Void] {
     protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Void, _ >: Attachment]): Unit = {
       socket.connect(remote, attachment, handler)
