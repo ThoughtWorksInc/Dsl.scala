@@ -4,28 +4,17 @@ libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.10" % Test
 
 publishArtifact := false
 
-libraryDependencies ++= {
-  import Ordering.Implicits._
-  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
-    Nil
-  } else {
-    Seq(
-      "com.thoughtworks.dsl" %% "domains-cats" % "2.0.0" % Optional,
-      "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % Optional,
-      "org.scala-lang.modules" %% "scala-async" % "0.9.7" % Optional,
-      "com.typesafe.akka" %% "akka-actor" % "2.5.32" % Optional,
-      "com.twitter" %% "algebird-core" % "0.13.9" % Optional,
-      "com.thoughtworks.binding" %% "binding" % "11.9.0" % Optional,
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2" % Optional,
-      "org.scalacheck" %% "scalacheck" % "1.15.2" % Optional,
-      "com.thoughtworks.each" %% "each" % "3.3.1" % Optional,
-      "com.lihaoyi" %% "sourcecode" % "0.2.7" % Optional,
-      "io.monix" %% "monix" % "3.3.0" % Optional,
-      "com.typesafe.akka" %% "akka-stream" % "2.5.32" % Optional,
-      "com.typesafe.akka" %% "akka-http" % "10.1.15" % Optional
-    )
-  }
-}
+libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.6.17" % Optional
+libraryDependencies += "com.thoughtworks.binding" %% "binding" % "13.0.0-M0" % Optional
+libraryDependencies += "org.scala-lang.modules" %% "scala-async" % "1.0.1" % Optional cross CrossVersion.for3Use2_13
+libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.0" % Optional
+libraryDependencies += "com.twitter" %% "algebird-core" % "0.13.9" % Optional cross CrossVersion.for3Use2_13
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.15.4" % Optional
+// libraryDependencies += "com.thoughtworks.each" %% "each" % "3.3.4" % Optional cross CrossVersion.for3Use2_13
+libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.2.7" % Optional
+libraryDependencies += "io.monix" %% "monix" % "3.4.0" % Optional
+libraryDependencies += "com.typesafe.akka" %% "akka-http" % "10.2.7" % Optional cross CrossVersion.for3Use2_13
+libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.6.17" % Optional
 
 import Ordering.Implicits._
 sourceGenerators in Test := {
