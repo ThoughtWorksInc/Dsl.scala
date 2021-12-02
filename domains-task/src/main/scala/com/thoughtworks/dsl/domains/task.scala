@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
+import com.thoughtworks.dsl.Dsl.{!!, Continuation}
 import com.thoughtworks.dsl.keywords.Shift
 
 import scala.collection._
