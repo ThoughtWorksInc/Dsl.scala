@@ -1,7 +1,8 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.Dsl.{!!, Continuation, reset}
+import com.thoughtworks.dsl.Dsl.{!!, Continuation}
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.keywords.{Using, Yield}
 import org.scalatest.Assertion
 import org.scalatest.freespec.AnyFreeSpec
@@ -11,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
   */
 class UsingSpec extends AnyFreeSpec with Matchers {
 
-  def successContinuation[Domain](domain: Domain): (Domain !! Throwable) @reset = Continuation.empty(domain)
+  def successContinuation[Domain](domain: Domain): (Domain !! Throwable) = Continuation.empty(domain)
 
   "AutoCloseable" - {
 
@@ -20,7 +21,7 @@ class UsingSpec extends AnyFreeSpec with Matchers {
       "arm" in {
         var isOpen = false
 
-        def raii: Stream[Int] !! Throwable !! Assertion = Continuation.apply {
+        def raii: Stream[Int] !! Throwable !! Assertion = *[[X] =>> Stream[Int] !! Throwable !! X] {
           !Yield(1)
           isOpen should be(false)
           val a = !Using {

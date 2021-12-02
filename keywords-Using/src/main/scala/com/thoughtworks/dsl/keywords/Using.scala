@@ -42,8 +42,9 @@ object Using {
     *          {{{
     *          import scala.concurrent.Future
     *          import com.thoughtworks.dsl.keywords.Using.scopeExit
+    *          import com.thoughtworks.dsl.bangnotation._
     *          var n = 1
-    *          def multiplicationAfterAddition = Future {
+    *          def multiplicationAfterAddition = *[Future] {
     *            !scopeExit { () =>
     *              n *= 2
     *            }
@@ -79,4 +80,43 @@ object Using {
     }
   }
 
+  implicit def scalaFutureUsingDsl[R <: AutoCloseable, A](implicit executionContext: ExecutionContext)
+    : Dsl[Using[R], Future[A], R] = { (keyword: Using[R], handler: R => Future[A]) =>
+    Future(keyword.open()).flatMap { (r: R) =>
+      def onFailure(e: Throwable): Future[Nothing] = {
+        try {
+          r.close()
+          Future.failed(e)
+        } catch {
+          case NonFatal(e2) =>
+            Future.failed(e2)
+        }
+      }
+
+      def onSuccess(a: A): Future[A] = {
+        try {
+          r.close()
+          Future.successful(a)
+        } catch {
+          case NonFatal(e2) =>
+            Future.failed(e2)
+        }
+      }
+
+      def returnableBlock(): Future[A] = {
+        val fa: Future[A] = try {
+          handler(r)
+        } catch {
+          case NonFatal(e) =>
+            return onFailure(e)
+        }
+        fa.recoverWith {
+            case NonFatal(e) =>
+              onFailure(e)
+          }
+          .flatMap(onSuccess)
+      }
+      returnableBlock()
+    }
+  }
 }
