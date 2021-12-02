@@ -183,6 +183,7 @@ lazy val `keywords-Yield` =
     .dependsOn(
       Dsl,
       bangnotation % Test,
+      `keywords-Each` % Test,
       `keywords-Shift` % Test,
       `keywords-In` % Test,
       `keywords-Continue` % Test
