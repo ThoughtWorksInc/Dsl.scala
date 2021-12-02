@@ -67,7 +67,7 @@ object Using {
   ): Using[R] = new Using(() => r)
 
   implicit def continuationUsingDsl[Domain, Value, R <: AutoCloseable](implicit
-      tryFinallyDsl: Dsl[TryFinally[Suspend[Shift[Domain, Value]], Pure[scala.Unit]], Domain !! Value, Value],
+      tryFinally: Dsl.TryFinally[Value, Domain, Domain, Domain],
       // shiftDsl: Dsl[Shift[Domain, Value], Domain, Value]
   ): Dsl[Using[R], Domain !! Value, R] = { (keyword: Using[R], handler: R => Domain !! Value) =>
     *[[X] =>> Domain !! X] {
