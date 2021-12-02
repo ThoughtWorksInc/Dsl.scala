@@ -9,9 +9,9 @@ final case class WithFilter[UpstreamKeyword, UpstreamValue](
 object WithFilter {
   given [UpstreamKeyword, UpstreamValue]:Dsl.IsKeyword[WithFilter[UpstreamKeyword, UpstreamValue], UpstreamValue] with {}
   implicit def withFilterDsl[UpstreamKeyword, Domain, UpstreamValue](implicit
-      upstreamDsl: Dsl[UpstreamKeyword, Domain, UpstreamValue],
+      upstreamDsl: Dsl.PolyCont[UpstreamKeyword, Domain, UpstreamValue],
       continueDsl: Dsl[Continue, Domain, Nothing]
-  ): Dsl[WithFilter[UpstreamKeyword, UpstreamValue], Domain, UpstreamValue] =
+  ): Dsl.PolyCont[WithFilter[UpstreamKeyword, UpstreamValue], Domain, UpstreamValue] =
     new Dsl[WithFilter[UpstreamKeyword, UpstreamValue], Domain, UpstreamValue] {
       def cpsApply(keyword: WithFilter[UpstreamKeyword, UpstreamValue], handler: UpstreamValue => Domain) = {
         val WithFilter(upstream, condition) = keyword
