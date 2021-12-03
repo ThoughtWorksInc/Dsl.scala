@@ -91,22 +91,9 @@ import scala.language.implicitConversions
   * def exceptionalFuture = Future[StringBuffer] {
   *   throw new IllegalStateException("No")
   * }
-  // * def myFuture = reset[Char => Future[StringBuffer]](!Return {
-  // *   try {
-  // *     !Await(exceptionalFuture)
-  // *   } catch {
-  // *     case e: IllegalStateException =>
-  // *       !Await(recoverFuture)
-  // *       buffer.append(!Get[Char]())
-  // *       buffer.append(e.getMessage)
-  // *   } finally {
-  // *     buffer.append("!")
-  // *   }
-  // * })
-  * val reified = reify {
+  * def myFuture = reset[Char => Future[StringBuffer]](!Return {
   *   try {
   *     !Await(exceptionalFuture)
-  *     buffer.append(!Get[Char]())
   *   } catch {
   *     case e: IllegalStateException =>
   *       !Await(recoverFuture)
@@ -115,14 +102,7 @@ import scala.language.implicitConversions
   *   } finally {
   *     buffer.append("!")
   *   }
-  * }
-  * def myFuture = reified.to[[X] =>> Char => Future[X]]
-  //
-  // This compiles
-  // * def myFuture = *[[X] =>> Char => Future[X]] {
-  // *       !Await(recoverFuture)
-  // *       buffer.append(!Get[Char]())
-  // * }
+  * })
   * myFuture(' ').map(_.toString should be("Oh No!"))
   * }}}
   * @author
