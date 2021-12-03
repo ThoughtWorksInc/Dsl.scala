@@ -2,8 +2,10 @@ package com.thoughtworks.dsl.keywords
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.Keyword
 
-/** @see [[Put]]
-  * @author 杨博 (Yang Bo)
+/** @see
+  *   [[Put]]
+  * @author
+  *   杨博 (Yang Bo)
   */
 final case class Get[S]() extends Keyword[Get[S], S]
 

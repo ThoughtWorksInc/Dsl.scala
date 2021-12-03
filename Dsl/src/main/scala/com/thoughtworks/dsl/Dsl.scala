@@ -13,17 +13,20 @@ import scala.util.{Failure, Success, Try}
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
-/** The domain-specific interpreter for `Keyword` in `Domain`,
-  * which is a dependent type type class that registers an asynchronous callback function,
-  * to handle the `Value` inside `Keyword`.
+/** The domain-specific interpreter for `Keyword` in `Domain`, which is a dependent type type class that registers an
+  * asynchronous callback function, to handle the `Value` inside `Keyword`.
   *
-  * @tparam Value The value held inside `Keyword`.
-  * @author 杨博 (Yang Bo)
-  * @example Creating a collaborative DSL in [[https://github.com/ThoughtWorksInc/Dsl.scala Dsl.scala]] is easy.
-  *          Only two steps are required:
+  * @tparam Value
+  *   The value held inside `Keyword`.
+  * @author
+  *   杨博 (Yang Bo)
+  * @example
+  *   Creating a collaborative DSL in [[https://github.com/ThoughtWorksInc/Dsl.scala Dsl.scala]] is easy. Only two steps
+  *   are required:
   *
-  *           - Defining their domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
-  *           - Implementing this [[Dsl]] type class, which is an interpreter for an [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
+  *   - Defining their domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
+  *   - Implementing this [[Dsl]] type class, which is an interpreter for an
+  *     [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   */
 @implicitNotFound("The keyword ${Keyword} is not supported inside a function that returns ${Domain}.")
 trait Dsl[-Keyword, Domain, +Value] {
@@ -236,8 +239,9 @@ object Dsl extends LowPriorityDsl0 {
 
   /** An annotation to explicitly perform reset control operator on a code block.
     *
-    * @note This annotation can be automatically added
-    *       if [[compilerplugins.ResetEverywhere ResetEverywhere]] compiler plug-in is enabled.
+    * @note
+    *   This annotation can be automatically added if [[compilerplugins.ResetEverywhere ResetEverywhere]] compiler
+    *   plug-in is enabled.
     */
   final class reset extends ResetAnnotation with StaticAnnotation with TypeConstraint
 
@@ -247,9 +251,11 @@ object Dsl extends LowPriorityDsl0 {
   def apply[Keyword, Domain, Value](implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
     typeClass
 
-  /** @tparam Self the self type
-    * @see [[https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern Curiously recurring template pattern]]
-    *      for the reason why we need the `Self` type parameter
+  /** @tparam Self
+    *   the self type
+    * @see
+    *   [[https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern Curiously recurring template pattern]] for
+    *   the reason why we need the `Self` type parameter
     */
   trait Keyword[Self, Value] extends Any { this: Self =>
 
@@ -287,8 +293,8 @@ object Dsl extends LowPriorityDsl0 {
 
   /** The type class to support `try` ... `catch` ... `finally` expression for `OutputDomain`.
     *
-    * !-notation is allowed by default for `? !! Throwable` and [[scala.concurrent.Future Future]] domains,
-    * with the help of this type class.
+    * !-notation is allowed by default for `? !! Throwable` and [[scala.concurrent.Future Future]] domains, with the
+    * help of this type class.
     */
   @implicitNotFound(
     "The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
