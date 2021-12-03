@@ -6,31 +6,28 @@ import Dsl.!!
 import Dsl.IsKeyword
 import Dsl.Typed
 import keywords._, Match._
-import org.junit._, Assert._
 import concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
 import concurrent.Await.result
 import concurrent.duration._
 import scala.language.dynamics
-import org.hamcrest.CoreMatchers.instanceOf
+import org.scalatest.freespec.AsyncFreeSpec
+import org.scalatest.matchers.should.Matchers
 
-class AwaitTest {
+class AwaitTest extends AsyncFreeSpec with Matchers {
 
-  @Test
-  def testReturnIf: Unit = { 
+  "testReturnIf" in {
     val reified = reify {
       if (true) {
         !Return(!Await(Future(42)))
       }
       -1
     }
-    assertEquals(42, result(reified.to[Future], Duration.Inf))
+    result(reified.to[Future], Duration.Inf) should be(42)
   }
 
   type Id[A] = A
-
-  @Test
-  def testComprehension1: Unit = {
+  "testComprehension1" in {
     def inner1 = for {
       j <- In(0 until 3)
     } yield 100 + j
@@ -60,16 +57,16 @@ class AwaitTest {
     }
     summon[
       ast1.type
-        <:< 
-      FlatMap[
-        Await[Int],
-        Int,
-        FlatMap[
-          In[Int],
-          Int,
-          Pure[Int]
-        ]
-      ]
+        <:<
+          FlatMap[
+            Await[Int],
+            Int,
+            FlatMap[
+              In[Int],
+              Int,
+              Pure[Int]
+            ]
+          ]
     ]
 
     def forall[A] = {
@@ -88,108 +85,98 @@ class AwaitTest {
       ]]
     }
 
-    import FlatMap.given
-
-    // assertEquals(Vector(100, 101, 102), result(ast1.as[Future[Vector[Int]]], Duration.Inf))
-    assertEquals(Vector(100, 101, 102), result(ast1.as[Future[Vector[Int]] !! Vector[Int]].apply(Future.successful), Duration.Inf))
-    assertArrayEquals(Array(100, 101, 102), result(ast1.as[Future[Array[Int]] !! Array[Int]].apply(Future.successful), Duration.Inf))
-    // assertArrayEquals(Array(100, 101, 102), result(ast1.as[Future[Future[Array[Int]] !! Array[Int]]].flatMap(_(Future.successful)), Duration.Inf))
+    *[Future] {
+      !Await(ast1.as[Future[Vector[Int]] !! Vector[Int]].apply(Future.successful)) should be(Vector(100, 101, 102))
+      !Await(ast1.as[Future[Array[Int]] !! Array[Int]].apply(Future.successful)) should be(Array(100, 101, 102))
+    }
   }
 
-  @Test
-  def testComprehension2: Unit = {
+  "testComprehension2" in {
     val inner2 = for {
       j <- In(0 until 10)
     } yield 111
     summon[
       inner2.type
         <:<
-      FlatMap[
-        In[Int],
-        Int,
-        Pure[Int]
-      ]
-    ]   
+          FlatMap[
+            In[Int],
+            Int,
+            Pure[Int]
+          ]
+    ]
     val ast2 = Await(Future(1)).flatMap { i =>
       inner2
     }
     summon[
       ast2.type
-        <:< 
-      FlatMap[
-        Await[Int],
-        Int,
-        FlatMap[
-          In[Int],
-          Int,
-          Pure[Int]
-        ]
-      ]
+        <:<
+          FlatMap[
+            Await[Int],
+            Int,
+            FlatMap[
+              In[Int],
+              Int,
+              Pure[Int]
+            ]
+          ]
     ]
+    succeed
   }
 
-  @Test
-  def testComprehension3: Unit = {
+  "testComprehension3" in {
     val ast3 = for {
       i <- Await(Future(1))
       j <- In(0 until 10)
     } yield 111
     summon[
       ast3.type
-        <:< 
-      FlatMap[
-        Await[Int],
-        Int,
-        FlatMap[
-          In[Int],
-          Int,
-          Pure[Int]
-        ]
-      ]
+        <:<
+          FlatMap[
+            Await[Int],
+            Int,
+            FlatMap[
+              In[Int],
+              Int,
+              Pure[Int]
+            ]
+          ]
     ]
+    succeed
   }
 
-  @Test
-  def test1: Unit = {
+  "test1" in {
     val refied = reify[1](1)
     summon[refied.type <:< Typed[Pure[1], 1]]
-    assertEquals(1, refied)
+    refied should be(1)
   }
-
-  @Test
-  def test2: Unit = {
-    val refied = reify[1] {1}
+  "test2" in {
+    val refied = reify[1] { 1 }
     summon[refied.type <:< Typed[Pure[1], 1]]
-    assertEquals(1, refied)
-    
+    refied should be(1)
+
     val refied2 = reify[1](!refied)
     // summon[refied2.type <:< Typed[Typed[Pure[1], 1], 1]]
     summon[refied2.type <:< Typed[refied.type, 1]]
-    assertEquals(1, refied2)
-
+    refied2 should be(1)
   }
-  
-  @Test
-  def test3: Unit = {
-    val refied = reify {
-      
-    }
+  "test3" in {
+    val refied = reify {}
     summon[refied.type <:< Typed[Pure[Unit], Unit]]
-    assertEquals((), refied)
+    refied should be(())
   }
-
-  @Test
-  def test4: Unit = {
+  "test4" in {
     val refied = reify {
       !Await(Future(1L))
     }
     summon[refied.type <:< Typed[Await[Long], Long]]
     summon[Run[Typed[Await[Long], Long], Future[Long], Long]](refied)
-    assertEquals(1L, result(refied.to[Future], Duration.Inf))
+
+    *[Future] {
+      !Await(refied.to[Future]) should be(1L)
+    }
   }
 
-  @Test
-  def test5: Unit = {
+  "test5" in {
     val refied = reify {
       !Await(Future(!Await(Future(1L))))
     }
@@ -201,11 +188,12 @@ class AwaitTest {
         Long
       ]
     ]
-    assertEquals(1L, result(refied.to[Future], Duration.Inf))
+    *[Future] {
+      !Await(refied.to[Future]) should be(1L)
+    }
   }
 
-  @Test
-  def test6: Unit = {
+  "test6" in {
     val refied = reify {
       val i = !Await(Future(super.getClass.getSimpleName))
       !Await(Future(i))
@@ -218,7 +206,9 @@ class AwaitTest {
         String
       ]
     ]
-    assertEquals(super.getClass.getSimpleName, result(refied.to[Future], Duration.Inf))
+    *[Future] {
+      !Await(refied.to[Future]) should be(super.getClass.getSimpleName)
+    }
   }
   object Foo extends Dynamic {
     def applyDynamicNamed(method: String)(arg1: (String, Long)) = {
@@ -226,10 +216,9 @@ class AwaitTest {
     }
   }
 
-  @Test
-  def test7: Unit = {
+  "test7" in {
     val refied = reify {
-      val i = !Await(Future(body=this.Foo.d(j=1L)))
+      val i = !Await(Future(body = this.Foo.d(j = 1L)))
       object A {
         def j = i + 200
       }
@@ -243,33 +232,36 @@ class AwaitTest {
         Long
       ]
     ]
-    assertEquals(201L, result(refied.to[Future], Duration.Inf))
+
+    *[Future] {
+      !Await(refied.to[Future]) should be(201L)
+    }
   }
 
-
-  @Test
-  def testReturn1: Unit = {
+  "testReturn1" in {
     val refied = reify {
-      (return !Await(Future(()))): Unit
+      (!Return(!Await(Future(())))): Unit
     }
     // summon[refied.type <:<
     //   com.thoughtworks.dsl.Dsl.Typed[
     //     com.thoughtworks.dsl.keywords.FlatMap[
     //       com.thoughtworks.dsl.keywords.Await[Unit]
-    //     , Unit, 
+    //     , Unit,
     //       com.thoughtworks.dsl.keywords.FlatMap[
     //         com.thoughtworks.dsl.keywords.Return[Unit]
     //       , Nothing, com.thoughtworks.dsl.keywords.Pure[Unit]]
     //     ]
     //   , Unit]
     // ]
-    assertEquals((), result(refied.to[Future], Duration.Inf))
+
+    *[Future] {
+      !Await(refied.to[Future]) should be(())
+    }
   }
 
-  @Test
-  def testReturn2: Unit = {
-    val refied = reify[Nothing] {
-      return !Await(Future(()))
+  "testReturn2" in {
+    val refied = reify {
+      !Return(!Await(Future(())))
     }
     // summon[refied.type <:<
     //   com.thoughtworks.dsl.Dsl.Typed[
@@ -278,39 +270,35 @@ class AwaitTest {
     //     , Unit,Pure[Nothing]]
     //   , Nothing]
     // ]
-    assertEquals((), result(refied.as[Future[Unit]], Duration.Inf))
+    *[Future] {
+      !Await(refied.to[Future]) should be(())
+    }
   }
 
   inline val x = 42
 
-  @Test
-  def testInline: Unit = {
+  "testInline" in {
     val rr = reify {
       reify[x.type] {
         x
       }
     }
 
-    summon[rr.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-       Pure[
-          com.thoughtworks.dsl.Dsl.Typed[
-           Pure[42]
-          , 42]
-        ]
-      , 
+    summon[
+      rr.type <:<
         com.thoughtworks.dsl.Dsl.Typed[
-         Pure[42]
-        , 42]
-      ]
+          Pure[
+            com.thoughtworks.dsl.Dsl.Typed[Pure[42], 42]
+          ],
+          com.thoughtworks.dsl.Dsl.Typed[Pure[42], 42]
+        ]
     ]
-    
-    assertEquals(42, rr.to[Id].to[Id])
+
+    rr.to[Id].to[Id] should be(42)
 
   }
 
-  @Test
-  def testIf: Unit = {
+  "testIf" in {
     val generator = reify {
       if (false) {
         !Yield(0)
@@ -318,7 +306,7 @@ class AwaitTest {
       if (true) {
         !Yield(1)
       }
-      if ({ !Yield(2); false }) {
+      if { !Yield(2); false } then {
         !Yield(3)
       } else {
         !Yield(4)
@@ -326,11 +314,10 @@ class AwaitTest {
       LazyList.empty[Int]
     }
 
-    assertEquals(Seq(1, 2, 4), generator.to[Id])
+    generator.to[Id] should be(Seq(1, 2, 4))
   }
 
-  @Test
-  def testMatch: Unit = {
+  "testMatch" in {
     def loop(i: Int): LazyList[Int] = {
       val reified = reify {
         (i: Int) match {
@@ -347,12 +334,12 @@ class AwaitTest {
       //       com.thoughtworks.dsl.Dsl.Typed[
       //         com.thoughtworks.dsl.keywords.Pure[?]
       //       , Int]
-      //     , Int, 
-      //       com.thoughtworks.dsl.keywords.Match.WithIndex[(0), 
+      //     , Int,
+      //       com.thoughtworks.dsl.keywords.Match.WithIndex[(0),
       //         com.thoughtworks.dsl.keywords.Pure[LazyList[Nothing]]
       //       ]
-      //     +: 
-      //       com.thoughtworks.dsl.keywords.Match.WithIndex[(1), 
+      //     +:
+      //       com.thoughtworks.dsl.keywords.Match.WithIndex[(1),
       //         com.thoughtworks.dsl.keywords.FlatMap[
       //           com.thoughtworks.dsl.keywords.Yield[Int]
       //         , Unit, com.thoughtworks.dsl.keywords.Pure[LazyList[Int]]]
@@ -363,11 +350,10 @@ class AwaitTest {
       reified.as[LazyList[Int]]
     }
 
-    assertEquals(LazyList(90, 91, 92, 93, 94, 95, 96, 97, 98, 99), loop(90))
+    loop(90) should be(LazyList(90, 91, 92, 93, 94, 95, 96, 97, 98, 99))
   }
 
-  @Test
-  def testTryCatchFinally: Unit = {
+  "testTryCatchFinally" in {
     val reified = reify {
       try {
         0 / 0
@@ -378,31 +364,28 @@ class AwaitTest {
       } finally {}
     }
 
-    summon[reified.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-        com.thoughtworks.dsl.keywords.TryCatchFinally[
-          com.thoughtworks.dsl.keywords.Suspend[
+    summon[
+      reified.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[
+          com.thoughtworks.dsl.keywords.TryCatchFinally[com.thoughtworks.dsl.keywords.Suspend[
             com.thoughtworks.dsl.keywords.Await[String]
-          ]
-        , 
-          com.thoughtworks.dsl.keywords.Match.WithIndex[0, 
-            com.thoughtworks.dsl.keywords.FlatMap[
-              com.thoughtworks.dsl.keywords.Await[Int]
-            , Int, 
-              com.thoughtworks.dsl.keywords.FlatMap[
-                com.thoughtworks.dsl.keywords.Await[Int]
-              , Int, com.thoughtworks.dsl.keywords.Pure[String]]
-            ]
-          ]
-        +: Nothing, com.thoughtworks.dsl.keywords.Pure[Unit]]
-      , String]
+          ], com.thoughtworks.dsl.keywords.Match.WithIndex[0, com.thoughtworks.dsl.keywords.FlatMap[
+            com.thoughtworks.dsl.keywords.Await[Int],
+            Int,
+            com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+              Int
+            ], Int, com.thoughtworks.dsl.keywords.Pure[String]]
+          ]]
+            +: Nothing, com.thoughtworks.dsl.keywords.Pure[Unit]],
+          String
+        ]
     ]
 
-    assertEquals("Cannot divide 3 by 0", result(reified.as[Future[String]], Duration.Inf))
+    val fs = reified.as[Future[String]]
+    fs.map(_ should be("Cannot divide 3 by 0"))
   }
 
-  @Test(expected = classOf[ArithmeticException])
-  def testTryFinally: Unit = {
+  "testTryFinally" in {
     val reified = reify {
       try {
         0 / 0
@@ -411,21 +394,16 @@ class AwaitTest {
     }
 
     summon[
-      reified.type <:< 
-        com.thoughtworks.dsl.Dsl.Typed[
-          com.thoughtworks.dsl.keywords.TryFinally[
-            com.thoughtworks.dsl.keywords.Suspend[
-              com.thoughtworks.dsl.keywords.Await[Int]
-            ]
-          , com.thoughtworks.dsl.keywords.Pure[Unit]]
-        , Int]
+      reified.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[com.thoughtworks.dsl.keywords.TryFinally[com.thoughtworks.dsl.keywords.Suspend[
+          com.thoughtworks.dsl.keywords.Await[Int]
+        ], com.thoughtworks.dsl.keywords.Pure[Unit]], Int]
     ]
 
-    result(reified.as[Future[Int]], Duration.Inf)
+    recoverToSucceededIf[ArithmeticException](reified.as[Future[Int]])
   }
 
-  @Test
-  def testTryCatch: Unit = {
+  "testTryCatch" in {
     val refied = reify {
       try {
         // s"Cannot divide ${!Await(Future(3))} by ${!Await(Future(0))}"
@@ -439,38 +417,31 @@ class AwaitTest {
       }
     }
 
-    summon[refied.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-        com.thoughtworks.dsl.keywords.TryCatch[
-          com.thoughtworks.dsl.keywords.Suspend[
-            com.thoughtworks.dsl.keywords.FlatMap[
-              com.thoughtworks.dsl.keywords.Await[Int]
-            , Int, 
-              com.thoughtworks.dsl.keywords.FlatMap[
-                com.thoughtworks.dsl.keywords.Await[Int]
-              , Int, com.thoughtworks.dsl.keywords.Pure[String]]
-            ]
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[com.thoughtworks.dsl.keywords.TryCatch[com.thoughtworks.dsl.keywords.Suspend[
+          com.thoughtworks.dsl.keywords.FlatMap[
+            com.thoughtworks.dsl.keywords.Await[Int],
+            Int,
+            com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+              Int
+            ], Int, com.thoughtworks.dsl.keywords.Pure[String]]
           ]
-        , 
-          com.thoughtworks.dsl.keywords.Match.WithIndex[0, 
-            com.thoughtworks.dsl.keywords.FlatMap[
-              com.thoughtworks.dsl.keywords.Await[Int]
-            , Int, 
-              com.thoughtworks.dsl.keywords.FlatMap[
-                com.thoughtworks.dsl.keywords.Await[Int]
-              , Int, com.thoughtworks.dsl.keywords.Pure[String]]
-            ]
-          ]
-        +: Nothing]
-      , String]
+        ], com.thoughtworks.dsl.keywords.Match.WithIndex[0, com.thoughtworks.dsl.keywords.FlatMap[
+          com.thoughtworks.dsl.keywords.Await[Int],
+          Int,
+          com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+            Int
+          ], Int, com.thoughtworks.dsl.keywords.Pure[String]]
+        ]]
+          +: Nothing], String]
     ]
-
-    assertEquals("Cannot divide 3 by 0", result(refied.to[Future], Duration.Inf))
+    refied.to[Future].map {
+      _ should be("Cannot divide 3 by 0")
+    }
   }
 
-
-  @Test
-  def testWhile: Unit = {
+  "testWhile" in {
     val refied = reify {
       var i = 0L
       while (!Await(Future(i < 3))) {
@@ -478,30 +449,26 @@ class AwaitTest {
       }
       i
     }
-    summon[refied.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-        com.thoughtworks.dsl.keywords.FlatMap[
-          com.thoughtworks.dsl.keywords.While[
-            com.thoughtworks.dsl.keywords.Suspend[
-              com.thoughtworks.dsl.keywords.Await[Boolean]
-            ]
-          , 
-            com.thoughtworks.dsl.keywords.Suspend[
-              com.thoughtworks.dsl.keywords.FlatMap[
-                com.thoughtworks.dsl.keywords.Await[Int]
-              , Int, com.thoughtworks.dsl.keywords.Pure[Unit]]
-            ]
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.While[
+          com.thoughtworks.dsl.keywords.Suspend[
+            com.thoughtworks.dsl.keywords.Await[Boolean]
+          ],
+          com.thoughtworks.dsl.keywords.Suspend[
+            com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+              Int
+            ], Int, com.thoughtworks.dsl.keywords.Pure[Unit]]
           ]
-        , Unit, com.thoughtworks.dsl.keywords.Pure[Long]]
-      , Long]
+        ], Unit, com.thoughtworks.dsl.keywords.Pure[Long]], Long]
     ]
-    assertEquals(3L, result(refied.to[Future], Duration.Inf))
-
-    assertEquals(3L, result(refied.as[Double => Future[Long]].apply(1.0), Duration.Inf))
+    *[Future] {
+      !Await(refied.to[Future]) should be(3L)
+      !Await(refied.as[Double => Future[Long]].apply(1.0)) should be(3L)
+    }
   }
 
-  @Test
-  def testAssign: Unit = {
+  "testAssign" in {
     object A {
       var a = "a"
     }
@@ -509,118 +476,114 @@ class AwaitTest {
       (!Await(Future(A))).a = !Await(Future("x"))
       A.a.toUpperCase
     }
-    summon[refied.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-       FlatMap[
-         Await[A.type]
-        , A.type, 
-         FlatMap[
-           Await[String]
-          , String,Pure[String]
-            ]
-        ]
-      , String]
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+          Await[A.type],
+          A.type,
+          FlatMap[
+            Await[String],
+            String,
+            Pure[String]
+          ]
+        ], String]
     ]
-    assertEquals("X", result(refied.to[Future], Duration.Inf))
+    refied.to[Future].map(_ should be("X"))
   }
 
-  @Test
-  def testTyped: Unit = {
+  "testTyped" in {
     val refied = reify {
       val i = !Await(Future("x"): Future[CharSequence])
       val r = !Await(Future(i)): AnyRef
       r
     }
-    summon[refied.type <:< 
-      com.thoughtworks.dsl.Dsl.Typed[
-        com.thoughtworks.dsl.keywords.FlatMap[
-          com.thoughtworks.dsl.keywords.Await[CharSequence]
-        , CharSequence, 
-          com.thoughtworks.dsl.keywords.FlatMap[
-            com.thoughtworks.dsl.keywords.Await[CharSequence]
-          , CharSequence, com.thoughtworks.dsl.keywords.Pure[Object]]
-        ]
-      , Object]
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[com.thoughtworks.dsl.keywords.FlatMap[
+          com.thoughtworks.dsl.keywords.Await[CharSequence],
+          CharSequence,
+          com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+            CharSequence
+          ], CharSequence, com.thoughtworks.dsl.keywords.Pure[Object]]
+        ], Object]
     ]
-    assertEquals("x", result(refied.to[Future], Duration.Inf))
+    refied.to[Future].map(_ should be("x"))
   }
 
-  @Test
-  def testPartialFunction: Unit = {
+  "testPartialFunction" in {
     val refied = reify {
-      Future[PartialFunction[Int, String]]{
-        case 1 => "1"
+      Future[PartialFunction[Int, String]] {
+        case 1          => "1"
         case x if x < 0 => "negative"
-        case _ => "default"
+        case _          => "default"
       }
     }
 
-    summon[refied.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-       Pure[
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[Pure[
           Future[PartialFunction[Int, String]]
-        ]
-      , Future[PartialFunction[Int, String]]]
+        ], Future[PartialFunction[Int, String]]]
     ]
     type Id[A] = A
-    assertThat(result(refied.to[Id], Duration.Inf), instanceOf(classOf[PartialFunction[_, _]]))
+    refied.to[Id].map {
+      _ should be(a[PartialFunction[_, _]])
+    }
   }
 
-
-  @Test
-  def testClosure: Unit = {
+  "testClosure" in {
     val refied = reify {
       val id = !Await(Future(identity[Int] _))
       val e = id.equals _
       !Await(Future(e))
     }
-    summon[refied.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-       FlatMap[
-         Await[Int => Int]
-        , Int => Int,Await[Any => Boolean]
-        ]
-      , Any => Boolean]
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+          Await[Int => Int],
+          Int => Int,
+          Await[Any => Boolean]
+        ], Any => Boolean]
     ]
-    assertThat(result(refied.to[Future], Duration.Inf), instanceOf(classOf[Function1[_, _]]))
+    refied.to[Future].map {
+      _ should be(a[Function1[_, _]])
+    }
   }
 
-  @Test
-  def testBangClosure: Unit = {
+  "testBangClosure" in {
     val refied = reify {
       val e = (!Await(Future(identity[Int] _))).equals _
       !Await(Future(e))
     }
-    summon[refied.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-       FlatMap[
-         FlatMap[
-           Await[Int => Int]
-          , Int => Int, 
-           Pure[Any => Boolean]]
-        , Any => Boolean,Await[Any => Boolean]]
-      , Any => Boolean]
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+          FlatMap[Await[Int => Int], Int => Int, Pure[Any => Boolean]],
+          Any => Boolean,
+          Await[Any => Boolean]
+        ], Any => Boolean]
     ]
-    assertThat(result(refied.to[Future], Duration.Inf), instanceOf(classOf[Function1[_, _]]))
+    refied.to[Future].map {
+      _ should be(a[Function1[_, _]])
+    }
   }
 
-  @Test
-  def testClosure2: Unit = {
+  "testClosure2" in {
     val refied = reify {
       val e = (!Await(Future((i: Int) => i))).equals _
       !Await(Future(e))
     }
-    summon[refied.type <:<
-      com.thoughtworks.dsl.Dsl.Typed[
-       FlatMap[
-         FlatMap[
-           Await[Int => Int]
-          , Int => Int, 
-           Pure[Any => Boolean]]
-        , Any => Boolean,Await[Any => Boolean]]
-      , Any => Boolean]
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+          FlatMap[Await[Int => Int], Int => Int, Pure[Any => Boolean]],
+          Any => Boolean,
+          Await[Any => Boolean]
+        ], Any => Boolean]
     ]
-    assertThat(result(refied.to[Future], Duration.Inf), instanceOf(classOf[Function1[_, _]]))
+    refied.to[Future].map {
+      _ should be(a[Function1[_, _]])
+    }
   }
 
 }
