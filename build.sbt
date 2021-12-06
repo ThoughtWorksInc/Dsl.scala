@@ -50,7 +50,7 @@ lazy val `keywords-Fork` =
 lazy val `keywords-Pure` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl)
+    .dependsOn(Dsl, `keywords-Shift`)
 
 lazy val `keywords-If` =
   crossProject(JSPlatform, JVMPlatform)
