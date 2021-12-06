@@ -8,13 +8,15 @@ import Dsl.Typed
 import keywords._, Match._
 import concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
-import concurrent.Await.result
 import concurrent.duration._
 import scala.language.dynamics
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.Inside
+import scala.util.Failure
+import scala.util.Success
 
-class AwaitTest extends AsyncFreeSpec with Matchers {
+class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
   "testReturnIf" in {
     val reified = reify {
@@ -23,7 +25,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
       }
       -1
     }
-    result(reified.to[Future], Duration.Inf) should be(42)
+    reified.to[Future].map { _ should be(42) }
   }
 
   type Id[A] = A
@@ -343,13 +345,14 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
   }
 
   "testTryCatchFinally" in {
+    def zeroDivZero = 0 / 0
     val reified = reify {
       try {
-        0 / 0
+        zeroDivZero
         !Await(Future("unreachable code"))
       } catch {
         case _: ArithmeticException =>
-          s"Cannot divide ${!Await(Future(3))} by ${!Await(Future(0))}"
+          s"Cannot divide ${!Await(Future(0))} by ${!Await(Future(0))}"
       } finally {}
     }
 
@@ -371,14 +374,15 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
     ]
 
     val fs = reified.as[Future[String]]
-    fs.map(_ should be("Cannot divide 3 by 0"))
+    fs.map(_ should be("Cannot divide 0 by 0"))
   }
 
   "testTryFinally" in {
+    def zeroDivZero = 0 / 0
     val reified = reify {
       try {
-        0 / 0
-        !Await(Future(-1))
+        zeroDivZero
+        !Await(Future(-41))
       } finally {}
     }
 
@@ -389,7 +393,11 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
         ], Suspend[Pure[Unit]]], Int]
     ]
 
-    recoverToSucceededIf[ArithmeticException](reified.as[Future[Int]])
+    reified.as[Future[Int]].transform { t =>
+      inside(t) { case Failure(e) =>
+        Success(e should be(an[ArithmeticException]))
+      }
+    }
   }
 
   "testTryCatch" in {
