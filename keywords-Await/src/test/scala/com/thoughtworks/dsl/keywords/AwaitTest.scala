@@ -242,17 +242,14 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
     val refied = reify {
       (!Return(!Await(Future(())))): Unit
     }
-    // summon[refied.type <:<
-    //   com.thoughtworks.dsl.Dsl.Typed[
-    //     com.thoughtworks.dsl.keywords.FlatMap[
-    //       com.thoughtworks.dsl.keywords.Await[Unit]
-    //     , Unit,
-    //       com.thoughtworks.dsl.keywords.FlatMap[
-    //         com.thoughtworks.dsl.keywords.Return[Unit]
-    //       , Nothing, com.thoughtworks.dsl.keywords.Pure[Unit]]
-    //     ]
-    //   , Unit]
-    // ]
+    summon[
+      refied.type <:<
+        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+          Await[Unit],
+          Unit,
+          FlatMap[Return[Unit], Nothing, Pure[Unit]]
+        ], Unit]
+    ]
 
     *[Future] {
       !Await(refied.to[Future]) should be(())
@@ -328,25 +325,17 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
             loop(i + 1)
         }
       }
-      // summon[reified.type <:<
-      //   com.thoughtworks.dsl.Dsl.Typed[
-      //     com.thoughtworks.dsl.keywords.FlatMap[
-      //       com.thoughtworks.dsl.Dsl.Typed[
-      //         com.thoughtworks.dsl.keywords.Pure[?]
-      //       , Int]
-      //     , Int,
-      //       com.thoughtworks.dsl.keywords.Match.WithIndex[(0),
-      //         com.thoughtworks.dsl.keywords.Pure[LazyList[Nothing]]
-      //       ]
-      //     +:
-      //       com.thoughtworks.dsl.keywords.Match.WithIndex[(1),
-      //         com.thoughtworks.dsl.keywords.FlatMap[
-      //           com.thoughtworks.dsl.keywords.Yield[Int]
-      //         , Unit, com.thoughtworks.dsl.keywords.Pure[LazyList[Int]]]
-      //       ]
-      //     +: Nothing]
-      //   , LazyList[Int]]
-      // ]
+      summon[
+        reified.type <:<
+          com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+            Pure[Int],
+            Int,
+            Match.WithIndex[(0), Pure[LazyList[Nothing]]]
+              +:
+                Match.WithIndex[(1), FlatMap[Yield[Int], Unit, Pure[LazyList[Int]]]]
+                +: Nothing
+          ], LazyList[Int]]
+      ]
       reified.as[LazyList[Int]]
     }
 
@@ -367,16 +356,16 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
     summon[
       reified.type <:<
         com.thoughtworks.dsl.Dsl.Typed[
-          com.thoughtworks.dsl.keywords.TryCatchFinally[com.thoughtworks.dsl.keywords.Suspend[
-            com.thoughtworks.dsl.keywords.Await[String]
-          ], com.thoughtworks.dsl.keywords.Match.WithIndex[0, com.thoughtworks.dsl.keywords.FlatMap[
-            com.thoughtworks.dsl.keywords.Await[Int],
+          TryCatchFinally[Suspend[
+            Await[String]
+          ], Match.WithIndex[0, FlatMap[
+            Await[Int],
             Int,
-            com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+            FlatMap[Await[
               Int
-            ], Int, com.thoughtworks.dsl.keywords.Pure[String]]
+            ], Int, Pure[String]]
           ]]
-            +: Nothing, com.thoughtworks.dsl.keywords.Pure[Unit]],
+            +: Nothing, Suspend[Pure[Unit]]],
           String
         ]
     ]
@@ -395,9 +384,9 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
 
     summon[
       reified.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[com.thoughtworks.dsl.keywords.TryFinally[com.thoughtworks.dsl.keywords.Suspend[
-          com.thoughtworks.dsl.keywords.Await[Int]
-        ], com.thoughtworks.dsl.keywords.Pure[Unit]], Int]
+        com.thoughtworks.dsl.Dsl.Typed[TryFinally[Suspend[
+          Await[Int]
+        ], Suspend[Pure[Unit]]], Int]
     ]
 
     recoverToSucceededIf[ArithmeticException](reified.as[Future[Int]])
@@ -406,11 +395,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
   "testTryCatch" in {
     val refied = reify {
       try {
-        // s"Cannot divide ${!Await(Future(3))} by ${!Await(Future(0))}"
-        // s"Division result: ${math.random()}"
-        // s"Division result: ${!Await(Future(3)) / !Await(Future(0))}"
-        // raw"Division result: ${!Await(Future(3)) / !Await(Future(0))}"
-        "Division result: " + (!Await(Future(3)) / !Await(Future(0)))
+        s"Division result: ${!Await(Future(3)) / !Await(Future(0))}"
       } catch {
         case e: ArithmeticException =>
           s"Cannot divide ${!Await(Future(3))} by ${!Await(Future(0))}"
@@ -419,20 +404,20 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
 
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[com.thoughtworks.dsl.keywords.TryCatch[com.thoughtworks.dsl.keywords.Suspend[
-          com.thoughtworks.dsl.keywords.FlatMap[
-            com.thoughtworks.dsl.keywords.Await[Int],
+        com.thoughtworks.dsl.Dsl.Typed[TryCatch[Suspend[
+          FlatMap[
+            Await[Int],
             Int,
-            com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+            FlatMap[Await[
               Int
-            ], Int, com.thoughtworks.dsl.keywords.Pure[String]]
+            ], Int, Pure[String]]
           ]
-        ], com.thoughtworks.dsl.keywords.Match.WithIndex[0, com.thoughtworks.dsl.keywords.FlatMap[
-          com.thoughtworks.dsl.keywords.Await[Int],
+        ], Match.WithIndex[0, FlatMap[
+          Await[Int],
           Int,
-          com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+          FlatMap[Await[
             Int
-          ], Int, com.thoughtworks.dsl.keywords.Pure[String]]
+          ], Int, Pure[String]]
         ]]
           +: Nothing], String]
     ]
@@ -451,16 +436,16 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.While[
-          com.thoughtworks.dsl.keywords.Suspend[
-            com.thoughtworks.dsl.keywords.Await[Boolean]
+        com.thoughtworks.dsl.Dsl.Typed[FlatMap[While[
+          Suspend[
+            Await[Boolean]
           ],
-          com.thoughtworks.dsl.keywords.Suspend[
-            com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+          Suspend[
+            FlatMap[Await[
               Int
-            ], Int, com.thoughtworks.dsl.keywords.Pure[Unit]]
+            ], Int, Pure[Unit]]
           ]
-        ], Unit, com.thoughtworks.dsl.keywords.Pure[Long]], Long]
+        ], Unit, Pure[Long]], Long]
     ]
     *[Future] {
       !Await(refied.to[Future]) should be(3L)
@@ -499,12 +484,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[com.thoughtworks.dsl.keywords.FlatMap[
-          com.thoughtworks.dsl.keywords.Await[CharSequence],
+        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+          Await[CharSequence],
           CharSequence,
-          com.thoughtworks.dsl.keywords.FlatMap[com.thoughtworks.dsl.keywords.Await[
+          FlatMap[Await[
             CharSequence
-          ], CharSequence, com.thoughtworks.dsl.keywords.Pure[Object]]
+          ], CharSequence, Pure[Object]]
         ], Object]
     ]
     refied.to[Future].map(_ should be("x"))
