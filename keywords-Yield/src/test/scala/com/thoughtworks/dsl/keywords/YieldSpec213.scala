@@ -1,5 +1,6 @@
 package com.thoughtworks.dsl.keywords
 
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.Dsl.!!
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -14,13 +15,13 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
 
   "lazylist" - {
 
-    def shouldCompile = {
+    def shouldCompile = reset {
       !Yield("naked")
       LazyList.empty[String]
     }
 
     "local method" in {
-      def generator: LazyList[Int] = {
+      def generator: LazyList[Int] = reset {
         def id[A](a: A) = a
         id(!Yield(100))
         LazyList.empty[Int]
@@ -29,7 +30,7 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
     }
 
     "yield from" in {
-      def generator: LazyList[Int] = {
+      def generator = reset[LazyList[Int]] {
         def id[A](a: A) = a
         id(!Yield(100, 200))
         LazyList.empty
@@ -38,7 +39,7 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
     }
 
     "local function" in {
-      def generator: LazyList[Int] = {
+      def generator: LazyList[Int] = reset {
         def id[A](a: A) = a
         (id[Unit] _)(!Yield(100))
         LazyList.empty[Int]
@@ -48,38 +49,38 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
 
     "do/while" - {
       "empty body" in {
-        def generator: LazyList[Int] = {
-          do {} while ({
+        def generator: LazyList[Int] = reset {
+          while {
             !Yield(100)
             false
-          })
+          } do ()
           LazyList.empty[Int]
         }
         generator should be(LazyList(100))
       }
 
       "false" in {
-        def generator: LazyList[Int] = {
-          do {
+        def generator: LazyList[Int] = reset {
+          while {
             !Yield(100)
-          } while (false)
+            false
+          } do ()
           LazyList.empty[Int]
         }
         generator should be(LazyList(100))
       }
 
       "with var" in {
-        def generator: LazyList[Int] = {
+        def generator: LazyList[Int] = reset {
           var i = 5
-          do {
+          while {
             i -= {
               !Yield(i)
               1
             }
-          } while ({
             !Yield(-i)
             i > 0
-          })
+          } do ()
           LazyList.empty[Int]
         }
         generator should be(LazyList(5, -4, 4, -3, 3, -2, 2, -1, 1, 0))
@@ -88,7 +89,7 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
 
     "while" - {
       "false" in {
-        def whileFalse: LazyList[Int] = {
+        def whileFalse: LazyList[Int] = reset {
           while (false) {
             !Yield(100)
           }
@@ -101,7 +102,7 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
 
     "match/case" in {
 
-      def loop(i: Int): LazyList[Int] = {
+      def loop(i: Int): LazyList[Int] = reset {
         i match {
           case 100 =>
             LazyList.empty
@@ -116,7 +117,7 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
     }
 
     "recursive" in {
-      def loop(i: Int): LazyList[Int] = {
+      def loop(i: Int): LazyList[Int] = reset {
         if (i < 100) {
           !Yield(i)
           loop(i + 1)
@@ -130,7 +131,7 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
     }
 
     "Given a generator that contains conditional Yield" - {
-      def generator = {
+      def generator = reset {
         if (false) {
           !Yield(0)
         }
@@ -153,14 +154,14 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
 
     "Given a continuation that uses Yield" - {
 
-      def yield4243: LazyList[Int] !! Unit = _ {
+      def yield4243: LazyList[Int] !! Unit = *[[X] =>> LazyList[Int] !! X] {
         !Yield(42)
         !Yield(43)
       }
 
       "when create a generator that contains multiple Yield expression followed by a bang notation and a LazyList.empty" - {
 
-        def generator: LazyList[Int] = {
+        def generator: LazyList[Int] = reset {
           !Yield(0)
           !Shift(yield4243)
           !Yield(1)
@@ -176,7 +177,7 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
     }
 
     "apply" in {
-      def generator: LazyList[Int] = {
+      def generator: LazyList[Int] = reset {
         val f = {
           !Yield(1)
 
@@ -195,7 +196,7 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
     }
 
     "return" in {
-      def generator: LazyList[Int] = {
+      def generator: LazyList[Int] = reset {
         if (true) {
           return {
             !Yield(100)
@@ -210,28 +211,32 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
     "partial function" - {
       "empty" in {
         Seq.empty[Any].flatMap { case i: Int =>
-          !Yield(100)
-          LazyList(42)
+          reset {
+            !Yield(100)
+            LazyList(42)
+          }
         } should be(empty)
       }
 
       "flatMap" in {
         Seq(100, 200).flatMap { case i: Int =>
-          !Yield(100)
-          LazyList(42 + i)
+          reset {
+            !Yield(100)
+            LazyList(42 + i)
+          }
         } should be(Seq(100, 142, 100, 242))
       }
     }
 
     "nested function call" - {
       "call by value" in {
-        def nested() = {
+        def nested() = reset {
           "foo" +: !Yield("bar") +: LazyList.empty[Any]
         }
         nested() should be(LazyList("bar", "foo", ()))
       }
       "call by name" in {
-        def nested() = {
+        def nested() = reset {
           "foo" #:: !Yield("bar") #:: LazyList.empty[Any]
         }
         nested() should be(LazyList("bar", "foo", ()))
