@@ -287,7 +287,7 @@ object bangnotation {
           case Try(expr, Nil, Some(finalizer)) =>
             TryFinally(
               Suspend(KeywordTree(expr)),
-              KeywordTree(finalizer),
+              Suspend(KeywordTree(finalizer)),
               term.tpe
             )
           case Try(expr, cases, Some(finalizer)) =>
@@ -297,7 +297,7 @@ object bangnotation {
                 case caseDef @ CaseDef(pattern, guard, body) =>
                   caseDef -> KeywordTree(body)
               },
-              KeywordTree(finalizer),
+              Suspend(KeywordTree(finalizer)),
               term.tpe
             )
           case typed @ qctx.reflect.Typed(expr, tpt) =>
@@ -711,8 +711,8 @@ object bangnotation {
     def reset[From, To](body: quoted.Expr[From])(using qctx: Quotes, fromType: quoted.Type[From], toType: quoted.Type[To]): quoted.Expr[To] = {
       import qctx.reflect.{_, given}
       val result: quoted.Expr[To] = Macros[qctx.type](resetDescendant = false).reset(body/*.underlyingArgument*/)
+      // report.warning(result.asTerm.show(using qctx.reflect.Printer.TreeStructure))
       // report.warning(result.asTerm.show)
-      // report.warning(result.asTerm.showExtractors)
       result
     }
 
