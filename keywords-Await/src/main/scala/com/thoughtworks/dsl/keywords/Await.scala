@@ -83,7 +83,6 @@ import scala.language.implicitConversions
   * import scala.concurrent.Future
   * import com.thoughtworks.dsl.keywords.{Get, Return}
   * import com.thoughtworks.dsl.bangnotation._
-  * import com.thoughtworks.dsl.to
   * val buffer = new StringBuffer
   * def recoverFuture = Future {
   *   buffer.append("Oh")
