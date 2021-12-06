@@ -319,14 +319,14 @@ object bangnotation {
             KeywordTree(term)
           case whileTerm @ qctx.reflect.While(cond, body) =>
             While(Suspend(KeywordTree(cond)), Suspend(KeywordTree(body)))
-          case returnTree @ qctx.reflect.Return(expr, _from) =>
-            KeywordTree(expr).flatMap { pureExpr =>
-              Return(pureExpr, expr.tpe)
-            }
-          // case returnTree @ qctx.reflect.Return(expr, from) =>
+          // case returnTree @ qctx.reflect.Return(expr, _from) =>
           //   KeywordTree(expr).flatMap { pureExpr =>
-          //     Pure(qctx.reflect.Return.copy(returnTree)(pureExpr, from), term.tpe)
+          //     Return(pureExpr, expr.tpe)
           //   }
+          case returnTree @ qctx.reflect.Return(expr, from) =>
+            KeywordTree(expr).flatMap { pureExpr =>
+              Pure(qctx.reflect.Return.copy(returnTree)(pureExpr, from), term.tpe)
+            }
         }
       }
     
