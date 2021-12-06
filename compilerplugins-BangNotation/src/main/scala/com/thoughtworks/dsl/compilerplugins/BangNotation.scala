@@ -16,16 +16,17 @@ private object BangNotation {
 
 }
 
-/** The Scala compiler plug-in to convert ordinary Scala control flows to continuation-passing style, which will then be
-  * interpreted by [[Dsl]].
+/** The Scala compiler plug-in to convert ordinary Scala control flows to continuation-passing style,
+  * which will then be interpreted by [[Dsl]].
   *
-  * =Usage=
+  * = Usage =
   *
-  * `<pre> // In your build.sbt addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" %
-  * "latest.release") </pre>`
+  * `<pre>
+  * // In your build.sbt
+  * addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")
+  * </pre>`
   *
-  * @author
-  *   杨博 (Yang Bo)
+  * @author 杨博 (Yang Bo)
   */
 final class BangNotation(override val global: Global) extends Plugin {
   import global._
@@ -64,8 +65,7 @@ final class BangNotation(override val global: Global) extends Plugin {
 
     /** Avoid [[UnApply]] in `tree` to suppress compiler crash due to `unexpected UnApply xxx`.
       *
-      * @see
-      *   https://github.com/scala/bug/issues/8825
+      * @see https://github.com/scala/bug/issues/8825
       */
     private def scalaBug8825Workaround(tree: Tree): Tree = {
       val transformer = new Transformer {

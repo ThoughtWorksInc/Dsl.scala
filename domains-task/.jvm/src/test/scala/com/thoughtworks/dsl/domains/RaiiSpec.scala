@@ -9,8 +9,7 @@ import scala.util.control.NonFatal
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author
-  *   杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 final class RaiiSpec extends AnyFreeSpec with Matchers {
 

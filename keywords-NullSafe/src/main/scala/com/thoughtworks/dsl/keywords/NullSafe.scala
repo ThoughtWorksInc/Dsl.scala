@@ -9,100 +9,96 @@ import scala.annotation.compileTimeOnly
 
 /** [[NullSafe]] is a keyword to perform `null` check.
   *
-  * @example
-  *   You can use [[NullSafe$.? ?]] annotation to represent a nullable value.
+  * @example You can use [[NullSafe$.? ?]] annotation to represent a nullable value.
   *
-  * {{{
-  *           import com.thoughtworks.dsl.keywords.NullSafe._
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.NullSafe._
   *
-  *           case class Tree(left: Tree @ $qmark = null, right: Tree @ $qmark = null, value: String @ $qmark = null)
+  *          case class Tree(left: Tree @ $qmark = null, right: Tree @ $qmark = null, value: String @ $qmark = null)
   *
-  *           val root: Tree @ $qmark = Tree(
-  *             left = Tree(
-  *               left = Tree(value = "left-left"),
-  *               right = Tree(value = "left-right")
-  *             ),
-  *             right = Tree(value = "right")
-  *           )
-  * }}}
+  *          val root: Tree @ $qmark = Tree(
+  *            left = Tree(
+  *              left = Tree(value = "left-left"),
+  *              right = Tree(value = "left-right")
+  *            ),
+  *            right = Tree(value = "right")
+  *          )
+  *          }}}
   *
-  * A normal `.` is not null safe, when selecting `left`, `right` or `value` on a `null` value.
+  *          A normal `.` is not null safe, when selecting `left`, `right` or `value` on a `null` value.
   *
-  * {{{
-  *           a[NullPointerException] should be thrownBy {
-  *             root.right.left.right.value
-  *           }
-  * }}}
+  *          {{{
+  *          a[NullPointerException] should be thrownBy {
+  *            root.right.left.right.value
+  *          }
+  *          }}}
   *
-  * The above code throws an exception because `root.right.left` is `null`.
+  *          The above code throws an exception because `root.right.left` is `null`.
   *
-  * The exception can be avoided by using [[?]] on a nullable value:
+  *          The exception can be avoided by using [[?]] on a nullable value:
   *
-  * {{{
-  *           root.?.right.?.left.?.right.?.value should be(null)
-  * }}}
+  *          {{{
+  *          root.?.right.?.left.?.right.?.value should be(null)
+  *          }}}
   *
-  * The entire expression will be `null` if one of [[?]] is performed on a `null` value.
+  *          The entire expression will be `null` if one of [[?]] is performed on a `null` value.
   *
-  * <hr/>
+  *          <hr/>
   *
-  * The boundary of a null safe operator [[?]] is the nearest enclosing expression whose type is annotated as `@ ?`.
+  *          The boundary of a null safe operator [[?]] is the nearest enclosing expression
+  *          whose type is annotated as `@ ?`.
   *
-  * {{{
-  *           ("Hello " + ("world " + root.?.right.?.left.?.value)) should be("Hello world null")
-  *           ("Hello " + (("world " + root.?.right.?.left.?.value.?): @ $qmark)) should be("Hello null")
-  *           (("Hello " + ("world " + root.?.right.?.left.?.value.?)): @ $qmark) should be(null)
-  * }}}
+  *          {{{
+  *          ("Hello " + ("world " + root.?.right.?.left.?.value)) should be("Hello world null")
+  *          ("Hello " + (("world " + root.?.right.?.left.?.value.?): @ $qmark)) should be("Hello null")
+  *          (("Hello " + ("world " + root.?.right.?.left.?.value.?)): @ $qmark) should be(null)
+  *          }}}
   *
-  * @example
-  *   The [[?]] operator usually works with Java libraries that may produce `null`.
+  * @example The [[?]] operator usually works with Java libraries that may produce `null`.
   *
-  * {{{
-  *           import com.thoughtworks.dsl.keywords.NullSafe._
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.NullSafe._
   *
-  *           val myMap = new java.util.HashMap[String, String]();
-  *           ((myMap.get("key1").? + myMap.get("key2").?): @ $qmark) should be(null)
-  * }}}
+  *          val myMap = new java.util.HashMap[String, String]();
+  *          ((myMap.get("key1").? + myMap.get("key2").?): @ $qmark) should be(null)
+  *          }}}
   *
-  * @note
-  *   The [[?]] operator is only available on nullable values.
+  * @note The [[?]] operator is only available on nullable values.
   *
-  * A type is considered as nullable if it is a reference type, no matter it is annotated as `@ ?` or not.
+  *       A type is considered as nullable if it is a reference type,
+  *       no matter it is annotated as `@ ?` or not.
   *
-  * {{{
+  *       {{{
   *       import com.thoughtworks.dsl.keywords.NullSafe._
   *
   *       val explicitNullable: String @ $qmark = null
   *       ((explicitNullable.? + " Doe") : @ $qmark) should be(null)
-  * }}}
+  *       }}}
   *
-  * {{{
+  *       {{{
   *       val implicitNullable: String = null
   *       ((implicitNullable.? + " Doe") : @ $qmark) should be(null)
-  * }}}
+  *       }}}
   *
-  * A type is considered as not nullable if it is a value type.
+  *       A type is considered as not nullable if it is a value type.
   *
-  * {{{
+  *       {{{
   *       val implicitNotNullable: Int = 0
   *       "(implicitNotNullable.? + 42) : @ $qmark" shouldNot compile
-  * }}}
+  *       }}}
   *
-  * Alternatively, a type can be considered as not nullable by explicitly converting it to
-  * [[com.thoughtworks.dsl.keywords.NullSafe.NotNull[A]* NotNull]].
+  *       Alternatively, a type can be considered as not nullable
+  *       by explicitly converting it to [[com.thoughtworks.dsl.keywords.NullSafe.NotNull[A]* NotNull]].
   *
-  * {{{
+  *       {{{
   *       val explicitNotNullable: NotNull[String] = NotNull("John")
   *       """(explicitNotNullable.? + " Doe") : @ $qmark""" shouldNot compile
-  * }}}
+  *       }}}
   *
-  * @see
-  *   [[NoneSafe]] for similar checks on [[scala.Option]]s.
-  * @author
-  *   杨博 (Yang Bo)
+  * @see [[NoneSafe]] for similar checks on [[scala.Option]]s.
+  * @author 杨博 (Yang Bo)
   *
-  * @define qmark
-  *   ?
+  * @define qmark ?
   */
 final case class NullSafe[A <: AnyRef](nullable: A @ ?) extends AnyVal {
 
@@ -140,32 +136,29 @@ object NullSafe {
     private[NullSafe] def toNotNull[A](a: A) = a
   }
 
-  /** @usecase
-    *   type NotNull[+A] <: A
+  /** @usecase type NotNull[+A] <: A
     */
   type NotNull[+A] = OpaqueTypes.NotNull[A]
 
   /** Returns `a` if `a` is not `null`.
     *
-    * @return
-    *   `a` if `a` is not `null`.
+    * @return `a` if `a` is not `null`.
     *
-    * {{{
+    *         {{{
     *         import com.thoughtworks.dsl.keywords.NullSafe._
     *
     *         val o = new AnyRef
     *         NotNull(o) should be(o)
-    * }}}
+    *         }}}
     *
-    * @throws java.lang.NullPointerException
-    *   if `a` is `null`.
+    * @throws java.lang.NullPointerException if `a` is `null`.
     *
-    * {{{
+    *         {{{
     *         import com.thoughtworks.dsl.keywords.NullSafe._
     *         a[NullPointerException] should be thrownBy {
     *           NotNull(null)
     *         }
-    * }}}
+    *         }}}
     */
   def NotNull[A](a: A): NotNull[A] = {
     if (a == null) {

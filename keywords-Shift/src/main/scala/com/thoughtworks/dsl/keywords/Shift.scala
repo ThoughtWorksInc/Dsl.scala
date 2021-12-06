@@ -9,8 +9,7 @@ import scala.language.implicitConversions
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
-/** @author
-  *   杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 final case class Shift[Domain, Value](continuation: Domain !! Value)
     extends AnyVal

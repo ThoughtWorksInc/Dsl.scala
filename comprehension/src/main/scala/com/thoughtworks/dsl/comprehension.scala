@@ -21,104 +21,99 @@ private[dsl] sealed trait LowPriorityComprehension0 {
   * import com.thoughtworks.dsl.comprehension._
   * }}}
   *
-  * @example
-  *   `for` / `yield` expressions can be used on keywords.
+  * @example `for` / `yield` expressions can be used on keywords.
   *
-  * {{{
-  *           import com.thoughtworks.dsl.keywords._
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords._
   *
-  *           def cartesianProduct = for {
-  *             i <- Each(Array(1, 2, 3))
-  *             j <- Each(Vector(1, 10, 100, 1000))
-  *           } yield i * j
-  * }}}
+  *          def cartesianProduct = for {
+  *            i <- Each(Array(1, 2, 3))
+  *            j <- Each(Vector(1, 10, 100, 1000))
+  *          } yield i * j
+  *          }}}
   *
-  * The results of `for` / `yield` expressions are also keywords.
+  *          The results of `for` / `yield` expressions are also keywords.
   *
-  * {{{
-  *           cartesianProduct should be(a[Dsl.Keyword[_, _]])
-  * }}}
+  *          {{{
+  *          cartesianProduct should be(a[Dsl.Keyword[_, _]])
+  *          }}}
   *
-  * You can use !-notation extract the value from the produced keyword.
+  *          You can use !-notation extract the value from the produced keyword.
   *
-  * {{{
-  *           def resultAsList = List(!cartesianProduct)
-  *           resultAsList should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
+  *          {{{
+  *          def resultAsList = List(!cartesianProduct)
+  *          resultAsList should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
   *
-  *           def resultAsSet: Set[Int] = !Return(!cartesianProduct)
-  *           resultAsSet should be(Set(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
-  * }}}
+  *          def resultAsSet: Set[Int] = !Return(!cartesianProduct)
+  *          resultAsSet should be(Set(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
+  *          }}}
   *
-  * Alternatively, [[comprehension.ComprehensionOps.to]] can be used to convert the result of a keyword to other types
-  * of values as well.
+  *          Alternatively, [[comprehension.ComprehensionOps.to]] can be used to convert the result of a keyword to other types of values as well.
   *
-  * {{{
-  *           cartesianProduct.to[List] should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
-  * }}}
-  * @example
-  *   This example implements the same feature as the example on Scaladoc of [[keywords.Yield]], except this example use
-  *   `for`-comprehension instead of !-notation.
+  *          {{{
+  *          cartesianProduct.to[List] should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
+  *          }}}
+  * @example This example implements the same feature as the example on Scaladoc of [[keywords.Yield]],
+  *          except this example use `for`-comprehension instead of !-notation.
   *
-  * {{{
-  *           import com.thoughtworks.dsl.Dsl
-  *           import com.thoughtworks.dsl.keywords._
-  *           import com.thoughtworks.dsl.comprehension._
+  *          {{{
+  *          import com.thoughtworks.dsl.Dsl
+  *          import com.thoughtworks.dsl.keywords._
+  *          import com.thoughtworks.dsl.comprehension._
   *
-  *           def gccFlagBuilder(sourceFile: String, includes: String*) = {
-  *             for {
-  *               _ <- Yield("gcc")
-  *               _ <- Yield("-c")
-  *               _ <- Yield(sourceFile)
-  *               include <- Each(includes)
-  *               _ <- Yield("-I")
-  *               _ <- Yield(include)
-  *               r <- Continue
-  *             } yield r: String
-  *           }
+  *          def gccFlagBuilder(sourceFile: String, includes: String*) = {
+  *            for {
+  *              _ <- Yield("gcc")
+  *              _ <- Yield("-c")
+  *              _ <- Yield(sourceFile)
+  *              include <- Each(includes)
+  *              _ <- Yield("-I")
+  *              _ <- Yield(include)
+  *              r <- Continue
+  *            } yield r: String
+  *          }
   *
-  *           gccFlagBuilder("main.c", "lib1/include", "lib2/include").to[Stream] should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
-  * }}}
+  *          gccFlagBuilder("main.c", "lib1/include", "lib2/include").to[Stream] should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
+  *          }}}
   *
-  * Alternatively, you can use Scala native `yield` keyword to produce the last value.
+  *          Alternatively, you can use Scala native `yield` keyword to produce the last value.
   *
-  * {{{
-  *           def gccFlagBuilder2(sourceFile: String, includes: String*) = {
-  *             for {
-  *               _ <- Yield("gcc")
-  *               _ <- Yield("-c")
-  *               _ <- Yield(sourceFile)
-  *               include <- Each(includes)
-  *               _ <- Yield("-I")
-  *             } yield include
-  *           }
-  *           gccFlagBuilder2("main.c", "lib1/include", "lib2/include").to[Stream] should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
-  * }}}
+  *          {{{
+  *          def gccFlagBuilder2(sourceFile: String, includes: String*) = {
+  *            for {
+  *              _ <- Yield("gcc")
+  *              _ <- Yield("-c")
+  *              _ <- Yield(sourceFile)
+  *              include <- Each(includes)
+  *              _ <- Yield("-I")
+  *            } yield include
+  *          }
+  *          gccFlagBuilder2("main.c", "lib1/include", "lib2/include").to[Stream] should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
+  *          }}}
   *
-  * You can also omit the explicit constructor of [[keywords.Yield]] with the help of implicit conversion
-  * [[keywords.Yield.implicitYield]].
+  *          You can also omit the explicit constructor of [[keywords.Yield]] with the help of implicit conversion [[keywords.Yield.implicitYield]].
   *
-  * {{{
-  *           import com.thoughtworks.dsl.keywords.Yield.implicitYield
+  *          {{{
+  *          import com.thoughtworks.dsl.keywords.Yield.implicitYield
   *
-  *           def augmentString = ()
-  *           def wrapString = ()
-  * }}}
+  *          def augmentString = ()
+  *          def wrapString = ()
+  *          }}}
   *
-  * Note that [[scala.Predef.augmentString]] and [[scala.Predef.wrapString]] must be disabled in order to use `flatMap`
-  * for [[keywords.Yield]].
+  *          Note that [[scala.Predef.augmentString]] and [[scala.Predef.wrapString]] must be disabled in order to use `flatMap` for [[keywords.Yield]].
   *
-  * {{{
-  *           def gccFlagBuilder3(sourceFile: String, includes: String*) = {
-  *             for {
-  *               _ <- "gcc"
-  *               _ <- "-c"
-  *               _ <- sourceFile
-  *               include <- Each(includes)
-  *               _ <- "-I"
-  *             } yield include
-  *           }
-  *           gccFlagBuilder3("main.c", "lib1/include", "lib2/include").to[Stream] should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
-  * }}}
+  *          {{{
+  *          def gccFlagBuilder3(sourceFile: String, includes: String*) = {
+  *            for {
+  *              _ <- "gcc"
+  *              _ <- "-c"
+  *              _ <- sourceFile
+  *              include <- Each(includes)
+  *              _ <- "-I"
+  *            } yield include
+  *          }
+  *          gccFlagBuilder3("main.c", "lib1/include", "lib2/include").to[Stream] should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
+  *          }}}
   */
 object comprehension extends LowPriorityComprehension0 {
 

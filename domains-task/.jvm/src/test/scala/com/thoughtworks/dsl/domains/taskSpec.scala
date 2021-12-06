@@ -14,8 +14,7 @@ import scala.util.{Failure, Success}
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author
-  *   杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
