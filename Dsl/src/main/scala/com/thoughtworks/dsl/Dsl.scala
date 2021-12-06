@@ -512,10 +512,16 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-    private[Lift] trait LowPriorityOneStep0 { this: OneStep.type =>
-      given [R, F, A](using
-          isFunction: (A => R) <:< F
-      ): OneStep[R, F] = { r => isFunction(Function.const(r)) }
+    private[Lift] trait LowPriorityOneStep1 { this: OneStep.type =>
+      given[Collection, Element](
+        using factory: collection.Factory[Element, Collection]
+      ): OneStep[Element, Collection] = { element =>
+        factory.fromSpecific(element :: Nil)
+      }
+    }
+
+    private[Lift] trait LowPriorityOneStep0 extends LowPriorityOneStep1 { this: OneStep.type =>
+      given [R, F, A]: OneStep[R, A => R] = { r => Function.const(r) }
     }
 
     object OneStep extends LowPriorityOneStep0 {
@@ -528,21 +534,6 @@ object Dsl extends LowPriorityDsl0 {
       ): OneStep[Element, Future[Element]] = {
         Future.successful
       }
-
-
-      // given[Element, Array <: scala.Array[Element]](
-      //   given factory: collection.Factory[Element, Array]
-      // ): OneStep[Element, Array] = { element =>
-      //   factory.fromSpecific(element :: Nil)
-      // }
-      // given[Collection[_], Element](
-      //   using factory: collection.Factory[Element, Collection[Element]]
-      // ): OneStep[Element, Collection[Element]] = { element =>
-      //   factory.fromSpecific(element :: Nil)
-      // }
-      // given [Collection[a] >: List[a], Element]: OneStep[Element, Collection[Element]] = { element =>
-      //   element :: Nil
-      // }
     }
 
   }
