@@ -25,8 +25,7 @@ import scala.util.control.NonFatal
   *          import _root_.scalaz.Trampoline
   *          import _root_.scalaz.Free.Trampoline
   *          import com.thoughtworks.dsl.keywords.Monadic
-  *          import com.thoughtworks.dsl.keywords.Monadic._
-  *          import com.thoughtworks.dsl.domains.scalaz._
+  *          import com.thoughtworks.dsl.domains.scalaz.given
   *          import com.thoughtworks.dsl.bangnotation._
   *
   *          val trampoline3 = Trampoline.done(3)
@@ -66,17 +65,13 @@ import scala.util.control.NonFatal
   *          whose return type is `TryT[Trampoline, ?]`.
   *
   *          {{{
-  *          import scala.util.Try
-  *          import _root_.scalaz.\/-
-  *          import _root_.scalaz.EitherT
-  *          import _root_.scalaz.syntax.std.`try`.given
-  *          import _root_.scalaz.syntax.monad.given
-  *          type TryT[M[_], A] = EitherT[Throwable, M, A]
+  *          import com.thoughtworks.tryt.invariant.TryT, TryT.given
+  *          import scala.util.{Try, Success}
   *          type TryTTransfomredTrampoline[A] = TryT[Trampoline, A]
   *
-  *          val trampolineSuccess0: TryTTransfomredTrampoline[Int] = EitherT(Trampoline.done(\/-(0)))
+  *          val trampolineSuccess0: TryTTransfomredTrampoline[Int] = TryT(Trampoline.done(Try(0)))
   *
-  *          def dslTryCatch: TryTTransfomredTrampoline[String] = reset(EitherT(Trampoline.delay(\/- {
+  *          def dslTryCatch: TryTTransfomredTrampoline[String] = reset(TryT(Trampoline.delay(Try {
   *            try {
   *              s"Division result: ${!Monadic(trampoline3) / !Monadic(trampolineSuccess0)}"
   *            } catch {
@@ -86,8 +81,8 @@ import scala.util.control.NonFatal
   *          })))
   *
   *          inside(dslTryCatch) {
-  *            case EitherT(trampoline) =>
-  *              trampoline.run should be(\/-("Cannot divide 3 by 0"))
+  *            case TryT(trampoline) =>
+  *              trampoline.run should be(Success("Cannot divide 3 by 0"))
   *          }
   *          }}}
   *
@@ -102,17 +97,18 @@ import scala.util.control.NonFatal
   *          The above `dslTryCatch` method is equivalent to the following code in [[scalaz.syntax]]:
   *
   *          {{{
+  *          import _root_.scalaz.syntax.monad._
   *          def scalazSyntaxTryCatch: TryTTransfomredTrampoline[String] = {
   *            import _root_.scalaz.syntax.monadError._
   *            trampoline3.liftM[TryT].flatMap { tmp0 =>
   *              trampolineSuccess0.flatMap { tmp1 =>
-  *                 EitherT(Trampoline.delay(Try(s"Division result: ${tmp0 / tmp1}").toDisjunction))
+  *                 TryT(Trampoline.delay(Try(s"Division result: ${tmp0 / tmp1}")))
   *              }
   *            }.handleError {
   *              case e: ArithmeticException =>
   *                trampoline3.liftM[TryT].flatMap { tmp2 =>
   *                  trampolineSuccess0.flatMap { tmp3 =>
-  *                     EitherT(Trampoline.delay(\/-(s"Cannot divide ${tmp2} by ${tmp3}")))
+  *                     TryT(Trampoline.delay(Try(s"Cannot divide ${tmp2} by ${tmp3}")))
   *                  }
   *                }
   *              case e =>
@@ -121,8 +117,8 @@ import scala.util.control.NonFatal
   *          }
   *
   *          inside(scalazSyntaxTryCatch) {
-  *            case EitherT(trampoline) =>
-  *              trampoline.run should be(\/-("Cannot divide 3 by 0"))
+  *            case TryT(trampoline) =>
+  *              trampoline.run should be(Success("Cannot divide 3 by 0"))
   *          }
   *          }}}
   *
