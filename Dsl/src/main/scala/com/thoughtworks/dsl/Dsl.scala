@@ -529,11 +529,6 @@ object Dsl extends LowPriorityDsl0 {
         Future.successful
       }
 
-      given [Element, Collection <: IterableOnce[Element] | Array[Element]](using
-          factory: collection.Factory[Element, Collection]
-      ): OneStep[Element, Collection] = { element =>
-        factory.fromSpecific(element :: Nil)
-      }
 
       // given[Element, Array <: scala.Array[Element]](
       //   given factory: collection.Factory[Element, Array]
@@ -541,14 +536,13 @@ object Dsl extends LowPriorityDsl0 {
       //   factory.fromSpecific(element :: Nil)
       // }
       // given[Collection[_], Element](
-      //   given factory: collection.Factory[Element, Collection[Element]]
+      //   using factory: collection.Factory[Element, Collection[Element]]
       // ): OneStep[Element, Collection[Element]] = { element =>
       //   factory.fromSpecific(element :: Nil)
       // }
-
-      given [Collection[a] >: List[a], Element]: OneStep[Element, Collection[Element]] = { element =>
-        element :: Nil
-      }
+      // given [Collection[a] >: List[a], Element]: OneStep[Element, Collection[Element]] = { element =>
+      //   element :: Nil
+      // }
     }
 
   }
