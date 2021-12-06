@@ -10,8 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
 
-/** @author
-  *   杨博 (Yang Bo)
+/** @author 杨博 (Yang Bo)
   */
 @deprecated("[[keywords.Catch]] will be removed in favor of [[Dsl.TryCatch]].", "Dsl.scala 1.4.0")
 final case class Catch[Domain, Value](block: Domain !! Value, catcher: Catcher[Domain !! Value])
