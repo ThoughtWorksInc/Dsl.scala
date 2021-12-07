@@ -7,7 +7,7 @@ object Match {
   export FlatMap.apply
   case class WithIndex[Index <: Int, Keyword](index: Index, keyword: Keyword)
 
-  opaque type +:[A, B] >: A | B <: A | B = A | B
+  opaque type +:[A, B] = A | B
 
   given [
       Index <: Int,
@@ -15,9 +15,9 @@ object Match {
       Domain,
       LastValue
   ](using
-      dsl: Dsl[Keyword, Domain, LastValue],
+      dsl: Dsl.PolyCont[Keyword, Domain, LastValue],
       valueOfIndex: ValueOf[Index]
-  ): Dsl[WithIndex[Index, Keyword] +: Nothing, Domain, LastValue] with {
+  ): Dsl.PolyCont[WithIndex[Index, Keyword] +: Nothing, Domain, LastValue] with {
     def cpsApply(keywordWithIndex: WithIndex[Index, Keyword] +: Nothing, handler: LastValue => Domain): Domain = {
       keywordWithIndex match {
         case WithIndex(valueOfIndex.value, keyword) =>
@@ -35,10 +35,10 @@ object Match {
       Domain,
       Value
   ](using
-      leftDsl: Dsl[LeftKeyword, Domain, Value],
+      leftDsl: Dsl.PolyCont[LeftKeyword, Domain, Value],
       valueOfIndex: ValueOf[Index],
-      restDsl: Dsl[RestKeyword, Domain, Value]
-  ): Dsl[WithIndex[Index, LeftKeyword] +: RestKeyword, Domain, Value] with {
+      restDsl: Dsl.PolyCont[RestKeyword, Domain, Value]
+  ): Dsl.PolyCont[WithIndex[Index, LeftKeyword] +: RestKeyword, Domain, Value] with {
     def cpsApply(keywordUnion: WithIndex[Index, LeftKeyword] +: RestKeyword, handler: Value => Domain): Domain = {
       keywordUnion match {
         case WithIndex(valueOfIndex.value, leftKeyword) =>

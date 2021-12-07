@@ -5,38 +5,27 @@ import Dsl.!!
 import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 
-case class TryCatchFinally[TryKeyword, CaseSet, FinalizerKeyword](
-    block: TryKeyword,
-    cases: Catcher[CaseSet],
+case class TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword](
+    block: BlockKeyword,
+    cases: Catcher[CaseKeyword],
     finalizer: FinalizerKeyword
 )
 object TryCatchFinally {
-  given [
-      TryKeyword,
-      CaseSet,
-      FinalizerKeyword,
-      Domain,
-      Value
-  ](using
-      tryFinallyDsl: Dsl[
-        TryFinally[TryCatch[TryKeyword, CaseSet], FinalizerKeyword],
-        Domain,
-        Value,
-      ]
-  ): Dsl[
-    TryCatchFinally[TryKeyword, CaseSet, FinalizerKeyword],
-    Domain,
-    Value,
-  ] with {
-    def cpsApply(keyword: TryCatchFinally[TryKeyword, CaseSet, FinalizerKeyword], handler: Value => Domain): Domain = {
-      import Typed.given
-      tryFinallyDsl.cpsApply(
-        TryFinally(
-          TryCatch(keyword.block, keyword.cases),
-          keyword.finalizer
-        ),
+
+  given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword, FinalizerKeyword, FinalizerDomain](
+      using
+      dslTryCatchFinally: Dsl.TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
+      blockDsl: Dsl.PolyCont[BlockKeyword, BlockDomain, Value],
+      caseDsl: Dsl.PolyCont[CaseKeyword, BlockDomain, Value],
+      finalizerDsl: Dsl.PolyCont[FinalizerKeyword, FinalizerDomain, Unit]
+  ): Dsl.PolyCont[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value] = {
+    case (TryCatchFinally(blockKeyword, cases, finalizerKeyword), handler) =>
+      dslTryCatchFinally.tryCatchFinally(
+        blockDsl.cpsApply(blockKeyword, _),
+        cases.andThen { caseKeyword => caseDsl.cpsApply(caseKeyword, _) },
+        finalizerDsl.cpsApply(finalizerKeyword, _),
         handler
       )
-    }
   }
+
 }

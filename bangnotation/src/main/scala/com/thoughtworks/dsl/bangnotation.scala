@@ -8,6 +8,54 @@ import scala.quoted.Quotes
 import collection.immutable.Queue
 import Dsl.given
 import scala.util.control.Exception.Catcher
+/**
+  * @example
+  *   Suppose you are generating a random integer less than 100, whose first digit and second digit is different. A
+  *   solution is generating integers in an infinite loop, and [[Return]] from the loop when the generated integer
+  *   conforms with requirements.
+  *
+  * {{{
+  * import scala.util.Random
+  * import scala.util.control.TailCalls
+  * import scala.util.control.TailCalls.TailRec
+  * import com.thoughtworks.dsl.bangnotation.reset
+  * def randomInt(): TailRec[Int] = reset {
+  *   while (true) {
+  *     val r = Random.nextInt(100)
+  *     if (r % 10 != r / 10) {
+  *       !Return(TailCalls.done(r))
+  *     }
+  *   }
+  *   throw new AssertionError("Unreachable code");
+  * }
+  *
+  * val r = randomInt().result
+  * r should be < 100
+  * r % 10 should not be r / 10
+  * }}}
+  *
+  * @example
+  *   Since the [[Return]] keyword can automatically lift the return type, `TailCalls.done` can be omitted.
+  *
+  * {{{
+  * import scala.util.Random
+  * import scala.util.control.TailCalls
+  * import scala.util.control.TailCalls.TailRec
+  * def randomInt(): TailRec[Int] = reset {
+  *   while (true) {
+  *     val r = Random.nextInt(100)
+  *     if (r % 10 != r / 10) {
+  *       !Return(r)
+  *     }
+  *   }
+  *   throw new AssertionError("Unreachable code");
+  * }
+  *
+  * val r = randomInt().result
+  * r should be < 100
+  * r % 10 should not be r / 10
+  * }}}
+  */
 object bangnotation {
 
   private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
@@ -72,7 +120,7 @@ object bangnotation {
                     ${success.tree.asExprOf[Dsl.Run[K, Domain, Value]]}.apply($k)
                   }
                 case failure: ImplicitSearchFailure =>
-                  report.error(s"The keyword ${k.show},\nwhose type is ${quoted.Type.show[K]}\nand value type is ${quoted.Type.show[Value]},\nis not supported in a `reset` block that returns ${quoted.Type.show[Domain]}\n${failure.explanation}", body.asTerm.underlyingArgument.pos)
+                  report.error(s"The keyword ${quoted.Type.show[K]} is not supported in a `reset` block that returns ${quoted.Type.show[Domain]}\n${failure.explanation}", body.asTerm.underlyingArgument.pos)
                   body.asTerm.asExprOf[Domain]
               }
             }
@@ -239,7 +287,7 @@ object bangnotation {
           case Try(expr, Nil, Some(finalizer)) =>
             TryFinally(
               Suspend(KeywordTree(expr)),
-              KeywordTree(finalizer),
+              Suspend(KeywordTree(finalizer)),
               term.tpe
             )
           case Try(expr, cases, Some(finalizer)) =>
@@ -249,7 +297,7 @@ object bangnotation {
                 case caseDef @ CaseDef(pattern, guard, body) =>
                   caseDef -> KeywordTree(body)
               },
-              KeywordTree(finalizer),
+              Suspend(KeywordTree(finalizer)),
               term.tpe
             )
           case typed @ qctx.reflect.Typed(expr, tpt) =>
@@ -263,16 +311,22 @@ object bangnotation {
                 Pure(Assign.copy(assign)(pureLhs, pureRhs), term.tpe)
               }
             }
+          case Inlined(Some(typeTree: TypeTree), _, term) =>
+            KeywordTree(term).flatMap { pureExpr =>
+              Pure(qctx.reflect.Typed(pureExpr, typeTree), typeTree.tpe)
+            }
+          case Inlined(_, _, term) =>
+            KeywordTree(term)
           case whileTerm @ qctx.reflect.While(cond, body) =>
             While(Suspend(KeywordTree(cond)), Suspend(KeywordTree(body)))
-          case returnTree @ qctx.reflect.Return(expr, _from) =>
-            KeywordTree(expr).flatMap { pureExpr =>
-              Return(pureExpr, expr.tpe)
-            }
-          // case returnTree @ qctx.reflect.Return(expr, from) =>
+          // case returnTree @ qctx.reflect.Return(expr, _from) =>
           //   KeywordTree(expr).flatMap { pureExpr =>
-          //     Pure(qctx.reflect.Return.copy(returnTree)(pureExpr, from), term.tpe)
+          //     Return(pureExpr, expr.tpe)
           //   }
+          case returnTree @ qctx.reflect.Return(expr, from) =>
+            KeywordTree(expr).flatMap { pureExpr =>
+              Pure(qctx.reflect.Return.copy(returnTree)(pureExpr, from), term.tpe)
+            }
         }
       }
     
@@ -336,15 +390,10 @@ object bangnotation {
                     quoted.Expr(i).asTerm.usingExpr[CaseDef, Int] { [Index <: Int] => (indexExpr: quoted.Expr[Index]) => (indexType: quoted.Type[Index]) =>
                       given quoted.Type[Index] = indexType
                       CaseDef.copy(caseDef)(
-                        caseDef.pattern match {
-                          case Bind(name, pattern) =>
-                            Bind.copy(caseDefTemplate.pattern)(name, pattern)
-                          case otherPattern =>
-                            otherPattern
-                        },
+                        caseDef.pattern,
                         caseDef.guard,
                         '{WithIndex[Index, BodyKeyword]($indexExpr, $bodyExpr).asInstanceOf[Set]}.asTerm
-                      )
+                      ).changeOwner(defDef.symbol)
                     }
                   }
               }.toList
@@ -584,8 +633,8 @@ object bangnotation {
           {
             given quoted.Type[K] = keywordTpe
             given quoted.Type[V] = valueTpe
-            var innerKeywordTreeOption: Option[KeywordTree] = None
-            def flatMapperExpr[X]: quoted.Expr[V => X] = {
+            def go[X] = {
+              var innerKeywordTreeOption: Option[KeywordTree] = None
               val anyFunction = '{ (dslValue: V) =>
                 ${
                   val innerKeywordTree = flatMapper('dslValue.asTerm)
@@ -595,16 +644,16 @@ object bangnotation {
               }
               val Some(innerKeywordTree) = innerKeywordTreeOption
               given quoted.Type[X] = innerKeywordTree.keywordTerm.tpe.asType.asInstanceOf[quoted.Type[X]]
-              '{$anyFunction.asInstanceOf[V => X]}
+              val flatMapperExpr ='{$anyFunction.asInstanceOf[V => X]}
+              val flatMapperTerm = flatMapperExpr.asTerm
+              val flatMapObject = '{keywords.FlatMap}.asTerm
+              Apply(TypeApply(Select.unique(flatMapObject, "apply"), List(
+                TypeTree.of[K],
+                TypeTree.of[V],
+                TypeTree.of[X],
+              )), List(keywordExpr.asTerm, flatMapperTerm)) -> innerKeywordTree.valueType
             }
-            val flatMapperTerm = flatMapperExpr.asTerm
-            val Some(innerKeywordTree) = innerKeywordTreeOption
-            val flatMapObject = '{keywords.FlatMap}.asTerm
-            Apply(TypeApply(Select.unique(flatMapObject, "apply"), List(
-              TypeTree.of[K],
-              TypeTree.of[V],
-              Inferred(innerKeywordTree.keywordTerm.tpe),
-            )), List(keywordExpr.asTerm, flatMapperTerm)) -> innerKeywordTree.valueType
+            go
           }
         }
       }
@@ -641,10 +690,11 @@ object bangnotation {
       override def block = this
 
       def keywordTerm: Term = {
-        term.usingExpr { [A] => (expr: quoted.Expr[A]) => (ta: quoted.Type[A]) =>
+        // We don't need widenTermRefByName because Pure is covariant, so it could be widen automatically as needed
+        valueType/*.widenTermRefByName*/.usingType { [A] => (ta: quoted.Type[A]) =>
           given quoted.Type[A] = ta
           '{
-            keywords.Pure.cast($expr)
+            keywords.Pure.cast[A](${term.asExprOf[A]})
           }.asTerm
         }
       }
@@ -661,8 +711,8 @@ object bangnotation {
     def reset[From, To](body: quoted.Expr[From])(using qctx: Quotes, fromType: quoted.Type[From], toType: quoted.Type[To]): quoted.Expr[To] = {
       import qctx.reflect.{_, given}
       val result: quoted.Expr[To] = Macros[qctx.type](resetDescendant = false).reset(body/*.underlyingArgument*/)
+      // report.warning(result.asTerm.show(using qctx.reflect.Printer.TreeStructure))
       // report.warning(result.asTerm.show)
-      // report.warning(result.asTerm.showExtractors)
       result
     }
 

@@ -1,7 +1,10 @@
 package com.thoughtworks.dsl
 package keywords
+
+import com.thoughtworks.dsl.Dsl
 import Dsl.IsKeyword
 import Dsl.Typed
+import scala.util.NotGiven
 
 final case class FlatMap[Upstream, UpstreamValue, Mapped](
     upstream: Upstream,
@@ -20,18 +23,18 @@ object FlatMap {
       MappedValue,
       Domain
   ](using
-      upstreamDsl: Dsl[Upstream, Domain, UpstreamValue],
-      mappedDsl: Dsl[Mapped, Domain, MappedValue]
-  ): Dsl[FlatMap[Upstream, UpstreamValue, Mapped], Domain, MappedValue] with {
+      upstreamDsl: Dsl.PolyCont[Upstream, Domain, UpstreamValue],
+      nestedDsl: Dsl.PolyCont[Mapped, Domain, MappedValue]
+  ): Dsl.PolyCont[FlatMap[Upstream, UpstreamValue, Mapped], Domain, MappedValue] with {
     def cpsApply(
         keyword: FlatMap[Upstream, UpstreamValue, Mapped],
         handler: MappedValue => Domain
     ): Domain = {
+      val FlatMap(upstream, flatMapper) = keyword
       upstreamDsl.cpsApply(
-        keyword.upstream,
-        { a =>
-          val b = keyword.flatMapper(a)
-          mappedDsl.cpsApply(b, handler)
+        upstream,
+        { upstreamValue =>
+          nestedDsl.cpsApply(flatMapper(upstreamValue), handler)
         }
       )
     }
