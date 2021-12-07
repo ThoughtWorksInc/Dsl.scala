@@ -50,9 +50,17 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
   })
 
+  "*[Task] does not necessarily suspend or catch exceptions" in {
+    class MyException extends Exception
+    def task1: Task[Int] = *[Task] {
+      throw new MyException
+    }
+    a[MyException] should be thrownBy task1
+  }
+
   "try" in Task.toFuture(*[Task] {
     class MyException extends Exception
-    val task1: Task[Int] = *[Task] {
+    def task1: Task[Int] = *[Task] {
       throw new MyException
     }
 
