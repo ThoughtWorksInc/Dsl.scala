@@ -21,7 +21,7 @@ import org.scalatest.matchers.should.Matchers
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
-  "tailRecurision" in Task.toFuture(*[Task] {
+  "tailRecurision" in Task.toFuture(Task {
     def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = *[task.Task] {
       if (i < 10000) {
         !Shift(loop(i + 1, accumulator + i))
@@ -34,11 +34,11 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     result should be(49995000)
   })
 
-  "taskToFuture" in Task.toFuture(*[Task] {
+  "taskToFuture" in Task.toFuture(Task {
     succeed
   })
 
-  "loop" in Task.toFuture(*[Task] {
+  "loop" in Task.toFuture(Task {
 
     val task1: Task[Int] = Task.now(1)
 
@@ -58,13 +58,13 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     a[MyException] should be thrownBy task1
   }
 
-  "try" in Task.toFuture(*[Task] {
+  "try" in Task.toFuture(Task {
     class MyException extends Exception
-    def task1: Task[Int] = *[Task] {
+    val task1: Task[Int] = Task {
       throw new MyException
     }
 
-    val task2 = *[Task] {
+    val task2 = Task {
       val v =
         try {
           !Shift(task1)
@@ -90,7 +90,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       throw new MyException
     }
 
-    val task2: Task[String] = *[Task] {
+    val task2: Task[String] = Task {
       try {
         "no exception"
       } catch {
@@ -114,6 +114,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
   "autoClose" in {
     val logs = ArrayBuffer.empty[Int]
 
+    // TODO: Re-implement Using to support `Task {}` instead of `*[Task]`
     val task: Task[Unit] = *[Task] {
 
       logs += 0
@@ -137,6 +138,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
         }
       })
 
+      // TODO: Re-implement Using to support `Task{}`
       !Shift(*[Task] {
         logs += 3
 

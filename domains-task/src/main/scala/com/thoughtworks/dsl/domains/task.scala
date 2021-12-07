@@ -3,6 +3,7 @@ package domains
 
 import com.thoughtworks.dsl.Dsl.{!!, Continuation}
 import com.thoughtworks.dsl.keywords.Shift
+import com.thoughtworks.dsl.bangnotation._
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -77,8 +78,9 @@ object task {
     @inline
     def delay[A](f: () => A): Task[A] = _(f())
 
-    @inline
-    def apply[A](a: => A): Task[A] = delay(() => a)
+    inline def apply[A](inline a: A): Task[A] = { handler =>
+      reset(handler(a))
+    }
 
     /** Returns a task that does nothing but let the succeeding tasks run on `executionContext`
       *
