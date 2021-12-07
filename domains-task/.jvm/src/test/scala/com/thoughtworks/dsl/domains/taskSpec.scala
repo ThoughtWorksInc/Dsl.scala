@@ -23,7 +23,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
   "tailRecurision" in Task.toFuture(*[Task] {
     def loop(i: Int = 0, accumulator: Int = 0): task.Task[Int] = *[task.Task] {
-      if (i < 1000) {
+      if (i < 10000) {
         !Shift(loop(i + 1, accumulator + i))
       } else {
         accumulator
@@ -31,7 +31,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     }
 
     val result = !Shift(loop())
-    result should be(499500)
+    result should be(49995000)
   })
 
   "taskToFuture" in Task.toFuture(*[Task] {

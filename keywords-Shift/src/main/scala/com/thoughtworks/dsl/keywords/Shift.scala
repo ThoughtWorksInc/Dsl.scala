@@ -28,13 +28,21 @@ private[keywords] trait LowPriorityShift1 {
 
 }
 
-private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
+private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 { this: Shift.type =>
 
   @inline
   implicit def stackSafeShiftDsl[Domain, NewDomain, Value](implicit
       stackSafeShiftDsl: StackSafeShiftDsl[Domain, NewDomain, Value]
   ): Dsl[Shift[Domain, Value], NewDomain, Value] = {
     stackSafeShiftDsl
+  }
+
+  given [LeftDomain, RightDomain, Value](using
+      restDsl: SameDomainStackSafeShiftDsl[LeftDomain, RightDomain]
+  ): SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] = { (keyword, handler) =>
+    keyword { value =>
+      restDsl.cpsApply(handler(value), _)
+    }
   }
 
 }
@@ -44,7 +52,7 @@ object Shift extends LowPriorityShift0 {
 
   trait StackSafeShiftDsl[Domain, NewDomain, Value] extends Dsl[Shift[Domain, Value], NewDomain, Value]
 
-  private type SameDomainStackSafeShiftDsl[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
+  private[keywords] type SameDomainStackSafeShiftDsl[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
 
   @inline
   implicit def implicitShift[Domain, Value](fa: Domain !! Value): Shift[Domain, Value] = fa
