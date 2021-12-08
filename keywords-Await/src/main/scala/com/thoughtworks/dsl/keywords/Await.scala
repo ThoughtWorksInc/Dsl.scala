@@ -146,6 +146,6 @@ object Await {
         !!.fromTryContinuation[Unit, Value](keyword.future.onComplete)(handler)
     }
 
-  implicit def implicitAwait[Value](future: Future[Value]): Await[Value] = Await[Value](future)
+  given [Value]: AsKeyword.FromKeywordSubtype[Future[Value], Await[Value], Value] with {}
 
 }
