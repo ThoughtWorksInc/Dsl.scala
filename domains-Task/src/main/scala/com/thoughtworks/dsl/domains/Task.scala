@@ -123,16 +123,10 @@ object Task extends TaskPlatformSpecificFunctions {
     TailCalls.done(())
   }
 
-  private[Task] object Scala213 {
-
-    @inline
-    def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
-      factory.newBuilder
-    }
-
+  @inline
+  private def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
+    factory.newBuilder
   }
-
-  import Scala213._
 
   inline def join[Element, That](inline element: Element)(implicit factory: Factory[Element, That]): Task[That] = bangnotation.reset(now {
     (newBuilder[Element, That] += element).result()
