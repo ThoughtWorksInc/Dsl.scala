@@ -22,6 +22,6 @@ object NoneSafe {
       }
     }
 
-  implicit def implicitNoneSafe[A](option: Option[A]): NoneSafe[A] = NoneSafe(option)
+  given [A]: AsKeyword[Option[A], NoneSafe[A], A] = NoneSafe(_)
 
 }
