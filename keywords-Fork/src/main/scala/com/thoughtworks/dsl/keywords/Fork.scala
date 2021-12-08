@@ -36,7 +36,7 @@ object Fork {
 
   import Scala213._
 
-  implicit def implicitFork[Element](elements: Traversable[Element]): Fork[Element] = Fork[Element](elements)
+  given [Element]: AsKeyword[Traversable[Element], Fork[Element], Element] = Fork(_)
 
   final case class MultipleException(throwableSet: Set[Throwable])
       extends RuntimeException("Multiple exceptions found") {
