@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 import Dsl.Typed
 import scala.collection._
 import scala.language.implicitConversions
@@ -100,7 +100,7 @@ import YieldScalaVersions.Scala213._
 
 object Yield extends LowPriorityYield0 {
 
-  given [Element]: IsKeyword[Yield[Element], Unit] with {}
+  given [Element]: AsKeyword.FromKeyword[Yield[Element], Unit] with {}
   def cast[Element]: Element <:< Yield[Element] = implicitly
   extension [Element](keyword: Yield[Element])
     def element: Element = keyword
@@ -113,7 +113,7 @@ object Yield extends LowPriorityYield0 {
 
   opaque type From[FromCollection <: TraversableOnce[_]] = FromCollection
   object From {
-    given [FromCollection <: TraversableOnce[_]]: IsKeyword[From[FromCollection], Unit] with {}
+    given [FromCollection <: TraversableOnce[_]]: AsKeyword.FromKeyword[From[FromCollection], Unit] with {}
 
     def apply[FromCollection <: TraversableOnce[_]](elements: FromCollection): From[FromCollection] = elements
     extension [FromCollection <: TraversableOnce[_]](keyword: From[FromCollection])

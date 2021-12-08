@@ -4,7 +4,7 @@ import com.thoughtworks.dsl.Dsl
 
 import scala.language.implicitConversions
 
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 import Dsl.Lift
 import Dsl.Typed
 
@@ -18,7 +18,7 @@ object Return {
   @inline def cast[ReturnValue]: ReturnValue <:< Return[ReturnValue] = implicitly
 
   @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] = summon[ReturnValue =:= Return[ReturnValue]]
-  given [ReturnValue]: IsKeyword[Return[ReturnValue], Nothing] with {}
+  given [ReturnValue]: AsKeyword.FromKeyword[Return[ReturnValue], Nothing] with {}
 
   extension [ReturnValue](keyword: Return[ReturnValue]) def returnValue: ReturnValue = keyword
 

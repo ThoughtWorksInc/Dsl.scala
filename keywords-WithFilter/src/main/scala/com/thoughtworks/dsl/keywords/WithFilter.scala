@@ -7,7 +7,7 @@ final case class WithFilter[UpstreamKeyword, UpstreamValue](
 )
 
 object WithFilter {
-  given [UpstreamKeyword, UpstreamValue]:Dsl.IsKeyword[WithFilter[UpstreamKeyword, UpstreamValue], UpstreamValue] with {}
+  given [UpstreamKeyword, UpstreamValue]:Dsl.AsKeyword.FromKeyword[WithFilter[UpstreamKeyword, UpstreamValue], UpstreamValue] with {}
   implicit def withFilterDsl[UpstreamKeyword, Domain, UpstreamValue](implicit
       upstreamDsl: Dsl.PolyCont[UpstreamKeyword, Domain, UpstreamValue],
       continueDsl: Dsl[Continue, Domain, Nothing]

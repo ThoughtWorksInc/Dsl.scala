@@ -3,8 +3,8 @@ package com.thoughtworks.dsl
 import bangnotation._
 import Dsl.Run
 import Dsl.!!
-import Dsl.IsKeyword
 import Dsl.Typed
+import Dsl.AsKeyword
 import keywords._, Match._
 import concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
@@ -44,7 +44,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     ]]
 
     summon[
-      IsKeyword[
+      AsKeyword.FromKeyword[
         FlatMap[
           In[Int],
           Int,

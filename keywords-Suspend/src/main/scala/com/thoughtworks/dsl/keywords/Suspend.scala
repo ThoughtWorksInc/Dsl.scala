@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 import Dsl.Typed
 import Dsl.cpsApply
 
@@ -9,7 +9,7 @@ object Suspend {
   @inline def cast[Keyword]: (() => Keyword) =:= Suspend[Keyword] = implicitly
   def apply[Keyword, Value](keywordFunction: () => Keyword): Suspend[Keyword] = keywordFunction
 
-  given[Upstream, UpstreamValue](using upstreamIsKeyword: => IsKeyword[Upstream, UpstreamValue]): IsKeyword[Suspend[Upstream], UpstreamValue] with {}
+  given[Upstream, UpstreamValue](using upstreamIsKeyword: => AsKeyword.FromKeyword[Upstream, UpstreamValue]): AsKeyword.FromKeyword[Suspend[Upstream], UpstreamValue] with {}
 
   given[Keyword, Domain, Value](using Dsl.PolyCont[Keyword, Domain, Value]): Dsl.PolyCont[Suspend[Keyword], Domain, Value] with {
     def cpsApply(keyword: Suspend[Keyword], handler: Value => Domain): Domain = {

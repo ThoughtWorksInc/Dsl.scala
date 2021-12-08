@@ -496,7 +496,7 @@ object Dsl extends LowPriorityDsl0 {
   /** A type annotated keyword */
   opaque type Typed[Keyword, Value] = Keyword
   object Typed {
-    given [Keyword, Value]: IsKeyword[Typed[Keyword, Value], Value] with {}
+    given [Keyword, Value]: AsKeyword.FromKeyword[Typed[Keyword, Value], Value] with {}
     given [Keyword, Domain, Value](using
         dsl: Dsl.PolyCont[Keyword, Domain, Value]
     ): Dsl.PolyCont[Typed[Keyword, Value], Domain, Value] =
@@ -526,23 +526,26 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   object AsKeyword {
-    trait FromSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
+    trait FromKeywordSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
       def asKeyword(from: From): Keyword = from
     }
-  }
-  def IsKeyword[Keyword, Value](using IsKeyword[Keyword, Value]) = summon[IsKeyword[Keyword, Value]]
-  trait IsKeyword[Keyword, Value] extends AsKeyword.FromSubtype[Keyword, Keyword, Value]
+    trait FromKeyword[Keyword, Value] extends FromKeywordSubtype[Keyword, Keyword, Value]
 
-  opaque type IsKeywordThenAsKeyword[From, Keyword, Value] <: AsKeyword[From, Keyword, Value] =
-    AsKeyword[From, Keyword, Value]
-  object IsKeywordThenAsKeyword {
-    given [Keyword, Value](using
-        isKeyword: IsKeyword[Keyword, Value]
-    ): IsKeywordThenAsKeyword[Keyword, Keyword, Value] = isKeyword
-    given [From, Keyword, Value](using
-        not: util.NotGiven[IsKeyword[From, Value]],
-        asKeyword: AsKeyword[From, Keyword, Value]
-    ): IsKeywordThenAsKeyword[From, Keyword, Value] = asKeyword
+    /** An [[AsKeyword]] type class that enables a special implicit resolution order - search for [[FromKeyword]]
+      * instances first then other [[AsKeyword]] instances
+      */
+    opaque type SearchFromKeywordFirst[From, Keyword, Value] <: AsKeyword[From, Keyword, Value] =
+      AsKeyword[From, Keyword, Value]
+    object SearchFromKeywordFirst {
+      given [Keyword, Value](using
+          isKeyword: FromKeyword[Keyword, Value]
+      ): SearchFromKeywordFirst[Keyword, Keyword, Value] = isKeyword
+      given [From, Keyword, Value](using
+          not: util.NotGiven[FromKeyword[From, Value]],
+          asKeyword: AsKeyword[From, Keyword, Value]
+      ): SearchFromKeywordFirst[From, Keyword, Value] = asKeyword
+    }
+
   }
 
   extension [Keyword, Domain, Value](keyword: Keyword)

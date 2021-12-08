@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 import Dsl.Typed
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.domains.Continuation.!!
@@ -112,7 +112,7 @@ object Await {
   extension [Result](keyword: Await[Result]) def future: concurrent.Future[Result] = keyword
   def apply[Result](future: concurrent.Future[Result]): Await[Result] = future
   @inline def cast[Result]: concurrent.Future[Result] <:< Await[Result] = implicitly
-  given [Result]: IsKeyword[Await[Result], Result] with {}
+  given [Result]: AsKeyword.FromKeyword[Await[Result], Result] with {}
 
   implicit def streamAwaitDsl[Value, That](implicit
       executionContext: ExecutionContext

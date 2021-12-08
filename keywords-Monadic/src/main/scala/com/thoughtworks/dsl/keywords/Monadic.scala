@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 import Dsl.AsKeyword
 import Dsl.Typed
 import scala.language.higherKinds
@@ -21,8 +21,8 @@ object Monadic {
   @inline def cast[Functor[_], Value]: Functor[Value] =:= Monadic[Functor, Value] = implicitly
   @inline def apply[Functor[_], Value](f: Functor[Value]): Monadic[Functor, Value] = f
 
-  given [Functor[_], Value]: IsKeyword[Monadic[Functor, Value], Value] with {}
+  given [Functor[_], Value]: AsKeyword.FromKeyword[Monadic[Functor, Value], Value] with {}
 
-  given [Functor[_], Value]: AsKeyword.FromSubtype[Functor[Value], Monadic[Functor, Value], Value] with {}
+  given [Functor[_], Value]: AsKeyword.FromKeywordSubtype[Functor[Value], Monadic[Functor, Value], Value] with {}
 
 }

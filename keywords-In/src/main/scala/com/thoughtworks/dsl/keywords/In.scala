@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 import Dsl.Typed
 
 opaque type In[Element] <: Any = Iterable[Element]
@@ -8,7 +8,7 @@ object In {
   @inline def cast[Element]: Iterable[Element] <:< In[Element] = implicitly
   def apply[Element](iterable: Iterable[Element]): In[Element] = iterable
 
-  given [Element]: IsKeyword[In[Element], Element] with {}
+  given [Element]: AsKeyword.FromKeyword[In[Element], Element] with {}
 
   given [Element, Domain, DomainElement](using
       conversion: Domain => IterableOnce[DomainElement],
