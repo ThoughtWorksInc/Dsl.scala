@@ -1,4 +1,0 @@
-<plugin>
-    <name>ResetEverywhere</name>
-    <classname>com.thoughtworks.dsl.compilerplugins.ResetEverywhere</classname>
-</plugin>
