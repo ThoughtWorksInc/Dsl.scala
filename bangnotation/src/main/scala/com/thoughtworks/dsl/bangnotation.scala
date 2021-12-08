@@ -2,7 +2,6 @@ package com.thoughtworks
 package dsl
 import keywords._
 import com.thoughtworks.dsl.keywords._, Match._
-import Dsl.IsKeyword
 import Dsl.Typed.given
 import scala.quoted.Quotes
 import collection.immutable.Queue
@@ -142,7 +141,9 @@ object bangnotation {
         helper
       }
 
-    val bangSymbols = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").declaredMethod("unary_!").toSet
+      
+    val List(bangSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").declaredMethod("unary_!")
+    val List(asKeywordSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.Dsl.AsKeyword").declaredMethod("asKeyword")
 
     sealed trait KeywordTree {
       def keywordTerm: Term
@@ -176,18 +177,26 @@ object bangnotation {
               Apply(
                 TypeApply(
                   id: Ident,
-                  List(_, valueTypeTree)
+                  List(_, _, valueTypeTree)
                 ),
                 List(
-                  keyword
+                  from
                 )
               ),
               List(
-                _ // given IsKeyword
+                asKeywordInstance
               )
             )
-          if bangSymbols(id.symbol)  =>
-            KeywordTree(keyword).flatMap(Keyword(_, valueTypeTree.tpe))
+          if bangSymbol == id.symbol =>
+            KeywordTree(from).flatMap { pureFrom =>
+              Keyword(Apply(
+                Select(
+                  asKeywordInstance,
+                  asKeywordSymbol,
+                ),
+                List(pureFrom)
+              ), valueTypeTree.tpe)
+            }
           case typeApply @ TypeApply(fun, args) =>
             KeywordTree(fun).flatMap { pureFun =>
               Pure(TypeApply.copy(typeApply)(pureFun, args), term.tpe)
@@ -733,8 +742,8 @@ object bangnotation {
     Macros.reset[Value, Value]('value)
   }
 
-  extension [Keyword, Value](keyword: Keyword)
+  extension [From, Keyword, Value](from: From)(using Dsl.AsKeyword.SearchFromKeywordFirst[From, Keyword, Value])
     @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
-    def unary_!(using IsKeyword[Keyword, Value]): Value = ???
+    def unary_! : Value = ???
 
 }        

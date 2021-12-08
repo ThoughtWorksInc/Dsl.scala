@@ -3,7 +3,7 @@ package keywords
 import Dsl.Typed
 import Dsl.!!
 import Dsl.cpsApply
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 import scala.util.control.Exception.Catcher
 import scala.concurrent._
 import scala.util.control.NonFatal

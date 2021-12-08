@@ -4,7 +4,7 @@ import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels._
 
-import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
+import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
 import scala.util.control.NonFatal
 
@@ -81,7 +81,7 @@ trait AsynchronousIo[Value] extends Any {
 }
 
 object AsynchronousIo {
-  given [Keyword <: AsynchronousIo[Value], Value]: IsKeyword[Keyword, Value] with {}
+  given [Keyword <: AsynchronousIo[Value], Value]: AsKeyword.FromKeyword[Keyword, Value] with {}
   final case class Connect(socket: AsynchronousSocketChannel, remote: SocketAddress) extends AsynchronousIo[Void] {
     protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Void, _ >: Attachment]): Unit = {
       socket.connect(remote, attachment, handler)

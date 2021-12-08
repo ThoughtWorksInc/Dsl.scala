@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import com.thoughtworks.dsl.Dsl.IsKeyword
+import com.thoughtworks.dsl.Dsl.AsKeyword
 
 /** [[Put]] is a [[Dsl.Keyword Keyword]] to replace the [[value]] of the current context.
   *
@@ -59,7 +59,7 @@ import com.thoughtworks.dsl.Dsl.IsKeyword
 final case class Put[S](value: S) extends AnyVal
 
 object Put {
-  given [S]: IsKeyword[Put[S], Unit] with {}
+  given [S]: AsKeyword.FromKeyword[Put[S], Unit] with {}
   implicit def putDsl[S0, S >: S0, A]: Dsl[Put[S0], S => A, Unit] = new Dsl[Put[S0], S => A, Unit] {
     def cpsApply(keyword: Put[S0], handler: Unit => S => A): S => A = {
       val newValue = keyword.value;

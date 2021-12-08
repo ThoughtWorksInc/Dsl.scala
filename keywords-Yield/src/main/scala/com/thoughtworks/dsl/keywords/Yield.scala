@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 import Dsl.Typed
 import scala.collection._
 import scala.language.implicitConversions
@@ -100,7 +100,7 @@ import YieldScalaVersions.Scala213._
 
 object Yield extends LowPriorityYield0 {
 
-  given [Element]: IsKeyword[Yield[Element], Unit] with {}
+  given [Element]: AsKeyword.FromKeyword[Yield[Element], Unit] with {}
   def cast[Element]: Element <:< Yield[Element] = implicitly
   extension [Element](keyword: Yield[Element])
     def element: Element = keyword
@@ -113,7 +113,7 @@ object Yield extends LowPriorityYield0 {
 
   opaque type From[FromCollection <: TraversableOnce[_]] = FromCollection
   object From {
-    given [FromCollection <: TraversableOnce[_]]: IsKeyword[From[FromCollection], Unit] with {}
+    given [FromCollection <: TraversableOnce[_]]: AsKeyword.FromKeyword[From[FromCollection], Unit] with {}
 
     def apply[FromCollection <: TraversableOnce[_]](elements: FromCollection): From[FromCollection] = elements
     extension [FromCollection <: TraversableOnce[_]](keyword: From[FromCollection])
@@ -198,8 +198,7 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  implicit def implicitYieldFrom[FromCollection <: TraversableOnce[_]](elements: FromCollection): From[FromCollection] =
-    From(elements)
+  given [FromCollection <: TraversableOnce[_]]: AsKeyword.FromKeywordSubtype[FromCollection, From[FromCollection], Unit] with {}
 
   implicit def streamYieldFromDsl[A, FromCollection <: Iterable[A]]: Dsl[From[FromCollection], Stream[A], Unit] =
     new Dsl[From[FromCollection], Stream[A], Unit] {
@@ -208,7 +207,7 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  implicit def implicitYield[Element](element: Element): Yield[Element] = Yield[Element](element)
+  given [Element]: AsKeyword.FromKeywordSubtype[Element, Yield[Element], Unit] with {}
 
   implicit def streamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
     new Dsl[Yield[Element], Stream[That], Unit] {

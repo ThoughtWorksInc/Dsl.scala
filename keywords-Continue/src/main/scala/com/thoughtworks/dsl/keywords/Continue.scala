@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
+import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
 import scala.language.implicitConversions
 import scala.language.higherKinds
@@ -42,8 +42,8 @@ sealed class Continue
   * @author 杨博 (Yang Bo)
   */
 case object Continue extends Continue {
-  given IsKeyword[Continue, Nothing] with {}
-  given IsKeyword[Continue.type, Nothing] with {}
+  given AsKeyword.FromKeyword[Continue, Nothing] with {}
+  given AsKeyword.FromKeyword[Continue.type, Nothing] with {}
 
   implicit def continueUnitDsl[Value]: Dsl[Continue, Unit, Value] = new Dsl[Continue, Unit, Value] {
     def cpsApply(keyword: Continue, handler: Value => Unit): Unit = ()

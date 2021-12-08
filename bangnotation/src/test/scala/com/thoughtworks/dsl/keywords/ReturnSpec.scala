@@ -5,7 +5,7 @@ import bangnotation.{_, given}
 import utest.{TestSuite, Tests, given}
 import Dsl.Run
 import scala.language.implicitConversions
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 
 /**
   * @author 杨博 (Yang Bo)

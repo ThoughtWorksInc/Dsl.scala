@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.thoughtworks.dsl.bangnotation.{`*`, reify, unary_!}
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
+import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -16,7 +16,7 @@ import scala.util.control.NonFatal
 final case class Fork[Element](elements: Traversable[Element]) extends AnyVal 
 
 object Fork {
-  given [Element]: IsKeyword[Fork[Element], Element] with {}
+  given [Element]: AsKeyword.FromKeyword[Fork[Element], Element] with {}
   private[Fork] object Scala213 {
 
     @inline
@@ -36,7 +36,7 @@ object Fork {
 
   import Scala213._
 
-  implicit def implicitFork[Element](elements: Traversable[Element]): Fork[Element] = Fork[Element](elements)
+  given [Element]: AsKeyword[Traversable[Element], Fork[Element], Element] = Fork(_)
 
   final case class MultipleException(throwableSet: Set[Throwable])
       extends RuntimeException("Multiple exceptions found") {

@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 
-import Dsl.IsKeyword
+import Dsl.AsKeyword
 
 opaque type Pure[+Value] = Value
 object Pure {
@@ -11,7 +11,7 @@ object Pure {
     shiftDsl.cpsApply(Shift(_(keyword)), handler)
   }
 
-  given [PureValue]: IsKeyword[Pure[PureValue], PureValue] with {}
+  given [PureValue]: AsKeyword.FromKeyword[Pure[PureValue], PureValue] with {}
   @inline def cast[Value]: Value =:= Pure[Value] = summon[Value =:= Pure[Value]]
   def apply[Value](value: Value): Pure[Value] = value
 }

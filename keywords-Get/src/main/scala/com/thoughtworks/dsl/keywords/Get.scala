@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl.keywords
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.IsKeyword
+import com.thoughtworks.dsl.Dsl.AsKeyword
 
 /** @see
   *   [[Put]]
@@ -10,7 +10,7 @@ import com.thoughtworks.dsl.Dsl.IsKeyword
 final case class Get[S]()
 
 object Get {
-  given [S]: IsKeyword[Get[S], S] with {}
+  given [S]: AsKeyword.FromKeyword[Get[S], S] with {}
 
   implicit def getDsl[S0, S <: S0, A]: Dsl[Get[S0], S => A, S0] = new Dsl[Get[S0], S => A, S0] {
     def cpsApply(keyword: Get[S0], handler: S0 => S => A): S => A = { b =>

@@ -25,19 +25,21 @@ import scala.util.control.NonFatal
   *          import _root_.scalaz.Trampoline
   *          import _root_.scalaz.Free.Trampoline
   *          import com.thoughtworks.dsl.keywords.Monadic
+  *          import com.thoughtworks.dsl.keywords.Monadic.given
   *          import com.thoughtworks.dsl.domains.scalaz.given
   *          import com.thoughtworks.dsl.bangnotation._
   *
   *          val trampoline3 = Trampoline.done(3)
   *
   *          def dslSquare = reset(Trampoline.delay {
-  *            s"This string is produced by a trampoline: ${!Monadic(trampoline3) * !Monadic(trampoline3)}"
+  *            s"This string is produced by a trampoline: ${!trampoline3 * !trampoline3}"
   *          })
   *
   *          dslSquare.run should be("This string is produced by a trampoline: 9")
   *          }}}
   *
   *          `!trampoline3` is a shortcut of `!Monadic(trampoline3)`,
+  *          enabled by `import com.thoughtworks.dsl.keywords.Monadic.given`,
   *          which will be converted to `flatMap` calls by our DSL interpreter.
   *          Thus, the method `dslSquare` is equivalent to the following code in [[scalaz.syntax]]:
   *
@@ -73,10 +75,10 @@ import scala.util.control.NonFatal
   *
   *          def dslTryCatch: TryTTransfomredTrampoline[String] = reset(TryT(Trampoline.delay(Try {
   *            try {
-  *              s"Division result: ${!Monadic(trampoline3) / !Monadic(trampolineSuccess0)}"
+  *              s"Division result: ${!trampoline3 / !trampolineSuccess0}"
   *            } catch {
   *              case e: ArithmeticException =>
-  *                s"Cannot divide ${!Monadic(trampoline3)} by ${!Monadic(trampolineSuccess0)}"
+  *                s"Cannot divide ${!trampoline3} by ${!trampolineSuccess0}"
   *            }
   *          })))
   *

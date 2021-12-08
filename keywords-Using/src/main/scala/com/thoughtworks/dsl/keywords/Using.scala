@@ -4,7 +4,7 @@ package keywords
 import com.thoughtworks.dsl.bangnotation.{ `*`, reify, reset, unary_!}
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
-import com.thoughtworks.dsl.Dsl.IsKeyword
+import com.thoughtworks.dsl.Dsl.AsKeyword
 // import com.thoughtworks.dsl.keywords.Catch.{CatchDsl, DslCatch}
 import com.thoughtworks.dsl.keywords.TryFinally
 import com.thoughtworks.dsl.Dsl.cpsApply
@@ -22,9 +22,9 @@ import scala.util.control.NonFatal
 final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal
 
 object Using {
-  given [R <: AutoCloseable]: IsKeyword[Using[R], R] with {}
+  given [R <: AutoCloseable]: AsKeyword.FromKeyword[Using[R], R] with {}
 
-  implicit def implicitUsing[R <: AutoCloseable](r: => R): Using[R] = Using[R](() => r)
+  given [R <: AutoCloseable]: AsKeyword[R, Using[R], R] = r => Using(() => r)
 
   trait ScopeExitHandler extends AutoCloseable
 

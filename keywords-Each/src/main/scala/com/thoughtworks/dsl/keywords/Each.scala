@@ -2,11 +2,10 @@ package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.bangnotation.{reset, unary_!}
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
+import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
 import scala.collection._
 import scala.language.implicitConversions
-import Shift.implicitShift
 
 import scala.collection.mutable.Builder
 
@@ -24,7 +23,7 @@ import scala.collection.mutable.Builder
   */
 final case class Each[Element](elements: Traversable[Element])
 object Each {
-  given [Element]: IsKeyword[Each[Element], Element] with {}
+  given [Element]: AsKeyword.FromKeyword[Each[Element], Element] with {}
   private[Each] object Scala213 {
 
     @inline
@@ -44,7 +43,7 @@ object Each {
 
   import Scala213._
 
-  implicit def implicitEach[Element](elements: Traversable[Element]): Each[Element] = Each[Element](elements)
+  given [Element]: AsKeyword[Traversable[Element], Each[Element], Element] = Each(_)
 
   implicit def eachDsl[Element, Domain, DomainElement](implicit
       thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),
