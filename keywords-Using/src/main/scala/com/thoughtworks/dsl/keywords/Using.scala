@@ -24,7 +24,7 @@ final case class Using[R <: AutoCloseable](open: () => R) extends AnyVal
 object Using {
   given [R <: AutoCloseable]: AsKeyword.FromKeyword[Using[R], R] with {}
 
-  implicit def implicitUsing[R <: AutoCloseable](r: => R): Using[R] = Using[R](() => r)
+  given [R <: AutoCloseable]: AsKeyword[R, Using[R], R] = r => Using(() => r)
 
   trait ScopeExitHandler extends AutoCloseable
 
