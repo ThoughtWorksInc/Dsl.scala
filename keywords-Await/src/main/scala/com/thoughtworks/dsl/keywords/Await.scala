@@ -35,7 +35,7 @@ import scala.language.implicitConversions
   * A [[scala.concurrent.Future Future]] can be converted to a [[domains.task.Task]] with the help of [[Await]].
   *
   * {{{
-  * import com.thoughtworks.dsl.domains.task.Task
+  * import com.thoughtworks.dsl.domains.Task
   * import com.thoughtworks.dsl.keywords.Await
   * val myTask = *[Task] {
   *   !Await(myFuture42)

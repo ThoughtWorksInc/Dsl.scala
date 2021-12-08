@@ -125,6 +125,7 @@ object Dsl extends LowPriorityDsl0 {
 
   type Continuation[R, +A] = (A => R) => R
 
+  // TODO: Move to a separate library ( domains-continuation? )
   object Continuation {
     @inline
     def now[R, A](a: A): R !! A = _(a)
@@ -135,6 +136,8 @@ object Dsl extends LowPriorityDsl0 {
     @inline
     def delay[R, A](a: () => A): R !! A = _(a())
 
+    // TODO: turn it into an inline def
+    // TODO: Think about package object in Scala 3
     @inline
     def apply[R, A](a: => A): (R !! A) = delay(() => a)
 

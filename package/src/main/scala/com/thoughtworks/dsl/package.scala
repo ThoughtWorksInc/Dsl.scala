@@ -376,7 +376,7 @@ package com.thoughtworks
   *          For example, you can implement an HTTP client from those keywords.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.domains.task._
+  *          import com.thoughtworks.dsl.domains._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift.implicitShift
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo._
@@ -423,11 +423,11 @@ package com.thoughtworks
   *          The usage of `Task` is similar to previous examples.
   *          You can check the result or exception in asynchronous handlers.
   *
-  *          But we also provides [[com.thoughtworks.dsl.domains.task.Task.blockingAwait blockingAwait]] and some other utilities
+  *          But we also provides [[com.thoughtworks.dsl.domains.Task.blockingAwait blockingAwait]] and some other utilities
   *          at [[domains.task.Task]].
   *
   *          {{{
-  *          import com.thoughtworks.dsl.domains.task.Task.blockingAwait
+  *          import com.thoughtworks.dsl.domains.Task.blockingAwait
   *
   *          val url = new URL("http://localhost:8085/ping")
   *          val fileContent = blockingAwait(httpClient(url))
@@ -439,7 +439,7 @@ package com.thoughtworks
   *          similar to the POSIX `fork` system call.
   *
   *          [[com.thoughtworks.dsl.keywords.Fork Fork]] should be used inside
-  *          a [[com.thoughtworks.dsl.domains.task.Task#join]] block, which collects the result of each forked control flow.
+  *          a [[com.thoughtworks.dsl.domains.Task#join]] block, which collects the result of each forked control flow.
   *
   *          {{{
   *          import com.thoughtworks.dsl.keywords.Fork
