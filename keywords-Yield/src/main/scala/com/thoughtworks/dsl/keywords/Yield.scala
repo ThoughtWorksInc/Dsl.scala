@@ -65,39 +65,29 @@ private[keywords] trait LowPriorityYield3 {
 
 }
 
-private[keywords] object YieldScalaVersions {
 
-  object Scala213 {
-
-
-    trait LowPriorityYield1 extends LowPriorityYield3 {
-      implicit def seqYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A], Collection[X] <: SeqOps[
-        X,
-        Collection,
-        Collection[X]
-      ]]: Dsl[From[FromCollection], Collection[A], Unit] =
-        new Dsl[From[FromCollection], Collection[A], Unit] {
-          def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[A]): Collection[A] = {
-            keyword.elements.toIterable ++: generateTail(())
-          }
-        }
-
-      implicit def seqYieldDsl[A, B >: A, Collection[+X] <: SeqOps[X, Collection, Collection[X]]]
-          : Dsl[Yield[A], Collection[B], Unit] =
-        new Dsl[Yield[A], Collection[B], Unit] {
-          def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {
-            keyword.element +: generateTail(())
-          }
-        }
+private[keywords] trait LowPriorityYield1 extends LowPriorityYield3 {
+  implicit def seqYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A], Collection[X] <: SeqOps[
+    X,
+    Collection,
+    Collection[X]
+  ]]: Dsl[From[FromCollection], Collection[A], Unit] =
+    new Dsl[From[FromCollection], Collection[A], Unit] {
+      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[A]): Collection[A] = {
+        keyword.elements.toIterable ++: generateTail(())
+      }
     }
 
-    trait LowPriorityYield0 extends LowPriorityYield1
-  }
-
+  implicit def seqYieldDsl[A, B >: A, Collection[+X] <: SeqOps[X, Collection, Collection[X]]]
+      : Dsl[Yield[A], Collection[B], Unit] =
+    new Dsl[Yield[A], Collection[B], Unit] {
+      def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {
+        keyword.element +: generateTail(())
+      }
+    }
 }
 
-import YieldScalaVersions.Scala213._
-
+private[keywords] trait LowPriorityYield0 extends LowPriorityYield1
 object Yield extends LowPriorityYield0 {
 
   given [Element]: AsKeyword.FromKeyword[Yield[Element], Unit] with {}

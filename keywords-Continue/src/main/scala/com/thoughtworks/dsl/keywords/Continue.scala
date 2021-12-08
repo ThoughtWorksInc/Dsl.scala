@@ -49,16 +49,10 @@ case object Continue extends Continue {
     def cpsApply(keyword: Continue, handler: Value => Unit): Unit = ()
   }
 
-  private[dsl] object Scala213 {
-
-    @inline
-    def empty[A, C](implicit factory: Factory[A, C]): C = {
-      factory.newBuilder.result()
-    }
-
+  @inline
+  private def empty[A, C](implicit factory: Factory[A, C]): C = {
+    factory.newBuilder.result()
   }
-
-  import Scala213._
 
   implicit def collectionContinueDsl[Value, Element, Collection[_]](implicit
       factory: Factory[Element, Collection[Element]]

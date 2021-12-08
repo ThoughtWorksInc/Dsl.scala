@@ -24,24 +24,19 @@ import scala.collection.mutable.Builder
 final case class Each[Element](elements: Traversable[Element])
 object Each {
   given [Element]: AsKeyword.FromKeyword[Each[Element], Element] with {}
-  private[Each] object Scala213 {
 
-    @inline
-    def flatMapBreakOut[Element, Domain, DomainElement](
-        fa: Traversable[Element],
-        f: Element => GenTraversableOnce[DomainElement]
-    )(implicit factory: Factory[DomainElement, Domain]): Domain = {
-      factory.fromSpecific(new View.FlatMap(fa, f))
-    }
-
-    @inline
-    def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
-      factory.newBuilder
-    }
-
+  @inline
+  private def flatMapBreakOut[Element, Domain, DomainElement](
+      fa: Traversable[Element],
+      f: Element => GenTraversableOnce[DomainElement]
+  )(implicit factory: Factory[DomainElement, Domain]): Domain = {
+    factory.fromSpecific(new View.FlatMap(fa, f))
   }
 
-  import Scala213._
+  @inline
+  private def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
+    factory.newBuilder
+  }
 
   given [Element]: AsKeyword[Traversable[Element], Each[Element], Element] = Each(_)
 
