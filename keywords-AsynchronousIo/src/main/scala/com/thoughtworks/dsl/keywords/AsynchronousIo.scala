@@ -10,13 +10,13 @@ import scala.util.control.NonFatal
 
 /** The base keyword to perform asynchronous IO in [[domains.task.Task]]s.
   *
-  * @example The following `readAll` is a [[com.thoughtworks.dsl.domains.task.Task Task]] to read file content
+  * @example The following `readAll` is a [[com.thoughtworks.dsl.domains.Task Task]] to read file content
   *          with the help of [[AsynchronousIo.ReadFile]]
   *
   *          {{{
   *          import java.nio._, file._, channels._
   *          import com.thoughtworks.dsl.bangnotation._
-  *          import com.thoughtworks.dsl.domains.task.Task
+  *          import com.thoughtworks.dsl.domains.Task
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo.ReadFile
@@ -51,7 +51,7 @@ import scala.util.control.NonFatal
   *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
-  *          import com.thoughtworks.dsl.domains.task.Task
+  *          import com.thoughtworks.dsl.domains.Task
   *          import java.net.URL
   *          def cat(paths: Path*) = {
   *            for {

@@ -21,7 +21,7 @@ lazy val bangnotation =
       `keywords-While`
     )
 
-lazy val `domains-task` =
+lazy val `domains-Task` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(
@@ -122,7 +122,7 @@ lazy val `keywords-AsynchronousIo` =
       `keywords-Each` % Test,
       `keywords-Using` % Test,
       comprehension % Test,
-      `domains-task` % Test
+      `domains-Task` % Test
     )
 
 lazy val `keywords-Shift` =
@@ -172,7 +172,7 @@ lazy val `keywords-Await` =
       Dsl,
       comprehension % Test,
       bangnotation % Test,
-      `domains-task` % Test,
+      `domains-Task` % Test,
       `keywords-In` % Test,
       `keywords-Get` % Test,
       `keywords-Return` % Test,
@@ -258,7 +258,7 @@ lazy val `package` = project
     `keywords-WithFilter`.jvm,
     `comprehension`.jvm,
     `bangnotation`.jvm,
-    `domains-task`.jvm,
+    `domains-Task`.jvm,
     Dsl.jvm
   )
 
