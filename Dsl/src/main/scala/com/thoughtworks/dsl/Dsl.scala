@@ -123,62 +123,7 @@ object Dsl extends LowPriorityDsl0 {
     )
   }
 
-  type Continuation[R, +A] = (A => R) => R
-
-  // TODO: Move to a separate library ( domains-continuation? )
-  object Continuation {
-    @inline
-    def now[R, A](a: A): R !! A = _(a)
-
-    @inline
-    def empty[R, A](r: R): R !! A = Function.const(r)
-
-    @inline
-    def delay[R, A](a: () => A): R !! A = _(a())
-
-    // TODO: turn it into an inline def
-    // TODO: Think about package object in Scala 3
-    @inline
-    def apply[R, A](a: => A): (R !! A) = delay(() => a)
-
-    def toTryContinuation[LeftDomain, Value](
-        task: LeftDomain !! Throwable !! Value
-    )(handler: Try[Value] => LeftDomain): LeftDomain = {
-      task { a => failureHandler =>
-        handler(Success(a))
-      } { e =>
-        handler(Failure(e))
-      }
-    }
-
-    def fromTryContinuation[LeftDomain, Value](
-        continuation: LeftDomain !! Try[Value]
-    )(successHandler: Value => LeftDomain !! Throwable)(failureHandler: Throwable => LeftDomain): LeftDomain = {
-      continuation(
-        new (Try[Value] => LeftDomain) {
-          def apply(result: Try[Value]): LeftDomain = {
-            result match {
-              case Success(a) =>
-                val protectedContinuation =
-                  try {
-                    successHandler(a)
-                  } catch {
-                    case NonFatal(e) =>
-                      return failureHandler(e)
-                  }
-                protectedContinuation(failureHandler)
-              case Failure(e) =>
-                failureHandler(e)
-            }
-          }
-        }
-      )
-    }
-
-  }
-
-  type !![R, +A] = Continuation[R, A]
-  val !! = Continuation
+  private[dsl] type !![R, +A] = (A => R) => R
 
   @deprecated("Use bangnotation.reset instead", "Dsl.scala 2.0.0")
   private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation

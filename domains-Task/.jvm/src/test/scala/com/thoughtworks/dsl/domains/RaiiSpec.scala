@@ -1,9 +1,8 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.Dsl.{!!, Continuation}
 import com.thoughtworks.dsl.keywords.{Shift, Yield}
-import com.thoughtworks.dsl.domains._
+import com.thoughtworks.dsl.domains._, Continuation.!!
 import com.thoughtworks.dsl.bangnotation._
 
 import scala.util.control.NonFatal
