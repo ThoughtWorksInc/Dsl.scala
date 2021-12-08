@@ -43,7 +43,7 @@ object Each {
 
   import Scala213._
 
-  implicit def implicitEach[Element](elements: Traversable[Element]): Each[Element] = Each[Element](elements)
+  given [Element]: AsKeyword[Traversable[Element], Each[Element], Element] = Each(_)
 
   implicit def eachDsl[Element, Domain, DomainElement](implicit
       thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),
