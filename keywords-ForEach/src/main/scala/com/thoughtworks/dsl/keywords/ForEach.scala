@@ -12,8 +12,7 @@ import scala.collection.mutable.Builder
 final case class ForEach[Element](elements: Traversable[Element])
 object ForEach {
   given [Element]: AsKeyword.FromKeyword[ForEach[Element], Element] with {}
-
-  implicit def implicitForEach[Element](elements: Traversable[Element]): ForEach[Element] = ForEach[Element](elements)
+  given [Element]: AsKeyword[Traversable[Element], ForEach[Element], Element] = ForEach(_)
 
   implicit def foreachDsl[Element]: Dsl[ForEach[Element], Unit, Element] =
     new Dsl[ForEach[Element], Unit, Element] {
