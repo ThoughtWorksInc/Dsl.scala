@@ -28,7 +28,7 @@ import scala.util.control.TailCalls.TailRec
   *     [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   */
 @implicitNotFound("The keyword:\n ${Keyword}\nis not supported inside a function that returns:\n${Domain}.")
-trait Dsl[-Keyword, Domain, +Value] extends Dsl.PolyCont[Keyword, Domain, Value] 
+trait Dsl[-Keyword, Domain, +Value] extends Dsl.PolyCont[Keyword, Domain, Value]
 
 private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
@@ -68,24 +68,25 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
   implicit def throwableContinuationDsl[Keyword, ThrowableContinuationDomain, LeftDomain, Value](implicit
       isThrowableContinuationDomain: ThrowableContinuationDomain =:= (LeftDomain !! Throwable),
       restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Dsl[Keyword, ThrowableContinuationDomain, Value] = isThrowableContinuationDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]]  { (keyword, handler) => continue =>
-    restDsl.cpsApply(
-      keyword,
-      new (Value => LeftDomain) {
-        def apply(value: Value): LeftDomain = {
-          val protectedContinuation =
-            try {
-              handler(value)
-            } catch {
-              case NonFatal(e) =>
-                return continue(e)
-            }
-          // FIXME: Shift[Domain, Throwable]
-          protectedContinuation(continue)
+  ): Dsl[Keyword, ThrowableContinuationDomain, Value] =
+    isThrowableContinuationDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) => continue =>
+      restDsl.cpsApply(
+        keyword,
+        new (Value => LeftDomain) {
+          def apply(value: Value): LeftDomain = {
+            val protectedContinuation =
+              try {
+                handler(value)
+              } catch {
+                case NonFatal(e) =>
+                  return continue(e)
+              }
+            // FIXME: Shift[Domain, Throwable]
+            protectedContinuation(continue)
+          }
         }
-      }
-    )
-  }
+      )
+    }
 
 }
 
@@ -94,33 +95,35 @@ object Dsl extends LowPriorityDsl0 {
   implicit def derivedTailRecDsl[Keyword, TailRecDomain, Domain, Value](implicit
       isTailRecDomain: TailRecDomain =:= TailRec[Domain],
       restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, TailRecDomain, Value] = isTailRecDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) =>
-    TailCalls.done {
-      restDsl.cpsApply(
-        keyword,
-        { value =>
-          handler(value).result
-        }
-      )
-    }
+  ): Dsl[Keyword, TailRecDomain, Value] = isTailRecDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
+    (keyword, handler) =>
+      TailCalls.done {
+        restDsl.cpsApply(
+          keyword,
+          { value =>
+            handler(value).result
+          }
+        )
+      }
   }
 
   implicit def derivedThrowableTailRecDsl[Keyword, TaskDomain, LeftDomain, Value](implicit
       isTaskDomain: TaskDomain =:= (TailRec[LeftDomain] !! Throwable),
       restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value]
-  ): Dsl[Keyword, TaskDomain, Value] = isTaskDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) => tailRecFailureHandler =>
-    TailCalls.done(
-      restDsl.cpsApply(
-        keyword,
-        { value => failureHandler =>
-          handler(value) { e =>
-            TailCalls.done(failureHandler(e))
-          }.result
+  ): Dsl[Keyword, TaskDomain, Value] = isTaskDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
+    (keyword, handler) => tailRecFailureHandler =>
+      TailCalls.done(
+        restDsl.cpsApply(
+          keyword,
+          { value => failureHandler =>
+            handler(value) { e =>
+              TailCalls.done(failureHandler(e))
+            }.result
+          }
+        ) { e =>
+          tailRecFailureHandler(e).result
         }
-      ) { e =>
-        tailRecFailureHandler(e).result
-      }
-    )
+      )
   }
 
   private[dsl] type !![R, +A] = (A => R) => R
@@ -228,7 +231,6 @@ object Dsl extends LowPriorityDsl0 {
         typeClass.tryCatch(block, catcher, outerSuccessHandler)
       }
     }
-
 
     implicit def throwableContinuationTryCatch[LeftDomain, Value]
         : TryCatch[Value, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
@@ -443,8 +445,8 @@ object Dsl extends LowPriorityDsl0 {
     }
 
     private[Lift] trait LowPriorityOneStep1 { this: OneStep.type =>
-      given[Collection, Element](
-        using factory: collection.Factory[Element, Collection]
+      given [Collection, Element](using
+          factory: collection.Factory[Element, Collection]
       ): OneStep[Element, Collection] = { element =>
         factory.fromSpecific(element :: Nil)
       }
@@ -468,14 +470,12 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
-
   trait PolyCont[-Keyword, Domain, +Value] {
 
     /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
     def cpsApply(keyword: Keyword, handler: Value => Domain): Domain
 
   }
-
 
   trait Run[Keyword, Domain, Value] extends (Keyword => Domain)
 
@@ -521,9 +521,29 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
-  def IsKeyword[Keyword, Value](using IsKeyword[Keyword, Value]) = summon[IsKeyword[Keyword, Value]]
+  trait AsKeyword[From, Keyword, Value] {
+    def asKeyword(from: From): Keyword
+  }
 
-  trait IsKeyword[Keyword, Value]
+  object AsKeyword {
+    trait FromSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
+      def asKeyword(from: From): Keyword = from
+    }
+  }
+  def IsKeyword[Keyword, Value](using IsKeyword[Keyword, Value]) = summon[IsKeyword[Keyword, Value]]
+  trait IsKeyword[Keyword, Value] extends AsKeyword.FromSubtype[Keyword, Keyword, Value]
+
+  opaque type IsKeywordThenAsKeyword[From, Keyword, Value] <: AsKeyword[From, Keyword, Value] =
+    AsKeyword[From, Keyword, Value]
+  object IsKeywordThenAsKeyword {
+    given [Keyword, Value](using
+        isKeyword: IsKeyword[Keyword, Value]
+    ): IsKeywordThenAsKeyword[Keyword, Keyword, Value] = isKeyword
+    given [From, Keyword, Value](using
+        not: util.NotGiven[IsKeyword[From, Value]],
+        asKeyword: AsKeyword[From, Keyword, Value]
+    ): IsKeywordThenAsKeyword[From, Keyword, Value] = asKeyword
+  }
 
   extension [Keyword, Domain, Value](keyword: Keyword)
     @inline def cpsApply(using
