@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.Dsl.{!!, Continuation}
+import com.thoughtworks.dsl.domains.Continuation, Continuation.!!
 import com.thoughtworks.dsl.keywords.Shift
 import com.thoughtworks.dsl.bangnotation._
 

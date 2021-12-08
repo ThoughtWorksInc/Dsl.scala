@@ -4,7 +4,6 @@ import Dsl.IsKeyword
 import Dsl.Typed
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, Continuation}
 import com.thoughtworks.dsl.keywords.Shift.{SameDomainStackSafeShiftDsl, StackSafeShiftDsl}
 
 import scala.annotation.tailrec
@@ -15,7 +14,7 @@ import scala.util.control.TailCalls.TailRec
 /** @author
   *   杨博 (Yang Bo)
   */
-opaque type Shift[R, A] = Dsl.Continuation[R, A]
+opaque type Shift[R, A] = (A => R) => R
 
 private[keywords] trait LowPriorityShift1 {
 
@@ -151,8 +150,10 @@ object Shift extends LowPriorityShift0 {
         taskFlatMap(keyword.continuation, handler)
     }
 
-  def apply[R, A](continuation: Continuation[R, A]): Shift[R, A] = continuation
+  private[keywords] type !![R, +A] = (A => R) => R
 
-  extension [R, A](shift: Shift[R, A]) def continuation: Continuation[R, A] = shift
+  def apply[R, A](continuation: R !! A): Shift[R, A] = continuation
+
+  extension [R, A](shift: Shift[R, A]) def continuation: R !! A = shift
 
 }

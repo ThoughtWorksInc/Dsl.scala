@@ -3,7 +3,7 @@ package keywords
 import Dsl.IsKeyword
 import Dsl.Typed
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.!!
+import com.thoughtworks.dsl.domains.Continuation.!!
 import scala.concurrent.Await.result
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}

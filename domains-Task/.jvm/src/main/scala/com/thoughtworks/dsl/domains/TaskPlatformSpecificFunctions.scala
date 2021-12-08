@@ -4,7 +4,7 @@ import scala.concurrent.SyncVar
 import scala.util.Try
 import scala.util.control.TailCalls
 import scala.concurrent.duration.Duration
-import com.thoughtworks.dsl.Dsl.Continuation
+import com.thoughtworks.dsl.domains.Continuation
 private[domains] trait TaskPlatformSpecificFunctions { this: Task.type =>
 
   def blockingAwait[A](task: Task[A], timeout: Duration = Duration.Inf): A = {

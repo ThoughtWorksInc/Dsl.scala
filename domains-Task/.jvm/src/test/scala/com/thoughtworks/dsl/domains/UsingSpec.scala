@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.Dsl.{!!, Continuation}
+import Continuation.!!
 import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.keywords.{Using, Yield}
 import org.scalatest.Assertion
