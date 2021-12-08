@@ -125,24 +125,6 @@ object Dsl extends LowPriorityDsl0 {
 
   private[dsl] type !![R, +A] = (A => R) => R
 
-  @deprecated("Use bangnotation.reset instead", "Dsl.scala 2.0.0")
-  private[dsl] /* sealed */ trait ResetAnnotation extends Annotation with StaticAnnotation
-  @deprecated("Use bangnotation.reset instead", "Dsl.scala 2.0.0")
-  private[dsl] final class nonTypeConstraintReset extends ResetAnnotation with StaticAnnotation
-
-  /** An annotation to explicitly perform reset control operator on a code block.
-    *
-    * @note
-    *   This annotation can be automatically added if [[compilerplugins.ResetEverywhere ResetEverywhere]] compiler
-    *   plug-in is enabled.
-    */
-  @deprecated("Use bangnotation.reset instead", "Dsl.scala 2.0.0")
-  final class reset extends ResetAnnotation with StaticAnnotation with TypeConstraint
-
-  /** An annotation to mark a method is a shift control operator. */
-  @deprecated("Use bangnotation.reset instead", "Dsl.scala 2.0.0")
-  final class shift extends StaticAnnotation
-
   def apply[Keyword, Domain, Value](implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
     typeClass
 
