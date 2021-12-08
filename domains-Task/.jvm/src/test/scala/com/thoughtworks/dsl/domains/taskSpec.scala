@@ -9,7 +9,7 @@ import scala.language.implicitConversions
 import com.thoughtworks.dsl.keywords.{Using, Each, Fork}
 import com.thoughtworks.dsl.domains._
 import com.thoughtworks.dsl.keywords.Shift
-import com.thoughtworks.dsl.keywords.Shift.implicitShift
+import com.thoughtworks.dsl.keywords.Shift.given
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.TailCalls

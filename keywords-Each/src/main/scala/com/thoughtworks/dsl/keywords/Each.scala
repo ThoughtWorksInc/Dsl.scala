@@ -6,7 +6,6 @@ import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
 import scala.collection._
 import scala.language.implicitConversions
-import Shift.implicitShift
 
 import scala.collection.mutable.Builder
 
