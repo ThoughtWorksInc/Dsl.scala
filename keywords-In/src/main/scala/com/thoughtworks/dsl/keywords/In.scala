@@ -9,12 +9,13 @@ object In {
   given [Element]: AsKeyword.IsKeyword[In[Element], Element] with {}
 
   given [Element, Domain, DomainElement](using
-      conversion: Domain => IterableOnce[DomainElement],
+      isIterableOnce: Domain <:< IterableOnce[DomainElement],
       factory: collection.Factory[DomainElement, Domain]
-  ): Dsl[In[Element], Domain, Element] with {
-    def cpsApply(keyword: In[Element], handler: Element => Domain): Domain = {
-      factory.fromSpecific(new collection.View.FlatMap(keyword, handler.andThen(conversion)))
-    }
+  ): Dsl[In[Element], Domain, Element] = {
+    (keyword: In[Element], handler: Element => Domain) =>
+      factory.fromSpecific(
+        new collection.View.FlatMap(keyword, isIterableOnce.liftCo(handler))
+      )
   }
 
   private class OptimizedDrop[Element](
@@ -35,7 +36,7 @@ object In {
       case indexedSeq: collection.IndexedSeq[Element] =>
         new OptimizedDrop(indexedSeq, 0)
       case notSeq =>
-        List.from(notSeq)
+        LazyList.from(notSeq)
     }
   }
 
@@ -85,27 +86,27 @@ object In {
   // }
 
   import Dsl.!!
-  given [Element, Output[DomainElement], OuterDomain, DomainElement](using
-      conversion: Output[DomainElement] => IterableOnce[DomainElement],
+  given [Element, Output, OuterDomain, DomainElement](using
+      isIterableOnce: Output => IterableOnce[DomainElement],
       // lift: Lift[Output[DomainElement], OuterDomain],
-      factory: collection.Factory[DomainElement, Output[DomainElement]]
-  ): Dsl[In[Element], OuterDomain !! Output[DomainElement], Element] with {
+      factory: collection.Factory[DomainElement, Output]
+  ): Dsl[In[Element], OuterDomain !! Output, Element] with {
     // type InnerDomain = OuterDomain !! Output[DomainElement]
     def cpsApply(
         keyword: In[Element],
-        handler: Element => OuterDomain !! Output[DomainElement]
-    ): OuterDomain !! Output[DomainElement] = { join =>
+        handler: Element => OuterDomain !! Output
+    ): OuterDomain !! Output = { join =>
       @inline def loop(
           seqOps: SeqOrSeqView[Element],
-          accumulator: List[Output[DomainElement]]
+          accumulator: List[Output]
       ): OuterDomain = {
         seqOps.headOption match {
           case None =>
-            join(factory.fromSpecific(accumulator.view.reverse.flatMap(conversion)))
+            join(factory.fromSpecific(accumulator.view.reverse.flatMap(isIterableOnce)))
           case Some(head) =>
             // Workaround for https://github.com/lampepfl/dotty/issues/7880
             val tail: SeqOrSeqView[Element] = seqOps.drop(1).asInstanceOf[SeqOrSeqView[Element]]
-            handler(head) { (expended: Output[DomainElement]) =>
+            handler(head) { (expended: Output) =>
               loop(tail, expended :: accumulator)
             }
         }
