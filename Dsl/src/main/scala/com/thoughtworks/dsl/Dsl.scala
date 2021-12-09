@@ -502,19 +502,6 @@ object Dsl extends LowPriorityDsl0 {
     ): Dsl.PolyCont[Typed[Keyword, Value], Domain, Value] =
       dsl
 
-    // TODO: Remove
-    given ToTypedKeyword[Keyword]: AnyRef with {
-      extension [Value](keyword: Keyword)
-        @inline def typed: Typed[Keyword, Value] = {
-          keyword
-        }
-    }
-
-    given [Keyword, Value]: AnyRef with {
-      extension [NewValue](typedKeyword: Typed[Keyword, Value])
-        @inline def withValueType: Typed[Keyword, NewValue] = typedKeyword
-    }
-
     @inline def apply[Keyword, Value]: Keyword =:= Typed[Keyword, Value] = summon
 
   }
