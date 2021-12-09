@@ -2,10 +2,8 @@ package com.thoughtworks
 package dsl
 import keywords._
 import com.thoughtworks.dsl.keywords._, Match._
-import Dsl.Typed.given
 import scala.quoted.Quotes
 import collection.immutable.Queue
-import Dsl.given
 import scala.util.control.Exception.Catcher
 /**
   * @example
