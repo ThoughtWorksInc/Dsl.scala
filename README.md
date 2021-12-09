@@ -81,7 +81,7 @@ The call to `xorshiftRandomGenerator` does not throw a `StackOverflowError` beca
 
 ## Links and related works
 
-* Check the [Documentation](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html) to find examples about using or creating DSLs.
+* Check the [Documentation](https://javadoc.io/page/com.thoughtworks.dsl/dsl_3/latest/com/thoughtworks/dsl.html) to find examples about using or creating DSLs.
 * See [MVNRepository](http://mvnrepository.com/artifact/com.thoughtworks.dsl?sort=newest) or [Scaladex](https://index.scala-lang.org/thoughtworksinc/dsl.scala) for the settings of each built-in DSLs for your build tools.
 * [Benchmarks: Dsl.scala vs Monix vs Cats Effect vs Scalaz Concurrent vs Scala Async vs Scala Continuation](https://github.com/ThoughtWorksInc/Dsl.scala/wiki/Benchmarks:-Dsl.scala-vs-Monix-vs-Cats-Effect-vs-Scalaz-Concurrent-vs-Scala-Async-vs-Scala-Continuation)
 * [Control.Dsl](https://github.com/Atry/Control.Dsl) is the Haskell port of this library.
