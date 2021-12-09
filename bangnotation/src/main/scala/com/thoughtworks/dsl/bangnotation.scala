@@ -65,7 +65,7 @@ object bangnotation {
       val reifiedTerm = KeywordTree(bodyTerm).keywordTerm
         reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) =>
           given quoted.Type[K] = tk
-          '{Dsl.Typed.cast[K, V]($k)}: quoted.Expr[_]
+          '{Dsl.Typed[K, V]($k)}: quoted.Expr[_]
         }
       }
 
@@ -703,7 +703,7 @@ object bangnotation {
         valueType/*.widenTermRefByName*/.usingType { [A] => (ta: quoted.Type[A]) =>
           given quoted.Type[A] = ta
           '{
-            keywords.Pure.cast[A](${term.asExprOf[A]})
+            keywords.Pure[A](${term.asExprOf[A]})
           }.asTerm
         }
       }

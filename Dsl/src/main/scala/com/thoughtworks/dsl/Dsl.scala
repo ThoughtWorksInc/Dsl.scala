@@ -515,9 +515,7 @@ object Dsl extends LowPriorityDsl0 {
         @inline def withValueType: Typed[Keyword, NewValue] = typedKeyword
     }
 
-    @inline def cast[Keyword, Value]: Keyword =:= Typed[Keyword, Value] = summon[Keyword =:= Typed[Keyword, Value]]
-
-    def apply[Keyword, Value](keyword: Keyword): Typed[Keyword, Value] = keyword
+    @inline def apply[Keyword, Value]: Keyword =:= Typed[Keyword, Value] = summon
 
   }
 

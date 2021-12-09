@@ -15,12 +15,9 @@ import Dsl.Typed
   */
 opaque type Return[ReturnValue] = ReturnValue
 object Return {
-  @inline def cast[ReturnValue]: ReturnValue <:< Return[ReturnValue] = implicitly
+  @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] = summon
 
-  @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] = summon[ReturnValue =:= Return[ReturnValue]]
   given [ReturnValue]: AsKeyword.FromKeyword[Return[ReturnValue], Nothing] with {}
-
-  extension [ReturnValue](keyword: Return[ReturnValue]) def returnValue: ReturnValue = keyword
 
   given [ReturnValue, Domain](using
       lift: Lift[ReturnValue, Domain]
@@ -33,7 +30,7 @@ object Return {
   implicit def returnDsl[ReturnValue, Domain >: ReturnValue]: Dsl[Return[ReturnValue], Domain, Nothing] =
     new Dsl[Return[ReturnValue], Domain, Nothing] {
       def cpsApply(keyword: Return[ReturnValue], handler: Nothing => Domain): Domain = {
-        keyword.returnValue
+        keyword
       }
     }
 }

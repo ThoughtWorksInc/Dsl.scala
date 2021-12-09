@@ -22,7 +22,7 @@ private[keywords] trait LowPriorityShift1 {
   implicit def stackUnsafeShiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
     new Dsl[Shift[Domain, Value], Domain, Value] {
       def cpsApply(shift: Shift[Domain, Value], handler: Value => Domain) =
-        shift.continuation(handler)
+        Shift.apply.flip(shift)(handler)
     }
 
 }
@@ -59,7 +59,7 @@ object Shift extends LowPriorityShift0 {
   implicit def tailRecShiftDsl[R, Value]: SameDomainStackSafeShiftDsl[TailRec[R], Value] =
     new SameDomainStackSafeShiftDsl[TailRec[R], Value] {
       def cpsApply(keyword: Shift[TailRec[R], Value], handler: Value => TailRec[R]): TailRec[R] = {
-        shiftTailRec(keyword.continuation, handler)
+        shiftTailRec(keyword, handler)
       }
     }
 
@@ -105,7 +105,7 @@ object Shift extends LowPriorityShift0 {
           keyword: Shift[LeftDomain !! Throwable, Value],
           handler: Value => LeftDomain !! Throwable
       ): !![LeftDomain, Throwable] =
-        suspend(keyword.continuation, handler)
+        suspend(keyword, handler)
     }
 
   private def flatMapTrampoline[LeftDomain, RightDomain, Value](
@@ -139,13 +139,11 @@ object Shift extends LowPriorityShift0 {
           keyword: Shift[!![LeftDomain, Throwable], Value],
           handler: Value => !![!![LeftDomain, Throwable], RightDomain]
       ): !![!![LeftDomain, Throwable], RightDomain] =
-        taskFlatMap(keyword.continuation, handler)
+        taskFlatMap(keyword, handler)
     }
 
   private[keywords] type !![R, +A] = (A => R) => R
 
-  def apply[R, A](continuation: R !! A): Shift[R, A] = continuation
-
-  extension [R, A](shift: Shift[R, A]) def continuation: R !! A = shift
+  def apply[R, A]: (R !! A) =:= Shift[R, A] = summon
 
 }

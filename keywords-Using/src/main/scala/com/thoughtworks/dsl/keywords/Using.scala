@@ -67,7 +67,7 @@ object Using {
     */
   def scopeExit(r: ScopeExitHandler) = r
 
-  def apply[R <: AutoCloseable](r: R): Using[R] = r
+  def apply[R <: AutoCloseable]: R =:= Using[R] = summon
 
   given [
       R <: AutoCloseable,
