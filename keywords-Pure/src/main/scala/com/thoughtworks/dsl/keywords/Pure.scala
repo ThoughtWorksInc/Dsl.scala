@@ -12,6 +12,5 @@ object Pure {
   }
 
   given [PureValue]: AsKeyword.FromKeyword[Pure[PureValue], PureValue] with {}
-  @inline def cast[Value]: Value =:= Pure[Value] = summon[Value =:= Pure[Value]]
-  def apply[Value](value: Value): Pure[Value] = value
+  @inline def apply[Value]: Value =:= Pure[Value] = summon[Value =:= Pure[Value]]
 }

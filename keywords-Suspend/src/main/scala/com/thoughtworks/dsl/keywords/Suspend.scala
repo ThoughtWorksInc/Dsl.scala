@@ -6,8 +6,7 @@ import Dsl.cpsApply
 
 opaque type Suspend[Keyword] = () => Keyword
 object Suspend {
-  @inline def cast[Keyword]: (() => Keyword) =:= Suspend[Keyword] = implicitly
-  def apply[Keyword, Value](keywordFunction: () => Keyword): Suspend[Keyword] = keywordFunction
+  @inline def apply[Keyword]: (() => Keyword) =:= Suspend[Keyword] = summon
 
   given[Upstream, UpstreamValue](using upstreamIsKeyword: => AsKeyword.FromKeyword[Upstream, UpstreamValue]): AsKeyword.FromKeyword[Suspend[Upstream], UpstreamValue] with {}
 

@@ -3,10 +3,9 @@ package keywords
 import Dsl.AsKeyword
 import Dsl.Typed
 
-opaque type In[Element] <: Any = Iterable[Element]
+opaque type In[Element] = Iterable[Element]
 object In {
-  @inline def cast[Element]: Iterable[Element] <:< In[Element] = implicitly
-  def apply[Element](iterable: Iterable[Element]): In[Element] = iterable
+  @inline def apply[Element]: Iterable[Element] =:= In[Element] = summon
 
   given [Element]: AsKeyword.FromKeyword[In[Element], Element] with {}
 

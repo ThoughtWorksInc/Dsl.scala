@@ -109,9 +109,7 @@ import scala.language.implicitConversions
   */
 opaque type Await[Result] = concurrent.Future[Result]
 object Await {
-  extension [Result](keyword: Await[Result]) def future: concurrent.Future[Result] = keyword
-  def apply[Result](future: concurrent.Future[Result]): Await[Result] = future
-  @inline def cast[Result]: concurrent.Future[Result] <:< Await[Result] = implicitly
+  @inline def apply[Result]: concurrent.Future[Result] =:= Await[Result] = summon
   given [Result]: AsKeyword.FromKeyword[Await[Result], Result] with {}
 
   implicit def streamAwaitDsl[Value, That](implicit
@@ -119,7 +117,7 @@ object Await {
   ): Dsl[Await[Value], Stream[Future[That]], Value] =
     new Dsl[Await[Value], Stream[Future[That]], Value] {
       def cpsApply(keyword: Await[Value], handler: Value => Stream[Future[That]]): Stream[Future[That]] = {
-        val futureOfStream = keyword.future.map(handler)
+        val futureOfStream = keyword.map(handler)
         new Stream.Cons(futureOfStream.flatMap(_.head), result(futureOfStream, Duration.Inf).tail)
       }
     }
@@ -129,7 +127,7 @@ object Await {
   ): Dsl[Await[Value], Future[That], Value] =
     new Dsl[Await[Value], Future[That], Value] {
       def cpsApply(keyword: Await[Value], handler: Value => Future[That]): Future[That] = {
-        keyword.future.flatMap(handler)
+        keyword.flatMap(handler)
       }
     }
 
@@ -143,7 +141,7 @@ object Await {
   ): Dsl[Await[Value], Unit !! Throwable, Value] =
     new Dsl[Await[Value], Unit !! Throwable, Value] {
       def cpsApply(keyword: Await[Value], handler: Value => Unit !! Throwable): Unit !! Throwable =
-        !!.fromTryContinuation[Unit, Value](keyword.future.onComplete)(handler)
+        !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
     }
 
   given [Value]: AsKeyword.FromKeywordSubtype[Future[Value], Await[Value], Value] with {}

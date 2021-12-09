@@ -26,7 +26,7 @@ extension [Keyword, Value](keyword: Keyword)
   )(
       mapper: Value => MappedValue
   ): FlatMap[Keyword, Value, Pure[MappedValue]] =
-    FlatMap(keyword, Pure.cast.liftCo(mapper))
+    FlatMap(keyword, Pure.apply.liftCo(mapper))
 
   @inline def flatMap[Mapped, MappedValue](
       using /*erased*/ AsKeyword.FromKeyword[Keyword, Value]

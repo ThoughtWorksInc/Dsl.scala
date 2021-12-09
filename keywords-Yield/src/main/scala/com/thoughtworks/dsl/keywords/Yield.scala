@@ -52,14 +52,14 @@ private[keywords] trait LowPriorityYield3 {
       : Dsl[From[FromCollection], Iterator[A], Unit] =
     new Dsl[From[FromCollection], Iterator[A], Unit] {
       def cpsApply(keyword: From[FromCollection], generateTail: Unit => Iterator[A]): Iterator[A] = {
-        keyword.elements.toIterator ++ generateTail(())
+        From.apply.flip(keyword).toIterator ++ generateTail(())
       }
     }
 
   implicit def iteratorYieldDsl[A, B >: A]: Dsl[Yield[A], Iterator[B], Unit] =
     new Dsl[Yield[A], Iterator[B], Unit] {
       def cpsApply(keyword: Yield[A], generateTail: Unit => Iterator[B]): Iterator[B] = {
-        Iterator.single(keyword.element) ++ generateTail(())
+        Iterator.single(Yield.apply.flip(keyword)) ++ generateTail(())
       }
     }
 
@@ -74,7 +74,7 @@ private[keywords] trait LowPriorityYield1 extends LowPriorityYield3 {
   ]]: Dsl[From[FromCollection], Collection[A], Unit] =
     new Dsl[From[FromCollection], Collection[A], Unit] {
       def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[A]): Collection[A] = {
-        keyword.elements.toIterable ++: generateTail(())
+        From.apply.flip(keyword).toIterable ++: generateTail(())
       }
     }
 
@@ -82,7 +82,7 @@ private[keywords] trait LowPriorityYield1 extends LowPriorityYield3 {
       : Dsl[Yield[A], Collection[B], Unit] =
     new Dsl[Yield[A], Collection[B], Unit] {
       def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {
-        keyword.element +: generateTail(())
+        Yield.apply.flip(keyword) +: generateTail(())
       }
     }
 }
@@ -91,12 +91,7 @@ private[keywords] trait LowPriorityYield0 extends LowPriorityYield1
 object Yield extends LowPriorityYield0 {
 
   given [Element]: AsKeyword.FromKeyword[Yield[Element], Unit] with {}
-  def cast[Element]: Element <:< Yield[Element] = implicitly
-  extension [Element](keyword: Yield[Element])
-    def element: Element = keyword
-
-  def apply[Element](element: Element): Yield[Element] = cast(element)
-
+  def apply[Element]: Element =:= Yield[Element] = summon
   def apply[A](element0: A, element1: A, elements: A*) = {
     From(element0 +: element1 +: elements)
   }
@@ -105,9 +100,7 @@ object Yield extends LowPriorityYield0 {
   object From {
     given [FromCollection <: TraversableOnce[_]]: AsKeyword.FromKeyword[From[FromCollection], Unit] with {}
 
-    def apply[FromCollection <: TraversableOnce[_]](elements: FromCollection): From[FromCollection] = elements
-    extension [FromCollection <: TraversableOnce[_]](keyword: From[FromCollection])
-      def elements: FromCollection = keyword
+    def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = summon
 
   }
 
