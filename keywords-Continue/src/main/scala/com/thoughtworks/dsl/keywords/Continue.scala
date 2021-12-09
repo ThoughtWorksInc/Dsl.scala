@@ -42,8 +42,8 @@ sealed class Continue
   * @author 杨博 (Yang Bo)
   */
 case object Continue extends Continue {
-  given AsKeyword.FromKeyword[Continue, Nothing] with {}
-  given AsKeyword.FromKeyword[Continue.type, Nothing] with {}
+  given AsKeyword.IsKeyword[Continue, Nothing] with {}
+  given AsKeyword.IsKeyword[Continue.type, Nothing] with {}
 
   implicit def continueUnitDsl[Value]: Dsl[Continue, Unit, Value] = new Dsl[Continue, Unit, Value] {
     def cpsApply(keyword: Continue, handler: Value => Unit): Unit = ()

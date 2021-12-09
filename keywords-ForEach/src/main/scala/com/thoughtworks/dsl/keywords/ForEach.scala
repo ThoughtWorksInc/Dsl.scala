@@ -11,7 +11,7 @@ import scala.collection.mutable.Builder
 /** Iterates though each element in [[elements]]. */
 final case class ForEach[Element](elements: Traversable[Element])
 object ForEach {
-  given [Element]: AsKeyword.FromKeyword[ForEach[Element], Element] with {}
+  given [Element]: AsKeyword.IsKeyword[ForEach[Element], Element] with {}
   given [Element]: AsKeyword[Traversable[Element], ForEach[Element], Element] = ForEach(_)
 
   implicit def foreachDsl[Element]: Dsl[ForEach[Element], Unit, Element] =

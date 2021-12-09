@@ -16,7 +16,7 @@ import scala.util.control.NonFatal
 final case class Fork[Element](elements: Traversable[Element]) extends AnyVal 
 
 object Fork {
-  given [Element]: AsKeyword.FromKeyword[Fork[Element], Element] with {}
+  given [Element]: AsKeyword.IsKeyword[Fork[Element], Element] with {}
 
   @inline
   private def flatMapBreakOut[Element, Domain, DomainElement](

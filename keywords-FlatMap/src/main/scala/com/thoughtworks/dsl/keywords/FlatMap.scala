@@ -12,8 +12,8 @@ final case class FlatMap[Upstream, UpstreamValue, Mapped](
 
 object FlatMap {
   given [Upstream, UpstreamValue, Mapped, MappedValue](using
-      AsKeyword.FromKeyword[Mapped, MappedValue]
-  ): AsKeyword.FromKeyword[FlatMap[Upstream, UpstreamValue, Mapped], MappedValue] with {}
+      AsKeyword.IsKeyword[Mapped, MappedValue]
+  ): AsKeyword.IsKeyword[FlatMap[Upstream, UpstreamValue, Mapped], MappedValue] with {}
 
   given [
       Upstream,

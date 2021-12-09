@@ -6,7 +6,7 @@ opaque type In[Element] = Iterable[Element]
 object In {
   @inline def apply[Element]: Iterable[Element] =:= In[Element] = summon
 
-  given [Element]: AsKeyword.FromKeyword[In[Element], Element] with {}
+  given [Element]: AsKeyword.IsKeyword[In[Element], Element] with {}
 
   given [Element, Domain, DomainElement](using
       conversion: Domain => IterableOnce[DomainElement],

@@ -39,13 +39,13 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 { this: Shif
 }
 
 object Shift extends LowPriorityShift0 {
-  given [Domain, Value]: AsKeyword.FromKeyword[Shift[Domain, Value], Value] with {}
+  given [Domain, Value]: AsKeyword.IsKeyword[Shift[Domain, Value], Value] with {}
 
   trait StackSafeShiftDsl[Domain, NewDomain, Value] extends Dsl[Shift[Domain, Value], NewDomain, Value]
 
   private[keywords] type SameDomainStackSafeShiftDsl[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
 
-  given [Domain, Value]: AsKeyword.FromKeywordSubtype[Domain !! Value, Shift[Domain, Value], Value] with {}
+  given [Domain, Value]: AsKeyword.IsKeywordSubtype[Domain !! Value, Shift[Domain, Value], Value] with {}
 
   private def shiftTailRec[R, Value](continuation: TailRec[R] !! Value, handler: Value => TailRec[R]) = {
     continuation { a =>

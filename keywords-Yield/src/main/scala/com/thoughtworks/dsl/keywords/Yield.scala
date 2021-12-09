@@ -89,7 +89,7 @@ private[keywords] trait LowPriorityYield1 extends LowPriorityYield3 {
 private[keywords] trait LowPriorityYield0 extends LowPriorityYield1
 object Yield extends LowPriorityYield0 {
 
-  given [Element]: AsKeyword.FromKeyword[Yield[Element], Unit] with {}
+  given [Element]: AsKeyword.IsKeyword[Yield[Element], Unit] with {}
   def apply[Element]: Element =:= Yield[Element] = summon
   def apply[A](element0: A, element1: A, elements: A*) = {
     From(element0 +: element1 +: elements)
@@ -97,7 +97,7 @@ object Yield extends LowPriorityYield0 {
 
   opaque type From[FromCollection <: TraversableOnce[_]] = FromCollection
   object From {
-    given [FromCollection <: TraversableOnce[_]]: AsKeyword.FromKeyword[From[FromCollection], Unit] with {}
+    given [FromCollection <: TraversableOnce[_]]: AsKeyword.IsKeyword[From[FromCollection], Unit] with {}
 
     def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = summon
 
@@ -180,7 +180,7 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  given [FromCollection <: TraversableOnce[_]]: AsKeyword.FromKeywordSubtype[FromCollection, From[FromCollection], Unit] with {}
+  given [FromCollection <: TraversableOnce[_]]: AsKeyword.IsKeywordSubtype[FromCollection, From[FromCollection], Unit] with {}
 
   implicit def streamYieldFromDsl[A, FromCollection <: Iterable[A]]: Dsl[From[FromCollection], Stream[A], Unit] =
     new Dsl[From[FromCollection], Stream[A], Unit] {
@@ -189,7 +189,7 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  given [Element]: AsKeyword.FromKeywordSubtype[Element, Yield[Element], Unit] with {}
+  given [Element]: AsKeyword.IsKeywordSubtype[Element, Yield[Element], Unit] with {}
 
   implicit def streamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
     new Dsl[Yield[Element], Stream[That], Unit] {

@@ -82,7 +82,7 @@ trait AsynchronousIo[Value] extends Any {
 }
 
 object AsynchronousIo {
-  given [Keyword <: AsynchronousIo[Value], Value]: AsKeyword.FromKeyword[Keyword, Value] with {}
+  given [Keyword <: AsynchronousIo[Value], Value]: AsKeyword.IsKeyword[Keyword, Value] with {}
   final case class Connect(socket: AsynchronousSocketChannel, remote: SocketAddress) extends AsynchronousIo[Void] {
     protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Void, _ >: Attachment]): Unit = {
       socket.connect(remote, attachment, handler)

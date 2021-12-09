@@ -24,7 +24,7 @@ import scala.util.control.NonFatal
 opaque type Using[R <: AutoCloseable] = R
 
 object Using {
-  given [R <: AutoCloseable]: AsKeyword.FromKeyword[Using[R], R] with {}
+  given [R <: AutoCloseable]: AsKeyword.IsKeyword[Using[R], R] with {}
 
   given [R <: AutoCloseable]: AsKeyword[R, Using[R], R] = Using(_)
 
@@ -77,7 +77,7 @@ object Using {
       BlockDomain,
       FinalizerDomain
   ](using
-      AsKeyword.FromKeyword[Mapped, MappedValue],
+      AsKeyword.IsKeyword[Mapped, MappedValue],
       Dsl.TryFinally[MappedValue, OuterDomain, BlockDomain, FinalizerDomain],
       Dsl.PolyCont[Mapped, BlockDomain, MappedValue]
   ): Dsl.PolyCont[FlatMap[Using[R], R, Mapped], OuterDomain, MappedValue] = {

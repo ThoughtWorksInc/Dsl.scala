@@ -59,7 +59,7 @@ import com.thoughtworks.dsl.Dsl.AsKeyword
 final case class Put[S](value: S) extends AnyVal
 
 object Put {
-  given [S]: AsKeyword.FromKeyword[Put[S], Unit] with {}
+  given [S]: AsKeyword.IsKeyword[Put[S], Unit] with {}
   implicit def putDsl[S0, S >: S0, A]: Dsl[Put[S0], S => A, Unit] = new Dsl[Put[S0], S => A, Unit] {
     def cpsApply(keyword: Put[S0], handler: Unit => S => A): S => A = {
       val newValue = keyword.value;

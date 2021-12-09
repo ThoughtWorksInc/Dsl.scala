@@ -23,7 +23,7 @@ import scala.collection.mutable.Builder
   */
 final case class Each[Element](elements: Traversable[Element])
 object Each {
-  given [Element]: AsKeyword.FromKeyword[Each[Element], Element] with {}
+  given [Element]: AsKeyword.IsKeyword[Each[Element], Element] with {}
 
   @inline
   private def flatMapBreakOut[Element, Domain, DomainElement](
