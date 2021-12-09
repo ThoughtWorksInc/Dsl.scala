@@ -2,6 +2,7 @@ package com.thoughtworks.dsl
 
 import keywords._
 import Dsl._
+import scala.collection.WithFilter
 
 object comprehension {
   extension [Keyword, Value](keyword: Keyword)
@@ -37,4 +38,11 @@ object comprehension {
         using /*erased*/ AsKeyword.IsKeyword[Mapped, MappedValue]
     ): FlatMap[Keyword, Value, Mapped] =
       FlatMap(keyword, flatMapper)
+
+    @inline def withFilter[Mapped, MappedValue](
+        using /*erased*/ AsKeyword.IsKeyword[Keyword, Value]
+    )(
+        filter: Value => Boolean
+    ) =
+      WithFilter(keyword, filter)
 }
