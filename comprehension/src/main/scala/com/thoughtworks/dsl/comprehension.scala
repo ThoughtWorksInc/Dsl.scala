@@ -5,44 +5,35 @@ import Dsl._
 import scala.collection.WithFilter
 
 object comprehension {
-  extension [Keyword, Value](keyword: Keyword)
-    @inline def to[Domain[_]](
-        using /* erased */
-        isKeyword: AsKeyword.IsKeyword[Keyword, Value]
-    )(using
+  extension [From, Keyword, Value](keyword: From)(using
+      asKeyword: AsKeyword.SearchIsKeywordFirst[From, Keyword, Value]
+  )
+    @inline def to[Domain[_]](using
         run: Run[Keyword, Domain[Value], Value]
     ): Domain[Value] = {
-      run(keyword)
+      run(asKeyword(keyword))
     }
 
-    @inline def as[Domain](
-        using /* erased */
-        isKeyword: AsKeyword.IsKeyword[Keyword, Value]
-    )(using
+    @inline def as[Domain](using
         run: Run[Keyword, Domain, Value]
     ): Domain = {
-      run(keyword)
+      run(asKeyword(keyword))
     }
+
     @inline def map[MappedValue](
-        using /*erased*/ AsKeyword.IsKeyword[Keyword, Value]
-    )(
         mapper: Value => MappedValue
     ): FlatMap[Keyword, Value, Pure[MappedValue]] =
-      FlatMap(keyword, Pure.apply.liftCo(mapper))
+      FlatMap(asKeyword(keyword), Pure.apply.liftCo(mapper))
 
     @inline def flatMap[Mapped, MappedValue](
-        using /*erased*/ AsKeyword.IsKeyword[Keyword, Value]
-    )(
         flatMapper: Value => Mapped
     )(
         using /*erased*/ AsKeyword.IsKeyword[Mapped, MappedValue]
     ): FlatMap[Keyword, Value, Mapped] =
-      FlatMap(keyword, flatMapper)
+      FlatMap(asKeyword(keyword), flatMapper)
 
     @inline def withFilter[Mapped, MappedValue](
-        using /*erased*/ AsKeyword.IsKeyword[Keyword, Value]
-    )(
         filter: Value => Boolean
     ) =
-      WithFilter(keyword, filter)
+      WithFilter(asKeyword(keyword), filter)
 }
