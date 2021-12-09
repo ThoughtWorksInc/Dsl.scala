@@ -7,24 +7,33 @@ final case class WithFilter[UpstreamKeyword, UpstreamValue](
 )
 
 object WithFilter {
-  given [UpstreamKeyword, UpstreamValue]:Dsl.AsKeyword.IsKeyword[WithFilter[UpstreamKeyword, UpstreamValue], UpstreamValue] with {}
+  given [UpstreamKeyword, UpstreamValue]: Dsl.AsKeyword.IsKeyword[WithFilter[
+    UpstreamKeyword,
+    UpstreamValue
+  ], UpstreamValue] with {}
+
   implicit def withFilterDsl[UpstreamKeyword, Domain, UpstreamValue](implicit
       upstreamDsl: Dsl.PolyCont[UpstreamKeyword, Domain, UpstreamValue],
       continueDsl: Dsl[Continue, Domain, Nothing]
-  ): Dsl.PolyCont[WithFilter[UpstreamKeyword, UpstreamValue], Domain, UpstreamValue] =
-    new Dsl[WithFilter[UpstreamKeyword, UpstreamValue], Domain, UpstreamValue] {
-      def cpsApply(keyword: WithFilter[UpstreamKeyword, UpstreamValue], handler: UpstreamValue => Domain) = {
-        val WithFilter(upstream, condition) = keyword
-        upstreamDsl.cpsApply(
-          upstream,
-          { upstreamValue =>
-            if (condition(upstreamValue)) {
-              handler(upstreamValue)
-            } else {
-              continueDsl.cpsApply(Continue, identity)
-            }
+  ): Dsl.PolyCont[WithFilter[
+    UpstreamKeyword,
+    UpstreamValue
+  ], Domain, UpstreamValue] = {
+    (
+        keyword: WithFilter[UpstreamKeyword, UpstreamValue],
+        handler: UpstreamValue => Domain
+    ) =>
+      val WithFilter(upstream, condition) = keyword
+      upstreamDsl.cpsApply(
+        upstream,
+        { upstreamValue =>
+          if (condition(upstreamValue)) {
+            handler(upstreamValue)
+          } else {
+            continueDsl.cpsApply(Continue, identity)
           }
-        )
-      }
-    }
+        }
+      )
+  }
+
 }

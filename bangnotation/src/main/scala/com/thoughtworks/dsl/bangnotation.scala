@@ -141,7 +141,7 @@ object bangnotation {
 
       
     val List(bangSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").declaredMethod("unary_!")
-    val List(asKeywordSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.Dsl.AsKeyword").declaredMethod("asKeyword")
+    val List(applySymbol) = Symbol.classSymbol("scala.Function1").declaredMethod("apply")
 
     sealed trait KeywordTree {
       def keywordTerm: Term
@@ -190,7 +190,7 @@ object bangnotation {
               Keyword(Apply(
                 Select(
                   asKeywordInstance,
-                  asKeywordSymbol,
+                  applySymbol,
                 ),
                 List(pureFrom)
               ), valueTypeTree.tpe)
