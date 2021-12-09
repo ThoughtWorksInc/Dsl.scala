@@ -500,24 +500,24 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   object AsKeyword {
-    trait FromKeywordSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
+    trait IsKeywordSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
       def asKeyword(from: From): Keyword = from
     }
-    trait FromKeyword[Keyword, Value] extends FromKeywordSubtype[Keyword, Keyword, Value]
+    trait IsKeyword[Keyword, Value] extends IsKeywordSubtype[Keyword, Keyword, Value]
 
-    /** An [[AsKeyword]] type class that enables a special implicit resolution order - search for [[FromKeyword]]
+    /** An [[AsKeyword]] type class that enables a special implicit resolution order - search for [[IsKeyword]]
       * instances first then other [[AsKeyword]] instances
       */
-    opaque type SearchFromKeywordFirst[From, Keyword, Value] <: AsKeyword[From, Keyword, Value] =
+    opaque type SearchIsKeywordFirst[From, Keyword, Value] <: AsKeyword[From, Keyword, Value] =
       AsKeyword[From, Keyword, Value]
-    object SearchFromKeywordFirst {
+    object SearchIsKeywordFirst {
       given [Keyword, Value](using
-          isKeyword: FromKeyword[Keyword, Value]
-      ): SearchFromKeywordFirst[Keyword, Keyword, Value] = isKeyword
+          isKeyword: IsKeyword[Keyword, Value]
+      ): SearchIsKeywordFirst[Keyword, Keyword, Value] = isKeyword
       given [From, Keyword, Value](using
-          not: util.NotGiven[FromKeyword[From, Value]],
+          not: util.NotGiven[IsKeyword[From, Value]],
           asKeyword: AsKeyword[From, Keyword, Value]
-      ): SearchFromKeywordFirst[From, Keyword, Value] = asKeyword
+      ): SearchIsKeywordFirst[From, Keyword, Value] = asKeyword
     }
 
   }

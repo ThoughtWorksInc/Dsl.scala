@@ -16,7 +16,7 @@ opaque type Return[ReturnValue] = ReturnValue
 object Return {
   @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] = summon
 
-  given [ReturnValue]: AsKeyword.FromKeyword[Return[ReturnValue], Nothing] with {}
+  given [ReturnValue]: AsKeyword.IsKeyword[Return[ReturnValue], Nothing] with {}
 
   given [ReturnValue, Domain](using
       lift: Lift[ReturnValue, Domain]

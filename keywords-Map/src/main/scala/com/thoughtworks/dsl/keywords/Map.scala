@@ -5,7 +5,7 @@ final case class Map[UpstreamKeyword, UpstreamValue, Value](upstream: UpstreamKe
       
 
 object Map {
-  given [UpstreamKeyword, UpstreamValue, Value]: Dsl.AsKeyword.FromKeyword[Map[UpstreamKeyword, UpstreamValue, Value], Value] with {}
+  given [UpstreamKeyword, UpstreamValue, Value]: Dsl.AsKeyword.IsKeyword[Map[UpstreamKeyword, UpstreamValue, Value], Value] with {}
   implicit def mapDsl[UpstreamKeyword, UpstreamValue, Domain, Value](implicit
       upstreamDsl: Dsl[UpstreamKeyword, Domain, UpstreamValue]
   ): Dsl[Map[UpstreamKeyword, UpstreamValue, Value], Domain, Value] =

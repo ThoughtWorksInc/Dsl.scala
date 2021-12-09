@@ -740,7 +740,7 @@ object bangnotation {
     Macros.reset[Value, Value]('value)
   }
 
-  extension [From, Keyword, Value](from: From)(using Dsl.AsKeyword.SearchFromKeywordFirst[From, Keyword, Value])
+  extension [From, Keyword, Value](from: From)(using Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
     @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
     def unary_! : Value = ???
 

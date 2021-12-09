@@ -6,7 +6,7 @@ import scala.language.implicitConversions
 final case class NoneSafe[A](option: Option[A]) extends AnyVal
 
 object NoneSafe {
-  given [A]: AsKeyword.FromKeyword[NoneSafe[A], A] with {}
+  given [A]: AsKeyword.IsKeyword[NoneSafe[A], A] with {}
 
   implicit def noneSafeDsl[A, Domain](implicit
       continueDsl: Dsl[Return[None.type], Domain, Nothing]

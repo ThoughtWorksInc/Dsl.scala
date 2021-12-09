@@ -44,7 +44,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     ]]
 
     summon[
-      AsKeyword.FromKeyword[
+      AsKeyword.IsKeyword[
         FlatMap[
           In[Int],
           Int,

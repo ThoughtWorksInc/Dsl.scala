@@ -11,6 +11,6 @@ object Pure {
     shiftDsl.cpsApply(Shift(_(keyword)), handler)
   }
 
-  given [PureValue]: AsKeyword.FromKeyword[Pure[PureValue], PureValue] with {}
+  given [PureValue]: AsKeyword.IsKeyword[Pure[PureValue], PureValue] with {}
   @inline def apply[Value]: Value =:= Pure[Value] = summon[Value =:= Pure[Value]]
 }

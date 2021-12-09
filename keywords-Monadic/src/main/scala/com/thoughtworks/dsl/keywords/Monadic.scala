@@ -19,8 +19,8 @@ opaque type Monadic[Functor[_], Value] <: Any = Functor[Value]
 object Monadic {
   @inline def apply[Functor[_], Value]: Functor[Value] =:= Monadic[Functor, Value] = summon
 
-  given [Functor[_], Value]: AsKeyword.FromKeyword[Monadic[Functor, Value], Value] with {}
+  given [Functor[_], Value]: AsKeyword.IsKeyword[Monadic[Functor, Value], Value] with {}
 
-  given [Functor[_], Value]: AsKeyword.FromKeywordSubtype[Functor[Value], Monadic[Functor, Value], Value] with {}
+  given [Functor[_], Value]: AsKeyword.IsKeywordSubtype[Functor[Value], Monadic[Functor, Value], Value] with {}
 
 }
