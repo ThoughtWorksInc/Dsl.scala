@@ -63,7 +63,7 @@ object bangnotation {
       val reifiedTerm = KeywordTree(bodyTerm).keywordTerm
         reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) =>
           given quoted.Type[K] = tk
-          '{Dsl.Typed[K, V]($k)}: quoted.Expr[_]
+          '{keywords.Typed[K, V]($k)}: quoted.Expr[_]
         }
       }
 
@@ -680,7 +680,7 @@ object bangnotation {
     //     }
     //   }
     //   lazy val keywordTerm = {
-    //     val typedObject = '{Dsl.Typed}.asTerm
+    //     val typedObject = '{keywords.Typed}.asTerm
     //     Apply(TypeApply(Select.unique(typedObject, "apply"), List(Inferred(originalTree.keywordTerm.tpe), Inferred(valueType))), List(originalTree.keywordTerm))
     //   }
     // }

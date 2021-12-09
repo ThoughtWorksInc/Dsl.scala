@@ -9,6 +9,7 @@ lazy val bangnotation =
     .crossType(CrossType.Pure)
     .dependsOn(
       Dsl,
+      `keywords-Typed`,
       `keywords-Return`,
       `keywords-FlatMap`,
       `keywords-Match`,
@@ -57,6 +58,11 @@ lazy val `keywords-Pure` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, `keywords-Shift`)
+
+lazy val `keywords-Typed` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .dependsOn(Dsl)
 
 lazy val `keywords-If` =
   crossProject(JSPlatform, JVMPlatform)

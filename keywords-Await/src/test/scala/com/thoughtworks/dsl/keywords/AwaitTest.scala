@@ -3,7 +3,6 @@ package com.thoughtworks.dsl
 import bangnotation._
 import Dsl.Run
 import Dsl.!!
-import Dsl.Typed
 import Dsl.AsKeyword
 import keywords._, Match._
 import concurrent.ExecutionContext.Implicits.global
@@ -245,7 +244,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+        com.thoughtworks.dsl.keywords.Typed[FlatMap[
           Await[Unit],
           Unit,
           FlatMap[Return[Unit], Nothing, Pure[Unit]]
@@ -262,7 +261,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       !Return(!Await(Future(())))
     }
     // summon[refied.type <:<
-    //   com.thoughtworks.dsl.Dsl.Typed[
+    //   com.thoughtworks.dsl.keywords.Typed[
     //    FlatMap[
     //      Await[Unit]
     //     , Unit,Pure[Nothing]]
@@ -284,11 +283,11 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       rr.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[
+        com.thoughtworks.dsl.keywords.Typed[
           Pure[
-            com.thoughtworks.dsl.Dsl.Typed[Pure[42], 42]
+            com.thoughtworks.dsl.keywords.Typed[Pure[42], 42]
           ],
-          com.thoughtworks.dsl.Dsl.Typed[Pure[42], 42]
+          com.thoughtworks.dsl.keywords.Typed[Pure[42], 42]
         ]
     ]
 
@@ -328,7 +327,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       }
       summon[
         reified.type <:<
-          com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+          com.thoughtworks.dsl.keywords.Typed[FlatMap[
             Pure[Int],
             Int,
             Match.WithIndex[(0), Pure[LazyList[Nothing]]]
@@ -357,7 +356,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       reified.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[
+        com.thoughtworks.dsl.keywords.Typed[
           TryCatchFinally[Suspend[
             Await[String]
           ], Match.WithIndex[0, FlatMap[
@@ -387,7 +386,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       reified.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[TryFinally[Suspend[
+        com.thoughtworks.dsl.keywords.Typed[TryFinally[Suspend[
           Await[Int]
         ], Suspend[Pure[Unit]]], Int]
     ]
@@ -411,7 +410,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[TryCatch[Suspend[
+        com.thoughtworks.dsl.keywords.Typed[TryCatch[Suspend[
           FlatMap[
             Await[Int],
             Int,
@@ -443,7 +442,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[FlatMap[While[
+        com.thoughtworks.dsl.keywords.Typed[FlatMap[While[
           Suspend[
             Await[Boolean]
           ],
@@ -470,7 +469,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+        com.thoughtworks.dsl.keywords.Typed[FlatMap[
           Await[A.type],
           A.type,
           FlatMap[
@@ -491,7 +490,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+        com.thoughtworks.dsl.keywords.Typed[FlatMap[
           Await[CharSequence],
           CharSequence,
           FlatMap[Await[
@@ -513,7 +512,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[Pure[
+        com.thoughtworks.dsl.keywords.Typed[Pure[
           Future[PartialFunction[Int, String]]
         ], Future[PartialFunction[Int, String]]]
     ]
@@ -531,7 +530,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+        com.thoughtworks.dsl.keywords.Typed[FlatMap[
           Await[Int => Int],
           Int => Int,
           Await[Any => Boolean]
@@ -549,7 +548,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+        com.thoughtworks.dsl.keywords.Typed[FlatMap[
           FlatMap[Await[Int => Int], Int => Int, Pure[Any => Boolean]],
           Any => Boolean,
           Await[Any => Boolean]
@@ -567,7 +566,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.Dsl.Typed[FlatMap[
+        com.thoughtworks.dsl.keywords.Typed[FlatMap[
           FlatMap[Await[Int => Int], Int => Int, Pure[Any => Boolean]],
           Any => Boolean,
           Await[Any => Boolean]
