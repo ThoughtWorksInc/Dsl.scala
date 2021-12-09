@@ -3,7 +3,6 @@ package keywords
 
 import com.thoughtworks.dsl.Dsl
 import Dsl.AsKeyword
-import Dsl.Typed
 import scala.util.NotGiven
 
 final case class FlatMap[Upstream, UpstreamValue, Mapped](

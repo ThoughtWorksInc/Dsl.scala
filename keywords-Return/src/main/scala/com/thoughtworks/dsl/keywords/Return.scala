@@ -6,7 +6,6 @@ import scala.language.implicitConversions
 
 import Dsl.AsKeyword
 import Dsl.Lift
-import Dsl.Typed
 
 /** A [[Dsl.Keyword]] to early return a lifted value from the enclosing function.
   *

@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
 import Dsl.AsKeyword
-import Dsl.Typed
 
 opaque type In[Element] = Iterable[Element]
 object In {
@@ -39,8 +38,6 @@ object In {
         List.from(notSeq)
     }
   }
-
-  import Dsl.Typed
 
   // 这种方式要么增加运行时type class复杂度，要么需要修改AST而很难支持 for / yield
   // given[Element, MappedKeyword, Domain, MappedContainer[x] <: IterableOnce[x], MappedElement, PureValue](

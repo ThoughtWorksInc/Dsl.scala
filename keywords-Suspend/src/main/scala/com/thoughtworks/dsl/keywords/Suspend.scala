@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
 import Dsl.AsKeyword
-import Dsl.Typed
 import Dsl.cpsApply
 
 opaque type Suspend[Keyword] = () => Keyword

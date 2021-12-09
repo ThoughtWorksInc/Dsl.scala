@@ -2,7 +2,6 @@ package com.thoughtworks.dsl
 package keywords
 import Dsl.AsKeyword
 import Dsl.AsKeyword
-import Dsl.Typed
 import scala.language.higherKinds
 import scala.language.implicitConversions
 

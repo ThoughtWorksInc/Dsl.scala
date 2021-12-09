@@ -1,6 +1,5 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.Typed
 import Dsl.!!
 import Dsl.cpsApply
 import Dsl.AsKeyword
