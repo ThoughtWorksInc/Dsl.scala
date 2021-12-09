@@ -1,5 +1,6 @@
 package com.thoughtworks.dsl
 
+import comprehension._
 import bangnotation._
 import Dsl.Run
 import Dsl.!!
