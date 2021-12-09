@@ -495,13 +495,11 @@ object Dsl extends LowPriorityDsl0 {
   // If I remove this, the compiler crashes.
   private opaque type Typed[Keyword, Value] = Nothing
 
-  trait AsKeyword[From, Keyword, Value] {
-    def asKeyword(from: From): Keyword
-  }
+  trait AsKeyword[From, Keyword, Value] extends (From => Keyword)
 
   object AsKeyword {
     trait IsKeywordSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
-      def asKeyword(from: From): Keyword = from
+      def apply(from: From): Keyword = from
     }
     trait IsKeyword[Keyword, Value] extends IsKeywordSubtype[Keyword, Keyword, Value]
 
