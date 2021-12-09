@@ -255,38 +255,6 @@ lazy val `domains-scalaz` =
       `keywords-Yield` % Test
     )
 
-lazy val `package` = project
-  .dependsOn(
-    `domains-scalaz`.jvm,
-    `keywords-Get`.jvm,
-    `keywords-Put`.jvm,
-    `keywords-Continue`.jvm,
-    `keywords-Return`.jvm,
-    `keywords-Shift`.jvm,
-    `keywords-ForEach`.jvm,
-    `keywords-Each`.jvm,
-    `keywords-Yield`.jvm,
-    `keywords-Fork`.jvm,
-    `keywords-NoneSafe`.jvm,
-    `keywords-Await`.jvm,
-    `keywords-AsynchronousIo`.jvm,
-    `keywords-Using`.jvm,
-    `keywords-Map`.jvm,
-    `keywords-FlatMap`.jvm,
-    `keywords-WithFilter`.jvm,
-    `comprehension`.jvm,
-    `bangnotation`.jvm,
-    `domains-Task`.jvm,
-    `scala-async`.jvm,
-    Dsl.jvm
-  )
+enablePlugins(ScalaUnidocPlugin)
 
-lazy val unidoc =
-  project
-    .enablePlugins(ScalaUnidocPlugin)
-    .settings(
-      publishArtifact := false,
-      unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := {
-        inDependencies(`package`)
-      }
-    )
+publishArtifact := false
