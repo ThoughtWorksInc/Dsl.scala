@@ -2,7 +2,6 @@ package com.thoughtworks.dsl
 package keywords
 import Dsl.AsKeyword
 import Dsl.cpsApply
-import Dsl.Typed
 
 case class While[
     ConditionKeyword,

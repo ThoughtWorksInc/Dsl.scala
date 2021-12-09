@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
 import Dsl.AsKeyword
-import Dsl.Typed
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.keywords.Shift.{SameDomainStackSafeShiftDsl, StackSafeShiftDsl}
