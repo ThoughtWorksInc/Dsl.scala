@@ -192,6 +192,11 @@ lazy val `keywords-Await` =
       `keywords-Yield` % Test
     )
 
+lazy val `scala-async` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .dependsOn(`keywords-Await`, bangnotation)
+
 lazy val `keywords-Yield` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -272,6 +277,7 @@ lazy val `package` = project
     `comprehension`.jvm,
     `bangnotation`.jvm,
     `domains-Task`.jvm,
+    `scala-async`.jvm,
     Dsl.jvm
   )
 
