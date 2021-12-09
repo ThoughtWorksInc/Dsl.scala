@@ -41,20 +41,12 @@ libraryDependencies += "com.thoughtworks.dsl" %% "keywords-yield" % "latest.rele
 // libraryDependencies += "com.thoughtworks.dsl" %% "keywords-xxx" % "latest.release"
 ```
 
-And the Dsl.scala compiler plug-ins that are shared by all DSLs:   
-
-``` scala
-// Add the following settings in your build.sbt 
-addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-bangnotation" % "latest.release")
-addCompilerPlugin("com.thoughtworks.dsl" %% "compilerplugins-reseteverywhere" % "latest.release")
-```
-
 The random number generator can be implemented as a recursive function that produces the next random number in each iteration.
 
 ```scala
 import com.thoughtworks.dsl.keywords.Yield
 // Must not annotated with @tailrec
-def xorshiftRandomGenerator(seed: Int): scala.collection.immutable.Stream[Int] = {
+def xorshiftRandomGenerator(seed: Int): LazyList[Int] = reset {
   val tmp1 = seed ^ (seed << 13)
   val tmp2 = tmp1 ^ (tmp1 >>> 17)
   val tmp3 = tmp2 ^ (tmp2 << 5)
