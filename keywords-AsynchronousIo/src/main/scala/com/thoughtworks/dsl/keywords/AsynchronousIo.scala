@@ -68,9 +68,10 @@ import scala.util.control.NonFatal
   *          Then the `cat` function is used to concatenate files from this project, as shown below:
   *
   *          {{{
-  *          Task.toFuture(*[Task] {
+  *          Task.toFuture(Task {
   *            (!Shift(cat(Paths.get(".sbtopts"), Paths.get(".scalafmt.conf")))).mkString should be(
-  *              "-J-XX:MaxMetaspaceSize=512M\n-J-Xmx5G\n-J-Xss6M\nversion = \"1.5.1\"\nmaxColumn = 120"
+  *              new String(Files.readAllBytes(Paths.get(".sbtopts")), io.Codec.UTF8.charSet) +
+  *              new String(Files.readAllBytes(Paths.get(".scalafmt.conf")), io.Codec.UTF8.charSet)
   *            )
   *          })
   *          }}}
