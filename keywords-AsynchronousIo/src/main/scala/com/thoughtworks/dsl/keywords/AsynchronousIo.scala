@@ -67,7 +67,8 @@ import scala.util.control.NonFatal
   *          {{{
   *          Task.toFuture(Task {
   *            (!cat(Paths.get(".sbtopts"), Paths.get(".scalafmt.conf"))).mkString should be(
-  *              "-J-XX:MaxMetaspaceSize=512M\n-J-Xmx5G\n-J-Xss6M\nversion = \"1.5.1\"\nmaxColumn = 120"
+  *              new String(Files.readAllBytes(Paths.get(".sbtopts")), io.Codec.UTF8.charSet) +
+  *              new String(Files.readAllBytes(Paths.get(".scalafmt.conf")), io.Codec.UTF8.charSet)
   *            )
   *          })
   *          }}}
