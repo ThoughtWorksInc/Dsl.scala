@@ -26,7 +26,7 @@ opaque type Using[R <: AutoCloseable] = R
 object Using {
   given [R <: AutoCloseable]: AsKeyword.IsKeyword[Using[R], R] with {}
 
-  given [R <: AutoCloseable]: AsKeyword[R, Using[R], R] = Using(_)
+  given implicitUsing[R <: AutoCloseable]: AsKeyword[R, Using[R], R] = Using(_)
 
   trait ScopeExitHandler extends AutoCloseable
 
