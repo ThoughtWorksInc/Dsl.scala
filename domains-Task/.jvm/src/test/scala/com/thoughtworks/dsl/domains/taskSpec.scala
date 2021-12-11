@@ -42,7 +42,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
     val task1: Task[Int] = Task.now(1)
 
-    val ts = Task.join {
+    val ts = *[Task]/* .join */ apply Seq {
       !Fork(0 until 10) + !Shift(task1)
     }
 
@@ -174,15 +174,16 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
   }
 
-  "nested seq of task" in {
+  // Task.join is not supported any more
+  "nested seq of task" ignore {
 
     def composeTask(t0: Task[Seq[Task[Seq[Task[Seq[Task[Seq[Float]]]]]]]]): Task[Seq[Seq[Seq[Seq[Float]]]]] = {
       // TODO: remove explicit type parameters when https://github.com/scala/bug/issues/11068 is fixed
-      Task.join[Seq[Seq[Seq[Float]]], Seq[Seq[Seq[Seq[Float]]]]] {
+      *[Task]/*.join*/ apply Seq {
         val t1 = !Each(!Shift(t0))
-        !Shift(Task.join[Seq[Seq[Float]], Seq[Seq[Seq[Float]]]] {
+        !Shift(*[Task]/*.join*/ apply Seq {
           val t2 = !Each(!Shift(t1))
-          !Shift(Task.join[Seq[Float], Seq[Seq[Float]]] {
+          !Shift(*[Task]/*.join*/ apply Seq {
             val t3 = !Each(!Shift(t2))
             !Shift(t3)
           })

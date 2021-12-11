@@ -26,7 +26,7 @@ class EachSpec extends AnyFreeSpec with Matchers {
       result.last should be(110)
     }
 
-    "@reset block" in {
+    "reset block" in {
       val seq = 1 to 10
       def run(): Seq[Int] = *[Seq] {
         val plus100 = reset {
@@ -41,14 +41,14 @@ class EachSpec extends AnyFreeSpec with Matchers {
       result.last should be(110)
     }
 
-    "@reset result value" in {
+    "block without reset should behave the same as a block with a reset" in {
       val seq = 1 to 10
       def run(): Seq[Int] = *[Seq] {
         val plus100 = {
           val element = !Each(seq)
-          *[Seq](element + 100)
+          Seq(element + 100)
         }
-        plus100.length should be(1)
+        plus100.length should be(10)
         !Each(plus100)
       }
 

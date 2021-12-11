@@ -445,9 +445,11 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
       def generator: Stream[String] = reset {
         !Yield("Entering generator")
-        val threadId = !Each(Seq(0, 1))
-        !Yield(s"Fork thread $threadId")
-        !Shift(asyncFunction)
+        {
+          val threadId = !Each(Seq(0, 1))
+          !Yield(s"Fork thread $threadId")
+          !Shift(asyncFunction)
+        }
         Stream("Leaving generator")
       }
 

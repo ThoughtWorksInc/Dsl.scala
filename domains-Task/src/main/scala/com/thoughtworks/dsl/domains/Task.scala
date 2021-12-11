@@ -36,7 +36,7 @@ import scala.util.control.TailCalls.TailRec
   *              url <- Fork(urls)
   *              data <- Shift(downloader(url))
   *              byte <- Each(data)
-  *            } yield byte
+  *            } yield Vector(byte)
   *          }.as[Task[Vector[Byte]]]
   *          }}}
   *
@@ -128,10 +128,6 @@ object Task extends TaskPlatformSpecificFunctions {
   private def newBuilder[A, C](implicit factory: Factory[A, C]): Builder[A, C] = {
     factory.newBuilder
   }
-
-  inline def join[Element, That](inline element: Element)(implicit factory: Factory[Element, That]): Task[That] = bangnotation.reset(now {
-    (newBuilder[Element, That] += element).result()
-  })
 
   def onComplete[A](task: Task[A])(continue: Try[A] => Unit) = {
     Continuation
