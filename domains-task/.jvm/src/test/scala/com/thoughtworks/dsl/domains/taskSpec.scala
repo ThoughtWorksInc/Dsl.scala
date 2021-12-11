@@ -69,6 +69,19 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     !task2 should be("try: my exception")
   })
 
+  "try with Each" ignore {
+    val listTask = Task {
+      val x =
+        try {
+          10 * !Each(List(1, 2))
+        } finally {}
+      List(x)
+    }
+    Task.toFuture(listTask).map {
+      _ should be(List(10, 20))
+    }
+  }
+
   "empty try" in {
     val logs = ArrayBuffer.empty[String]
 
