@@ -61,7 +61,7 @@ import scala.util.control.NonFatal
   *              charBuffers <- Shift(readAll(channel))
   *              charBuffer <- Each(charBuffers)
   *              char <- Each(charBuffer.toString)
-  *            } yield char
+  *            } yield Vector(char)
   *          }.as[Task[Vector[Char]]]
   *          }}}
   *
@@ -69,9 +69,13 @@ import scala.util.control.NonFatal
   *
   *          {{{
   *          Task.toFuture(Task {
-  *            (!Shift(cat(Paths.get(".sbtopts"), Paths.get(".scalafmt.conf")))).mkString should be(
-  *              new String(Files.readAllBytes(Paths.get(".sbtopts")), io.Codec.UTF8.charSet) +
-  *              new String(Files.readAllBytes(Paths.get(".scalafmt.conf")), io.Codec.UTF8.charSet)
+  *            val filesToRead = for (fileName <- Seq(".sbtopts", ".scalafmt.conf")) yield {
+  *              Paths.get(sourcecode.File()).getParent.resolve("../../../../../..").resolve(fileName)
+  *            }
+  *            (!Shift(cat(filesToRead: _*))).mkString should be(
+  *              filesToRead.map { fileToRead =>
+  *                new String(Files.readAllBytes(fileToRead), io.Codec.UTF8.charSet)
+  *              }.mkString
   *            )
   *          })
   *          }}}

@@ -36,7 +36,7 @@ import scala.util.control.TailCalls.TailRec
   *              url <- Fork(urls)
   *              data <- Shift(downloader(url))
   *              byte <- Each(data)
-  *            } yield byte
+  *            } yield Vector(byte)
   *          }.as[Task[Vector[Byte]]]
   *          }}}
   *

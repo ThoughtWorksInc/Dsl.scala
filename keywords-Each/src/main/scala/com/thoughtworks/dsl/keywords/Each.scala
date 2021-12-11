@@ -57,33 +57,67 @@ object Each {
       }
     }
 
-  implicit def continuationEachDsl[Element, LeftDomain, RightDomain, DomainElement](implicit
-      rightDomainIsTraversableOnce: (Element => LeftDomain !! RightDomain) => (
-          Element => LeftDomain !! TraversableOnce[DomainElement]
-      ),
-      factory: Factory[DomainElement, RightDomain],
-      shiftDsl: Dsl[Shift[LeftDomain, TraversableOnce[DomainElement]], LeftDomain, TraversableOnce[DomainElement]]
-  ): Dsl[Each[Element], LeftDomain !! RightDomain, Element] = {
-    new Dsl[Each[Element], LeftDomain !! RightDomain, Element] {
-      def cpsApply(
-          keyword: Each[Element],
-          handler0: Element => LeftDomain !! RightDomain
-      ): LeftDomain !! RightDomain = {
-        val i = keyword.elements.iterator
-        val builder = newBuilder[DomainElement, RightDomain]
-        val handler = rightDomainIsTraversableOnce(handler0)
-        @inline
-        def loop(continue: RightDomain => LeftDomain): LeftDomain = reset {
-          if (i.hasNext) {
-            builder ++= !Shift(handler(i.next()))
-            loop(continue)
-          } else {
-            continue(builder.result())
+  private def toLinearSeq[Element](
+      i: IterableOnce[Element]
+  ): LinearSeq[Element] = {
+    i match {
+      case linearSeq: LinearSeq[Element] =>
+        linearSeq
+      case notSeq =>
+        LazyList.from(notSeq)
           }
         }
-        loop
+  given [
+      Element,
+      Mapped,
+      MappedKeyword,
+      MappedValue <: IterableOps[
+        MappedElement,
+        _,
+        _
+      ],
+      MappedElement,
+      Domain
+  ](using
+      asMappedKeyword: AsKeyword.SearchIsKeywordFirst[
+        Mapped,
+        MappedKeyword,
+        MappedValue
+      ],
+      factory: Factory[MappedElement, MappedValue],
+      blockDsl: Dsl.PolyCont[MappedKeyword, Domain, MappedValue]
+  ): Dsl.PolyCont[
+    FlatMap[Each[Element], Element, Mapped],
+    Domain,
+    MappedValue
+  ] = { case (FlatMap(Each(sourceCollection), flatMapper), handler) =>
+    @inline def loop(
+        seqOps: LinearSeq[Element],
+        viewHandler: View[MappedElement] => Domain
+    ): Domain = {
+      seqOps.headOption match {
+        case Some(head) =>
+          blockDsl.cpsApply(
+            asMappedKeyword(flatMapper(head)),
+            { mappedHead =>
+              loop(
+                seqOps.tail.asInstanceOf[LinearSeq[Element]],
+                { mappedTail =>
+                  viewHandler(View.Concat(mappedHead, mappedTail))
+                }
+              )
+            }
+          )
+        case None =>
+          viewHandler(Nil.view)
       }
     }
+    loop(
+      toLinearSeq(sourceCollection),
+      { view =>
+      handler(factory.fromSpecific(view))
+      }
+    )
   }
 
 }
