@@ -31,7 +31,7 @@ object Fork {
     factory.newBuilder
   }
 
-  given [Element]: AsKeyword[Traversable[Element], Fork[Element], Element] = Fork(_)
+  given implicitFork[Element]: AsKeyword[Traversable[Element], Fork[Element], Element] = Fork(_)
 
   final case class MultipleException(throwableSet: Set[Throwable])
       extends RuntimeException("Multiple exceptions found") {
