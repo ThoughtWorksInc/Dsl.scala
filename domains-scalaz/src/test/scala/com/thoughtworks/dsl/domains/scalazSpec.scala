@@ -51,59 +51,29 @@ class scalazSpec extends AnyFreeSpec with Matchers {
       }
 
       "Then the generator should contains yield values" in {
+        // format: off
         generator should be(
           Seq(
-            /**/ "Entering generator",
-            /** *
-              */
+            "Entering generator",
             "Fork thread 0",
-            /** ***
-              */
             "Entering asyncFunction",
-            /** *****
-              */
             "Fork sub-thread 0",
-            /** *******
-              */
             "Leaving asyncFunction",
-            /** *******
-              */
             "Leaving generator",
-            /** *****
-              */
             "Fork sub-thread 1",
-            /** *******
-              */
             "Leaving asyncFunction",
-            /** *******
-              */
             "Leaving generator",
-            /** *
-              */
             "Fork thread 1",
-            /** ***
-              */
             "Entering asyncFunction",
-            /** *****
-              */
             "Fork sub-thread 0",
-            /** *******
-              */
             "Leaving asyncFunction",
-            /** *******
-              */
             "Leaving generator",
-            /** *****
-              */
             "Fork sub-thread 1",
-            /** *******
-              */
             "Leaving asyncFunction",
-            /** *******
-              */
             "Leaving generator"
           )
         )
+        // format: on
       }
 
     }
