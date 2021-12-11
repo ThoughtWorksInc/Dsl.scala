@@ -129,10 +129,6 @@ object Task extends TaskPlatformSpecificFunctions {
     factory.newBuilder
   }
 
-  inline def join[Element, That](inline element: Element)(implicit factory: Factory[Element, That]): Task[That] = bangnotation.reset(now {
-    (newBuilder[Element, That] += element).result()
-  })
-
   def onComplete[A](task: Task[A])(continue: Try[A] => Unit) = {
     Continuation
       .toTryContinuation(task) { result =>
