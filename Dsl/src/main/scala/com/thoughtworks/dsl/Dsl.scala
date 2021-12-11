@@ -158,19 +158,6 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   object TryCatchFinally {
-    implicit final class Ops[Value, OuterDomain, BlockDomain, FinalizerDomain](
-        outerSuccessHandler: Value => OuterDomain
-    )(implicit
-        typeClass: TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]
-    ) {
-
-      def apply(
-          block: BlockDomain !! Value,
-          catcher: Catcher[BlockDomain !! Value],
-          finalizer: FinalizerDomain !! Unit
-      ): OuterDomain =
-        typeClass.tryCatchFinally(block, catcher, finalizer, outerSuccessHandler)
-    }
 
     implicit def fromTryCatchTryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain](implicit
         tryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
@@ -223,14 +210,6 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   object TryCatch extends LowPriorityTryCatch {
-
-    implicit final class Ops[Value, OuterDomain, BlockDomain](outerSuccessHandler: Value => OuterDomain)(implicit
-        typeClass: TryCatch[Value, OuterDomain, BlockDomain]
-    ) {
-      def apply(block: BlockDomain !! Value, catcher: Catcher[BlockDomain !! Value]) = {
-        typeClass.tryCatch(block, catcher, outerSuccessHandler)
-      }
-    }
 
     implicit def throwableContinuationTryCatch[LeftDomain, Value]
         : TryCatch[Value, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
@@ -347,15 +326,6 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   object TryFinally extends LowPriorityTryFinally {
-
-    implicit final class Ops[Value, OuterDomain, BlockDomain, FinalizerDomain] @inline() (
-        outerSuccessHandler: Value => OuterDomain
-    )(implicit typeClass: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]) {
-      @inline
-      def apply(block: BlockDomain !! Value, finalizer: FinalizerDomain !! Unit): OuterDomain = {
-        typeClass.tryFinally(block, finalizer, outerSuccessHandler)
-      }
-    }
 
     implicit def futureTryFinally[BlockValue, OuterValue](implicit
         executionContext: ExecutionContext
