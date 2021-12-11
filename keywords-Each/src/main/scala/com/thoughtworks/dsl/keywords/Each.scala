@@ -50,13 +50,6 @@ object Each {
       }
     }
 
-  private[dsl] def foreachDsl[Element]: Dsl[Each[Element], Unit, Element] =
-    new Dsl[Each[Element], Unit, Element] {
-      def cpsApply(keyword: Each[Element], handler: Element => Unit): Unit = {
-        keyword.elements.foreach(handler)
-      }
-    }
-
   private def toLinearSeq[Element](
       i: IterableOnce[Element]
   ): LinearSeq[Element] = {
