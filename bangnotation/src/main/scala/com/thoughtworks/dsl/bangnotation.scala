@@ -391,17 +391,17 @@ object bangnotation {
                   caseKeywordTree.usingKeyword {
                     [BodyKeyword, BodyValue] =>
                     (bodyExpr: quoted.Expr[BodyKeyword]) =>
-                    ( bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
-                    given quoted.Type[BodyKeyword] = bodyKeywordTpe
-                    given quoted.Type[BodyValue] = bodyValueTpe
-                    quoted.Expr(i).asTerm.usingExpr[CaseDef, Int] { [Index <: Int] => (indexExpr: quoted.Expr[Index]) => (indexType: quoted.Type[Index]) =>
-                      given quoted.Type[Index] = indexType
-                      CaseDef.copy(caseDef)(
-                        caseDef.pattern,
-                        caseDef.guard,
-                        '{WithIndex[Index, BodyKeyword]($indexExpr, $bodyExpr).asInstanceOf[Set]}.asTerm
-                      ).changeOwner(defDef.symbol)
-                    }
+                    (bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
+                      given quoted.Type[BodyKeyword] = bodyKeywordTpe
+                      given quoted.Type[BodyValue] = bodyValueTpe
+                      quoted.Expr(i).asTerm.usingExpr[CaseDef, Int] { [Index <: Int] => (indexExpr: quoted.Expr[Index]) => (indexType: quoted.Type[Index]) =>
+                        given quoted.Type[Index] = indexType
+                        CaseDef.copy(caseDef)(
+                          caseDef.pattern,
+                          caseDef.guard,
+                          '{WithIndex[Index, BodyKeyword]($indexExpr, $bodyExpr).asInstanceOf[Set]}.asTerm
+                        ).changeOwner(defDef.symbol)
+                      }
                   }
               }.toList
               val pfTerm = qctx.reflect.Block.copy(pfBlock)(List(DefDef.copy(defDef)(name, typeParamsAndParams, returnTpt, Some(qctx.reflect.Match.copy(matchTree)(scrutinee, newCases)))), closure)
@@ -416,32 +416,32 @@ object bangnotation {
         [CondKeyword, CondValue <: Boolean] =>
         (condExpr: quoted.Expr[CondKeyword]) =>
         ( condKeywordType: quoted.Type[CondKeyword], condValueType: quoted.Type[CondValue]) =>
-        given quoted.Type[CondKeyword] = condKeywordType
-        given quoted.Type[CondValue] = condValueType
-        thenp.usingKeyword[Term, Boolean] {
-          [ThenpKeyword, ThenpValue <: Boolean] =>
-          (thenpExpr: quoted.Expr[ThenpKeyword]) =>
-          (thenpKeywordType: quoted.Type[ThenpKeyword], thenpValueType: quoted.Type[ThenpValue]) =>
-          given quoted.Type[ThenpKeyword] = thenpKeywordType
-          given quoted.Type[ThenpValue] = thenpValueType
-          elsep.usingKeyword[Term, Boolean] {
-            [ElsepKeyword, ElsepValue <: Boolean] =>
-            (elsepExpr: quoted.Expr[ElsepKeyword]) =>
-            (elsepKeywordType: quoted.Type[ElsepKeyword], elsepValueType: quoted.Type[ElsepValue]) =>
-            given quoted.Type[ElsepKeyword] = elsepKeywordType
-            given quoted.Type[ElsepValue] = elsepValueType
-            valueType.usingType { [Result] => (resultType: quoted.Type[Result]) =>
-              given quoted.Type[Result] = resultType
-              '{
-                com.thoughtworks.dsl.keywords.If(
-                  $condExpr,
-                  $thenpExpr,
-                  $elsepExpr,
-                )
-              }.asTerm
-            }
+          given quoted.Type[CondKeyword] = condKeywordType
+          given quoted.Type[CondValue] = condValueType
+          thenp.usingKeyword[Term, Boolean] {
+            [ThenpKeyword, ThenpValue <: Boolean] =>
+            (thenpExpr: quoted.Expr[ThenpKeyword]) =>
+            (thenpKeywordType: quoted.Type[ThenpKeyword], thenpValueType: quoted.Type[ThenpValue]) =>
+              given quoted.Type[ThenpKeyword] = thenpKeywordType
+              given quoted.Type[ThenpValue] = thenpValueType
+              elsep.usingKeyword[Term, Boolean] {
+                [ElsepKeyword, ElsepValue <: Boolean] =>
+                (elsepExpr: quoted.Expr[ElsepKeyword]) =>
+                (elsepKeywordType: quoted.Type[ElsepKeyword], elsepValueType: quoted.Type[ElsepValue]) =>
+                  given quoted.Type[ElsepKeyword] = elsepKeywordType
+                  given quoted.Type[ElsepValue] = elsepValueType
+                  valueType.usingType { [Result] => (resultType: quoted.Type[Result]) =>
+                    given quoted.Type[Result] = resultType
+                    '{
+                      com.thoughtworks.dsl.keywords.If(
+                        $condExpr,
+                        $thenpExpr,
+                        $elsepExpr,
+                      )
+                    }.asTerm
+                  }
+              }
           }
-        }
       }
     }
 
@@ -456,14 +456,14 @@ object bangnotation {
             [CaseSet, CaseValue] => 
             (pf: quoted.Expr[PartialFunction[V, CaseSet]]) =>
             (caseSetType: quoted.Type[CaseSet], caseValueType: quoted.Type[CaseValue]) =>
-            given quoted.Type[CaseSet] = caseSetType
-            given quoted.Type[CaseValue] = caseValueType
-            '{
-              com.thoughtworks.dsl.keywords.Match(
-                $exprKeywordExpr,
-                $pf
-              )
-            }.asTerm
+              given quoted.Type[CaseSet] = caseSetType
+              given quoted.Type[CaseValue] = caseValueType
+              '{
+                com.thoughtworks.dsl.keywords.Match(
+                  $exprKeywordExpr,
+                  $pf
+                )
+              }.asTerm
           }
         }
       }
@@ -475,28 +475,28 @@ object bangnotation {
           [Set, Value] => 
           (pf: quoted.Expr[PartialFunction[Throwable, Set]]) =>
           (setType: quoted.Type[Set], valueType: quoted.Type[Value]) =>
-          given quoted.Type[Set] = setType
-          given quoted.Type[Value] = valueType
-          expr.usingKeyword[Term, Value] { [K, V <: Value] =>
-            (tryKeywordExpr: quoted.Expr[K]) =>
-            (tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
-            given quoted.Type[K] = tryKeywordTpe
-            given quoted.Type[V] = tryValueTpe
-            finalizer.usingKeyword {
-              [FinalizerKeyword, FinalizerValue] =>
-              (finalizerKeywordExpr: quoted.Expr[FinalizerKeyword]) =>
-              (finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
-              given quoted.Type[FinalizerKeyword] = finalizerKeywordType
-              given quoted.Type[FinalizerValue] = finalizerValueType
-              '{
-                com.thoughtworks.dsl.keywords.TryCatchFinally(
-                  $tryKeywordExpr,
-                  $pf,
-                  $finalizerKeywordExpr
-                )
-              }.asTerm
+            given quoted.Type[Set] = setType
+            given quoted.Type[Value] = valueType
+            expr.usingKeyword[Term, Value] { [K, V <: Value] =>
+              (tryKeywordExpr: quoted.Expr[K]) =>
+              (tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
+              given quoted.Type[K] = tryKeywordTpe
+              given quoted.Type[V] = tryValueTpe
+              finalizer.usingKeyword {
+                [FinalizerKeyword, FinalizerValue] =>
+                (finalizerKeywordExpr: quoted.Expr[FinalizerKeyword]) =>
+                (finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
+                  given quoted.Type[FinalizerKeyword] = finalizerKeywordType
+                  given quoted.Type[FinalizerValue] = finalizerValueType
+                  '{
+                    com.thoughtworks.dsl.keywords.TryCatchFinally(
+                      $tryKeywordExpr,
+                      $pf,
+                      $finalizerKeywordExpr
+                    )
+                  }.asTerm
+              }
             }
-          }
         }
       }
     }
@@ -509,21 +509,21 @@ object bangnotation {
             [K, V <: Value] =>
             (tryKeywordExpr: quoted.Expr[K]) =>
             (tryKeywordType: quoted.Type[K], tryValueType: quoted.Type[V]) =>
-            given quoted.Type[K] = tryKeywordType
-            given quoted.Type[V] = tryValueType
-            finalizer.usingKeyword {
-              [FinalizerKeyword, FinalizerValue] =>
-              (finalizerKeywordExpr: quoted.Expr[FinalizerKeyword]) =>
-              (finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
-              given quoted.Type[FinalizerKeyword] = finalizerKeywordType
-              given quoted.Type[FinalizerValue] = finalizerValueType
-              '{
-                com.thoughtworks.dsl.keywords.TryFinally(
-                  $tryKeywordExpr,
-                  $finalizerKeywordExpr
-                )
-              }.asTerm
-            }
+              given quoted.Type[K] = tryKeywordType
+              given quoted.Type[V] = tryValueType
+              finalizer.usingKeyword {
+                [FinalizerKeyword, FinalizerValue] =>
+                (finalizerKeywordExpr: quoted.Expr[FinalizerKeyword]) =>
+                (finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
+                  given quoted.Type[FinalizerKeyword] = finalizerKeywordType
+                  given quoted.Type[FinalizerValue] = finalizerValueType
+                  '{
+                    com.thoughtworks.dsl.keywords.TryFinally(
+                      $tryKeywordExpr,
+                      $finalizerKeywordExpr
+                    )
+                  }.asTerm
+              }
           }
         }
       }
@@ -535,20 +535,20 @@ object bangnotation {
           [Set, Value] => 
           (pf: quoted.Expr[PartialFunction[Throwable, Set]]) =>
           (setType: quoted.Type[Set], vt: quoted.Type[Value]) =>
-          given quoted.Type[Set] = setType
-          given quoted.Type[Value] = vt
-          expr.usingKeyword[Term, Value] { [K, V <: Value] =>
-            (tryKeywordExpr: quoted.Expr[K]) =>
-            ( tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
-            given quoted.Type[K] = tryKeywordTpe
-            given quoted.Type[V] = tryValueTpe
-            '{
-              com.thoughtworks.dsl.keywords.TryCatch[K, Set](
-                $tryKeywordExpr,
-                $pf
-              )
-            }.asTerm
-          }
+            given quoted.Type[Set] = setType
+            given quoted.Type[Value] = vt
+            expr.usingKeyword[Term, Value] { [K, V <: Value] =>
+              (tryKeywordExpr: quoted.Expr[K]) =>
+              (tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
+                given quoted.Type[K] = tryKeywordTpe
+                given quoted.Type[V] = tryValueTpe
+                '{
+                  com.thoughtworks.dsl.keywords.TryCatch[K, Set](
+                    $tryKeywordExpr,
+                    $pf
+                  )
+                }.asTerm
+            }
         }
       }
     }
@@ -559,11 +559,11 @@ object bangnotation {
         [BodyKeyword, BodyValue] =>
         (bodyExpr: quoted.Expr[BodyKeyword]) =>
         (bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
-        given quoted.Type[BodyKeyword] = bodyKeywordTpe
-        given quoted.Type[BodyValue] = bodyValueTpe
-        '{
-          com.thoughtworks.dsl.keywords.Suspend(() => $bodyExpr)
-        }.asTerm
+          given quoted.Type[BodyKeyword] = bodyKeywordTpe
+          given quoted.Type[BodyValue] = bodyValueTpe
+          '{
+            com.thoughtworks.dsl.keywords.Suspend(() => $bodyExpr)
+          }.asTerm
       }
     }
 
@@ -573,19 +573,19 @@ object bangnotation {
         cond.usingKeyword{
           [CondKeyword, CondValue] =>
           (condExpr: quoted.Expr[CondKeyword]) =>
-          ( condKeywordTpe: quoted.Type[CondKeyword], condValueTpe: quoted.Type[CondValue]) =>
-          given quoted.Type[CondKeyword] = condKeywordTpe
-          given quoted.Type[CondValue] = condValueTpe
-          body.usingKeyword {
-            [BodyKeyword, BodyValue] =>
-            (bodyExpr: quoted.Expr[BodyKeyword]) =>
-            (bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
-            given quoted.Type[BodyKeyword] = bodyKeywordTpe
-            given quoted.Type[BodyValue] = bodyValueTpe
-            '{
-              com.thoughtworks.dsl.keywords.While($condExpr, $bodyExpr)
-            }.asTerm          
-          }
+          (condKeywordTpe: quoted.Type[CondKeyword], condValueTpe: quoted.Type[CondValue]) =>
+            given quoted.Type[CondKeyword] = condKeywordTpe
+            given quoted.Type[CondValue] = condValueTpe
+            body.usingKeyword {
+              [BodyKeyword, BodyValue] =>
+              (bodyExpr: quoted.Expr[BodyKeyword]) =>
+              (bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
+                given quoted.Type[BodyKeyword] = bodyKeywordTpe
+                given quoted.Type[BodyValue] = bodyValueTpe
+                '{
+                  com.thoughtworks.dsl.keywords.While($condExpr, $bodyExpr)
+                }.asTerm          
+            }
         }
       }
     }
