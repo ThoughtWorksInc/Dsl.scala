@@ -11,7 +11,9 @@ import utest.{TestSuite, Tests, test, given}
 /** @author
   *   杨博 (Yang Bo)
   */
-@deprecated("This test suite contains test cases for Stream, which is deprecated")
+@deprecated(
+  "This test suite contains test cases for Stream, which is deprecated"
+)
 object YieldSpec extends TestSuite {
 
   val tests = Tests {
@@ -450,59 +452,29 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
       }
 
       "Then the generator should contains yield values" in {
+        // format: off
         generator should be(
           Seq(
-            /**/ "Entering generator",
-            /** *
-              */
-            "Fork thread 0",
-            /** ***
-              */
-            "Entering asyncFunction",
-            /** *****
-              */
-            "Fork sub-thread 0",
-            /** *******
-              */
-            "Leaving asyncFunction",
-            /** *******
-              */
-            "Leaving generator",
-            /** *****
-              */
-            "Fork sub-thread 1",
-            /** *******
-              */
-            "Leaving asyncFunction",
-            /** *******
-              */
-            "Leaving generator",
-            /** *
-              */
-            "Fork thread 1",
-            /** ***
-              */
-            "Entering asyncFunction",
-            /** *****
-              */
-            "Fork sub-thread 0",
-            /** *******
-              */
-            "Leaving asyncFunction",
-            /** *******
-              */
-            "Leaving generator",
-            /** *****
-              */
-            "Fork sub-thread 1",
-            /** *******
-              */
-            "Leaving asyncFunction",
-            /** *******
-              */
-            "Leaving generator"
+            "Entering generator",
+              "Fork thread 0",
+                "Entering asyncFunction",
+                  "Fork sub-thread 0",
+                    "Leaving asyncFunction",
+                    "Leaving generator",
+                  "Fork sub-thread 1",
+                    "Leaving asyncFunction",
+                    "Leaving generator",
+              "Fork thread 1",
+                "Entering asyncFunction",
+                  "Fork sub-thread 0",
+                    "Leaving asyncFunction",
+                    "Leaving generator",
+                  "Fork sub-thread 1",
+                    "Leaving asyncFunction",
+                    "Leaving generator"
           )
         )
+        // format: on
       }
 
     }
