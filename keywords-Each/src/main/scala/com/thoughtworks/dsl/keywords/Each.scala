@@ -38,7 +38,7 @@ object Each {
     factory.newBuilder
   }
 
-  given [Element]: AsKeyword[Traversable[Element], Each[Element], Element] = Each(_)
+  given implicitEach[Element]: AsKeyword[Traversable[Element], Each[Element], Element] = Each(_)
 
   implicit def eachDsl[Element, Domain, DomainElement](implicit
       thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),
