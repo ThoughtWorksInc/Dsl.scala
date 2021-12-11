@@ -9,7 +9,7 @@ import _root_.scalaz.std.either._
 import _root_.scalaz.std.stream._
 import com.thoughtworks.dsl.domains.scalaz.{_, given}
 import com.thoughtworks.dsl.keywords.{Monadic, Shift, Yield}
-import com.thoughtworks.dsl.keywords.Monadic.given
+import com.thoughtworks.dsl.keywords.Monadic.implicitMonadic
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -25,7 +25,7 @@ class scalazSpec extends AnyFreeSpec with Matchers {
         case e: ArithmeticException =>
           42
       } finally {
-        !Monadic(*[[X] =>> Either[Throwable, X]](()))
+        ! *[[X] =>> Either[Throwable, X]](())
       }
     }
     task should be(Right(42))
@@ -35,7 +35,7 @@ class scalazSpec extends AnyFreeSpec with Matchers {
 
     def asyncFunction: Stream[String] !! Unit = *[[X] =>> Stream[String] !! X] {
       !Yield("Entering asyncFunction")
-      val subThreadId = !Monadic(Stream(0, 1))
+      val subThreadId = !Stream(0, 1)
       !Yield(s"Fork sub-thread $subThreadId")
       !Yield("Leaving asyncFunction")
     }
@@ -44,7 +44,7 @@ class scalazSpec extends AnyFreeSpec with Matchers {
 
       def generator: Stream[String] = reset {
         !Yield("Entering generator")
-        val threadId = !Monadic(Stream(0, 1))
+        val threadId = !Stream(0, 1)
         !Yield(s"Fork thread $threadId")
         !Shift(asyncFunction)
         Stream("Leaving generator")
@@ -83,9 +83,9 @@ class scalazSpec extends AnyFreeSpec with Matchers {
   "Given a monadic expression that contains a Scalaz OptionT" - {
     def myOptionalList: OptionT[Stream, String] = reset {
       // TODO: Is it possible to have `Yield` expressions here?
-      val threadId = !Monadic(Stream(0, 1, 2))
-      val subThreadId = !Monadic(OptionT(Stream(Some(10), None, Some(30))))
-      val subSubThreadId = !Monadic(OptionT(Stream(Some(100), Some(200), None)))
+      val threadId = !Stream(0, 1, 2)
+      val subThreadId = !OptionT(Stream(Some(10), None, Some(30)))
+      val subSubThreadId = !OptionT(Stream(Some(100), Some(200), None))
       OptionT[Stream, String](Stream(Some(s"Fork thread $threadId-$subThreadId-$subSubThreadId")))
     }
 

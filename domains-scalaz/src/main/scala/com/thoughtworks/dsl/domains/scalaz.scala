@@ -25,7 +25,7 @@ import scala.util.control.NonFatal
   *          import _root_.scalaz.Trampoline
   *          import _root_.scalaz.Free.Trampoline
   *          import com.thoughtworks.dsl.keywords.Monadic
-  *          import com.thoughtworks.dsl.keywords.Monadic.given
+  *          import com.thoughtworks.dsl.keywords.Monadic.implicitMonadic
   *          import com.thoughtworks.dsl.domains.scalaz.given
   *          import com.thoughtworks.dsl.bangnotation._
   *
