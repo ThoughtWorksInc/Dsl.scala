@@ -62,7 +62,6 @@ object Each {
         }
   given [
       Element,
-      Mapped,
       MappedKeyword,
       MappedValue <: IterableOps[
         MappedElement,
@@ -72,15 +71,14 @@ object Each {
       MappedElement,
       Domain
   ](using
-      asMappedKeyword: AsKeyword.SearchIsKeywordFirst[
-        Mapped,
+      isKeyword: AsKeyword.IsKeyword[
         MappedKeyword,
         MappedValue
       ],
       factory: Factory[MappedElement, MappedValue],
       blockDsl: Dsl.PolyCont[MappedKeyword, Domain, MappedValue]
   ): Dsl.PolyCont[
-    FlatMap[Each[Element], Element, Mapped],
+    FlatMap[Each[Element], Element, MappedKeyword],
     Domain,
     MappedValue
   ] = { case (FlatMap(Each(sourceCollection), flatMapper), handler) =>
@@ -91,7 +89,7 @@ object Each {
       seqOps.headOption match {
         case Some(head) =>
           blockDsl.cpsApply(
-            asMappedKeyword(flatMapper(head)),
+            flatMapper(head),
             { mappedHead =>
               loop(
                 seqOps.tail.asInstanceOf[LinearSeq[Element]],
