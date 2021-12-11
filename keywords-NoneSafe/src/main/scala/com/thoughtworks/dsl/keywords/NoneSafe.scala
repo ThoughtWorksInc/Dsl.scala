@@ -22,6 +22,6 @@ object NoneSafe {
       }
     }
 
-  given [A]: AsKeyword[Option[A], NoneSafe[A], A] = NoneSafe(_)
+  given implicitNoneSafe[A]: AsKeyword[Option[A], NoneSafe[A], A] = NoneSafe(_)
 
 }
