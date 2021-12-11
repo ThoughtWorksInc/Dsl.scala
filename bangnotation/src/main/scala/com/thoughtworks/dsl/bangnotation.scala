@@ -140,8 +140,7 @@ object bangnotation {
       }
 
       
-    val List(bangSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").declaredMethod("unary_!")
-    val List(applySymbol) = Symbol.classSymbol("scala.Function1").declaredMethod("apply")
+    val List(shiftSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").declaredMethod("shift")
 
     sealed trait KeywordTree {
       def keywordTerm: Term
@@ -172,28 +171,17 @@ object bangnotation {
         term match {
           case
             Apply(
-              Apply(
-                TypeApply(
-                  id: Ident,
-                  List(_, _, valueTypeTree)
-                ),
-                List(
-                  from
-                )
+              TypeApply(
+                ident: Ident,
+                List(_, valueTypeTree)
               ),
               List(
-                asKeywordInstance
+                from
               )
             )
-          if bangSymbol == id.symbol =>
+          if shiftSymbol == ident.symbol =>
             KeywordTree(from).flatMap { pureFrom =>
-              Keyword(Apply(
-                Select(
-                  asKeywordInstance,
-                  applySymbol,
-                ),
-                List(pureFrom)
-              ), valueTypeTree.tpe)
+              Keyword(pureFrom, valueTypeTree.tpe)
             }
           case typeApply @ TypeApply(fun, args) =>
             KeywordTree(fun).flatMap { pureFun =>
@@ -740,8 +728,12 @@ object bangnotation {
     Macros.reset[Value, Value]('value)
   }
 
-  extension [From, Keyword, Value](from: From)(using Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
-    @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
-    def unary_! : Value = ???
+  @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
+  def shift[Keyword, Value](keyword: Keyword): Value = ???
+
+  extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
+    transparent inline def unary_! : Value = {
+      shift[Keyword, Value](asKeyword(from))
+    }
 
 }        
