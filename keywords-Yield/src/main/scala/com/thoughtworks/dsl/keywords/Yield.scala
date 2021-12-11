@@ -180,7 +180,7 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  given [FromCollection <: TraversableOnce[_]]: AsKeyword.IsKeywordSubtype[FromCollection, From[FromCollection], Unit] with {}
+  given implicitYieldFrom[FromCollection <: TraversableOnce[_]]: AsKeyword.IsKeywordSubtype[FromCollection, From[FromCollection], Unit] with {}
 
   implicit def streamYieldFromDsl[A, FromCollection <: Iterable[A]]: Dsl[From[FromCollection], Stream[A], Unit] =
     new Dsl[From[FromCollection], Stream[A], Unit] {
@@ -189,7 +189,7 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  given [Element]: AsKeyword.IsKeywordSubtype[Element, Yield[Element], Unit] with {}
+  given implicitYield[Element]: AsKeyword.IsKeywordSubtype[Element, Yield[Element], Unit] with {}
 
   implicit def streamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
     new Dsl[Yield[Element], Stream[That], Unit] {
