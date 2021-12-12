@@ -149,8 +149,6 @@ object bangnotation {
       def where(blockTemplate: qctx.reflect.Block, statement: Statement): KeywordTree = Let(blockTemplate, statement, this)
       def block: KeywordTree = Block(this)
       def usingKeyword[B, Bound](f: [K, V <: Bound] => quoted.Expr[K] => (tk: quoted.Type[K], tv: quoted.Type[V]) => B): B = {
-        // given quoted.Type[K] = tk
-        // given quoted.Type[V] = tv
         keywordTerm.usingExpr[B, Any]{ [K] => (keyword: quoted.Expr[K]) => ( keywordType: quoted.Type[K]) =>
           {
             given quoted.Type[K] = keywordType
@@ -296,7 +294,6 @@ object bangnotation {
               term.tpe
             )
           case typed @ qctx.reflect.Typed(expr, tpt) =>
-            // Typed(KeywordTree(expr), typed)
             KeywordTree(expr).flatMap { pureExpr =>
               Pure(qctx.reflect.Typed.copy(typed)(pureExpr, tpt), term.tpe)
             }
@@ -659,19 +656,6 @@ object bangnotation {
         }
       }
     }
-
-    // case class Typed(originalTree: KeywordTree, template: qctx.reflect.Typed) extends KeywordTree {
-    //   def valueType = template.tpe
-    //   override def flatMap(flatMapper: Term => KeywordTree): KeywordTree = {
-    //     originalTree.flatMap { term =>
-    //       flatMapper(qctx.reflect.Typed.copy(template)(term, template.tpt))
-    //     }
-    //   }
-    //   lazy val keywordTerm = {
-    //     val typedObject = '{keywords.Typed}.asTerm
-    //     Apply(TypeApply(Select.unique(typedObject, "apply"), List(Inferred(originalTree.keywordTerm.tpe), Inferred(valueType))), List(originalTree.keywordTerm))
-    //   }
-    // }
 
     case class Keyword(keywordTerm: Term, valueType: TypeRepr) extends KeywordTree
 
