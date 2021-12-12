@@ -3,6 +3,7 @@ package keywords
 import Dsl.AsKeyword
 
 import com.thoughtworks.dsl.Dsl
+import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.keywords.Shift.{SameDomainStackSafeShiftDsl, StackSafeShiftDsl}
 
 import scala.annotation.tailrec
@@ -13,7 +14,7 @@ import scala.util.control.TailCalls.TailRec
 /** @author
   *   杨博 (Yang Bo)
   */
-opaque type Shift[R, A] = (A => R) => R
+opaque type Shift[R, A] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[R !! A]
 
 private[keywords] trait LowPriorityShift1 {
 
@@ -30,9 +31,12 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 { this: Shif
 
   given [LeftDomain, RightDomain, Value](using
       restDsl: SameDomainStackSafeShiftDsl[LeftDomain, RightDomain]
-  ): SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] = { (keyword, handler) =>
-    keyword { value =>
-      restDsl.cpsApply(handler(value), _)
+  ): SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] = {
+    val restDsl0 = apply.liftContra[[X] =>> Dsl[X, LeftDomain, RightDomain]](restDsl);
+    { (keyword, handler) =>
+      keyword { value =>
+        restDsl0.cpsApply(handler(value), _)
+      }
     }
   }
 
@@ -45,7 +49,7 @@ object Shift extends LowPriorityShift0 {
 
   private[keywords] type SameDomainStackSafeShiftDsl[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
 
-  given implicitShift[Domain, Value]: AsKeyword.IsKeywordSubtype[Domain !! Value, Shift[Domain, Value], Value] with {}
+  given implicitShift[Domain, Value]: AsKeyword[Domain !! Value, Shift[Domain, Value], Value] = Shift(_)
 
   private def shiftTailRec[R, Value](continuation: TailRec[R] !! Value, handler: Value => TailRec[R]) = {
     continuation { a =>
@@ -141,8 +145,6 @@ object Shift extends LowPriorityShift0 {
         taskFlatMap(keyword, handler)
     }
 
-  private[keywords] type !![R, +A] = (A => R) => R
-
-  def apply[R, A]: (R !! A) =:= Shift[R, A] = summon
+  def apply[R, A]: (R !! A) =:= Shift[R, A] = Dsl.OpaqueKeyword.Of.apply
 
 }

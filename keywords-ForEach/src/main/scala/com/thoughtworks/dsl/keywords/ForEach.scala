@@ -9,7 +9,7 @@ import scala.language.implicitConversions
 import scala.collection.mutable.Builder
 
 /** Iterates though each element in [[elements]]. */
-final case class ForEach[Element](elements: Traversable[Element])
+final case class ForEach[Element](elements: Traversable[Element]) extends Dsl.Keyword
 object ForEach {
   given [Element]: AsKeyword.IsKeyword[ForEach[Element], Element] with {}
   given [Element]: AsKeyword[Traversable[Element], ForEach[Element], Element] = ForEach(_)

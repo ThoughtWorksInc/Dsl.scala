@@ -2,9 +2,9 @@ package com.thoughtworks.dsl
 package keywords
 import Dsl.AsKeyword
 
-opaque type In[Element] = Iterable[Element]
+opaque type In[Element] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[Iterable[Element]]
 object In {
-  @inline def apply[Element]: Iterable[Element] =:= In[Element] = summon
+  @inline def apply[Element]: Iterable[Element] =:= In[Element] = Dsl.OpaqueKeyword.Of.apply
 
   given [Element]: AsKeyword.IsKeyword[In[Element], Element] with {}
 

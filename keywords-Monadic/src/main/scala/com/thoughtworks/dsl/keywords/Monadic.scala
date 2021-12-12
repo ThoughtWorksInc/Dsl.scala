@@ -14,13 +14,13 @@ import scala.language.implicitConversions
   * @todo
   *   [[Monadic]] should be a [[scala.AnyVal]] after [[https://github.com/scala/bug/issues/10595]] is resolved.
   */
-opaque type Monadic[Functor[_], Value] <: Any = Functor[Value]
+opaque type Monadic[Functor[_], Value] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[Functor[Value]]
 
 object Monadic {
-  @inline def apply[Functor[_], Value]: Functor[Value] =:= Monadic[Functor, Value] = summon
+  @inline def apply[Functor[_], Value]: Functor[Value] =:= Monadic[Functor, Value] = Dsl.OpaqueKeyword.Of.apply
 
   given [Functor[_], Value]: AsKeyword.IsKeyword[Monadic[Functor, Value], Value] with {}
 
-  given implicitMonadic[Functor[_], Value]: AsKeyword.IsKeywordSubtype[Functor[Value], Monadic[Functor, Value], Value] with {}
+  given implicitMonadic[Functor[_], Value]: AsKeyword[Functor[Value], Monadic[Functor, Value], Value] = Monadic(_)
 
 }

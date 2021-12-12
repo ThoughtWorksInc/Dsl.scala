@@ -7,7 +7,7 @@ import com.thoughtworks.dsl.Dsl.AsKeyword
   * @author
   *   杨博 (Yang Bo)
   */
-final case class Get[S]()
+final case class Get[S]() extends Dsl.Keyword
 
 object Get {
   given [S]: AsKeyword.IsKeyword[Get[S], S] with {}

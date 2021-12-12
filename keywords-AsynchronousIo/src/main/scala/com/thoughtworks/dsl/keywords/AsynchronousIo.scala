@@ -80,7 +80,7 @@ import scala.util.control.NonFatal
   *          })
   *          }}}
   */
-trait AsynchronousIo[Value] extends Any {
+trait AsynchronousIo[Value] extends Any with Dsl.Keyword {
 
   /** Starts the asynchronous operations */
   protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Value, _ >: Attachment]): Unit

@@ -7,7 +7,7 @@ import scala.util.control.Exception.Catcher
 import scala.concurrent._
 import scala.util.control.NonFatal
 
-case class TryCatch[BlockKeyword, CaseKeyword](block: BlockKeyword, cases: Catcher[CaseKeyword])
+case class TryCatch[BlockKeyword, CaseKeyword](block: BlockKeyword, cases: Catcher[CaseKeyword]) extends Dsl.Keyword
 object TryCatch {
 
   given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword](

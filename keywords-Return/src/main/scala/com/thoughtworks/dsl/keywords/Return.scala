@@ -12,9 +12,9 @@ import Dsl.Lift
   * @author
   *   杨博 (Yang Bo)
   */
-opaque type Return[ReturnValue] = ReturnValue
+opaque type Return[ReturnValue] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[ReturnValue]
 object Return {
-  @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] = summon
+  @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] = Dsl.OpaqueKeyword.Of.apply
 
   given [ReturnValue]: AsKeyword.IsKeyword[Return[ReturnValue], Nothing] with {}
 

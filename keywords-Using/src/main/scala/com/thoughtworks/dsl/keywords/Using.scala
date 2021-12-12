@@ -21,7 +21,7 @@ import scala.util.control.NonFatal
   * @see
   *   [[dsl]] for usage of this [[Using]] keyword in continuations
   */
-opaque type Using[R <: AutoCloseable] = R
+opaque type Using[R <: AutoCloseable] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[R]
 
 object Using {
   given [R <: AutoCloseable]: AsKeyword.IsKeyword[Using[R], R] with {}
@@ -67,7 +67,7 @@ object Using {
     */
   def scopeExit(r: ScopeExitHandler) = r
 
-  def apply[R <: AutoCloseable]: R =:= Using[R] = summon
+  def apply[R <: AutoCloseable]: R =:= Using[R] = Dsl.OpaqueKeyword.Of.apply
 
   given [
       R <: AutoCloseable,

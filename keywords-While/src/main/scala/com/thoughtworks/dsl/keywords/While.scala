@@ -9,7 +9,7 @@ case class While[
 ](
     condition: ConditionKeyword,
     body: BodyKeyword
-)
+) extends Dsl.Keyword
 object While {
   given [
       ConditionKeyword,

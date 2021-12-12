@@ -1,8 +1,7 @@
 package com.thoughtworks.dsl.keywords
 import com.thoughtworks.dsl.Dsl
 
-final case class Map[UpstreamKeyword, UpstreamValue, Value](upstream: UpstreamKeyword, mapper: UpstreamValue => Value)
-      
+final case class Map[UpstreamKeyword, UpstreamValue, Value](upstream: UpstreamKeyword, mapper: UpstreamValue => Value) extends Dsl.Keyword
 
 object Map {
   given [UpstreamKeyword, UpstreamValue, Value]: Dsl.AsKeyword.IsKeyword[Map[UpstreamKeyword, UpstreamValue, Value], Value] with {}

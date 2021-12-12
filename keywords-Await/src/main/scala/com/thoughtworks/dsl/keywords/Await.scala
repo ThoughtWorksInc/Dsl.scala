@@ -106,9 +106,9 @@ import scala.language.implicitConversions
   * @author
   *   杨博 (Yang Bo)
   */
-opaque type Await[Result] = concurrent.Future[Result]
+opaque type Await[Result] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[concurrent.Future[Result]]
 object Await {
-  @inline def apply[Result]: concurrent.Future[Result] =:= Await[Result] = summon
+  @inline def apply[Result]: concurrent.Future[Result] =:= Await[Result] = Dsl.OpaqueKeyword.Of.apply
   given [Result]: AsKeyword.IsKeyword[Await[Result], Result] with {}
 
   implicit def streamAwaitDsl[Value, That](implicit
@@ -143,6 +143,6 @@ object Await {
         !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
     }
 
-  given implicitAwait[Value]: AsKeyword.IsKeywordSubtype[Future[Value], Await[Value], Value] with {}
+  given implicitAwait[Value]: AsKeyword[Future[Value], Await[Value], Value] = Await(_)
 
 }
