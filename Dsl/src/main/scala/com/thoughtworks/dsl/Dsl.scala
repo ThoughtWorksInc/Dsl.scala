@@ -462,6 +462,10 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
+  // If I remove this, the compiler crashes.
+  // See https://github.com/lampepfl/dotty/issues/14076
+  private opaque type Dotty14076Workaround = Any
+
   extension [From, Keyword, Value](keyword: From)(using
       asKeyword: AsKeyword.SearchIsKeywordFirst[From, Keyword, Value]
   )
@@ -476,9 +480,6 @@ object Dsl extends LowPriorityDsl0 {
     ): Domain = {
       run(asKeyword(keyword))
     }
-
-  // If I remove this, the compiler crashes.
-  private opaque type Typed[Keyword, Value] = Nothing
 
   trait AsKeyword[From, Keyword, Value] extends (From => Keyword)
 
