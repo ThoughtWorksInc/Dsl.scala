@@ -2,9 +2,7 @@ package com.thoughtworks.dsl
 
 import comprehension._
 import bangnotation._
-import Dsl.Run
-import Dsl.!!
-import Dsl.AsKeyword
+import Dsl._
 import keywords._, Match._
 import concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
@@ -358,7 +356,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         com.thoughtworks.dsl.keywords.Typed[
-          TryCatchFinally[Suspend[
+          keywords.TryCatchFinally[Suspend[
             Await[String]
           ], Match.WithIndex[0, FlatMap[
             Await[Int],
@@ -387,7 +385,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       reified.type <:<
-        com.thoughtworks.dsl.keywords.Typed[TryFinally[Suspend[
+        com.thoughtworks.dsl.keywords.Typed[keywords.TryFinally[Suspend[
           Await[Int]
         ], Suspend[Pure[Unit]]], Int]
     ]
@@ -411,7 +409,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       refied.type <:<
-        com.thoughtworks.dsl.keywords.Typed[TryCatch[Suspend[
+        com.thoughtworks.dsl.keywords.Typed[keywords.TryCatch[Suspend[
           FlatMap[
             Await[Int],
             Int,
