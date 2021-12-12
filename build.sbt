@@ -12,6 +12,7 @@ lazy val bangnotation =
       `keywords-Typed`,
       `keywords-Return`,
       `keywords-FlatMap`,
+      `keywords-WithFilter`,
       `keywords-Match`,
       `keywords-Suspend`,
       `keywords-Pure`,
@@ -39,7 +40,6 @@ lazy val `domains-Task` =
       `keywords-Each` % Test,
       `keywords-Using` % Test,
       `keywords-Yield` % Test,
-      comprehension % Test
     )
 
 lazy val `keywords-Fork` =
@@ -107,7 +107,7 @@ lazy val `keywords-Return` =
 lazy val `keywords-Continue` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, bangnotation % Test, `keywords-Each` % Test)
+    .dependsOn(Dsl)
 
 lazy val `keywords-Get` =
   crossProject(JSPlatform, JVMPlatform)
@@ -133,7 +133,6 @@ lazy val `keywords-AsynchronousIo` =
       `keywords-In` % Test,
       `keywords-Each` % Test,
       `keywords-Using` % Test,
-      comprehension % Test,
       `domains-Task` % Test
     )
 
@@ -183,7 +182,6 @@ lazy val `keywords-Await` =
     .dependsOn(
       Dsl,
       `domains-Continuation`,
-      comprehension % Test,
       bangnotation % Test,
       `domains-Task` % Test,
       `keywords-In` % Test,
@@ -213,21 +211,6 @@ lazy val `keywords-Monadic` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, bangnotation % Test)
-
-lazy val comprehension =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(
-      `keywords-Map`,
-      `keywords-FlatMap`,
-      `keywords-WithFilter`,
-      `keywords-Return`,
-      `keywords-Yield` % Test,
-      `keywords-In` % Test,
-      `keywords-Using` % Test,
-      `keywords-Continue` % Test,
-      bangnotation % Test
-    )
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 

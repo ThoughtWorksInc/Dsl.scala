@@ -16,7 +16,6 @@ import scala.util.control.NonFatal
   *          {{{
   *          import java.nio._, file._, channels._
   *          import com.thoughtworks.dsl.bangnotation._
-  *          import com.thoughtworks.dsl.comprehension._
   *          import com.thoughtworks.dsl.domains.Task
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._

@@ -720,4 +720,20 @@ object bangnotation {
       shift[Keyword, Value](asKeyword(from))
     }
 
+    inline def map[MappedValue](
+        mapper: Value => MappedValue
+    ): FlatMap[Keyword, Value, Pure[MappedValue]] =
+      FlatMap(asKeyword(from), Pure.apply.liftCo(mapper))
+
+    inline def flatMap[Mapped, MappedValue](
+        flatMapper: Value => Mapped
+    )(
+        using /*erased*/ Dsl.AsKeyword.IsKeyword[Mapped, MappedValue]
+    ): FlatMap[Keyword, Value, Mapped] =
+      FlatMap(asKeyword(from), flatMapper)
+
+    inline def withFilter[Mapped, MappedValue](
+        filter: Value => Boolean
+    ) =
+      WithFilter(asKeyword(from), filter)
 }        

@@ -1,6 +1,5 @@
 package com.thoughtworks.dsl
 
-import comprehension._
 import bangnotation._
 import Dsl._
 import keywords._, Match._

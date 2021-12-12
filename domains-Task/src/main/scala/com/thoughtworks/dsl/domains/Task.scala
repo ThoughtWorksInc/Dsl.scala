@@ -25,7 +25,6 @@ import scala.util.control.TailCalls.TailRec
   *
   *          {{{
   *          import com.thoughtworks.dsl.Dsl._
-  *          import com.thoughtworks.dsl.comprehension._
   *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl._
   *          import com.thoughtworks.dsl.keywords._
