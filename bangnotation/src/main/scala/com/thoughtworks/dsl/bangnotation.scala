@@ -61,11 +61,11 @@ object bangnotation {
     def reify[V](body: quoted.Expr[_])(using valueType: quoted.Type[V]): quoted.Expr[_] = {
       val bodyTerm = body.asTerm.underlyingArgument
       val reifiedTerm = KeywordTree(bodyTerm).keywordTerm
-        reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) =>
-          given quoted.Type[K] = tk
-          '{keywords.Typed[K, V]($k)}: quoted.Expr[_]
-        }
+      reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) =>
+        given quoted.Type[K] = tk
+        '{keywords.Typed[K, V]($k)}: quoted.Expr[_]
       }
+    }
 
     def resetDefDef(defDef: DefDef): DefDef = {
       val DefDef(name, typeParamsAndParams, tpt, rhsOption) = defDef
