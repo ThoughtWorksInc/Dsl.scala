@@ -8,17 +8,6 @@ object comprehension {
   extension [From, Keyword, Value](keyword: From)(using
       asKeyword: AsKeyword.SearchIsKeywordFirst[From, Keyword, Value]
   )
-    @inline def to[Domain[_]](using
-        run: Run[Keyword, Domain[Value], Value]
-    ): Domain[Value] = {
-      run(asKeyword(keyword))
-    }
-
-    @inline def as[Domain](using
-        run: Run[Keyword, Domain, Value]
-    ): Domain = {
-      run(asKeyword(keyword))
-    }
 
     @inline def map[MappedValue](
         mapper: Value => MappedValue

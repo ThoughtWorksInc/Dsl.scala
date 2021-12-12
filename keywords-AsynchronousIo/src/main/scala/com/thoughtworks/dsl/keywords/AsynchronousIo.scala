@@ -53,6 +53,7 @@ import scala.util.control.NonFatal
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.domains.Task
+  *          import com.thoughtworks.dsl.Dsl.as
   *          import java.net.URL
   *          def cat(paths: Path*) = {
   *            for {
