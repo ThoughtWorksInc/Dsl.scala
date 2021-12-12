@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 
-import bangnotation._
+import bangnotation._, Ops._
 import Dsl._
 import keywords._, Match._
 import concurrent.ExecutionContext.Implicits.global

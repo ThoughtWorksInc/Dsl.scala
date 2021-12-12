@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 
-import bangnotation._
+import bangnotation._, Ops._
 import scala.util._
 import scala.util.control.NonFatal
 

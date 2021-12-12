@@ -16,7 +16,7 @@ import scala.language.implicitConversions
   * @example
   *   Given a [[scala.concurrent.Future Future]]:
   * {{{
-  * import com.thoughtworks.dsl.bangnotation._
+  * import com.thoughtworks.dsl.bangnotation._, Ops._
   * import scala.concurrent.Future
   * val myFuture40 = Future {
   *   40
@@ -54,7 +54,7 @@ import scala.language.implicitConversions
   *   `!Await` can be used together with `try` / `catch` / `finally`.
   * {{{
   * import scala.concurrent.Future
-  * import com.thoughtworks.dsl.bangnotation._
+  * import com.thoughtworks.dsl.bangnotation._, Ops._
   * val buffer = new StringBuffer
   * def recoverFuture = Future {
   *   buffer.append("Oh")
@@ -81,7 +81,7 @@ import scala.language.implicitConversions
   * {{{
   * import scala.concurrent.Future
   * import com.thoughtworks.dsl.keywords.{Get, Return}
-  * import com.thoughtworks.dsl.bangnotation._
+  * import com.thoughtworks.dsl.bangnotation._, Ops._
   * val buffer = new StringBuffer
   * def recoverFuture = Future {
   *   buffer.append("Oh")

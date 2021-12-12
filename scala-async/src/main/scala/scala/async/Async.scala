@@ -1,6 +1,6 @@
 package scala.async
 import scala.concurrent.Future
-import com.thoughtworks.dsl.bangnotation.{`*`, unary_!}
+import com.thoughtworks.dsl.bangnotation._, Ops._
 import com.thoughtworks.dsl.keywords.Await
 
 /** Async blocks provide a direct means to work with

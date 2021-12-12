@@ -17,7 +17,7 @@ import com.thoughtworks.dsl.Dsl.AsKeyword
   *   character of the parameter.
   *
   * {{{
-  * import com.thoughtworks.dsl.bangnotation.{unary_!, reset}
+  * import com.thoughtworks.dsl.bangnotation._, Ops._
   * def upperCasedLastCharacter = reset[String => Char] {
   *   val initialValue = !Get[String]()
   *   !Put(initialValue.toUpperCase)
@@ -39,7 +39,7 @@ import com.thoughtworks.dsl.Dsl.AsKeyword
   * The following code creates a formatter that [[Put]] parts of content into a `Vector[Any]` of string buffers.
   *
   * {{{
-  * import com.thoughtworks.dsl.bangnotation.{reset, unary_!}
+  * import com.thoughtworks.dsl.bangnotation._, Ops._
   * def formatter = reset[Double => Int => Vector[Any] => String] {
   *   !Put(!Get[Vector[Any]]() :+ "x=")
   *   !Put(!Get[Vector[Any]]() :+ !Get[Double]())

@@ -15,7 +15,7 @@ import scala.util.control.NonFatal
   *
   *          {{{
   *          import java.nio._, file._, channels._
-  *          import com.thoughtworks.dsl.bangnotation._
+  *          import com.thoughtworks.dsl.bangnotation._, Ops._
   *          import com.thoughtworks.dsl.domains.Task
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
@@ -44,11 +44,11 @@ import scala.util.control.NonFatal
   *          It asynchronously iterates elements `Seq`, `ArrayBuffer` and `String` with the help of [[keywords.Each]],
   *          managed native resources with the help of [[keywords.Using]],
   *          performs previously created `readAll` task with the help of [[keywords.Shift]],
-  *          and finally converts the return type [[comprehension.ComprehensionOps.as as]] a `Task[Vector[Char]]`.
+  *          and finally converts the return type [[bangnotation.Ops.as as]] a `Task[Vector[Char]]`.
   *
   *          {{{
   *          import com.thoughtworks.dsl._
-  *          import com.thoughtworks.dsl.bangnotation._
+  *          import com.thoughtworks.dsl.bangnotation._, Ops._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.domains.Task

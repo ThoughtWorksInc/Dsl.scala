@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.bangnotation._
+import com.thoughtworks.dsl.bangnotation._, Ops._
 import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
 import scala.language.implicitConversions

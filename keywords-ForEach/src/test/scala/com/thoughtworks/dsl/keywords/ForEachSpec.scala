@@ -2,7 +2,7 @@ package com.thoughtworks.dsl.keywords
 
 import com.thoughtworks.dsl.Dsl.!!
 import org.scalatest.freespec.AnyFreeSpec
-import com.thoughtworks.dsl.bangnotation._
+import com.thoughtworks.dsl.bangnotation._, Ops._
 import org.scalatest.matchers.should.Matchers
 
 /** @author 杨博 (Yang Bo)
