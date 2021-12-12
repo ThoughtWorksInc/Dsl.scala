@@ -170,14 +170,14 @@ object bangnotation {
           case
             Apply(
               TypeApply(
-                ident: Ident,
+                shiftMethod,
                 List(_, valueTypeTree)
               ),
               List(
                 from
               )
             )
-          if shiftSymbol == ident.symbol =>
+          if shiftMethod.symbol == shiftSymbol =>
             KeywordTree(from).flatMap { pureFrom =>
               Keyword(pureFrom, valueTypeTree.tpe)
             }
