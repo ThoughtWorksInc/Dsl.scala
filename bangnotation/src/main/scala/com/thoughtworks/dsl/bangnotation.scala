@@ -682,7 +682,7 @@ object bangnotation {
     
   }
 
-  object Macros {
+  private[dsl] object Macros {
     def reify[V](body: quoted.Expr[_])(using qctx: Quotes, tv: quoted.Type[V]): quoted.Expr[_] = {
       Macros[qctx.type](resetDescendant = false).reify[V](body/*.underlyingArgument*/)
     }
