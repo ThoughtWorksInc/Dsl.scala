@@ -481,6 +481,22 @@ object Dsl extends LowPriorityDsl0 {
       run(asKeyword(keyword))
     }
 
+  /** A marker trait that denotes a keyword class, enabling extension method
+    * defined in [[Dsl]] for subclasses of [[Keyword]].
+    */
+  trait Keyword extends Any
+
+  /** A marker trait that denotes a keyword opaque type, enabling extension
+    * method defined in [[Dsl]] for its subtypes of [[OpaqueKeyword]].
+    */
+  opaque type OpaqueKeyword = Any
+  object OpaqueKeyword {
+    opaque type Of[Self] <: Self & OpaqueKeyword = Self
+    object Of {
+      def apply[Self]: Self =:= Of[Self] = summon
+    }
+  }
+
   trait AsKeyword[From, Keyword, Value] extends (From => Keyword)
 
   object AsKeyword {
