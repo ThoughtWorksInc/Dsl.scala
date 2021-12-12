@@ -529,4 +529,23 @@ object Dsl extends LowPriorityDsl0 {
       dsl.cpsApply(keyword, handler)
     }
 
+  extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
+
+    inline def map[MappedValue](
+        mapper: Value => MappedValue
+    ): keywords.FlatMap[Keyword, Value, keywords.Pure[MappedValue]] =
+      keywords.FlatMap(asKeyword(from), keywords.Pure.apply.liftCo(mapper))
+
+    inline def flatMap[Mapped, MappedValue](
+        flatMapper: Value => Mapped
+    )(
+        using /*erased*/ AsKeyword.IsKeyword[Mapped, MappedValue]
+    ): keywords.FlatMap[Keyword, Value, Mapped] =
+      keywords.FlatMap(asKeyword(from), flatMapper)
+
+    inline def withFilter[Mapped, MappedValue](
+        filter: Value => Boolean
+    ) =
+      keywords.WithFilter(asKeyword(from), filter)
+
 }

@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 
-import com.thoughtworks.dsl.bangnotation._, Ops._
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.Dsl.AsKeyword
@@ -47,7 +47,7 @@ object Using {
     * {{{
     *           import scala.concurrent.Future
     *           import com.thoughtworks.dsl.keywords.Using.scopeExit
-    *           import com.thoughtworks.dsl.bangnotation._, Ops._
+    *           import com.thoughtworks.dsl.bangnotation._
     *           var n = 1
     *           def multiplicationAfterAddition = *[Future] {
     *             !scopeExit { () =>

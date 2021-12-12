@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import bangnotation._, Ops._
+import bangnotation._
 import com.thoughtworks.dsl.Dsl.!!
 import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}

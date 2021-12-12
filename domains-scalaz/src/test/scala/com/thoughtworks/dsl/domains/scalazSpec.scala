@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl.domains
 
-import com.thoughtworks.dsl.bangnotation._, Ops._
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.Dsl.!!
 import _root_.scalaz.\/
 import _root_.scalaz.\/-

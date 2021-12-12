@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl.keywords
 
-import com.thoughtworks.dsl.bangnotation._, Ops._
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
@@ -15,7 +15,7 @@ import scala.collection.mutable.Builder
   * @example [[Each]] keywords can be used to calculate cartesian product.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.bangnotation._, Ops._
+  *          import com.thoughtworks.dsl.bangnotation._
   *          def cartesianProduct = reset (List(!Each(Array(1, 2, 3)) * !Each(Vector(1, 10, 100, 1000))))
   *          cartesianProduct should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
   *          }}}

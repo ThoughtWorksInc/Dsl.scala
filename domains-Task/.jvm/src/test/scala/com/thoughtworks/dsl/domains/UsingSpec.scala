@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package domains
 
 import Continuation.!!
-import com.thoughtworks.dsl.bangnotation._, Ops._
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.keywords.{Using, Yield}
 import org.scalatest.Assertion
 import org.scalatest.freespec.AnyFreeSpec

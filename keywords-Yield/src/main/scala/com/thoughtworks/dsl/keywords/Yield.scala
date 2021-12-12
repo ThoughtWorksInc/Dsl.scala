@@ -18,13 +18,13 @@ import scala.language.higherKinds
   *          or it will not compile.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.bangnotation._, Ops._
+  *          import com.thoughtworks.dsl.bangnotation._
   *          "def f(): Int = !Yield(1)" shouldNot compile
   *          }}}
   *
   * @example [[Yield]] keywords can be used together with other keywords.
   *          {{{
-  *          import com.thoughtworks.dsl.bangnotation._, Ops._
+  *          import com.thoughtworks.dsl.bangnotation._
   *          def gccFlagBuilder(sourceFile: String, includes: String*) = reset[Stream[String]] {
   *            !Yield("gcc")
   *            !Yield("-c")

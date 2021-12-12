@@ -15,14 +15,14 @@ import scala.util.control.NonFatal
   *
   *          {{{
   *          import java.nio._, file._, channels._
-  *          import com.thoughtworks.dsl.bangnotation._, Ops._
+  *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl.domains.Task
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo.ReadFile
   *          import scala.collection.mutable.ArrayBuffer
   *          import scala.io.Codec
-  *          def readAll(channel: AsynchronousFileChannel, temporaryBufferSize: Int = 4096): Task[ArrayBuffer[CharBuffer]] = *[Task] {
+  *          def readAll(channel: AsynchronousFileChannel, temporaryBufferSize: Int = 4096): Task[ArrayBuffer[CharBuffer]] = Task {
   *            val charBuffers = ArrayBuffer.empty[CharBuffer]
   *            val decoder = Codec.UTF8.decoder
   *            val byteBuffer = ByteBuffer.allocate(temporaryBufferSize)
@@ -36,7 +36,6 @@ import scala.util.control.NonFatal
   *            charBuffers
   *          }
   *          }}}
-  *
   *          `Task`s created from !-notation can be used in `for`-comprehension,
   *          and other keywords can be used together in the same `for` block.
   *
@@ -48,7 +47,6 @@ import scala.util.control.NonFatal
   *
   *          {{{
   *          import com.thoughtworks.dsl._
-  *          import com.thoughtworks.dsl.bangnotation._, Ops._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.domains.Task

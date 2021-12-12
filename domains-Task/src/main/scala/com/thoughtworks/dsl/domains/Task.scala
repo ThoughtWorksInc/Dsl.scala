@@ -3,7 +3,7 @@ package domains
 
 import com.thoughtworks.dsl.domains.Continuation, Continuation.!!
 import com.thoughtworks.dsl.keywords.Shift
-import com.thoughtworks.dsl.bangnotation._, Ops._
+import com.thoughtworks.dsl.bangnotation._
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -25,7 +25,7 @@ import scala.util.control.TailCalls.TailRec
   *
   *          {{{
   *          import com.thoughtworks.dsl.Dsl._
-  *          import com.thoughtworks.dsl.bangnotation._, Ops._
+  *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
@@ -87,7 +87,7 @@ object Task extends TaskPlatformSpecificFunctions {
     *
     * @example All the code after a `!switchExecutionContext` should be executed on `executionContext`
     *          {{{
-    *          import com.thoughtworks.dsl.bangnotation._, Ops._
+    *          import com.thoughtworks.dsl.bangnotation._
     *          import com.thoughtworks.dsl.domains.Task
     *          import org.scalatest.Assertion
     *          import scala.concurrent.ExecutionContext
