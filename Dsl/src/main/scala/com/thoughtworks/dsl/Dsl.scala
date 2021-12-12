@@ -50,6 +50,11 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
+  // Must not put transparent inline extension methods directly in Dsl, or the compiler crashes
+  extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
+    transparent inline def unary_! : Value = {
+      Dsl.shift[Keyword, Value](asKeyword(from))
+    }
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
 //      implicit restDsl: Dsl[Keyword, LeftDomain, Value],
@@ -483,23 +488,23 @@ object Dsl extends LowPriorityDsl0 {
 
   type Keyword = Keyword.Opaque | Keyword.Trait
   object Keyword {
-  /** A marker trait that denotes a keyword class, enabling extension method
-    * defined in [[Dsl]] for subclasses of [[Keyword]].
-    */
+    /** A marker trait that denotes a keyword class, enabling extension method
+      * defined in [[Dsl]] for subclasses of [[Keyword]].
+      */
     trait Trait extends Any
 
-  /** A marker trait that denotes a keyword opaque type, enabling extension
-    * method defined in [[Dsl]] for its subtypes of [[OpaqueKeyword]].
-    */
+    /** A marker trait that denotes a keyword opaque type, enabling extension
+      * method defined in [[Dsl]] for its subtypes of [[OpaqueKeyword]].
+      */
     opaque type Opaque = Any
     object Opaque {
       opaque type Of[Self] <: Self & Opaque = Self
-    object Of {
-      def apply[Self]: Self =:= Of[Self] = summon
+      object Of {
+        def apply[Self]: Self =:= Of[Self] = summon
       }
     }
   }
-
+  
   trait AsKeyword[From, Keyword, Value] extends (From => Keyword)
 
   object AsKeyword {
@@ -531,5 +536,8 @@ object Dsl extends LowPriorityDsl0 {
     )(handler: Value => Domain)(using DummyImplicit): Domain = {
       dsl.cpsApply(keyword, handler)
     }
+
+  @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
+  def shift[Keyword, Value](keyword: Keyword): Value = ???
 
 }

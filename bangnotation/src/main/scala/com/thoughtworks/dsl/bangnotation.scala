@@ -139,8 +139,7 @@ object bangnotation {
         helper
       }
 
-      
-    val List(shiftSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").declaredMethod("shift")
+    val List(shiftSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.Dsl$").declaredMethod("shift")
 
     sealed trait KeywordTree {
       def keywordTerm: Term
@@ -716,9 +715,6 @@ object bangnotation {
   def shift[Keyword, Value](keyword: Keyword): Value = ???
 
   extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
-    transparent inline def unary_! : Value = {
-      shift[Keyword, Value](asKeyword(from))
-    }
 
     inline def map[MappedValue](
         mapper: Value => MappedValue

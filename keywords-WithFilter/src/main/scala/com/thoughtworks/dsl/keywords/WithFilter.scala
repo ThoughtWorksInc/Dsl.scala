@@ -1,4 +1,5 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 import com.thoughtworks.dsl.Dsl
 
 final case class WithFilter[UpstreamKeyword, UpstreamValue](

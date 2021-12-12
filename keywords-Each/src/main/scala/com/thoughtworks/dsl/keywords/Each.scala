@@ -1,6 +1,7 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 
-import com.thoughtworks.dsl.bangnotation.{reset, unary_!}
+import com.thoughtworks.dsl.bangnotation.reset
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 

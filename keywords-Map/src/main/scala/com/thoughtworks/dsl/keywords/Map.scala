@@ -1,4 +1,5 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 import com.thoughtworks.dsl.Dsl
 
 final case class Map[UpstreamKeyword, UpstreamValue, Value](upstream: UpstreamKeyword, mapper: UpstreamValue => Value) extends Dsl.Keyword.Trait
