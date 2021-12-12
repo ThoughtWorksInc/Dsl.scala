@@ -481,6 +481,22 @@ object Dsl extends LowPriorityDsl0 {
       run(asKeyword(keyword))
     }
 
+  /** A marker trait that denotes a keyword class, enabling extension method
+    * defined in [[Dsl]] for subclasses of [[Keyword]].
+    */
+  trait Keyword extends Any
+
+  /** A marker trait that denotes a keyword opaque type, enabling extension
+    * method defined in [[Dsl]] for its subtypes of [[OpaqueKeyword]].
+    */
+  opaque type OpaqueKeyword = Any
+  object OpaqueKeyword {
+    opaque type Of[Self] <: Self & OpaqueKeyword = Self
+    object Of {
+      def apply[Self]: Self =:= Of[Self] = summon
+    }
+  }
+
   trait AsKeyword[From, Keyword, Value] extends (From => Keyword)
 
   object AsKeyword {
@@ -512,5 +528,24 @@ object Dsl extends LowPriorityDsl0 {
     )(handler: Value => Domain)(using DummyImplicit): Domain = {
       dsl.cpsApply(keyword, handler)
     }
+
+  extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
+
+    inline def map[MappedValue](
+        mapper: Value => MappedValue
+    ): keywords.FlatMap[Keyword, Value, keywords.Pure[MappedValue]] =
+      keywords.FlatMap(asKeyword(from), keywords.Pure.apply.liftCo(mapper))
+
+    inline def flatMap[Mapped, MappedValue](
+        flatMapper: Value => Mapped
+    )(
+        using /*erased*/ AsKeyword.IsKeyword[Mapped, MappedValue]
+    ): keywords.FlatMap[Keyword, Value, Mapped] =
+      keywords.FlatMap(asKeyword(from), flatMapper)
+
+    inline def withFilter[Mapped, MappedValue](
+        filter: Value => Boolean
+    ) =
+      keywords.WithFilter(asKeyword(from), filter)
 
 }

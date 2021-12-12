@@ -16,14 +16,13 @@ import scala.util.control.NonFatal
   *          {{{
   *          import java.nio._, file._, channels._
   *          import com.thoughtworks.dsl.bangnotation._
-  *          import com.thoughtworks.dsl.comprehension._
   *          import com.thoughtworks.dsl.domains.Task
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo.ReadFile
   *          import scala.collection.mutable.ArrayBuffer
   *          import scala.io.Codec
-  *          def readAll(channel: AsynchronousFileChannel, temporaryBufferSize: Int = 4096): Task[ArrayBuffer[CharBuffer]] = *[Task] {
+  *          def readAll(channel: AsynchronousFileChannel, temporaryBufferSize: Int = 4096): Task[ArrayBuffer[CharBuffer]] = Task {
   *            val charBuffers = ArrayBuffer.empty[CharBuffer]
   *            val decoder = Codec.UTF8.decoder
   *            val byteBuffer = ByteBuffer.allocate(temporaryBufferSize)
@@ -37,7 +36,6 @@ import scala.util.control.NonFatal
   *            charBuffers
   *          }
   *          }}}
-  *
   *          `Task`s created from !-notation can be used in `for`-comprehension,
   *          and other keywords can be used together in the same `for` block.
   *
@@ -45,11 +43,10 @@ import scala.util.control.NonFatal
   *          It asynchronously iterates elements `Seq`, `ArrayBuffer` and `String` with the help of [[keywords.Each]],
   *          managed native resources with the help of [[keywords.Using]],
   *          performs previously created `readAll` task with the help of [[keywords.Shift]],
-  *          and finally converts the return type [[comprehension.ComprehensionOps.as as]] a `Task[Vector[Char]]`.
+  *          and finally converts the return type [[bangnotation.Ops.as as]] a `Task[Vector[Char]]`.
   *
   *          {{{
   *          import com.thoughtworks.dsl._
-  *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.domains.Task
@@ -81,7 +78,7 @@ import scala.util.control.NonFatal
   *          })
   *          }}}
   */
-trait AsynchronousIo[Value] extends Any {
+trait AsynchronousIo[Value] extends Any with Dsl.Keyword {
 
   /** Starts the asynchronous operations */
   protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Value, _ >: Attachment]): Unit

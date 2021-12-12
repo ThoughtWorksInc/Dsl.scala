@@ -67,10 +67,31 @@ object bangnotation {
       }
     }
 
-    def resetDefDef(defDef: DefDef): DefDef = {
+    def reifyFunction[R, A](function: quoted.Expr[R => A])(using quoted.Type[R], quoted.Type[A]): quoted.Expr[R => Any] = {
+      val functionTerm = function.asTerm.underlyingArgument
+      functionTerm match {
+        case block @ qctx.reflect.Block(
+          List(
+            defDef: DefDef
+          ),
+          closure @ Closure(ident: Ident, _)
+        ) if (ident.name == defDef.name) =>
+          qctx.reflect.Block.copy(block)(
+            List(reifyDefDef(defDef)),
+            closure,
+          ).usingExpr { [F] => (f: quoted.Expr[F]) => (tf: quoted.Type[F]) =>
+            f.asInstanceOf[quoted.Expr[R => Any]]
+          }
+        case _ =>
+          report.error("Expect a function literal", functionTerm.underlyingArgument.pos)
+          '{???}
+      }
+    }
+
+    def reifyDefDef(defDef: DefDef): DefDef = {
       val DefDef(name, typeParamsAndParams, tpt, rhsOption) = defDef
       rhsOption match {
-        case Some(rhs) if resetDescendant =>
+        case Some(rhs) =>
           rhs match {
             case matchTree @ qctx.reflect.Match(scrutinee, cases) =>
               DefDef.copy(defDef)(
@@ -91,6 +112,40 @@ object bangnotation {
           }
         case _ =>
           defDef
+      }
+    }
+
+    def resetDefDef(defDef: DefDef): DefDef = {
+      val DefDef(name, typeParamsAndParams, tpt, rhsOption) = defDef
+      rhsOption match {
+        case Some(rhs) if resetDescendant =>
+          rhs match {
+            case matchTree @ qctx.reflect.Match(scrutinee, cases) =>
+              DefDef.copy(defDef)(
+                name, typeParamsAndParams, tpt, Some(
+                  qctx.reflect.Match.copy(matchTree)(
+                    scrutinee,
+                    cases.map {
+                      case caseDef @ CaseDef(pattern, guard, caseRhs) =>
+                        CaseDef.copy(caseDef)(pattern, guard, reifyTerm(caseRhs))
+                    }
+                  )
+                )
+              )
+            case _ =>
+              DefDef.copy(defDef)(
+                name, typeParamsAndParams, tpt, Some(reifyTerm(rhs))
+              )
+          }
+        case _ =>
+          defDef
+      }
+    }
+
+    def reifyTerm(term: Term): Term = {
+      term.usingExpr { [Value] => (body: quoted.Expr[Value]) => (tv: quoted.Type[Value]) =>
+        given quoted.Type[Value] = tv
+        reify[Value](body).asTerm
       }
     }
 
@@ -686,7 +741,9 @@ object bangnotation {
     def reify[V](body: quoted.Expr[_])(using qctx: Quotes, tv: quoted.Type[V]): quoted.Expr[_] = {
       Macros[qctx.type](resetDescendant = false).reify[V](body/*.underlyingArgument*/)
     }
-
+    def reifyFunction[R, A](body: quoted.Expr[R => A])(using qctx: Quotes, tr: quoted.Type[R], ta: quoted.Type[A]): quoted.Expr[R => Any] = {
+      Macros[qctx.type](resetDescendant = false).reifyFunction[R, A](body/*.underlyingArgument*/)
+    }
     def reset[From, To](body: quoted.Expr[From])(using qctx: Quotes, fromType: quoted.Type[From], toType: quoted.Type[To]): quoted.Expr[To] = {
       import qctx.reflect.{_, given}
       val result: quoted.Expr[To] = Macros[qctx.type](resetDescendant = false).reset(body/*.underlyingArgument*/)
@@ -699,6 +756,10 @@ object bangnotation {
 
   transparent inline def reify[Value](inline value: Value): Any = ${
     Macros.reify[Value]('value)
+  }
+
+  transparent inline def reifyFunction[State, Value](inline value: State => Value): State => Any = ${
+    Macros.reifyFunction[State, Value]('value)
   }
 
   class *[Functor[_]] {

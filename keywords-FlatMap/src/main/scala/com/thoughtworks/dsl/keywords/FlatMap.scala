@@ -8,7 +8,7 @@ import scala.util.NotGiven
 final case class FlatMap[Upstream, UpstreamValue, Mapped](
     upstream: Upstream,
     flatMapper: UpstreamValue => Mapped
-)
+) extends Dsl.Keyword
 
 object FlatMap {
   given [Upstream, UpstreamValue, Mapped, MappedValue](using

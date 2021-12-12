@@ -3,7 +3,7 @@ package com.thoughtworks.dsl.keywords
 import java.io.{PrintStream, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.thoughtworks.dsl.bangnotation.{`*`, reify, unary_!}
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
@@ -13,7 +13,7 @@ import scala.collection.mutable.Builder
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
-final case class Fork[Element](elements: Traversable[Element]) extends AnyVal 
+final case class Fork[Element](elements: Traversable[Element]) extends AnyVal with Dsl.Keyword
 
 object Fork {
   given [Element]: AsKeyword.IsKeyword[Fork[Element], Element] with {}

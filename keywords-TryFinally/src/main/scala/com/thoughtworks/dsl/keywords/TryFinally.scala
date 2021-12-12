@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
 case class TryFinally[TryKeyword, FinalizerKeyword](
     block: TryKeyword,
     finalizer: FinalizerKeyword
-)
+) extends Dsl.Keyword
 
 object TryFinally {
 

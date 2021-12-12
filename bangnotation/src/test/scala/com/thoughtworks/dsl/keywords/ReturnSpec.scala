@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 import com.thoughtworks.dsl.Dsl.!!
-import bangnotation.{_, given}
+import bangnotation._
 import utest.{TestSuite, Tests, given}
 import Dsl.Run
 import scala.language.implicitConversions
