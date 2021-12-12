@@ -143,6 +143,6 @@ object Await {
         !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
     }
 
-  given [Value]: AsKeyword.IsKeywordSubtype[Future[Value], Await[Value], Value] with {}
+  given implicitAwait[Value]: AsKeyword.IsKeywordSubtype[Future[Value], Await[Value], Value] with {}
 
 }

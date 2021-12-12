@@ -45,7 +45,7 @@ object Shift extends LowPriorityShift0 {
 
   private[keywords] type SameDomainStackSafeShiftDsl[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
 
-  given [Domain, Value]: AsKeyword.IsKeywordSubtype[Domain !! Value, Shift[Domain, Value], Value] with {}
+  given implicitShift[Domain, Value]: AsKeyword.IsKeywordSubtype[Domain !! Value, Shift[Domain, Value], Value] with {}
 
   private def shiftTailRec[R, Value](continuation: TailRec[R] !! Value, handler: Value => TailRec[R]) = {
     continuation { a =>

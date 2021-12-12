@@ -21,6 +21,6 @@ object Monadic {
 
   given [Functor[_], Value]: AsKeyword.IsKeyword[Monadic[Functor, Value], Value] with {}
 
-  given [Functor[_], Value]: AsKeyword.IsKeywordSubtype[Functor[Value], Monadic[Functor, Value], Value] with {}
+  given implicitMonadic[Functor[_], Value]: AsKeyword.IsKeywordSubtype[Functor[Value], Monadic[Functor, Value], Value] with {}
 
 }
