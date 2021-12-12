@@ -21,7 +21,7 @@ import scala.collection.mutable.Builder
   *          }}}
   * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
   */
-final case class Each[Element](elements: Traversable[Element]) extends Dsl.Keyword
+final case class Each[Element](elements: Traversable[Element]) extends Dsl.Keyword.Trait
 object Each {
   given [Element]: AsKeyword.IsKeyword[Each[Element], Element] with {}
 

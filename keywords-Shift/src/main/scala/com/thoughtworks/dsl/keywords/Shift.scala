@@ -14,7 +14,7 @@ import scala.util.control.TailCalls.TailRec
 /** @author
   *   杨博 (Yang Bo)
   */
-opaque type Shift[R, A] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[R !! A]
+opaque type Shift[R, A] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R !! A]
 
 private[keywords] trait LowPriorityShift1 {
 
@@ -145,6 +145,6 @@ object Shift extends LowPriorityShift0 {
         taskFlatMap(keyword, handler)
     }
 
-  def apply[R, A]: (R !! A) =:= Shift[R, A] = Dsl.OpaqueKeyword.Of.apply
+  def apply[R, A]: (R !! A) =:= Shift[R, A] = Dsl.Keyword.Opaque.Of.apply
 
 }

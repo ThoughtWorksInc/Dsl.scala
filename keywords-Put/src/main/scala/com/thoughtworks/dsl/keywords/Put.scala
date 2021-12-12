@@ -56,7 +56,7 @@ import com.thoughtworks.dsl.Dsl.AsKeyword
   * @author
   *   杨博 (Yang Bo)
   */
-final case class Put[S](value: S) extends AnyVal with Dsl.Keyword
+final case class Put[S](value: S) extends AnyVal with Dsl.Keyword.Trait
 
 object Put {
   given [S]: AsKeyword.IsKeyword[Put[S], Unit] with {}

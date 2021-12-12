@@ -3,7 +3,7 @@ package keywords
 import com.thoughtworks.dsl.Dsl.AsKeyword
 import scala.language.implicitConversions
 
-final case class NoneSafe[A](option: Option[A]) extends AnyVal with Dsl.Keyword
+final case class NoneSafe[A](option: Option[A]) extends AnyVal with Dsl.Keyword.Trait
 
 object NoneSafe {
   given [A]: AsKeyword.IsKeyword[NoneSafe[A], A] with {}

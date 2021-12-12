@@ -106,9 +106,9 @@ import scala.language.implicitConversions
   * @author
   *   杨博 (Yang Bo)
   */
-opaque type Await[Result] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[concurrent.Future[Result]]
+opaque type Await[Result] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[concurrent.Future[Result]]
 object Await {
-  @inline def apply[Result]: concurrent.Future[Result] =:= Await[Result] = Dsl.OpaqueKeyword.Of.apply
+  @inline def apply[Result]: concurrent.Future[Result] =:= Await[Result] = Dsl.Keyword.Opaque.Of.apply
   given [Result]: AsKeyword.IsKeyword[Await[Result], Result] with {}
 
   implicit def streamAwaitDsl[Value, That](implicit

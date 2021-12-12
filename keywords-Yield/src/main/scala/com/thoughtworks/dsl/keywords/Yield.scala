@@ -39,7 +39,7 @@ import scala.language.higherKinds
   *          }}}
   * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
   */
-opaque type Yield[Element] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[Element]
+opaque type Yield[Element] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Element]
 
 private[keywords] trait LowPriorityYield3 {
 
@@ -90,16 +90,16 @@ private[keywords] trait LowPriorityYield0 extends LowPriorityYield1
 object Yield extends LowPriorityYield0 {
 
   given [Element]: AsKeyword.IsKeyword[Yield[Element], Unit] with {}
-  def apply[Element]: Element =:= Yield[Element] = Dsl.OpaqueKeyword.Of.apply
+  def apply[Element]: Element =:= Yield[Element] = Dsl.Keyword.Opaque.Of.apply
   def apply[A](element0: A, element1: A, elements: A*) = {
     From(element0 +: element1 +: elements)
   }
 
-  opaque type From[FromCollection <: TraversableOnce[_]] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[FromCollection]
+  opaque type From[FromCollection <: TraversableOnce[_]] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[FromCollection]
   object From {
     given [FromCollection <: TraversableOnce[_]]: AsKeyword.IsKeyword[From[FromCollection], Unit] with {}
 
-    def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = Dsl.OpaqueKeyword.Of.apply
+    def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = Dsl.Keyword.Opaque.Of.apply
 
   }
 

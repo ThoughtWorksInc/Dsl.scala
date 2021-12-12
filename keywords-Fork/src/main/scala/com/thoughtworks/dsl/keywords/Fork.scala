@@ -13,7 +13,7 @@ import scala.collection.mutable.Builder
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
-final case class Fork[Element](elements: Traversable[Element]) extends AnyVal with Dsl.Keyword
+final case class Fork[Element](elements: Traversable[Element]) extends AnyVal with Dsl.Keyword.Trait
 
 object Fork {
   given [Element]: AsKeyword.IsKeyword[Fork[Element], Element] with {}

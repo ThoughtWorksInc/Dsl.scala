@@ -3,9 +3,9 @@ package keywords
 import Dsl.AsKeyword
 import Dsl.cpsApply
 
-opaque type Suspend[Keyword] <: Dsl.OpaqueKeyword = Dsl.OpaqueKeyword.Of[() => Keyword]
+opaque type Suspend[Keyword] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[() => Keyword]
 object Suspend {
-  @inline def apply[Keyword]: (() => Keyword) =:= Suspend[Keyword] = Dsl.OpaqueKeyword.Of.apply
+  @inline def apply[Keyword]: (() => Keyword) =:= Suspend[Keyword] = Dsl.Keyword.Opaque.Of.apply
 
   given[Upstream, UpstreamValue](using upstreamIsKeyword: => AsKeyword.IsKeyword[Upstream, UpstreamValue]): AsKeyword.IsKeyword[Suspend[Upstream], UpstreamValue] with {}
 

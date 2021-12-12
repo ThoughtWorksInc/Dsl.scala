@@ -6,7 +6,7 @@ import Dsl.cpsApply
 final case class If[ConditionKeyword, ThenKeyword, ElseKeyword](
   cond: ConditionKeyword,
   thenp: ThenKeyword,
-  elsep: ElseKeyword) extends Dsl.Keyword
+  elsep: ElseKeyword) extends Dsl.Keyword.Trait
 
 object If {
   given[ConditionKeyword, ThenKeyword, ElseKeyword, Domain, Value](
