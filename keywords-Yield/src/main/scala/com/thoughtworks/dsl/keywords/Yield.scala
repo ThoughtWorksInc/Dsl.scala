@@ -101,6 +101,14 @@ object Yield extends LowPriorityYield0 {
 
     def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = Dsl.Keyword.Opaque.Of.apply
 
+    extension [A, E](inline a: A)(using
+        inline notKeyword: util.NotGiven[
+          A <:< Dsl.Keyword
+        ],
+        inline isIterable: A <:< Iterable[E]
+    )
+      transparent inline def unary_! : Unit =
+        !From[Iterable[E]](isIterable(a))
   }
 
 
@@ -180,7 +188,6 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  given implicitYieldFrom[FromCollection <: TraversableOnce[_]]: AsKeyword[FromCollection, From[FromCollection], Unit] = From(_)
 
   implicit def streamYieldFromDsl[A, FromCollection <: Iterable[A]]: Dsl[From[FromCollection], Stream[A], Unit] =
     new Dsl[From[FromCollection], Stream[A], Unit] {
@@ -188,6 +195,15 @@ object Yield extends LowPriorityYield0 {
         keyword.toStream #::: generateTail(())
       }
     }
+
+
+  extension [A](inline a: A)(using
+      inline notKeyword: util.NotGiven[
+        A <:< Dsl.Keyword
+      ]
+  )
+    transparent inline def unary_! : Unit =
+      !Yield[A](a)
 
   given implicitYield[Element]: AsKeyword[Element, Yield[Element], Unit] = Yield(_)
 
