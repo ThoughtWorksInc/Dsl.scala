@@ -39,7 +39,14 @@ object Each {
     factory.newBuilder
   }
 
-  given implicitEach[Element]: AsKeyword[Traversable[Element], Each[Element], Element] = Each(_)
+  extension [FA, A](inline fa: FA)(using
+      inline notKeyword: util.NotGiven[
+        FA <:< Dsl.Keyword
+      ],
+      inline asFA: FA <:< Traversable[A]
+  )
+    transparent inline def unary_! : A =
+      Dsl.shift(Each(asFA(fa))): A
 
   implicit def eachDsl[Element, Domain, DomainElement](implicit
       thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),
