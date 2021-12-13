@@ -300,7 +300,7 @@ package com.thoughtworks
   *          }}}
   *
   *          `!loop(0)` is a shortcut of `!Shift(loop(0))`,
-  *          because there is [[keywords.Shift.implicitShift an implicit conversion]]
+  *          When [[keywords.Shift.unaray_!]] is imported to internally convert
   *          from `Stream[String] !! Throwable !! Int` to a [[keywords.Shift]] case class,
   *          which is similar to the `await` keyword in JavaScript, Python or C#.
   *
@@ -378,7 +378,7 @@ package com.thoughtworks
   *          {{{
   *          import com.thoughtworks.dsl.domains._
   *          import com.thoughtworks.dsl.keywords._
-  *          import com.thoughtworks.dsl.keywords.Shift.implicitShift
+  *          import com.thoughtworks.dsl.keywords.Shift.unary_!
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo._
   *          import java.io._
   *          import java.net._
