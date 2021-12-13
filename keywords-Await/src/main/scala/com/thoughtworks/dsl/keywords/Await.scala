@@ -142,7 +142,13 @@ object Await {
       def cpsApply(keyword: Await[Value], handler: Value => Unit !! Throwable): Unit !! Throwable =
         !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
     }
-
-  given implicitAwait[Value]: AsKeyword[Future[Value], Await[Value], Value] = Await(_)
+  extension [FA, A](inline fa: FA)(using
+      inline notKeyword: util.NotGiven[
+        FA <:< Dsl.Keyword
+      ],
+      inline asFA: FA <:< Future[A]
+  )
+    transparent inline def unary_! : A =
+      Dsl.shift(Await(asFA(fa))): A
 
 }
