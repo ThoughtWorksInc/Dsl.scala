@@ -32,7 +32,14 @@ object Fork {
     factory.newBuilder
   }
 
-  given implicitFork[Element]: AsKeyword[Traversable[Element], Fork[Element], Element] = Fork(_)
+  extension [FA, A](inline fa: FA)(using
+      inline notKeyword: util.NotGiven[
+        FA <:< Dsl.Keyword
+      ],
+      inline asFA: FA <:< Traversable[A]
+  )
+    transparent inline def unary_! : A =
+      Dsl.shift(Fork(asFA(fa))): A
 
   final case class MultipleException(throwableSet: Set[Throwable])
       extends RuntimeException("Multiple exceptions found") {
