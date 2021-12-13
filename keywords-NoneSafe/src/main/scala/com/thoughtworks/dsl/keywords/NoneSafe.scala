@@ -22,6 +22,13 @@ object NoneSafe {
       }
     }
 
-  given implicitNoneSafe[A]: AsKeyword[Option[A], NoneSafe[A], A] = NoneSafe(_)
+  extension [FA, A](inline fa: FA)(using
+      inline notKeyword: util.NotGiven[
+        FA <:< Dsl.Keyword
+      ],
+      inline asFA: FA <:< Option[A]
+  )
+    transparent inline def unary_! : A =
+      Dsl.shift(NoneSafe(asFA(fa))): A
 
 }
