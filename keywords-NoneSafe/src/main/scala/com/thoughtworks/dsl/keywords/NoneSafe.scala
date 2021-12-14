@@ -3,7 +3,7 @@ package keywords
 import com.thoughtworks.dsl.Dsl.AsKeyword
 import scala.language.implicitConversions
 
-final case class NoneSafe[A](option: Option[A]) extends AnyVal
+final case class NoneSafe[A](option: Option[A]) extends AnyVal with Dsl.Keyword.Trait
 
 object NoneSafe {
   given [A]: AsKeyword.IsKeyword[NoneSafe[A], A] with {}
@@ -22,6 +22,13 @@ object NoneSafe {
       }
     }
 
-  given implicitNoneSafe[A]: AsKeyword[Option[A], NoneSafe[A], A] = NoneSafe(_)
+  extension [FA, A](inline fa: FA)(using
+      inline notKeyword: util.NotGiven[
+        FA <:< Dsl.Keyword
+      ],
+      inline asFA: FA <:< Option[A]
+  )
+    transparent inline def unary_! : A =
+      Dsl.shift(NoneSafe(asFA(fa))): A
 
 }

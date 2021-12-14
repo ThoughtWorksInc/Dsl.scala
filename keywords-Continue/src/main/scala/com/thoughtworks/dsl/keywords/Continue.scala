@@ -1,4 +1,5 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
@@ -13,7 +14,7 @@ import scala.collection._
   *
   * @see The [[Continue$ Continue]] object, which is the only instance of this [[Continue]] class.
   */
-sealed class Continue
+sealed class Continue extends Dsl.Keyword.Trait
 
 /** A keyword to skip the current iteration in a collection comprehension block.
   *

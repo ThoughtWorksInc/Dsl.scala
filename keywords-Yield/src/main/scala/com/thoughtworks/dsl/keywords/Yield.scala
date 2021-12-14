@@ -39,7 +39,7 @@ import scala.language.higherKinds
   *          }}}
   * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
   */
-opaque type Yield[Element] = Element
+opaque type Yield[Element] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Element]
 
 private[keywords] trait LowPriorityYield3 {
 
@@ -90,17 +90,25 @@ private[keywords] trait LowPriorityYield0 extends LowPriorityYield1
 object Yield extends LowPriorityYield0 {
 
   given [Element]: AsKeyword.IsKeyword[Yield[Element], Unit] with {}
-  def apply[Element]: Element =:= Yield[Element] = summon
+  def apply[Element]: Element =:= Yield[Element] = Dsl.Keyword.Opaque.Of.apply
   def apply[A](element0: A, element1: A, elements: A*) = {
     From(element0 +: element1 +: elements)
   }
 
-  opaque type From[FromCollection <: TraversableOnce[_]] = FromCollection
+  opaque type From[FromCollection <: TraversableOnce[_]] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[FromCollection]
   object From {
     given [FromCollection <: TraversableOnce[_]]: AsKeyword.IsKeyword[From[FromCollection], Unit] with {}
 
-    def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = summon
+    def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = Dsl.Keyword.Opaque.Of.apply
 
+    extension [A, E](inline a: A)(using
+        inline notKeyword: util.NotGiven[
+          A <:< Dsl.Keyword
+        ],
+        inline isIterable: A <:< Iterable[E]
+    )
+      transparent inline def unary_! : Unit =
+        !From[Iterable[E]](isIterable(a))
   }
 
 
@@ -180,7 +188,6 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  given implicitYieldFrom[FromCollection <: TraversableOnce[_]]: AsKeyword.IsKeywordSubtype[FromCollection, From[FromCollection], Unit] with {}
 
   implicit def streamYieldFromDsl[A, FromCollection <: Iterable[A]]: Dsl[From[FromCollection], Stream[A], Unit] =
     new Dsl[From[FromCollection], Stream[A], Unit] {
@@ -189,7 +196,16 @@ object Yield extends LowPriorityYield0 {
       }
     }
 
-  given implicitYield[Element]: AsKeyword.IsKeywordSubtype[Element, Yield[Element], Unit] with {}
+
+  extension [A](inline a: A)(using
+      inline notKeyword: util.NotGiven[
+        A <:< Dsl.Keyword
+      ]
+  )
+    transparent inline def unary_! : Unit =
+      !Yield[A](a)
+
+  given implicitYield[Element]: AsKeyword[Element, Yield[Element], Unit] = Yield(_)
 
   implicit def streamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
     new Dsl[Yield[Element], Stream[That], Unit] {

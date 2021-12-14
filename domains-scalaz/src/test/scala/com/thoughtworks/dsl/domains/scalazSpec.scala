@@ -9,11 +9,12 @@ import _root_.scalaz.std.either._
 import _root_.scalaz.std.stream._
 import com.thoughtworks.dsl.domains.scalaz.{_, given}
 import com.thoughtworks.dsl.keywords.{Monadic, Shift, Yield}
-import com.thoughtworks.dsl.keywords.Monadic.implicitMonadic
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import com.thoughtworks.dsl.keywords.Monadic.unary_!
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 class scalazSpec extends AnyFreeSpec with Matchers {
 
@@ -33,12 +34,13 @@ class scalazSpec extends AnyFreeSpec with Matchers {
 
   "Given a continuation that uses Yield and Monadic expressions" - {
 
-    def asyncFunction: Stream[String] !! Unit = *[[X] =>> Stream[String] !! X] {
-      !Yield("Entering asyncFunction")
-      val subThreadId = !Stream(0, 1)
-      !Yield(s"Fork sub-thread $subThreadId")
-      !Yield("Leaving asyncFunction")
-    }
+    def asyncFunction: Stream[String] !! Unit =
+      *[[X] =>> Stream[String] !! X] {
+        !Yield("Entering asyncFunction")
+        val subThreadId = !Stream(0, 1)
+        !Yield(s"Fork sub-thread $subThreadId")
+        !Yield("Leaving asyncFunction")
+      }
 
     "When create a generator that contains Yield, Shift, and Monadic expressions" - {
 
@@ -86,7 +88,9 @@ class scalazSpec extends AnyFreeSpec with Matchers {
       val threadId = !Stream(0, 1, 2)
       val subThreadId = !OptionT(Stream(Some(10), None, Some(30)))
       val subSubThreadId = !OptionT(Stream(Some(100), Some(200), None))
-      OptionT[Stream, String](Stream(Some(s"Fork thread $threadId-$subThreadId-$subSubThreadId")))
+      OptionT[Stream, String](
+        Stream(Some(s"Fork thread $threadId-$subThreadId-$subSubThreadId"))
+      )
     }
 
     "Then it should skips those elements that contains a None" in {

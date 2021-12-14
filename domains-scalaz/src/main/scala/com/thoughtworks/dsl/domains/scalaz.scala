@@ -25,9 +25,9 @@ import scala.util.control.NonFatal
   *          import _root_.scalaz.Trampoline
   *          import _root_.scalaz.Free.Trampoline
   *          import com.thoughtworks.dsl.keywords.Monadic
-  *          import com.thoughtworks.dsl.keywords.Monadic.implicitMonadic
   *          import com.thoughtworks.dsl.domains.scalaz.given
-  *          import com.thoughtworks.dsl.bangnotation._
+  *          import com.thoughtworks.dsl.bangnotation.reset
+  *          import com.thoughtworks.dsl.keywords.Monadic.unary_!
   *
   *          val trampoline3 = Trampoline.done(3)
   *

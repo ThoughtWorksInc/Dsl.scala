@@ -3,7 +3,7 @@ package keywords
 
 import Dsl.AsKeyword
 
-opaque type Pure[+Value] = Value
+opaque type Pure[+Value] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Value]
 object Pure {
   given [Domain, Value](using
       shiftDsl: Dsl.PolyCont[Shift[Domain, Value], Domain, Value]
@@ -12,5 +12,5 @@ object Pure {
   }
 
   given [PureValue]: AsKeyword.IsKeyword[Pure[PureValue], PureValue] with {}
-  @inline def apply[Value]: Value =:= Pure[Value] = summon[Value =:= Pure[Value]]
+  @inline def apply[Value]: Value =:= Pure[Value] = Dsl.Keyword.Opaque.Of.apply
 }

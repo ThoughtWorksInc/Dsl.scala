@@ -137,8 +137,7 @@ object bangnotation {
         helper
       }
 
-      
-    val List(shiftSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.bangnotation$").declaredMethod("shift")
+    val List(shiftSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.Dsl$").declaredMethod("shift")
 
     sealed trait KeywordTree {
       def keywordTerm: Term
@@ -165,14 +164,14 @@ object bangnotation {
           case
             Apply(
               TypeApply(
-                ident: Ident,
+                shiftMethod,
                 List(_, valueTypeTree)
               ),
               List(
                 from
               )
             )
-          if shiftSymbol == ident.symbol =>
+          if shiftMethod.symbol == shiftSymbol =>
             KeywordTree(from).flatMap { pureFrom =>
               Keyword(pureFrom, valueTypeTree.tpe)
             }
@@ -297,10 +296,6 @@ object bangnotation {
               KeywordTree(rhs).flatMap { pureRhs =>
                 Pure(Assign.copy(assign)(pureLhs, pureRhs), term.tpe)
               }
-            }
-          case Inlined(Some(typeTree: TypeTree), _, term) =>
-            KeywordTree(term).flatMap { pureExpr =>
-              Pure(qctx.reflect.Typed(pureExpr, typeTree), typeTree.tpe)
             }
           case Inlined(_, _, term) =>
             KeywordTree(term)
@@ -709,8 +704,21 @@ object bangnotation {
   def shift[Keyword, Value](keyword: Keyword): Value = ???
 
   extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
-    transparent inline def unary_! : Value = {
-      shift[Keyword, Value](asKeyword(from))
-    }
 
+    inline def map[MappedValue](
+        mapper: Value => MappedValue
+    ): FlatMap[Keyword, Value, Pure[MappedValue]] =
+      FlatMap(asKeyword(from), Pure.apply.liftCo(mapper))
+
+    inline def flatMap[Mapped, MappedValue](
+        flatMapper: Value => Mapped
+    )(
+        using /*erased*/ Dsl.AsKeyword.IsKeyword[Mapped, MappedValue]
+    ): FlatMap[Keyword, Value, Mapped] =
+      FlatMap(asKeyword(from), flatMapper)
+
+    inline def withFilter[Mapped, MappedValue](
+        filter: Value => Boolean
+    ) =
+      WithFilter(asKeyword(from), filter)
 }        

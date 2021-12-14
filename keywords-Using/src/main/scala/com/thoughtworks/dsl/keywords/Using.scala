@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 
-import com.thoughtworks.dsl.bangnotation.{`*`, reify, reset, unary_!}
+import com.thoughtworks.dsl.bangnotation._
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.Dsl.AsKeyword
@@ -21,12 +21,18 @@ import scala.util.control.NonFatal
   * @see
   *   [[dsl]] for usage of this [[Using]] keyword in continuations
   */
-opaque type Using[R <: AutoCloseable] = R
+opaque type Using[R] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R]
 
 object Using {
-  given [R <: AutoCloseable]: AsKeyword.IsKeyword[Using[R], R] with {}
+  given [R]: AsKeyword.IsKeyword[Using[R], R] with {}
 
-  given implicitUsing[R <: AutoCloseable]: AsKeyword[R, Using[R], R] = Using(_)
+  extension [R](inline r: R)(using
+      inline notKeyword: util.NotGiven[
+        R <:< Dsl.Keyword
+      ]
+  )
+    transparent inline def unary_! : R =
+      !Using[R](r)
 
   trait ScopeExitHandler extends AutoCloseable
 
@@ -47,6 +53,7 @@ object Using {
     * {{{
     *           import scala.concurrent.Future
     *           import com.thoughtworks.dsl.keywords.Using.scopeExit
+    *           import com.thoughtworks.dsl.keywords.Using.unary_!
     *           import com.thoughtworks.dsl.bangnotation._
     *           var n = 1
     *           def multiplicationAfterAddition = *[Future] {
@@ -65,13 +72,13 @@ object Using {
     *           }
     * }}}
     */
-  def scopeExit(r: ScopeExitHandler) = r
+  def scopeExit(r: ScopeExitHandler): Using[ScopeExitHandler] = Using(r)
 
-  def apply[R <: AutoCloseable]: R =:= Using[R] = summon
+  def apply[R]: R =:= Using[R] = Dsl.Keyword.Opaque.Of.apply
 
   given [
       R <: AutoCloseable,
-      Mapped,
+      Mapped <: Dsl.Keyword.Opaque | Dsl.Keyword.Trait,
       MappedValue,
       OuterDomain,
       BlockDomain,

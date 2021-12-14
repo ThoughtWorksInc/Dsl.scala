@@ -1,9 +1,10 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 
 import java.io.{PrintStream, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.thoughtworks.dsl.bangnotation.{`*`, reify, unary_!}
+import com.thoughtworks.dsl.bangnotation.{`*`, reify}
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
@@ -13,7 +14,7 @@ import scala.collection.mutable.Builder
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
-final case class Fork[Element](elements: Traversable[Element]) extends AnyVal 
+final case class Fork[Element](elements: Traversable[Element]) extends AnyVal with Dsl.Keyword.Trait
 
 object Fork {
   given [Element]: AsKeyword.IsKeyword[Fork[Element], Element] with {}
@@ -31,7 +32,14 @@ object Fork {
     factory.newBuilder
   }
 
-  given implicitFork[Element]: AsKeyword[Traversable[Element], Fork[Element], Element] = Fork(_)
+  extension [FA, A](inline fa: FA)(using
+      inline notKeyword: util.NotGiven[
+        FA <:< Dsl.Keyword
+      ],
+      inline asFA: FA <:< Traversable[A]
+  )
+    transparent inline def unary_! : A =
+      Dsl.shift(Fork(asFA(fa))): A
 
   final case class MultipleException(throwableSet: Set[Throwable])
       extends RuntimeException("Multiple exceptions found") {

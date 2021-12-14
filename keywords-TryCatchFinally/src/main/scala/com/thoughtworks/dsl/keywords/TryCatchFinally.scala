@@ -8,7 +8,7 @@ case class TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword](
     block: BlockKeyword,
     cases: Catcher[CaseKeyword],
     finalizer: FinalizerKeyword
-)
+) extends Dsl.Keyword.Trait
 object TryCatchFinally {
 
   given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword, FinalizerKeyword, FinalizerDomain](

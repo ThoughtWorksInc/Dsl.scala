@@ -1,10 +1,11 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 import com.thoughtworks.dsl.Dsl
 
 final case class WithFilter[UpstreamKeyword, UpstreamValue](
     upstream: UpstreamKeyword,
     condition: UpstreamValue => Boolean
-)
+) extends Dsl.Keyword.Trait
 
 object WithFilter {
   given [UpstreamKeyword, UpstreamValue]: Dsl.AsKeyword.IsKeyword[WithFilter[

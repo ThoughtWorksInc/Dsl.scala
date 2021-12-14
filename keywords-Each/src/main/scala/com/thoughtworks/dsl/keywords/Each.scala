@@ -1,6 +1,7 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 
-import com.thoughtworks.dsl.bangnotation.{reset, unary_!}
+import com.thoughtworks.dsl.bangnotation.reset
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
@@ -21,7 +22,7 @@ import scala.collection.mutable.Builder
   *          }}}
   * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
   */
-final case class Each[Element](elements: Traversable[Element])
+final case class Each[Element](elements: Traversable[Element]) extends Dsl.Keyword.Trait
 object Each {
   given [Element]: AsKeyword.IsKeyword[Each[Element], Element] with {}
 
@@ -38,7 +39,14 @@ object Each {
     factory.newBuilder
   }
 
-  given implicitEach[Element]: AsKeyword[Traversable[Element], Each[Element], Element] = Each(_)
+  extension [FA, A](inline fa: FA)(using
+      inline notKeyword: util.NotGiven[
+        FA <:< Dsl.Keyword
+      ],
+      inline asFA: FA <:< Traversable[A]
+  )
+    transparent inline def unary_! : A =
+      Dsl.shift(Each(asFA(fa))): A
 
   implicit def eachDsl[Element, Domain, DomainElement](implicit
       thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),

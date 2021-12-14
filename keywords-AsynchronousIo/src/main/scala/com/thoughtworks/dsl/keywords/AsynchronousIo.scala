@@ -16,7 +16,6 @@ import scala.util.control.NonFatal
   *          {{{
   *          import java.nio._, file._, channels._
   *          import com.thoughtworks.dsl.bangnotation._
-  *          import com.thoughtworks.dsl.comprehension._
   *          import com.thoughtworks.dsl.domains.Task
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
@@ -81,7 +80,7 @@ import scala.util.control.NonFatal
   *          })
   *          }}}
   */
-trait AsynchronousIo[Value] extends Any {
+trait AsynchronousIo[Value] extends Any with Dsl.Keyword.Trait {
 
   /** Starts the asynchronous operations */
   protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Value, _ >: Attachment]): Unit

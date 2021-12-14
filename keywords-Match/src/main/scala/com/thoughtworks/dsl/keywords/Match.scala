@@ -5,7 +5,7 @@ import Dsl.AsKeyword
 type Match[Keyword, Value, CaseSet] = keywords.FlatMap[Keyword, Value, CaseSet]
 object Match {
   export FlatMap.apply
-  case class WithIndex[Index <: Int, Keyword](index: Index, keyword: Keyword)
+  case class WithIndex[Index <: Int, Keyword](index: Index, keyword: Keyword) extends Dsl.Keyword.Trait
 
   opaque type +:[A, B] = A | B
 

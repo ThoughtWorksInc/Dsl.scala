@@ -1,4 +1,5 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.AsKeyword
 
@@ -7,7 +8,7 @@ import com.thoughtworks.dsl.Dsl.AsKeyword
   * @author
   *   杨博 (Yang Bo)
   */
-final case class Get[S]()
+final case class Get[S]() extends Dsl.Keyword.Trait
 
 object Get {
   given [S]: AsKeyword.IsKeyword[Get[S], S] with {}

@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package keywords
 
 /** A type annotated keyword */
-opaque type Typed[Keyword, Value] = Keyword
+opaque type Typed[Keyword, Value] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Keyword]
 
 object Typed {
   given [Keyword, Value]
@@ -12,6 +12,6 @@ object Typed {
   ): Dsl.PolyCont[Typed[Keyword, Value], Domain, Value] =
     dsl
 
-  @inline def apply[Keyword, Value]: Keyword =:= Typed[Keyword, Value] = summon
+  @inline def apply[Keyword, Value]: Keyword =:= Typed[Keyword, Value] = Dsl.Keyword.Opaque.Of.apply
 
 }
