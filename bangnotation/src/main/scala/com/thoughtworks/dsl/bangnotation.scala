@@ -61,8 +61,7 @@ object bangnotation {
     def reify[V](body: quoted.Expr[_])(using valueType: quoted.Type[V]): quoted.Expr[_] = {
       val bodyTerm = body.asTerm.underlyingArgument
       val reifiedTerm = KeywordTree(bodyTerm).keywordTerm
-      reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) =>
-        given quoted.Type[K] = tk
+      reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) ?=>
         '{keywords.Typed[K, V]($k)}: quoted.Expr[_]
       }
     }
@@ -95,8 +94,8 @@ object bangnotation {
     }
 
     def resetTerm(term: Term): Term = {
-      term.usingExpr { [Value] => (body: quoted.Expr[Value]) => (tv: quoted.Type[Value]) =>
-        given quoted.Type[Value] = tv
+      term.usingExpr { [Value] => (body: quoted.Expr[Value]) => (tv: quoted.Type[Value]) ?=>
+        // given quoted.Type[Value] = tv
         reset[Value, Value](body).asTerm
       }
     }
@@ -107,9 +106,8 @@ object bangnotation {
           pure.asExprOf[Domain]
         case keywordTree =>
           val reifiedTerm = keywordTree.keywordTerm
-          reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => ( keywordType: quoted.Type[K]) =>
+          reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => ( keywordType: quoted.Type[K]) ?=>
             {
-              given quoted.Type[K] = keywordType
 
               Implicits.search(TypeRepr.of[Dsl.Run[K, Domain, Value]]) match {
                 case success: ImplicitSearchSuccess =>
@@ -131,10 +129,10 @@ object bangnotation {
       }
 
     extension (term: Term)
-      def usingExpr[B, UpperBound](f: [A <: UpperBound] => quoted.Expr[A] => (ta: quoted.Type[A]) => B): B = {
+      def usingExpr[B, UpperBound](f: [A <: UpperBound] => quoted.Expr[A] => (ta: quoted.Type[A]) ?=> B): B = {
         def helper[A <: UpperBound] = {
           implicit val tpe: quoted.Type[A] = term.tpe.asType.asInstanceOf[quoted.Type[A]]
-          f[A](term.asExprOf[A])(/*given*/ tpe)
+          f[A](term.asExprOf[A])(using tpe)
         }
         helper
       }
@@ -149,13 +147,10 @@ object bangnotation {
       def where(blockTemplate: qctx.reflect.Block, statement: Statement): KeywordTree = Let(blockTemplate, statement, this)
       def block: KeywordTree = Block(this)
       def usingKeyword[B, Bound](f: [K, V <: Bound] => quoted.Expr[K] => (tk: quoted.Type[K], tv: quoted.Type[V]) => B): B = {
-        keywordTerm.usingExpr[B, Any]{ [K] => (keyword: quoted.Expr[K]) => ( keywordType: quoted.Type[K]) =>
-          {
-            given quoted.Type[K] = keywordType
-            valueType.usingType[B, Bound]{ [V <: Bound] => (valueType: quoted.Type[V]) =>
-              given quoted.Type[V] = valueType
-              f(keyword)(/*given*/ keywordType, valueType)
-            }
+        keywordTerm.usingExpr[B, Any]{ [K] => (keyword: quoted.Expr[K]) => (keywordType: quoted.Type[K]) ?=>
+          valueType.usingType[B, Bound]{ [V <: Bound] => (valueType: quoted.Type[V]) =>
+            given quoted.Type[V] = valueType
+            f(keyword)(/*given*/ keywordType, valueType)
           }
         }
       }
@@ -379,8 +374,7 @@ object bangnotation {
                     (bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
                       given quoted.Type[BodyKeyword] = bodyKeywordTpe
                       given quoted.Type[BodyValue] = bodyValueTpe
-                      quoted.Expr(i).asTerm.usingExpr[CaseDef, Int] { [Index <: Int] => (indexExpr: quoted.Expr[Index]) => (indexType: quoted.Type[Index]) =>
-                        given quoted.Type[Index] = indexType
+                      quoted.Expr(i).asTerm.usingExpr[CaseDef, Int] { [Index <: Int] => (indexExpr: quoted.Expr[Index]) => (indexType: quoted.Type[Index]) ?=>
                         CaseDef.copy(caseDef)(
                           caseDef.pattern,
                           caseDef.guard,
@@ -580,8 +574,7 @@ object bangnotation {
       lazy val keywordTerm = {
         returnValueType.usingType { [A0] => (tpe0: quoted.Type[A0]) =>
           given quoted.Type[A0] = tpe0
-          returnValue.usingExpr[Term, A0] { [A <: A0] => (expr: quoted.Expr[A]) => (tpe: quoted.Type[A]) =>
-            given quoted.Type[A] = tpe
+          returnValue.usingExpr[Term, A0] { [A <: A0] => (expr: quoted.Expr[A]) => (tpe: quoted.Type[A]) ?=>
             '{
               com.thoughtworks.dsl.keywords.Return[A0]($expr)
             }.asTerm
