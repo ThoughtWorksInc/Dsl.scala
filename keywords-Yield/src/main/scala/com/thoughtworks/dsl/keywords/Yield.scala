@@ -1,10 +1,10 @@
 package com.thoughtworks.dsl
 package keywords
+import Dsl.!!
 import Dsl.AsKeyword
 import scala.collection._
 import scala.language.implicitConversions
 
-import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.keywords.Yield.From
 
 import scala.collection._
@@ -213,5 +213,18 @@ object Yield extends LowPriorityYield0 {
         keyword #:: generateTail(())
       }
     }
+
+  // TODO: Shift Dsl for stack safety
+  given [
+      Element,
+      LeftDomain,
+      RightDomain >: CC[Element] <: collection.SeqOps[Element, CC, _],
+      CC[_]
+  ]: Dsl[Yield[Element], LeftDomain !! RightDomain, Unit] = {
+    (keyword: Yield[Element], generateTail) => handler =>
+      generateTail(()) { tail =>
+        handler(keyword +: tail)
+      }
+  }
 
 }
