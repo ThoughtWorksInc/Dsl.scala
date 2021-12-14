@@ -15,14 +15,13 @@ import scala.util.control.NonFatal
   *
   *          {{{
   *          import java.nio._, file._, channels._
-  *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl.domains.Task
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.keywords.AsynchronousIo.ReadFile
   *          import scala.collection.mutable.ArrayBuffer
   *          import scala.io.Codec
-  *          def readAll(channel: AsynchronousFileChannel, temporaryBufferSize: Int = 4096): Task[ArrayBuffer[CharBuffer]] = *[Task] {
+  *          def readAll(channel: AsynchronousFileChannel, temporaryBufferSize: Int = 4096): Task[ArrayBuffer[CharBuffer]] = Task {
   *            val charBuffers = ArrayBuffer.empty[CharBuffer]
   *            val decoder = Codec.UTF8.decoder
   *            val byteBuffer = ByteBuffer.allocate(temporaryBufferSize)
@@ -48,21 +47,19 @@ import scala.util.control.NonFatal
   *
   *          {{{
   *          import com.thoughtworks.dsl._
-  *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl.keywords._
-  *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.domains.Task
-  *          import com.thoughtworks.dsl.Dsl.as
+  *          import com.thoughtworks.dsl.Dsl.to
   *          import java.net.URL
-  *          def cat(paths: Path*) = {
+  *          def cat(paths: Path*) = ToView {
   *            for {
   *              path <- Each(paths)
   *              channel <- Using(AsynchronousFileChannel.open(path))
   *              charBuffers <- Shift(readAll(channel))
   *              charBuffer <- Each(charBuffers)
   *              char <- Each(charBuffer.toString)
-  *            } yield Vector(char)
-  *          }.as[Task[Vector[Char]]]
+  *            } yield char
+  *          }.to[Task]
   *          }}}
   *
   *          Then the `cat` function is used to concatenate files from this project, as shown below:
