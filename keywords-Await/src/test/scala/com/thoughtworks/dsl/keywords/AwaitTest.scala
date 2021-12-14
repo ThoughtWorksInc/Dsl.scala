@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 
-import bangnotation.{`*`, reify}
+import reset.{`*`, reify}
 import Dsl.!!
 import Dsl.Run
 import Dsl.AsKeyword

@@ -15,7 +15,7 @@ import scala.util.control.Exception.Catcher
   * import scala.util.Random
   * import scala.util.control.TailCalls
   * import scala.util.control.TailCalls.TailRec
-  * import com.thoughtworks.dsl.bangnotation.reset
+  * import com.thoughtworks.dsl.reset
   * def randomInt(): TailRec[Int] = reset {
   *   while (true) {
   *     val r = Random.nextInt(100)
@@ -53,7 +53,7 @@ import scala.util.control.Exception.Catcher
   * r % 10 should not be r / 10
   * }}}
   */
-object bangnotation {
+object reset {
 
   private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
     import qctx.reflect.{_, given}
@@ -689,14 +689,14 @@ object bangnotation {
     Macros.reify[Value]('value)
   }
 
-  class *[Functor[_]] {
+  class *[Functor[_]]() {
     inline def apply[Value](inline value: Value): Functor[Value] = ${
       Macros.reset[Value, Functor[Value]]('value)
     }
   }
   inline def *[Domain[_]]: *[Domain] = new *[Domain]
 
-  inline def reset[Value](inline value: Value): Value = ${
+  inline def apply[Value](inline value: Value): Value = ${
     Macros.reset[Value, Value]('value)
   }
 

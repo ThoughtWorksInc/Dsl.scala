@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl.keywords
 
-import com.thoughtworks.dsl.bangnotation._
+import com.thoughtworks.dsl.reset, reset._
 import com.thoughtworks.dsl.Dsl.!!
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
