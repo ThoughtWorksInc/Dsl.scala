@@ -24,7 +24,6 @@ import scala.util.control.TailCalls.TailRec
   *          For example, the above `concatenateRemoteData` downloads and concatenates data from multiple URLs.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.Dsl._
   *          import com.thoughtworks.dsl.bangnotation._
   *          import com.thoughtworks.dsl._
   *          import com.thoughtworks.dsl.keywords._

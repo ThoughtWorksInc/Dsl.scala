@@ -1,7 +1,9 @@
 package com.thoughtworks.dsl
 
 import bangnotation._
-import Dsl._
+import Dsl.!!
+import Dsl.Run
+import Dsl.AsKeyword
 import keywords._, Match._
 import concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
@@ -91,17 +93,16 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   }
 
   "testComprehension2" in {
+    import Dsl._
     val inner2 = for {
       j <- In(0 until 10)
     } yield 111
     summon[
       inner2.type
         <:<
-          FlatMap[
-            In[Int],
-            Int,
-            Pure[Int]
-          ]
+          Dsl.Comprehension.Container.Map[
+            In[Int]
+          , Int, Int]
     ]
     val ast2 = Await(Future(1)).flatMap { i =>
       inner2
@@ -109,20 +110,19 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       ast2.type
         <:<
-          FlatMap[
-            Await[Int],
-            Int,
-            FlatMap[
-              In[Int],
-              Int,
-              Pure[Int]
-            ]
-          ]
+           com.thoughtworks.dsl.Dsl.Comprehension.Container.FlatMap[
+            com.thoughtworks.dsl.keywords.Await[Int]
+          , Int, 
+            com.thoughtworks.dsl.Dsl.Comprehension.Container.Map[
+              com.thoughtworks.dsl.keywords.In[Int]
+            , Int, Int]
+          , Int]
     ]
     succeed
   }
 
   "testComprehension3" in {
+    import Dsl._
     val ast3 = for {
       i <- Await(Future(1))
       j <- In(0 until 10)
@@ -130,15 +130,13 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       ast3.type
         <:<
-          FlatMap[
-            Await[Int],
-            Int,
-            FlatMap[
-              In[Int],
-              Int,
-              Pure[Int]
-            ]
-          ]
+         com.thoughtworks.dsl.Dsl.Comprehension.Container.FlatMap[
+          com.thoughtworks.dsl.keywords.Await[Int]
+        , Int, 
+          com.thoughtworks.dsl.Dsl.Comprehension.Container.Map[
+            com.thoughtworks.dsl.keywords.In[Int]
+          , Int, Int]
+        , Int]
     ]
     succeed
   }

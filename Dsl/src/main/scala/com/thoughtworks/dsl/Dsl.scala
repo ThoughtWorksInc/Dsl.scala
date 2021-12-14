@@ -55,6 +55,15 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
     transparent inline def unary_! : Value = {
       Dsl.shift[Keyword, Value](asKeyword(from))
     }
+
+  extension [KeywordOrView, Element](keywordOrView: KeywordOrView)(using hasValueOrElement: Dsl.HasValueOrElement[KeywordOrView, Element])
+    def flatMap[Mapped <: Comprehension.Container[MappedElement], MappedElement](flatMapper: Element => Mapped) = Comprehension.Container.FlatMap(keywordOrView, flatMapper)
+    def map[Mapped](mapper: Element => Mapped) = Comprehension.Container.Map(keywordOrView, mapper)
+    def foreach[Nested <: Comprehension.DiscardValue](action: Element => Nested) = Comprehension.DiscardValue.FlatForeach(keywordOrView, action)
+    def foreach(action: Element => Unit) = Comprehension.DiscardValue.Foreach(keywordOrView, action)
+    def withFilter(filter: Element => Boolean) = Comprehension.Container.WithFilter(keywordOrView, filter)
+    // TODO: Implement `foreach` and `map` in macros to support !-notation in `do` block or `yield` block
+
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
 //      implicit restDsl: Dsl[Keyword, LeftDomain, Value],
@@ -96,6 +105,34 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 }
 
 object Dsl extends LowPriorityDsl0 {
+
+  sealed trait HasValueOrElement[KeywordOrView, ValueOrElement]
+  object HasValueOrElement {
+    given [KeywordOrView <: Comprehension.Container[Element], Element]: Comprehension.Container[Element] with {}
+  }
+
+  /** The reified for-comprehension expression.
+    *
+    * Note that a [[Comprehension]] does not directly support !-notation.
+    * Instead, [[keywords.As]] is used to convert a [[Comprehension]] to a
+    * [[Keyword]] that supports !-notation.
+    */
+  sealed trait Comprehension
+  object Comprehension {
+    sealed trait DiscardValue extends Comprehension
+    object DiscardValue {
+      final case class KeywordForeach[Upstream, UpstreamElement, UnitKeyword](upstream: Upstream, action: UpstreamElement => UnitKeyword) extends DiscardValue
+      final case class Foreach[Upstream, UpstreamElement](upstream: Upstream, action: UpstreamElement => Unit) extends DiscardValue
+      final case class FlatForeach[Upstream, UpstreamElement, Nested <: DiscardValue](upstream: Upstream, action: UpstreamElement => Nested) extends DiscardValue
+    }
+    sealed trait Container[Element] extends Comprehension
+    object Container {
+      final case class KeywordMap[Upstream, UpstreamElement, ElementKeyword, Element](upstream: Upstream, mapper: UpstreamElement => ElementKeyword) extends Container[Element]
+      final case class Map[Upstream, UpstreamElement, Element](upstream: Upstream, mapper: UpstreamElement => Element) extends Container[Element]
+      final case class FlatMap[Upstream, UpstreamElement, Mapped <: Container[Element], Element](upstream: Upstream, flatMapper: UpstreamElement => Mapped) extends Container[Element]
+      final case class WithFilter[Upstream, Element](upstream: Upstream, filter: Element => Boolean) extends Container[Element]
+    }
+  }
 
   implicit def derivedTailRecDsl[Keyword, TailRecDomain, Domain, Value](implicit
       isTailRecDomain: TailRecDomain =:= TailRec[Domain],
@@ -511,7 +548,7 @@ object Dsl extends LowPriorityDsl0 {
     trait IsKeywordSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
       def apply(from: From): Keyword = from
     }
-    trait IsKeyword[Keyword, Value] extends IsKeywordSubtype[Keyword, Keyword, Value]
+    trait IsKeyword[Keyword, Value] extends IsKeywordSubtype[Keyword, Keyword, Value] with HasValueOrElement[Keyword, Value]
 
     /** An [[AsKeyword]] type class that enables a special implicit resolution order - search for [[IsKeyword]]
       * instances first then other [[AsKeyword]] instances
