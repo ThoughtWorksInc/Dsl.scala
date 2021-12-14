@@ -194,7 +194,8 @@ lazy val `keywords-Await` =
       `keywords-In` % Test,
       `keywords-Get` % Test,
       `keywords-Return` % Test,
-      `keywords-Yield` % Test
+      `keywords-Yield` % Test,
+      `keywords-ToView` % Test
     )
 
 lazy val `scala-async` =

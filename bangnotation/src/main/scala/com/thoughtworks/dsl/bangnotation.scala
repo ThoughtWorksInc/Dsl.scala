@@ -703,22 +703,4 @@ object bangnotation {
   @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
   def shift[Keyword, Value](keyword: Keyword): Value = ???
 
-  extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
-
-    inline def map[MappedValue](
-        mapper: Value => MappedValue
-    ): FlatMap[Keyword, Value, Pure[MappedValue]] =
-      FlatMap(asKeyword(from), Pure.apply.liftCo(mapper))
-
-    inline def flatMap[Mapped, MappedValue](
-        flatMapper: Value => Mapped
-    )(
-        using /*erased*/ Dsl.AsKeyword.IsKeyword[Mapped, MappedValue]
-    ): FlatMap[Keyword, Value, Mapped] =
-      FlatMap(asKeyword(from), flatMapper)
-
-    inline def withFilter[Mapped, MappedValue](
-        filter: Value => Boolean
-    ) =
-      WithFilter(asKeyword(from), filter)
 }        
