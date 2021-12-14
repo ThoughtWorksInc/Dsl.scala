@@ -15,7 +15,7 @@ import scala.util.control.Exception.Catcher
   * import scala.util.Random
   * import scala.util.control.TailCalls
   * import scala.util.control.TailCalls.TailRec
-  * import com.thoughtworks.dsl.bangnotation.reset
+  * import com.thoughtworks.dsl.reset
   * def randomInt(): TailRec[Int] = reset {
   *   while (true) {
   *     val r = Random.nextInt(100)
@@ -53,7 +53,7 @@ import scala.util.control.Exception.Catcher
   * r % 10 should not be r / 10
   * }}}
   */
-object bangnotation {
+object reset {
 
   private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
     import qctx.reflect.{_, given}
@@ -689,36 +689,18 @@ object bangnotation {
     Macros.reify[Value]('value)
   }
 
-  class *[Functor[_]] {
+  class *[Functor[_]]() {
     inline def apply[Value](inline value: Value): Functor[Value] = ${
       Macros.reset[Value, Functor[Value]]('value)
     }
   }
   inline def *[Domain[_]]: *[Domain] = new *[Domain]
 
-  inline def reset[Value](inline value: Value): Value = ${
+  inline def apply[Value](inline value: Value): Value = ${
     Macros.reset[Value, Value]('value)
   }
 
   @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
   def shift[Keyword, Value](keyword: Keyword): Value = ???
 
-  extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
-
-    inline def map[MappedValue](
-        mapper: Value => MappedValue
-    ): FlatMap[Keyword, Value, Pure[MappedValue]] =
-      FlatMap(asKeyword(from), Pure.apply.liftCo(mapper))
-
-    inline def flatMap[Mapped, MappedValue](
-        flatMapper: Value => Mapped
-    )(
-        using /*erased*/ Dsl.AsKeyword.IsKeyword[Mapped, MappedValue]
-    ): FlatMap[Keyword, Value, Mapped] =
-      FlatMap(asKeyword(from), flatMapper)
-
-    inline def withFilter[Mapped, MappedValue](
-        filter: Value => Boolean
-    ) =
-      WithFilter(asKeyword(from), filter)
 }        

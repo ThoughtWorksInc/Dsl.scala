@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl
 package domains
 
-import bangnotation._
 import scala.util._
 import scala.util.control.NonFatal
 

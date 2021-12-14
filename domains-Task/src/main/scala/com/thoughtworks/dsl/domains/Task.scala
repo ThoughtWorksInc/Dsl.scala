@@ -3,7 +3,7 @@ package domains
 
 import com.thoughtworks.dsl.domains.Continuation, Continuation.!!
 import com.thoughtworks.dsl.keywords.Shift
-import com.thoughtworks.dsl.bangnotation._
+import com.thoughtworks.dsl.reset, reset._
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -24,20 +24,18 @@ import scala.util.control.TailCalls.TailRec
   *          For example, the above `concatenateRemoteData` downloads and concatenates data from multiple URLs.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.Dsl._
-  *          import com.thoughtworks.dsl.bangnotation._
+  *          import com.thoughtworks.dsl.Dsl.to
   *          import com.thoughtworks.dsl._
   *          import com.thoughtworks.dsl.keywords._
-  *          import com.thoughtworks.dsl.keywords.Shift._
   *          import com.thoughtworks.dsl.domains.Task
   *          import java.net.URL
-  *          def concatenateRemoteData(urls: List[URL], downloader: URL => Task[Vector[Byte]]): Task[Vector[Byte]] = {
+  *          def concatenateRemoteData(urls: List[URL], downloader: URL => Task[Vector[Byte]]) = ToView {
   *            for {
   *              url <- Fork(urls)
   *              data <- Shift(downloader(url))
   *              byte <- Each(data)
-  *            } yield Vector(byte)
-  *          }.as[Task[Vector[Byte]]]
+  *            } yield byte
+  *          }.to[Task]
   *          }}}
   *
   *          A [[Task]] can be also created from [[Task.apply]]
@@ -57,8 +55,8 @@ import scala.util.control.TailCalls.TailRec
   *          val mockUrls = List(new URL("http://example.com/file1"), new URL("http://example.com/file2"))
   *
   *          import org.scalatest.Assertion
-  *          def assertion: Task[Assertion] = *[Task] {
-  *            !Shift(concatenateRemoteData(mockUrls, mockDownloader)) should be("mock data\nmock data\n".getBytes.toVector)
+  *          def assertion: Task[Assertion] = Task {
+  *            new String((!Shift(concatenateRemoteData(mockUrls, mockDownloader))).toArray) should be("mock data\nmock data\n")
   *          }
   *
   *          Task.toFuture(assertion)
@@ -87,7 +85,7 @@ object Task extends TaskPlatformSpecificFunctions {
     *
     * @example All the code after a `!switchExecutionContext` should be executed on `executionContext`
     *          {{{
-    *          import com.thoughtworks.dsl.bangnotation._
+    *          import com.thoughtworks.dsl.reset, reset._
     *          import com.thoughtworks.dsl.domains.Task
     *          import org.scalatest.Assertion
     *          import scala.concurrent.ExecutionContext

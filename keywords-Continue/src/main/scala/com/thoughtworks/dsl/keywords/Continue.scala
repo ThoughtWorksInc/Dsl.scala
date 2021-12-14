@@ -23,7 +23,7 @@ sealed class Continue extends Dsl.Keyword.Trait
   * @example [[Each]] and [[Continue$ Continue]] can be used to calculate composite numbers and prime numbers.
   *
   *          {{{
-  *          import com.thoughtworks.dsl.bangnotation._
+  *          import com.thoughtworks.dsl.reset, reset._
   *          def compositeNumbersBelow(maxNumber: Int) = *[collection.immutable.HashSet] {
   *            val factor = !Each(2 until math.ceil(math.sqrt(maxNumber)).toInt)
   *            !Each(2 * factor until maxNumber by factor)

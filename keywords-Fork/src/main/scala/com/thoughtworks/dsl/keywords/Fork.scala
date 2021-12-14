@@ -4,7 +4,7 @@ package keywords
 import java.io.{PrintStream, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.thoughtworks.dsl.bangnotation.{`*`, reify}
+import com.thoughtworks.dsl.reset.{`*`, reify}
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
 
