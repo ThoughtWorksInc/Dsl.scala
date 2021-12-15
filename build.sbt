@@ -46,17 +46,6 @@ lazy val `keywords-ToView` =
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, reset, `keywords-Shift`)
 
-lazy val `keywords-Fork` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(
-      Dsl,
-      reset,
-      `keywords-Shift`,
-      `keywords-ForEach`,
-      `keywords-In`
-    )
-
 lazy val `keywords-Pure` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
