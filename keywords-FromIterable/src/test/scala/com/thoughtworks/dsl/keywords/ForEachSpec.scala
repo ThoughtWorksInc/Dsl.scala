@@ -16,10 +16,10 @@ class ForEachSpec extends AnyFreeSpec with Matchers {
 
       def run(): Unit = reset[Unit] {
         val plus100 = Seq {
-          !ToView.FromIterable(seq) + 100
+          !FromIterable(seq) + 100
         }
         plus100.length should be(1)
-        !ToView.FromIterable(plus100)
+        !FromIterable(plus100)
       }
 
       run()
@@ -29,10 +29,10 @@ class ForEachSpec extends AnyFreeSpec with Matchers {
 
       def run(): Unit = reset[Unit] {
         def plus100 = reset apply Seq(
-          !ToView.FromIterable(seq) + 100
+          !FromIterable(seq) + 100
         )
         plus100.length should be(10)
-        !ToView.FromIterable(plus100)
+        !FromIterable(plus100)
       }
 
       run()

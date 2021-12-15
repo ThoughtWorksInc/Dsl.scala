@@ -40,7 +40,7 @@ import scala.util.control.NonFatal
   *          and other keywords can be used together in the same `for` block.
   *
   *          For example, the following `cat` function contains a single `for` block to concatenate file contents.
-  *          It asynchronously iterates elements `Seq`, `ArrayBuffer` and `String` with the help of [[keywords.ToView.FromIterable]],
+  *          It asynchronously iterates elements `Seq`, `ArrayBuffer` and `String` with the help of [[keywords.FromIterable]],
   *          managed native resources with the help of [[keywords.Using]],
   *          performs previously created `readAll` task with the help of [[keywords.Shift]],
   *          and finally converts the return type [[comprehension.ComprehensionOps.as as]] a `Task[Vector[Char]]`.
@@ -51,13 +51,13 @@ import scala.util.control.NonFatal
   *          import com.thoughtworks.dsl.domains.Task
   *          import com.thoughtworks.dsl.Dsl.to
   *          import java.net.URL
-  *          def cat(paths: Path*) = ToView {
+  *          def cat(paths: Path*) = FromIterable.ToView {
   *            for {
-  *              path <- ToView.FromIterable(paths)
+  *              path <- FromIterable(paths)
   *              channel <- Using(AsynchronousFileChannel.open(path))
   *              charBuffers <- Shift(readAll(channel))
-  *              charBuffer <- ToView.FromIterable(charBuffers)
-  *              char <- ToView.FromIterable(charBuffer.toString)
+  *              charBuffer <- FromIterable(charBuffers)
+  *              char <- FromIterable(charBuffer.toString)
   *            } yield char
   *          }.to[Task]
   *          }}}

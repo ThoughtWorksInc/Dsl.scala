@@ -21,7 +21,7 @@ import scala.util.control.TailCalls.TailRec
   *
   * @template
   * @example A [[Task]] can be created from `for`-comprehension,
-  *          where [[keywords.ToView.FromIterable]] can be used together to asynchronously iterate collections.
+  *          where [[keywords.FromIterable]] can be used together to asynchronously iterate collections.
   *
   *          For example, the above `concatenateRemoteData` downloads and concatenates data from multiple URLs.
   *
@@ -31,11 +31,11 @@ import scala.util.control.TailCalls.TailRec
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.domains.Task
   *          import java.net.URL
-  *          def concatenateRemoteData(urls: List[URL], downloader: URL => Task[Vector[Byte]]) = ToView {
+  *          def concatenateRemoteData(urls: List[URL], downloader: URL => Task[Vector[Byte]]) = FromIterable.ToView {
   *            for {
-  *              url <- ToView.FromIterable(urls)
+  *              url <- FromIterable(urls)
   *              data <- Shift(downloader(url))
-  *              byte <- ToView.FromIterable(data)
+  *              byte <- FromIterable(data)
   *            } yield byte
   *          }.to[Task]
   *          }}}
