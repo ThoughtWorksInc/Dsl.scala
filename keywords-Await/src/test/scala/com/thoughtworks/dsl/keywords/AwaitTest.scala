@@ -112,41 +112,41 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   }
 
   "test1" in {
-    val refied = reify[1](1)
-    summon[refied.type <:< Typed[Pure[1], 1]]
-    refied should be(1)
+    val reified = reify[1](1)
+    summon[reified.type <:< Typed[Pure[1], 1]]
+    reified should be(1)
   }
   "test2" in {
-    val refied = reify[1] { 1 }
-    summon[refied.type <:< Typed[Pure[1], 1]]
-    refied should be(1)
+    val reified = reify[1] { 1 }
+    summon[reified.type <:< Typed[Pure[1], 1]]
+    reified should be(1)
 
-    val refied2 = reify[1](!refied)
-    summon[refied2.type <:< Typed[Typed[Pure[1], 1], 1]]
-    refied2 should be(1)
+    val reified2 = reify[1](!reified)
+    summon[reified2.type <:< Typed[Typed[Pure[1], 1], 1]]
+    reified2 should be(1)
   }
   "test3" in {
-    val refied = reify {}
-    summon[refied.type <:< Typed[Pure[Unit], Unit]]
-    refied should be(())
+    val reified = reify {}
+    summon[reified.type <:< Typed[Pure[Unit], Unit]]
+    reified should be(())
   }
   "test4" in {
-    val refied = reify {
+    val reified = reify {
       !Await(Future(1L))
     }
-    summon[refied.type <:< Typed[Await[Long], Long]]
-    summon[Run[Typed[Await[Long], Long], Future[Long], Long]](refied)
+    summon[reified.type <:< Typed[Await[Long], Long]]
+    summon[Run[Typed[Await[Long], Long], Future[Long], Long]](reified)
 
     *[Future] {
-      !Await(refied.to[Future]) should be(1L)
+      !Await(reified.to[Future]) should be(1L)
     }
   }
 
   "test5" in {
-    val refied = reify {
+    val reified = reify {
       !Await(Future(!Await(Future(1L))))
     }
-    summon[refied.type <:< Typed[FlatMap[Await[Long], Long, Await[Long]], Long]]
+    summon[reified.type <:< Typed[FlatMap[Await[Long], Long, Await[Long]], Long]]
     summon[
       Run[
         FlatMap[Await[Long], Long, Await[Long]],
@@ -155,16 +155,16 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       ]
     ]
     *[Future] {
-      !Await(refied.to[Future]) should be(1L)
+      !Await(reified.to[Future]) should be(1L)
     }
   }
 
   "test6" in {
-    val refied = reify {
+    val reified = reify {
       val i = !Await(Future(super.getClass.getSimpleName))
       !Await(Future(i))
     }
-    summon[refied.type <:< Typed[
+    summon[reified.type <:< Typed[
       FlatMap[Await[String], String, Await[String]],
       String
     ]]
@@ -176,7 +176,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       ]
     ]
     *[Future] {
-      !Await(refied.to[Future]) should be(super.getClass.getSimpleName)
+      !Await(reified.to[Future]) should be(super.getClass.getSimpleName)
     }
   }
   object Foo extends Dynamic {
@@ -186,14 +186,14 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   }
 
   "test7" in {
-    val refied = reify {
+    val reified = reify {
       val i = !Await(Future(body = this.Foo.d(j = 1L)))
       object A {
         def j = i + 200
       }
       !Await(Future(A.j))
     }
-    summon[refied.type <:< Typed[FlatMap[Await[Long], Long, Await[Long]], Long]]
+    summon[reified.type <:< Typed[FlatMap[Await[Long], Long, Await[Long]], Long]]
     summon[
       Run[
         FlatMap[Await[Long], Long, Await[Long]],
@@ -203,16 +203,16 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     ]
 
     *[Future] {
-      !Await(refied.to[Future]) should be(201L)
+      !Await(reified.to[Future]) should be(201L)
     }
   }
 
   "testReturn1" in {
-    val refied = reify {
+    val reified = reify {
       (!Return(!Await(Future(())))): Unit
     }
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[FlatMap[
           Await[Unit],
           Unit,
@@ -221,15 +221,15 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     ]
 
     *[Future] {
-      !Await(refied.to[Future]) should be(())
+      !Await(reified.to[Future]) should be(())
     }
   }
 
   "testReturn2" in {
-    val refied = reify {
+    val reified = reify {
       !Return(!Await(Future(())))
     }
-    // summon[refied.type <:<
+    // summon[reified.type <:<
     //   Typed[
     //    FlatMap[
     //      Await[Unit]
@@ -237,7 +237,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     //   , Nothing]
     // ]
     *[Future] {
-      !Await(refied.to[Future]) should be(())
+      !Await(reified.to[Future]) should be(())
     }
   }
 
@@ -370,7 +370,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   }
 
   "testTryCatch" in {
-    val refied = reify {
+    val reified = reify {
       try {
         s"Division result: ${!Await(Future(3)) / !Await(Future(0))}"
       } catch {
@@ -380,7 +380,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
 
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[keywords.TryCatch[Suspend[
           FlatMap[
             Await[Int],
@@ -398,13 +398,13 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
         ]]
           +: Nothing], String]
     ]
-    refied.to[Future].map {
+    reified.to[Future].map {
       _ should be("Cannot divide 3 by 0")
     }
   }
 
   "testWhile" in {
-    val refied = reify {
+    val reified = reify {
       var i = 0L
       while (!Await(Future(i < 3))) {
         i += !Await(Future(1))
@@ -412,7 +412,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       i
     }
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[FlatMap[While[
           Suspend[
             Await[Boolean]
@@ -425,8 +425,8 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
         ], Unit, Pure[Long]], Long]
     ]
     *[Future] {
-      !Await(refied.to[Future]) should be(3L)
-      !Await(refied.as[Double => Future[Long]].apply(1.0)) should be(3L)
+      !Await(reified.to[Future]) should be(3L)
+      !Await(reified.as[Double => Future[Long]].apply(1.0)) should be(3L)
     }
   }
 
@@ -434,12 +434,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     object A {
       var a = "a"
     }
-    val refied = reify {
+    val reified = reify {
       (!Await(Future(A))).a = !Await(Future("x"))
       A.a.toUpperCase
     }
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[FlatMap[
           Await[A.type],
           A.type,
@@ -450,17 +450,17 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
           ]
         ], String]
     ]
-    refied.to[Future].map(_ should be("X"))
+    reified.to[Future].map(_ should be("X"))
   }
 
   "testTyped" in {
-    val refied = reify {
+    val reified = reify {
       val i = !Await(Future("x"): Future[CharSequence])
       val r = !Await(Future(i)): AnyRef
       r
     }
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[FlatMap[
           Await[CharSequence],
           CharSequence,
@@ -469,11 +469,11 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
           ], CharSequence, Pure[Object]]
         ], Object]
     ]
-    refied.to[Future].map(_ should be("x"))
+    reified.to[Future].map(_ should be("x"))
   }
 
   "testPartialFunction" in {
-    val refied = reify {
+    val reified = reify {
       Future[PartialFunction[Int, String]] {
         case 1          => "1"
         case x if x < 0 => "negative"
@@ -482,68 +482,68 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
 
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[Pure[
           Future[PartialFunction[Int, String]]
         ], Future[PartialFunction[Int, String]]]
     ]
     type Id[A] = A
-    refied.to[Id].map {
+    reified.to[Id].map {
       _ should be(a[PartialFunction[_, _]])
     }
   }
 
   "testClosure" in {
-    val refied = reify {
+    val reified = reify {
       val id = !Await(Future(identity[Int] _))
       val e = id.equals _
       !Await(Future(e))
     }
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[FlatMap[
           Await[Int => Int],
           Int => Int,
           Await[Any => Boolean]
         ], Any => Boolean]
     ]
-    refied.to[Future].map {
+    reified.to[Future].map {
       _ should be(a[Function1[_, _]])
     }
   }
 
   "testBangClosure" in {
-    val refied = reify {
+    val reified = reify {
       val e = (!Await(Future(identity[Int] _))).equals _
       !Await(Future(e))
     }
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[FlatMap[
           FlatMap[Await[Int => Int], Int => Int, Pure[Any => Boolean]],
           Any => Boolean,
           Await[Any => Boolean]
         ], Any => Boolean]
     ]
-    refied.to[Future].map {
+    reified.to[Future].map {
       _ should be(a[Function1[_, _]])
     }
   }
 
   "testClosure2" in {
-    val refied = reify {
+    val reified = reify {
       val e = (!Await(Future((i: Int) => i))).equals _
       !Await(Future(e))
     }
     summon[
-      refied.type <:<
+      reified.type <:<
         Typed[FlatMap[
           FlatMap[Await[Int => Int], Int => Int, Pure[Any => Boolean]],
           Any => Boolean,
           Await[Any => Boolean]
         ], Any => Boolean]
     ]
-    refied.to[Future].map {
+    reified.to[Future].map {
       _ should be(a[Function1[_, _]])
     }
   }

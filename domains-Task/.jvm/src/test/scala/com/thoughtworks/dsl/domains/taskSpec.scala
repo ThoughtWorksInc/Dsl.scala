@@ -21,7 +21,7 @@ import org.scalatest.matchers.should.Matchers
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
-  "tailRecurision" in Task.toFuture(Task {
+  "tailRecursion" in Task.toFuture(Task {
     def loop(i: Int = 0, accumulator: Int = 0): Task[Int] = Task {
       if (i < 10000) {
         !Shift(loop(i + 1, accumulator + i))
