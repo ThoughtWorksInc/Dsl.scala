@@ -434,46 +434,52 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
 
   "Given a continuation that uses Yield and Each expressions" - {
 
-    def asyncFunction: Stream[String] !! Unit = *[[X] =>> Stream[String] !! X] {
-      !Yield("Entering asyncFunction")
-      val subThreadId: Int = !Each(Seq(0, 1))
-      !Yield(s"Fork sub-thread $subThreadId")
-      !Yield("Leaving asyncFunction")
-    }
+    def asyncFunction: LazyList[String] !! Unit =
+      *[[X] =>> LazyList[String] !! X] {
+        !Yield("Entering asyncFunction")
+        !Yield.From {
+          val subThreadId: Int = !Each(Seq(0, 1))
+          !Yield(s"Fork sub-thread $subThreadId")
+          LazyList(s"Join sub-thread $subThreadId")
+        }
+        !Yield("Leaving asyncFunction")
+      }
 
     "When create a generator that contains Yield, Shift, and Each expressions" - {
 
-      def generator: Stream[String] = reset {
+      def generator: LazyList[String] = reset {
         !Yield("Entering generator")
-        {
+        !Yield.From {
           val threadId = !Each(Seq(0, 1))
           !Yield(s"Fork thread $threadId")
           !Shift(asyncFunction)
+          LazyList(s"Join thread $threadId")
         }
-        Stream("Leaving generator")
+        LazyList("Leaving generator")
       }
 
       "Then the generator should contains yield values" in {
         // format: off
         generator should be(
-          Seq(
+          LazyList(
             "Entering generator",
               "Fork thread 0",
                 "Entering asyncFunction",
                   "Fork sub-thread 0",
-                    "Leaving asyncFunction",
-                    "Leaving generator",
                   "Fork sub-thread 1",
-                    "Leaving asyncFunction",
-                    "Leaving generator",
+                  "Join sub-thread 0",
+                  "Join sub-thread 1",
+                "Leaving asyncFunction",
               "Fork thread 1",
                 "Entering asyncFunction",
                   "Fork sub-thread 0",
-                    "Leaving asyncFunction",
-                    "Leaving generator",
                   "Fork sub-thread 1",
-                    "Leaving asyncFunction",
-                    "Leaving generator"
+                  "Join sub-thread 0",
+                  "Join sub-thread 1",
+                "Leaving asyncFunction",
+              "Join thread 0",
+              "Join thread 1",
+            "Leaving generator"
           )
         )
         // format: on
