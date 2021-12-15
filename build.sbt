@@ -34,13 +34,13 @@ lazy val `domains-Task` =
       `keywords-Shift`,
       reset,
       `domains-Continuation`,
-      `keywords-ToView` % Test,
+      `keywords-FromIterable` % Test,
       `keywords-Using` % Test,
       `keywords-Yield` % Test,
-      `keywords-ToView` % Test
+      `keywords-FromIterable` % Test
     )
 
-lazy val `keywords-ToView` =
+lazy val `keywords-FromIterable` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, reset, `keywords-Shift`)
@@ -116,9 +116,9 @@ lazy val `keywords-AsynchronousIo` =
     .crossType(CrossType.Pure)
     .dependsOn(
       `keywords-Shift`,
-      `keywords-ToView` % Test,
+      `keywords-FromIterable` % Test,
       `keywords-Using` % Test,
-      `keywords-ToView` % Test,
+      `keywords-FromIterable` % Test,
       `domains-Task` % Test
     )
 
@@ -150,11 +150,10 @@ lazy val `keywords-Await` =
       `domains-Continuation`,
       reset % Test,
       `domains-Task` % Test,
-      `keywords-ToView` % Test,
       `keywords-Get` % Test,
       `keywords-Return` % Test,
       `keywords-Yield` % Test,
-      `keywords-ToView` % Test
+      `keywords-FromIterable` % Test
     )
 
 lazy val `scala-async` =
@@ -168,7 +167,7 @@ lazy val `keywords-Yield` =
     .dependsOn(
       Dsl,
       reset % Test,
-      `keywords-ToView` % Test,
+      `keywords-FromIterable` % Test,
       `keywords-Shift` % Test,
     )
 

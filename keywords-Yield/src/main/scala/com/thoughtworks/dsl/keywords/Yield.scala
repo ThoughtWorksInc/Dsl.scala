@@ -29,7 +29,7 @@ import scala.language.higherKinds
   *            !Yield("gcc")
   *            !Yield("-c")
   *            !Yield(sourceFile)
-  *            val include = !ToView.FromIterable(includes)
+  *            val include = !FromIterable(includes)
   *            !Yield("-I")
   *            !Yield(include)
   *            Stream.empty
