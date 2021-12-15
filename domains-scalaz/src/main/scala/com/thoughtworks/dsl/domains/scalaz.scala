@@ -19,7 +19,7 @@ import scala.util.control.NonFatal
   * @example [[scalaz.Free.Trampoline]] is a monadic data type that performs tail call optimization.
   *          It can be built from a `@[[Dsl.reset reset]]` code block within some [[Dsl.Keyword#unary_$bang !-notation]],
   *          similar to the [[com.thoughtworks.each.Monadic.EachOps#each each]] method in
-  *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
+  *          [[https://github.com/ThoughtWorksInc/each ThoughtWorks ToView.FromIterable]].
   *
   *          {{{
   *          import _root_.scalaz.Trampoline

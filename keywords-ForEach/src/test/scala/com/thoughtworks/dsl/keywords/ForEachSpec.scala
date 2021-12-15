@@ -29,7 +29,7 @@ class ForEachSpec extends AnyFreeSpec with Matchers {
 
       def run(): Unit = reset[Unit] {
         def plus100 = reset apply Seq(
-          !Each(seq) + 100
+          !ToView.FromIterable(seq) + 100
         )
         plus100.length should be(10)
         !ForEach(plus100)

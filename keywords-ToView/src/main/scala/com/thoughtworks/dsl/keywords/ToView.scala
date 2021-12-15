@@ -1,7 +1,14 @@
 package com.thoughtworks.dsl
 package keywords
 
-import scala.collection.Factory
+import com.thoughtworks.dsl.reset
+import com.thoughtworks.dsl.Dsl
+import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
+
+import scala.collection._
+import scala.language.implicitConversions
+
+import scala.collection.mutable.Builder
 
 opaque type ToView[Comprehension] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[Comprehension]
@@ -45,13 +52,13 @@ object ToView {
     ], FlatMap[
       UpstreamKeyword,
       collection.View[UpstreamElement],
-      FlatMap[Each[UpstreamElement], UpstreamElement, NestedKeyword]
+      FlatMap[ToView.FromIterable[UpstreamElement], UpstreamElement, NestedKeyword]
     ]] = { case Dsl.For.Do.FlatForeach(upstream, flatAction) =>
       FlatMap(
         upstreamToKeyword(upstream),
         { upstreamCollection =>
           FlatMap(
-            Each(upstreamCollection),
+            ToView.FromIterable(upstreamCollection),
             flatAction.andThen(mappedToKeyword)
           )
         }
@@ -79,13 +86,13 @@ object ToView {
     ], FlatMap[
       UpstreamKeyword,
       collection.View[UpstreamElement],
-      FlatMap[Each[UpstreamElement], UpstreamElement, MappedKeyword]
+      FlatMap[ToView.FromIterable[UpstreamElement], UpstreamElement, MappedKeyword]
     ]] = { case Dsl.For.Yield.FlatMap(upstream, flatMapper) =>
       FlatMap(
         upstreamToKeyword(upstream),
         { upstreamCollection =>
           FlatMap(
-            Each(upstreamCollection),
+            ToView.FromIterable(upstreamCollection),
             flatMapper.andThen(mappedToKeyword)
           )
         }
@@ -321,4 +328,133 @@ object ToView {
   ): Dsl.PolyCont[ToView[Comprehension], Domain, Value] = { (as, handler) =>
     polyCont.cpsApply(toKeyword(as), handler)
   }
+
+  /** Iterates though each element in [[elements]].
+    * @author 杨博 (Yang Bo)
+    *
+    * @example [[ToView.FromIterable]] keywords can be used to calculate cartesian product.
+    *
+    *          {{{
+    *          import com.thoughtworks.dsl.reset, reset._
+    *          def cartesianProduct = reset (List(!ToView.FromIterable(Array(1, 2, 3)) * !ToView.FromIterable(Vector(1, 10, 100, 1000))))
+    *          cartesianProduct should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
+    *          }}}
+    * @see [[Dsl.For]] if you want to use traditional `for` comprehension instead of !-notation.
+    */
+  final case class FromIterable[Element](elements: Traversable[Element]) extends Dsl.Keyword.Trait
+  object FromIterable {
+    given [Element]: AsKeyword.IsKeyword[ToView.FromIterable[Element], Element] with {}
+
+    extension [FA, A](inline fa: FA)(using
+        inline notKeyword: util.NotGiven[
+          FA <:< Dsl.Keyword
+        ],
+        inline asFA: FA <:< Traversable[A]
+    )
+      transparent inline def unary_! : A =
+        Dsl.shift(ToView.FromIterable(asFA(fa))): A
+
+    private def toLinearSeq[Element](
+        i: IterableOnce[Element]
+    ): LinearSeq[Element] = {
+      i match {
+        case linearSeq: LinearSeq[Element] =>
+          linearSeq
+        case notSeq =>
+          LazyList.from(notSeq)
+            }
+          }
+    given [
+        Element,
+        MappedKeyword,
+        MappedValue <: IterableOps[
+          MappedElement,
+          _,
+          _
+        ],
+        MappedElement,
+        Domain
+    ](using
+        isKeyword: AsKeyword.IsKeyword[
+          MappedKeyword,
+          MappedValue
+        ],
+        factory: Factory[MappedElement, MappedValue],
+        blockDsl: Dsl.PolyCont[MappedKeyword, Domain, MappedValue]
+    ): Dsl.PolyCont[
+      FlatMap[ToView.FromIterable[Element], Element, MappedKeyword],
+      Domain,
+      MappedValue
+    ] = { case (FlatMap(ToView.FromIterable(sourceCollection), flatMapper), handler) =>
+      @inline def loop(
+          seqOps: LinearSeq[Element],
+          viewHandler: View[MappedElement] => Domain
+      ): Domain = {
+        seqOps.headOption match {
+          case Some(head) =>
+            blockDsl.cpsApply(
+              flatMapper(head),
+              { mappedHead =>
+                loop(
+                  seqOps.tail.asInstanceOf[LinearSeq[Element]],
+                  { mappedTail =>
+                    viewHandler(View.Concat(mappedHead, mappedTail))
+                  }
+                )
+              }
+            )
+          case None =>
+            viewHandler(View.Empty)
+        }
+      }
+      loop(
+        toLinearSeq(sourceCollection),
+        { view =>
+        handler(factory.fromSpecific(view))
+        }
+      )
+    }
+
+    given [
+        Element,
+        MappedKeyword,
+        Domain
+    ](using
+        blockDsl: Dsl.PolyCont[MappedKeyword, Domain, Unit]
+    ): Dsl.PolyCont[
+      FlatMap[ToView.FromIterable[Element], Element, MappedKeyword],
+      Domain,
+      Unit
+    ] = { case (FlatMap(ToView.FromIterable(sourceCollection), flatMapper), handler) =>
+      @inline def loop(
+          seqOps: LinearSeq[Element],
+          viewHandler: () => Domain
+      ): Domain = {
+        seqOps.headOption match {
+          case Some(head) =>
+            blockDsl.cpsApply(
+              flatMapper(head),
+              { mappedHead =>
+                loop(
+                  seqOps.tail.asInstanceOf[LinearSeq[Element]],
+                  { () =>
+                    viewHandler()
+                  }
+                )
+              }
+            )
+          case None =>
+            viewHandler()
+        }
+      }
+      loop(
+        toLinearSeq(sourceCollection),
+        { () =>
+          handler(())
+        }
+      )
+    }
+
+  }
+
 }

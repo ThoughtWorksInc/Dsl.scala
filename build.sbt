@@ -35,7 +35,7 @@ lazy val `domains-Task` =
       reset,
       `domains-Continuation`,
       `keywords-In` % Test,
-      `keywords-Each` % Test,
+      `keywords-ToView` % Test,
       `keywords-Using` % Test,
       `keywords-Yield` % Test,
       `keywords-ToView` % Test
@@ -44,7 +44,7 @@ lazy val `domains-Task` =
 lazy val `keywords-ToView` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset, `keywords-Each`)
+    .dependsOn(Dsl, reset, `keywords-Shift`)
 
 lazy val `keywords-Fork` =
   crossProject(JSPlatform, JVMPlatform)
@@ -129,7 +129,7 @@ lazy val `keywords-AsynchronousIo` =
     .dependsOn(
       `keywords-Shift`,
       `keywords-In` % Test,
-      `keywords-Each` % Test,
+      `keywords-ToView` % Test,
       `keywords-Using` % Test,
       `keywords-ToView` % Test,
       `domains-Task` % Test
@@ -191,7 +191,7 @@ lazy val `keywords-Yield` =
     .dependsOn(
       Dsl,
       reset % Test,
-      `keywords-Each` % Test,
+      `keywords-ToView` % Test,
       `keywords-Shift` % Test,
       `keywords-In` % Test,
     )
@@ -208,12 +208,7 @@ skip in publish := true
 lazy val `keywords-ForEach` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test, `keywords-Each` % Test)
-
-lazy val `keywords-Each` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset, `keywords-Shift`)
+    .dependsOn(Dsl, reset % Test, `keywords-ToView` % Test)
 
 lazy val `domains-scalaz` =
   crossProject(JSPlatform, JVMPlatform)

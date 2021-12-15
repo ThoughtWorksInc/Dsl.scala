@@ -31,7 +31,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   type Id[A] = A
   "testComprehension1" in {
     def inner1 = for {
-      j <- Each(0 until 3)
+      j <- ToView.FromIterable(0 until 3)
     } yield 100 + j
     summon[Run[
       FlatMap[
@@ -64,7 +64,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
             Await[Int],
             Int,
             Dsl.For.Yield.Map[
-              Each[Int],
+              ToView.FromIterable[Int],
               Int,
               Int
             ],

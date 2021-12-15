@@ -33,20 +33,20 @@ object YieldSpec extends TestSuite {
       nested()
     } // Should compile
 
-    // "Given a continuation that uses Yield and Each expressions" - {
+    // "Given a continuation that uses Yield and ToView.FromIterable expressions" - {
 
     //   def asyncFunction: Stream[String] !! Unit = _ {
     //     !Yield("Entering asyncFunction")
-    //     val subThreadId: Int = !Each(Seq(0, 1))
+    //     val subThreadId: Int = !ToView.FromIterable(Seq(0, 1))
     //     !Yield(s"Fork sub-thread $subThreadId")
     //     !Yield("Leaving asyncFunction")
     //   }
 
-    //   "When create a generator that contains Yield, Shift, and Each expressions" - {
+    //   "When create a generator that contains Yield, Shift, and ToView.FromIterable expressions" - {
 
     //     def generator: Stream[String] = {
     //       !Yield("Entering generator")
-    //       val threadId = !Each(Seq(0, 1))
+    //       val threadId = !ToView.FromIterable(Seq(0, 1))
     //       !Yield(s"Fork thread $threadId")
     //       !Shift(asyncFunction)
     //       Stream("Leaving generator")
@@ -432,25 +432,25 @@ class YieldSpec extends AnyFreeSpec with Matchers with Assertions {
     nested()
   } // Should compile
 
-  "Given a continuation that uses Yield and Each expressions" - {
+  "Given a continuation that uses Yield and ToView.FromIterable expressions" - {
 
     def asyncFunction: LazyList[String] !! Unit =
       *[[X] =>> LazyList[String] !! X] {
         !Yield("Entering asyncFunction")
         !Yield.From {
-          val subThreadId: Int = !Each(Seq(0, 1))
+          val subThreadId: Int = !ToView.FromIterable(Seq(0, 1))
           !Yield(s"Fork sub-thread $subThreadId")
           LazyList(s"Join sub-thread $subThreadId")
         }
         !Yield("Leaving asyncFunction")
       }
 
-    "When create a generator that contains Yield, Shift, and Each expressions" - {
+    "When create a generator that contains Yield, Shift, and ToView.FromIterable expressions" - {
 
       def generator: LazyList[String] = reset {
         !Yield("Entering generator")
         !Yield.From {
-          val threadId = !Each(Seq(0, 1))
+          val threadId = !ToView.FromIterable(Seq(0, 1))
           !Yield(s"Fork thread $threadId")
           !Shift(asyncFunction)
           LazyList(s"Join thread $threadId")
