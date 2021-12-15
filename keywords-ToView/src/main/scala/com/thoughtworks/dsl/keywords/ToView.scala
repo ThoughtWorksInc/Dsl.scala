@@ -26,7 +26,37 @@ object ToView {
         ComprehensionOrKeyword => Keyword
     ) =:= ToKeyword[ComprehensionOrKeyword, Keyword] = summon
 
-    // TODO: Foreach
+    given [
+        Upstream,
+        UpstreamElement,
+        Nested <: Dsl.For.Do,
+        UpstreamKeyword,
+        NestedKeyword
+    ](using
+        upstreamToKeyword: ToKeyword[
+          Upstream,
+          UpstreamKeyword
+        ],
+        mappedToKeyword: ToKeyword[Nested, NestedKeyword]
+    ): ToKeyword[Dsl.For.Do.FlatForeach[
+      Upstream,
+      UpstreamElement,
+      Nested,
+    ], FlatMap[
+      UpstreamKeyword,
+      collection.View[UpstreamElement],
+      FlatMap[Each[UpstreamElement], UpstreamElement, NestedKeyword]
+    ]] = { case Dsl.For.Do.FlatForeach(upstream, flatAction) =>
+      FlatMap(
+        upstreamToKeyword(upstream),
+        { upstreamCollection =>
+          FlatMap(
+            Each(upstreamCollection),
+            flatAction.andThen(mappedToKeyword)
+          )
+        }
+      )
+    }
 
     given [
         Upstream,
@@ -57,6 +87,33 @@ object ToView {
           FlatMap(
             Each(upstreamCollection),
             flatMapper.andThen(mappedToKeyword)
+          )
+        }
+      )
+    }
+
+    given [
+        Upstream,
+        UpstreamElement,
+        UpstreamKeyword
+    ](using
+        upstreamToKeyword: ToKeyword[
+          Upstream,
+          UpstreamKeyword
+        ]
+    ): ToKeyword[Dsl.For.Do.Foreach[
+      Upstream,
+      UpstreamElement,
+    ], FlatMap[
+      UpstreamKeyword,
+      collection.View[UpstreamElement],
+      Pure[Unit]
+    ]] = { case Dsl.For.Do.Foreach(upstream, action) =>
+      FlatMap(
+        upstreamToKeyword(upstream),
+        { (upstreamCollection: collection.View[UpstreamElement]) =>
+          Pure(
+            upstreamCollection.foreach(action)
           )
         }
       )
@@ -143,6 +200,32 @@ object ToView {
 
     given [
         Upstream,
+        UpstreamElement
+    ](using
+        isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, UpstreamElement]
+    ): ToKeyword[Dsl.For.Do.Foreach[
+      Upstream,
+      UpstreamElement,
+    ], FlatMap[
+      Upstream,
+      UpstreamElement,
+      Pure[Unit]
+    ]] = Pure.apply.liftCo[[X] =>> ToKeyword[Dsl.For.Do.Foreach[
+      Upstream,
+      UpstreamElement,
+    ], FlatMap[
+      Upstream,
+      UpstreamElement,
+      X
+    ]]] { case Dsl.For.Do.Foreach(upstream, action) =>
+      FlatMap(
+        upstream,
+        action
+      )
+    }
+
+    given [
+        Upstream,
         UpstreamElement,
         Element
     ](using
@@ -160,6 +243,26 @@ object ToView {
         upstream,
         element => Pure(collection.View.Single(mapper(element)))
       )
+    }
+
+    given [
+        Upstream,
+        UpstreamElement,
+        Nested <: Dsl.For.Do,
+        NestedKeyword
+    ](using
+        isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, UpstreamElement],
+        mappedToKeyword: ToKeyword[Nested, NestedKeyword]
+    ): ToKeyword[Dsl.For.Do.FlatForeach[
+      Upstream,
+      UpstreamElement,
+      Nested,
+    ], FlatMap[
+      Upstream,
+      UpstreamElement,
+      NestedKeyword
+    ]] = { case Dsl.For.Do.FlatForeach(upstream, flatAction) =>
+      FlatMap(upstream, flatAction.andThen(mappedToKeyword))
     }
 
     given [
