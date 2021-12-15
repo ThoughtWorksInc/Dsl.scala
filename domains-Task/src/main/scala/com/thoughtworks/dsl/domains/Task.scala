@@ -2,6 +2,8 @@ package com.thoughtworks.dsl
 package domains
 
 import com.thoughtworks.dsl.domains.Continuation, Continuation.!!
+import com.thoughtworks.dsl.keywords.Pure
+import com.thoughtworks.dsl.keywords.Suspend
 import com.thoughtworks.dsl.keywords.Shift
 import com.thoughtworks.dsl.reset, reset._
 
@@ -78,7 +80,10 @@ object Task extends TaskPlatformSpecificFunctions {
   def delay[A](f: () => A): Task[A] = _(f())
 
   inline def apply[A](inline a: A): Task[A] = { handler =>
-    reset(handler(a))
+    reset {
+      // !Pure ensures stack safety
+      handler(!Pure(a))
+    }
   }
 
   /** Returns a task that does nothing but let the succeeding tasks run on `executionContext`
@@ -90,7 +95,7 @@ object Task extends TaskPlatformSpecificFunctions {
     *          import org.scalatest.Assertion
     *          import scala.concurrent.ExecutionContext
     *          import com.thoughtworks.dsl.keywords.Shift
-    *          def myTask: Task[Assertion] = *[Task] {
+    *          def myTask: Task[Assertion] = Task {
     *            val originalThread = Thread.currentThread
     *            !Shift(Task.switchExecutionContext(ExecutionContext.global))
     *            Thread.currentThread should not be originalThread
