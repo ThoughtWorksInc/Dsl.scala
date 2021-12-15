@@ -142,11 +142,6 @@ lazy val `keywords-NoneSafe` =
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, reset % Test, `keywords-Return`)
 
-lazy val `keywords-For` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test)
-
 lazy val `keywords-Await` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
