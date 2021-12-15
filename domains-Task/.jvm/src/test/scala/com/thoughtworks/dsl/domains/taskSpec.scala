@@ -9,7 +9,6 @@ import scala.language.implicitConversions
 import com.thoughtworks.dsl.keywords.{Using, ToView}
 import com.thoughtworks.dsl.domains._
 import com.thoughtworks.dsl.keywords.Shift
-import com.thoughtworks.dsl.keywords.Shift.given
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.TailCalls
@@ -17,12 +16,13 @@ import scala.util.{Failure, Success}
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
   "tailRecurision" in Task.toFuture(Task {
-    def loop(i: Int = 0, accumulator: Int = 0): Task[Int] = *[Task] {
+    def loop(i: Int = 0, accumulator: Int = 0): Task[Int] = Task {
       if (i < 10000) {
         !Shift(loop(i + 1, accumulator + i))
       } else {
@@ -114,8 +114,8 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
   "autoClose" in {
     val logs = ArrayBuffer.empty[Int]
 
-    // TODO: Re-implement Using to support `Task {}` instead of `*[Task]`
-    val task: Task[Unit] = *[Task] {
+    // TODO: Re-implement Using to support `Task {}` instead of `Task`
+    val task: Task[Unit] = Task {
 
       logs += 0
 
@@ -139,7 +139,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       })
 
       // TODO: Re-implement Using to support `Task{}`
-      !Shift(*[Task] {
+      !Shift(Task {
         logs += 3
 
         !Using(new AutoCloseable {
@@ -169,7 +169,9 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     }
 
     Task.toFuture(task).map { _ =>
-      logs should be(ArrayBuffer(0, 10, 11, 12, 3, 40, 41, 42, 6, 52, 51, 50, 7, 22, 21, 20))
+      logs should be(
+        ArrayBuffer(0, 10, 11, 12, 3, 40, 41, 42, 6, 52, 51, 50, 7, 22, 21, 20)
+      )
     }
 
   }
@@ -177,13 +179,14 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
   // Task.join is not supported any more
   "nested seq of task" ignore {
 
-    def composeTask(t0: Task[Seq[Task[Seq[Task[Seq[Task[Seq[Float]]]]]]]]): Task[Seq[Seq[Seq[Seq[Float]]]]] = {
-      // TODO: remove explicit type parameters when https://github.com/scala/bug/issues/11068 is fixed
-      *[Task]/*.join*/ apply Seq {
+    def composeTask(
+        t0: Task[Seq[Task[Seq[Task[Seq[Task[Seq[Float]]]]]]]]
+    ): Task[Seq[Seq[Seq[Seq[Float]]]]] = {
+      Task /*.join*/ apply Seq {
         val t1 = !ToView.FromIterable(!Shift(t0))
-        !Shift(*[Task]/*.join*/ apply Seq {
+        !Shift(Task /*.join*/ apply Seq {
           val t2 = !ToView.FromIterable(!Shift(t1))
-          !Shift(*[Task]/*.join*/ apply Seq {
+          !Shift(Task /*.join*/ apply Seq {
             val t3 = !ToView.FromIterable(!Shift(t2))
             !Shift(t3)
           })

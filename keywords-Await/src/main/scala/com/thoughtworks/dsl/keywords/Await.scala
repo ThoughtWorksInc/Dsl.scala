@@ -36,7 +36,7 @@ import scala.language.implicitConversions
   * {{{
   * import com.thoughtworks.dsl.domains.Task
   * import com.thoughtworks.dsl.keywords.Await
-  * val myTask = *[Task] {
+  * val myTask = Task {
   *   !Await(myFuture42)
   * }
   * }}}
@@ -45,7 +45,7 @@ import scala.language.implicitConversions
   * [[domains.task.Task.toFuture]].
   *
   * {{{
-  * val myAssertionTask = *[Task] {
+  * val myAssertionTask = Task {
   *   !Shift(myTask) should be(42)
   * }
   * Task.toFuture(myAssertionTask)

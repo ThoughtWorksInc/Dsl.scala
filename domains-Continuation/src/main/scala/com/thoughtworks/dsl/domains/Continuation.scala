@@ -3,6 +3,7 @@ package domains
 
 import scala.util._
 import scala.util.control.NonFatal
+import com.thoughtworks.dsl.keywords.Pure
 
 type Continuation[R, +A] = (A => R) => R
 
@@ -21,7 +22,10 @@ object Continuation {
   def delay[R, A](a: () => A): R !! A = _(a())
 
   inline def apply[R, A](inline a: A): R !! A = { handler =>
-    reset(handler(a))
+    reset {
+      // !Pure ensures stack safety
+      handler(!Pure(a))
+    }
   }
 
   def toTryContinuation[LeftDomain, Value](
