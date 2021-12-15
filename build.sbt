@@ -117,7 +117,6 @@ lazy val `keywords-AsynchronousIo` =
       `keywords-Shift`,
       `keywords-Each` % Test,
       `keywords-Using` % Test,
-      `keywords-Each` % Test,
       `domains-Task` % Test
     )
 
