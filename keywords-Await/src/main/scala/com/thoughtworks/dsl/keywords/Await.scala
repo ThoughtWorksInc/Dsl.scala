@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.domains.Continuation.!!
 import scala.concurrent.Await.result
@@ -109,7 +109,7 @@ import scala.language.implicitConversions
 opaque type Await[Result] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[concurrent.Future[Result]]
 object Await {
   @inline def apply[Result]: concurrent.Future[Result] =:= Await[Result] = Dsl.Keyword.Opaque.Of.apply
-  given [Result]: AsKeyword.IsKeyword[Await[Result], Result] with {}
+  given [Result]: IsKeyword[Await[Result], Result] with {}
 
   implicit def streamAwaitDsl[Value, That](implicit
       executionContext: ExecutionContext

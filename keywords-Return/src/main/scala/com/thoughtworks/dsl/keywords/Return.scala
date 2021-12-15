@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.Dsl
 
 import scala.language.implicitConversions
 
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import Dsl.Lift
 
 /** A [[Dsl.Keyword]] to early return a lifted value from the enclosing function.
@@ -17,7 +17,7 @@ opaque type Return[ReturnValue] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Re
 object Return {
   @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] = Dsl.Keyword.Opaque.Of.apply
 
-  given [ReturnValue]: AsKeyword.IsKeyword[Return[ReturnValue], Nothing] with {}
+  given [ReturnValue]: IsKeyword[Return[ReturnValue], Nothing] with {}
 
   given [ReturnValue, Domain](using
       lift: Lift[ReturnValue, Domain]

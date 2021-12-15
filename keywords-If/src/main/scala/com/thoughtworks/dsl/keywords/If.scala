@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import Dsl.cpsApply
 
 final case class If[ConditionKeyword, ThenKeyword, ElseKeyword](

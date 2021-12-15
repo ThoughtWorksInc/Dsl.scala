@@ -6,7 +6,7 @@ opaque type Typed[Keyword, Value] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[
 
 object Typed {
   given [Keyword, Value]
-      : Dsl.AsKeyword.IsKeyword[Typed[Keyword, Value], Value] with {}
+      : Dsl.IsKeyword[Typed[Keyword, Value], Value] with {}
   given [Keyword, Domain, Value](using
       dsl: Dsl.PolyCont[Keyword, Domain, Value]
   ): Dsl.PolyCont[Typed[Keyword, Value], Domain, Value] =

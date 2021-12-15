@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package keywords
 import Dsl.!!
 import Dsl.cpsApply
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 import scala.concurrent._
 import scala.util.control.NonFatal

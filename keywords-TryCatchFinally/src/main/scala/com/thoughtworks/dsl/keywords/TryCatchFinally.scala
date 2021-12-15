@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 import Dsl.!!
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 
 case class TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword](

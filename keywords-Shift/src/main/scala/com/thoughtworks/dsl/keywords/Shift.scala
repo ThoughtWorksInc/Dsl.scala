@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
@@ -43,7 +43,7 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 { this: Shif
 }
 
 object Shift extends LowPriorityShift0 {
-  given [Domain, Value]: AsKeyword.IsKeyword[Shift[Domain, Value], Value] with {}
+  given [Domain, Value]: IsKeyword[Shift[Domain, Value], Value] with {}
 
   trait StackSafeShiftDsl[Domain, NewDomain, Value] extends Dsl[Shift[Domain, Value], NewDomain, Value]
 

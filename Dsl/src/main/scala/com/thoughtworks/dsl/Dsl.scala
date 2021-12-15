@@ -51,9 +51,9 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
   // Must not put transparent inline extension methods directly in Dsl, or the compiler crashes
-  extension [From, Keyword, Value](inline from: From)(using inline asKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[From, Keyword, Value])
+  extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
     transparent inline def unary_! : Value = {
-      Dsl.shift[Keyword, Value](asKeyword(from))
+      Dsl.shift[Keyword, Value](from)
     }
 
   extension [KeywordOrView, Element](keywordOrView: KeywordOrView)(using hasValueOrElement: Dsl.HasValueOrElement[KeywordOrView, Element])
@@ -510,19 +510,19 @@ object Dsl extends LowPriorityDsl0 {
   // See https://github.com/lampepfl/dotty/issues/14076
   private opaque type Dotty14076Workaround = Any
 
-  extension [From, Keyword, Value](keyword: From)(using
-      asKeyword: AsKeyword.SearchIsKeywordFirst[From, Keyword, Value]
+  extension [Keyword, Value](keyword: Keyword)(using
+      isKeyword: IsKeyword[Keyword, Value]
   )
     @inline def to[Domain[_]](using
         run: Run[Keyword, Domain[Value], Value]
     ): Domain[Value] = {
-      run(asKeyword(keyword))
+      run(keyword)
     }
 
     @inline def as[Domain](using
         run: Run[Keyword, Domain, Value]
     ): Domain = {
-      run(asKeyword(keyword))
+      run(keyword)
     }
 
   type Keyword = Keyword.Opaque | Keyword.Trait
@@ -544,30 +544,8 @@ object Dsl extends LowPriorityDsl0 {
     }
   }
   
-  trait AsKeyword[From, Keyword, Value] extends (From => Keyword)
-
-  object AsKeyword {
-    trait IsKeywordSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
-      def apply(from: From): Keyword = from
-    }
-    trait IsKeyword[Keyword, Value] extends IsKeywordSubtype[Keyword, Keyword, Value] with HasValueOrElement[Keyword, Value]
-
-    /** An [[AsKeyword]] type class that enables a special implicit resolution order - search for [[IsKeyword]]
-      * instances first then other [[AsKeyword]] instances
-      */
-    opaque type SearchIsKeywordFirst[From, Keyword, Value] <: AsKeyword[From, Keyword, Value] =
-      AsKeyword[From, Keyword, Value]
-    object SearchIsKeywordFirst {
-      given [Keyword, Value](using
-          isKeyword: IsKeyword[Keyword, Value]
-      ): SearchIsKeywordFirst[Keyword, Keyword, Value] = isKeyword
-      given [From, Keyword, Value](using
-          not: util.NotGiven[IsKeyword[From, Value]],
-          asKeyword: AsKeyword[From, Keyword, Value]
-      ): SearchIsKeywordFirst[From, Keyword, Value] = asKeyword
-    }
-
-  }
+ 
+  trait IsKeyword[Keyword, Value] extends HasValueOrElement[Keyword, Value]
 
   extension [Keyword, Domain, Value](keyword: Keyword)
     @inline def cpsApply(using

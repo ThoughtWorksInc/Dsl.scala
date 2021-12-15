@@ -1,12 +1,12 @@
 package com.thoughtworks.dsl
 package keywords
-import com.thoughtworks.dsl.Dsl.AsKeyword
+import com.thoughtworks.dsl.Dsl.IsKeyword
 import scala.language.implicitConversions
 
 final case class NoneSafe[A](option: Option[A]) extends AnyVal with Dsl.Keyword.Trait
 
 object NoneSafe {
-  given [A]: AsKeyword.IsKeyword[NoneSafe[A], A] with {}
+  given [A]: IsKeyword[NoneSafe[A], A] with {}
 
   implicit def noneSafeDsl[A, Domain](implicit
       continueDsl: Dsl[Return[None.type], Domain, Nothing]
