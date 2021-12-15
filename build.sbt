@@ -12,7 +12,6 @@ lazy val reset =
       `keywords-Typed`,
       `keywords-Return`,
       `keywords-FlatMap`,
-      `keywords-WithFilter`,
       `keywords-Match`,
       `keywords-Suspend`,
       `keywords-Pure`,
@@ -162,11 +161,6 @@ lazy val `keywords-FlatMap` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, `keywords-Pure`)
-
-lazy val `keywords-WithFilter` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(`keywords-Continue`)
 
 lazy val `keywords-NoneSafe` =
   crossProject(JSPlatform, JVMPlatform)
