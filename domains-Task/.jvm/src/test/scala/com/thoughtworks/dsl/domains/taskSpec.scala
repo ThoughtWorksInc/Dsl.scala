@@ -80,13 +80,13 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     !Shift(task2) should be("try: my exception")
   })
 
-  "try with Each" ignore {
+  "try with Each" in {
     val listTask = Task {
       val x =
         try {
-          10 * !Each(List(1, 2))
+          List(10 * !FromIterable(List(1, 2)))
         } finally {}
-      List(x)
+      x
     }
     Task.toFuture(listTask).map {
       _ should be(List(10, 20))
