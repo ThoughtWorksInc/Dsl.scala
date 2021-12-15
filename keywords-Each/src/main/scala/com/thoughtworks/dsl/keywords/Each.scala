@@ -339,8 +339,7 @@ object Each {
         Value
     ](using
         toKeyword: ToKeyword[Comprehension, Keyword],
-        isKeyword: Dsl.AsKeyword.SearchIsKeywordFirst[
-          Keyword,
+        isKeyword: Dsl.AsKeyword.IsKeyword[
           Keyword,
           Value
         ],

@@ -122,7 +122,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     reified should be(1)
 
     val reified2 = reify[1](!reified)
-    summon[reified2.type <:< Typed[Typed[Pure[1], 1], 1]]
+    summon[reified2.type <:< Typed[_ <: Typed[Pure[1], 1], 1]]
     reified2 should be(1)
   }
   "test3" in {
