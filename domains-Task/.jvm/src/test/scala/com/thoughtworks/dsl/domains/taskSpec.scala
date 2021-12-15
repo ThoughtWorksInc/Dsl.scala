@@ -6,7 +6,7 @@ import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
 import scala.language.implicitConversions
 
-import com.thoughtworks.dsl.keywords.{Using, FromIterable}
+import com.thoughtworks.dsl.keywords.{Using, Each}
 import com.thoughtworks.dsl.domains._
 import com.thoughtworks.dsl.keywords.Shift
 
@@ -43,7 +43,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     val task1: Task[Int] = Task.now(1)
 
     val ts = *[Task]/* .join */ apply Seq {
-      !FromIterable(0 until 10) + !Shift(task1)
+      !Each(0 until 10) + !Shift(task1)
     }
 
     !Shift(ts) should be(1 until 11)
@@ -84,7 +84,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     val listTask = Task {
       val x =
         try {
-          List(10 * !FromIterable(List(1, 2)))
+          List(10 * !Each(List(1, 2)))
         } finally {}
       x
     }
@@ -196,11 +196,11 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
         t0: Task[Seq[Task[Seq[Task[Seq[Task[Seq[Float]]]]]]]]
     ): Task[Seq[Seq[Seq[Seq[Float]]]]] = {
       Task /*.join*/ apply Seq {
-        val t1 = !FromIterable(!Shift(t0))
+        val t1 = !Each(!Shift(t0))
         !Shift(Task /*.join*/ apply Seq {
-          val t2 = !FromIterable(!Shift(t1))
+          val t2 = !Each(!Shift(t1))
           !Shift(Task /*.join*/ apply Seq {
-            val t3 = !FromIterable(!Shift(t2))
+            val t3 = !Each(!Shift(t2))
             !Shift(t3)
           })
         })

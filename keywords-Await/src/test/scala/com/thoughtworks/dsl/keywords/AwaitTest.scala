@@ -31,7 +31,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   type Id[A] = A
   "testComprehension1" in {
     def inner1 = for {
-      j <- FromIterable(0 until 3)
+      j <- Each(0 until 3)
     } yield 100 + j
 
     val ast1 = Await(Future(1)).flatMap { i =>
@@ -44,7 +44,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
             Await[Int],
             Int,
             Dsl.For.Yield.Map[
-              FromIterable[Int],
+              Each[Int],
               Int,
               Int
             ],
@@ -54,7 +54,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     *[Future] {
       (!Await(
-        FromIterable.ToView(ast1).to[Future]
+        Each.ToView(ast1).to[Future]
       )).toVector should be(Vector(100, 101, 102))
     }
   }
@@ -62,12 +62,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   "testComprehension2" in {
     import Dsl._
     val inner2 = for {
-      j <- FromIterable(0 until 10)
+      j <- Each(0 until 10)
     } yield 111
     summon[
       inner2.type
         <:<
-          Dsl.For.Yield.Map[FromIterable[Int], Int, Int]
+          Dsl.For.Yield.Map[Each[Int], Int, Int]
     ]
     val ast2 = Await(Future(1)).flatMap { i =>
       inner2
@@ -79,7 +79,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
             Await[Int],
             Int,
             Dsl.For.Yield.Map[
-              FromIterable[Int],
+              Each[Int],
               Int,
               Int
             ],
@@ -91,9 +91,9 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
   "testComprehension3" in {
     import Dsl._
-    val ast3 = FromIterable.ToView.toKeyword(for {
+    val ast3 = Each.ToView.toKeyword(for {
       i <- Await(Future(1))
-      j <- FromIterable(0 until 10)
+      j <- Each(0 until 10)
     } yield 111)
     summon[
       ast3.type
@@ -102,7 +102,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
             Await[Int],
             Int,
             FlatMap[
-              FromIterable[Int],
+              Each[Int],
               Int,
               Pure[collection.View[Int]]
             ]

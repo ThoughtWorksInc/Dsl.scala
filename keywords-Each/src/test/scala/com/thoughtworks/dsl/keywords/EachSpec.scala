@@ -17,10 +17,10 @@ class EachSpec extends AnyFreeSpec with Matchers {
       val seq = 1 to 10
       def run(): Seq[Int] = reset(Seq {
         val plus100 = reset(Seq {
-          !FromIterable(seq) + 100
+          !Each(seq) + 100
         })
         plus100.length should be(10)
-        !FromIterable(plus100)
+        !Each(plus100)
       })
 
       val result = run()
@@ -32,10 +32,10 @@ class EachSpec extends AnyFreeSpec with Matchers {
       val seq = 1 to 10
       def run(): Seq[Int] = reset(Seq {
         val plus100 = reset {
-          Seq(!FromIterable(seq) + 100)
+          Seq(!Each(seq) + 100)
         }
         plus100.length should be(10)
-        !FromIterable(plus100)
+        !Each(plus100)
       })
 
       val result = run()
@@ -47,11 +47,11 @@ class EachSpec extends AnyFreeSpec with Matchers {
       val seq = 1 to 10
       def run(): Seq[Int] = reset {
         val plus100 = {
-          val element = !FromIterable(seq)
+          val element = !Each(seq)
           Seq(element + 100)
         }
         plus100.length should be(10)
-        Seq(!FromIterable(plus100))
+        Seq(!Each(plus100))
       }
 
       val result = run()
@@ -69,10 +69,10 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
         def run(): Seq[Int] = reset {
           val plus100: Seq[Int] = Seq {
-            !FromIterable(seq) + 100
+            !Each(seq) + 100
           }
           plus100.length should be(1)
-          Seq(!FromIterable(plus100))
+          Seq(!Each(plus100))
         }
 
         val result = run()
@@ -85,10 +85,10 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
         def run(): Seq[Int] = reset {
           val plus100 = Seq {
-            !FromIterable(seq) + 100
+            !Each(seq) + 100
           }
           plus100.length should be(1)
-          Seq(!FromIterable(plus100))
+          Seq(!Each(plus100))
         }
 
         val result = run()
@@ -101,10 +101,10 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
         def run(): Seq[Int] = reset {
           def plus100 = reset apply Seq {
-            !FromIterable(seq) + 100
+            !Each(seq) + 100
           }
           plus100.length should be(10)
-          Seq(!FromIterable(plus100))
+          Seq(!Each(plus100))
         }
 
         val result = run()
@@ -117,7 +117,7 @@ class EachSpec extends AnyFreeSpec with Matchers {
   "default parameter" in {
 
     def foo(s: Seq[Int] = reset {
-      Seq(!FromIterable(Seq(1, 2, 3)) + 100)
+      Seq(!Each(Seq(1, 2, 3)) + 100)
     }) = s
 
     foo() should be(Seq(101, 102, 103))
@@ -127,7 +127,7 @@ class EachSpec extends AnyFreeSpec with Matchers {
   "val in class" in {
     class C {
       val ascii: Set[Int] = reset(
-        Set(!FromIterable(Seq(1, 2, 3, 2)) + 100)
+        Set(!Each(Seq(1, 2, 3, 2)) + 100)
       )
     }
 
@@ -139,12 +139,12 @@ class EachSpec extends AnyFreeSpec with Matchers {
       def foo: Seq[String] =
         reset {
           // OK
-          val s0 = !FromIterable(Seq("a"))
+          val s0 = !Each(Seq("a"))
 
           // How to support the following use case?
-          // val (s1, s2) = !FromIterable(Seq(("b", "c"))) 
+          // val (s1, s2) = !Each(Seq(("b", "c"))) 
 
-          val Seq(s1, s2) = !FromIterable(Seq(Seq("b", "c")))
+          val Seq(s1, s2) = !Each(Seq(Seq("b", "c")))
           Seq(s1)
         }
 
