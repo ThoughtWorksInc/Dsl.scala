@@ -4,7 +4,7 @@ package keywords
 import com.thoughtworks.dsl.reset, reset._
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
-import com.thoughtworks.dsl.Dsl.AsKeyword
+import com.thoughtworks.dsl.Dsl.IsKeyword
 import com.thoughtworks.dsl.keywords.TryFinally
 import com.thoughtworks.dsl.Dsl.cpsApply
 
@@ -24,7 +24,7 @@ import scala.util.control.NonFatal
 opaque type Using[R] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R]
 
 object Using {
-  given [R]: AsKeyword.IsKeyword[Using[R], R] with {}
+  given [R]: IsKeyword[Using[R], R] with {}
 
   extension [R](inline r: R)(using
       inline notKeyword: util.NotGiven[
@@ -84,7 +84,7 @@ object Using {
       BlockDomain,
       FinalizerDomain
   ](using
-      AsKeyword.IsKeyword[Mapped, MappedValue],
+      IsKeyword[Mapped, MappedValue],
       Dsl.TryFinally[MappedValue, OuterDomain, BlockDomain, FinalizerDomain],
       Dsl.PolyCont[Mapped, BlockDomain, MappedValue]
   ): Dsl.PolyCont[FlatMap[Using[R], R, Mapped], OuterDomain, MappedValue] = {

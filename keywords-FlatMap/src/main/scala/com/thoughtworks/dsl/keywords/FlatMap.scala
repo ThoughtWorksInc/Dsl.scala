@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package keywords
 
 import com.thoughtworks.dsl.Dsl
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import scala.util.NotGiven
 
 final case class FlatMap[Upstream, UpstreamValue, Mapped](
@@ -12,8 +12,8 @@ final case class FlatMap[Upstream, UpstreamValue, Mapped](
 
 object FlatMap {
   given [Upstream, UpstreamValue, Mapped, MappedValue](using
-      AsKeyword.IsKeyword[Mapped, MappedValue]
-  ): AsKeyword.IsKeyword[FlatMap[Upstream, UpstreamValue, Mapped], MappedValue] with {}
+      IsKeyword[Mapped, MappedValue]
+  ): IsKeyword[FlatMap[Upstream, UpstreamValue, Mapped], MappedValue] with {}
 
   given [
       Upstream,

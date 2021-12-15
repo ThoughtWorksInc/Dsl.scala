@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import scala.language.higherKinds
 import scala.language.implicitConversions
 
@@ -29,5 +29,5 @@ object Monadic {
 
   @inline def apply[Functor[_], Value]: Functor[Value] =:= Monadic[Functor, Value] = Dsl.Keyword.Opaque.Of.apply
 
-  given [Functor[_], Value]: AsKeyword.IsKeyword[Monadic[Functor, Value], Value] with {}
+  given [Functor[_], Value]: IsKeyword[Monadic[Functor, Value], Value] with {}
 }

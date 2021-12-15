@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package keywords
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, AsKeyword}
+import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
 
 import scala.collection._
 import scala.language.implicitConversions
@@ -210,7 +210,7 @@ object Each {
           Upstream,
           Element
       ](using
-          isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, Element]
+          isUpstreamKeyword: Dsl.IsKeyword[Upstream, Element]
       ): ToKeyword[Dsl.For.Yield.WithFilter[
         Upstream,
         Element
@@ -232,7 +232,7 @@ object Each {
           Upstream,
           UpstreamElement
       ](using
-          isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, UpstreamElement]
+          isUpstreamKeyword: Dsl.IsKeyword[Upstream, UpstreamElement]
       ): ToKeyword[Dsl.For.Do.Foreach[
         Upstream,
         UpstreamElement,
@@ -259,7 +259,7 @@ object Each {
           UpstreamElement,
           Element
       ](using
-          isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, UpstreamElement]
+          isUpstreamKeyword: Dsl.IsKeyword[Upstream, UpstreamElement]
       ): ToKeyword[Dsl.For.Yield.Map[
         Upstream,
         UpstreamElement,
@@ -281,7 +281,7 @@ object Each {
           Nested <: Dsl.For.Do,
           NestedKeyword
       ](using
-          isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, UpstreamElement],
+          isUpstreamKeyword: Dsl.IsKeyword[Upstream, UpstreamElement],
           mappedToKeyword: ToKeyword[Nested, NestedKeyword]
       ): ToKeyword[Dsl.For.Do.FlatForeach[
         Upstream,
@@ -302,7 +302,7 @@ object Each {
           Element,
           MappedKeyword
       ](using
-          isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, UpstreamElement],
+          isUpstreamKeyword: Dsl.IsKeyword[Upstream, UpstreamElement],
           mappedToKeyword: ToKeyword[Mapped, MappedKeyword]
       ): ToKeyword[Dsl.For.Yield.FlatMap[
         Upstream,
@@ -325,11 +325,11 @@ object Each {
         Value
     ](using
         toKeyword: ToKeyword[Comprehension, Keyword],
-        isKeyword: Dsl.AsKeyword.IsKeyword[
+        isKeyword: Dsl.IsKeyword[
           Keyword,
           Value
         ]
-    ): Dsl.AsKeyword.IsKeyword[Each.ToView[Comprehension], Value]
+    ): Dsl.IsKeyword[Each.ToView[Comprehension], Value]
       with {}
 
     given [
@@ -339,7 +339,7 @@ object Each {
         Value
     ](using
         toKeyword: ToKeyword[Comprehension, Keyword],
-        isKeyword: Dsl.AsKeyword.IsKeyword[
+        isKeyword: Dsl.IsKeyword[
           Keyword,
           Value
         ],
@@ -354,7 +354,7 @@ object Each {
     }
   }
 
-  given [Element]: AsKeyword.IsKeyword[Each[Element], Element] with {}
+  given [Element]: IsKeyword[Each[Element], Element] with {}
 
   extension [FA, A](inline fa: FA)(using
       inline notKeyword: util.NotGiven[
@@ -386,7 +386,7 @@ object Each {
       MappedElement,
       Domain
   ](using
-      isKeyword: AsKeyword.IsKeyword[
+      isKeyword: IsKeyword[
         MappedKeyword,
         MappedValue
       ],

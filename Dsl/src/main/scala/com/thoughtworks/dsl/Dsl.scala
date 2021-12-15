@@ -51,7 +51,7 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
   // Must not put transparent inline extension methods directly in Dsl, or the compiler crashes
-  extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.AsKeyword.IsKeyword[Keyword, Value])
+  extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
     transparent inline def unary_! : Value = {
       Dsl.shift[Keyword, Value](from)
     }
@@ -511,7 +511,7 @@ object Dsl extends LowPriorityDsl0 {
   private opaque type Dotty14076Workaround = Any
 
   extension [Keyword, Value](keyword: Keyword)(using
-      isKeyword: AsKeyword.IsKeyword[Keyword, Value]
+      isKeyword: IsKeyword[Keyword, Value]
   )
     @inline def to[Domain[_]](using
         run: Run[Keyword, Domain[Value], Value]
@@ -544,15 +544,8 @@ object Dsl extends LowPriorityDsl0 {
     }
   }
   
-  trait AsKeyword[From, Keyword, Value] extends (From => Keyword)
-
-  object AsKeyword {
-    trait IsKeywordSubtype[From <: Keyword, Keyword, Value] extends AsKeyword[From, Keyword, Value] {
-      def apply(from: From): Keyword = from
-    }
-    trait IsKeyword[Keyword, Value] extends IsKeywordSubtype[Keyword, Keyword, Value] with HasValueOrElement[Keyword, Value]
-
-  }
+ 
+  trait IsKeyword[Keyword, Value] extends HasValueOrElement[Keyword, Value]
 
   extension [Keyword, Domain, Value](keyword: Keyword)
     @inline def cpsApply(using

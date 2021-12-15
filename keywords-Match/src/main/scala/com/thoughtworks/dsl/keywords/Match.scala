@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 
 type Match[Keyword, Value, CaseSet] = keywords.FlatMap[Keyword, Value, CaseSet]
 object Match {

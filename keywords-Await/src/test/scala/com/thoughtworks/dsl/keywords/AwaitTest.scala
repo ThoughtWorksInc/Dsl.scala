@@ -4,7 +4,7 @@ package keywords
 import reset.{`*`, reify}
 import Dsl.!!
 import Dsl.Run
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import keywords._, Match._
 import concurrent.ExecutionContext.Implicits.global
 import concurrent.Future

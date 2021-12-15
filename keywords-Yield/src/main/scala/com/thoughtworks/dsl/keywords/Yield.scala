@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.AsKeyword
+import Dsl.IsKeyword
 import scala.collection._
 import scala.language.implicitConversions
 
@@ -89,7 +89,7 @@ private[keywords] trait LowPriorityYield1 extends LowPriorityYield3 {
 private[keywords] trait LowPriorityYield0 extends LowPriorityYield1
 object Yield extends LowPriorityYield0 {
 
-  given [Element]: AsKeyword.IsKeyword[Yield[Element], Unit] with {}
+  given [Element]: IsKeyword[Yield[Element], Unit] with {}
   def apply[Element]: Element =:= Yield[Element] = Dsl.Keyword.Opaque.Of.apply
   def apply[A](element0: A, element1: A, elements: A*) = {
     From(element0 +: element1 +: elements)
@@ -97,7 +97,7 @@ object Yield extends LowPriorityYield0 {
 
   opaque type From[FromCollection <: TraversableOnce[_]] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[FromCollection]
   object From {
-    given [FromCollection <: TraversableOnce[_]]: AsKeyword.IsKeyword[From[FromCollection], Unit] with {}
+    given [FromCollection <: TraversableOnce[_]]: IsKeyword[From[FromCollection], Unit] with {}
 
     def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = Dsl.Keyword.Opaque.Of.apply
 
@@ -204,8 +204,6 @@ object Yield extends LowPriorityYield0 {
   )
     transparent inline def unary_! : Unit =
       !Yield[A](a)
-
-  given implicitYield[Element]: AsKeyword[Element, Yield[Element], Unit] = Yield(_)
 
   implicit def streamYieldDsl[Element, That >: Element]: Dsl[Yield[Element], Stream[That], Unit] =
     new Dsl[Yield[Element], Stream[That], Unit] {
