@@ -109,4 +109,44 @@ object Each {
     )
   }
 
+  given [
+      Element,
+      MappedKeyword,
+      Domain
+  ](using
+      blockDsl: Dsl.PolyCont[MappedKeyword, Domain, Unit]
+  ): Dsl.PolyCont[
+    FlatMap[Each[Element], Element, MappedKeyword],
+    Domain,
+    Unit
+  ] = { case (FlatMap(Each(sourceCollection), flatMapper), handler) =>
+    @inline def loop(
+        seqOps: LinearSeq[Element],
+        viewHandler: () => Domain
+    ): Domain = {
+      seqOps.headOption match {
+        case Some(head) =>
+          blockDsl.cpsApply(
+            flatMapper(head),
+            { mappedHead =>
+              loop(
+                seqOps.tail.asInstanceOf[LinearSeq[Element]],
+                { () =>
+                  viewHandler()
+                }
+              )
+            }
+          )
+        case None =>
+          viewHandler()
+      }
+    }
+    loop(
+      toLinearSeq(sourceCollection),
+      { () =>
+        handler(())
+      }
+    )
+  }
+
 }
