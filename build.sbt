@@ -43,7 +43,7 @@ lazy val `domains-Task` =
 lazy val `keywords-FromIterable` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset, `keywords-Shift`)
+    .dependsOn(Dsl, reset % Test, `keywords-Pure`, `keywords-FlatMap`)
 
 lazy val `keywords-Pure` =
   crossProject(JSPlatform, JVMPlatform)
