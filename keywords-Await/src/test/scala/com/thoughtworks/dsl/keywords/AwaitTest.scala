@@ -33,26 +33,6 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     def inner1 = for {
       j <- ToView.FromIterable(0 until 3)
     } yield 100 + j
-    summon[Run[
-      FlatMap[
-        In[Int],
-        Int,
-        Pure[Int]
-      ],
-      Vector[Int],
-      Int
-    ]]
-
-    summon[
-      AsKeyword.IsKeyword[
-        FlatMap[
-          Future[Int],
-          Int,
-          Pure[Int]
-        ],
-        Int
-      ]
-    ]
 
     val ast1 = Await(Future(1)).flatMap { i =>
       inner1
@@ -72,22 +52,6 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
           ]
     ]
 
-    def forall[A] = {
-      summon[Run[
-        FlatMap[
-          Await[Int],
-          Int,
-          FlatMap[
-            In[Int],
-            Int,
-            Pure[Int]
-          ]
-        ],
-        Future[A] !! Vector[Int],
-        Int
-      ]]
-    }
-
     *[Future] {
       (!Await(
         ToView(ast1).to[Future]
@@ -98,12 +62,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   "testComprehension2" in {
     import Dsl._
     val inner2 = for {
-      j <- In(0 until 10)
+      j <- ToView.FromIterable(0 until 10)
     } yield 111
     summon[
       inner2.type
         <:<
-          Dsl.For.Yield.Map[In[Int], Int, Int]
+          Dsl.For.Yield.Map[ToView.FromIterable[Int], Int, Int]
     ]
     val ast2 = Await(Future(1)).flatMap { i =>
       inner2
@@ -115,7 +79,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
             Await[Int],
             Int,
             Dsl.For.Yield.Map[
-              In[Int],
+              ToView.FromIterable[Int],
               Int,
               Int
             ],
@@ -127,22 +91,21 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
   "testComprehension3" in {
     import Dsl._
-    val ast3 = for {
+    val ast3 = ToView.toKeyword(for {
       i <- Await(Future(1))
-      j <- In(0 until 10)
-    } yield 111
+      j <- ToView.FromIterable(0 until 10)
+    } yield 111)
     summon[
       ast3.type
         <:<
-          Dsl.For.Yield.FlatMap[
+          FlatMap[
             Await[Int],
             Int,
-            Dsl.For.Yield.Map[
-              In[Int],
+            FlatMap[
+              ToView.FromIterable[Int],
               Int,
-              Int
-            ],
-            Int
+              Pure[collection.View[Int]]
+            ]
           ]
     ]
     succeed
