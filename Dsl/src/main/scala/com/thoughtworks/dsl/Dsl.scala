@@ -114,7 +114,7 @@ object Dsl extends LowPriorityDsl0 {
   /** The AST returned from a `for`...`yield` or a `for`...`do` expression.
     *
     * Note that a [[For]] does not directly support !-notation.
-    * Instead, [[keywords.FromIterable.ToView]] is used to convert a [[For]] to a
+    * Instead, [[keywords.Each.ToView]] is used to convert a [[For]] to a
     * [[Keyword]] that supports !-notation.
     */
   sealed trait For

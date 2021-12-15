@@ -14,27 +14,27 @@ import scala.collection.mutable.Builder
   *   杨博 (Yang Bo)
   *
   * @example
-  *   [[FromIterable]] keywords can be used to calculate cartesian product.
+  *   [[Each]] keywords can be used to calculate cartesian product.
   *
   * {{{
   *           import com.thoughtworks.dsl.reset, reset._
-  *           def cartesianProduct = reset (List(!FromIterable(Array(1, 2, 3)) * !FromIterable(Vector(1, 10, 100, 1000))))
+  *           def cartesianProduct = reset (List(!Each(Array(1, 2, 3)) * !Each(Vector(1, 10, 100, 1000))))
   *           cartesianProduct should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
   * }}}
   * @see
   *   [[Dsl.For]] if you want to use traditional `for` comprehension instead of
   *   !-notation.
   */
-final case class FromIterable[Element](elements: Traversable[Element])
+final case class Each[Element](elements: Traversable[Element])
     extends Dsl.Keyword.Trait
-object FromIterable {
+object Each {
   opaque type ToView[Comprehension] <: Dsl.Keyword.Opaque =
     Dsl.Keyword.Opaque.Of[Comprehension]
 
   object ToView {
 
     def apply[Comprehension]
-        : Comprehension =:= FromIterable.ToView[Comprehension] =
+        : Comprehension =:= Each.ToView[Comprehension] =
       Dsl.Keyword.Opaque.Of.apply
 
     def toKeyword[ComprehensionOrKeyword, Keyword](
@@ -71,7 +71,7 @@ object FromIterable {
       ], FlatMap[
         UpstreamKeyword,
         collection.View[UpstreamElement],
-        FlatMap[FromIterable[
+        FlatMap[Each[
           UpstreamElement
         ], UpstreamElement, NestedKeyword]
       ]] = { case Dsl.For.Do.FlatForeach(upstream, flatAction) =>
@@ -79,7 +79,7 @@ object FromIterable {
           upstreamToKeyword(upstream),
           { upstreamCollection =>
             FlatMap(
-              FromIterable(upstreamCollection),
+              Each(upstreamCollection),
               flatAction.andThen(mappedToKeyword)
             )
           }
@@ -107,7 +107,7 @@ object FromIterable {
       ], FlatMap[
         UpstreamKeyword,
         collection.View[UpstreamElement],
-        FlatMap[FromIterable[
+        FlatMap[Each[
           UpstreamElement
         ], UpstreamElement, MappedKeyword]
       ]] = { case Dsl.For.Yield.FlatMap(upstream, flatMapper) =>
@@ -115,7 +115,7 @@ object FromIterable {
           upstreamToKeyword(upstream),
           { upstreamCollection =>
             FlatMap(
-              FromIterable(upstreamCollection),
+              Each(upstreamCollection),
               flatMapper.andThen(mappedToKeyword)
             )
           }
@@ -329,7 +329,7 @@ object FromIterable {
           Keyword,
           Value
         ]
-    ): Dsl.AsKeyword.IsKeyword[FromIterable.ToView[Comprehension], Value]
+    ): Dsl.AsKeyword.IsKeyword[Each.ToView[Comprehension], Value]
       with {}
 
     given [
@@ -349,13 +349,13 @@ object FromIterable {
           Domain,
           Value
         ]
-    ): Dsl.PolyCont[FromIterable.ToView[Comprehension], Domain, Value] = {
+    ): Dsl.PolyCont[Each.ToView[Comprehension], Domain, Value] = {
       (as, handler) =>
         polyCont.cpsApply(toKeyword(as), handler)
     }
   }
 
-  given [Element]: AsKeyword.IsKeyword[FromIterable[Element], Element] with {}
+  given [Element]: AsKeyword.IsKeyword[Each[Element], Element] with {}
 
   extension [FA, A](inline fa: FA)(using
       inline notKeyword: util.NotGiven[
@@ -364,7 +364,7 @@ object FromIterable {
       inline asFA: FA <:< Traversable[A]
   )
     transparent inline def unary_! : A =
-      Dsl.shift(FromIterable(asFA(fa))): A
+      Dsl.shift(Each(asFA(fa))): A
 
   private def toLinearSeq[Element](
       i: IterableOnce[Element]
@@ -394,12 +394,12 @@ object FromIterable {
       factory: Factory[MappedElement, MappedValue],
       blockDsl: Dsl.PolyCont[MappedKeyword, Domain, MappedValue]
   ): Dsl.PolyCont[
-    FlatMap[FromIterable[Element], Element, MappedKeyword],
+    FlatMap[Each[Element], Element, MappedKeyword],
     Domain,
     MappedValue
   ] = {
     case (
-          FlatMap(FromIterable(sourceCollection), flatMapper),
+          FlatMap(Each(sourceCollection), flatMapper),
           handler
         ) =>
       @inline def loop(
@@ -438,12 +438,12 @@ object FromIterable {
   ](using
       blockDsl: Dsl.PolyCont[MappedKeyword, Domain, Unit]
   ): Dsl.PolyCont[
-    FlatMap[FromIterable[Element], Element, MappedKeyword],
+    FlatMap[Each[Element], Element, MappedKeyword],
     Domain,
     Unit
   ] = {
     case (
-          FlatMap(FromIterable(sourceCollection), flatMapper),
+          FlatMap(Each(sourceCollection), flatMapper),
           handler
         ) =>
       @inline def loop(
