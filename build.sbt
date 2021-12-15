@@ -46,6 +46,17 @@ lazy val `keywords-ToView` =
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, reset, `keywords-Each`)
 
+lazy val `keywords-Fork` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .dependsOn(
+      Dsl,
+      reset,
+      `keywords-Shift`,
+      `keywords-ForEach`,
+      `keywords-In`
+    )
+
 lazy val `keywords-Pure` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -92,11 +103,6 @@ lazy val `keywords-Suspend` =
     .dependsOn(Dsl)
 
 lazy val `keywords-Return` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl)
-
-lazy val `keywords-Continue` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(Dsl)
@@ -188,7 +194,6 @@ lazy val `keywords-Yield` =
       `keywords-Each` % Test,
       `keywords-Shift` % Test,
       `keywords-In` % Test,
-      `keywords-Continue` % Test
     )
 
 lazy val `keywords-Monadic` =
