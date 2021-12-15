@@ -31,7 +31,7 @@ object ToView {
     given [
         Upstream,
         UpstreamElement,
-        Mapped <: Dsl.Comprehension.Container[Element],
+        Mapped <: Dsl.For.Yield[Element],
         Element,
         UpstreamKeyword,
         MappedKeyword
@@ -41,7 +41,7 @@ object ToView {
           UpstreamKeyword
         ],
         mappedToKeyword: ToKeyword[Mapped, MappedKeyword]
-    ): ToKeyword[Dsl.Comprehension.Container.FlatMap[
+    ): ToKeyword[Dsl.For.Yield.FlatMap[
       Upstream,
       UpstreamElement,
       Mapped,
@@ -50,7 +50,7 @@ object ToView {
       UpstreamKeyword,
       collection.View[UpstreamElement],
       FlatMap[Each[UpstreamElement], UpstreamElement, MappedKeyword]
-    ]] = { case Dsl.Comprehension.Container.FlatMap(upstream, flatMapper) =>
+    ]] = { case Dsl.For.Yield.FlatMap(upstream, flatMapper) =>
       FlatMap(
         upstreamToKeyword(upstream),
         { upstreamCollection =>
@@ -72,7 +72,7 @@ object ToView {
           Upstream,
           UpstreamKeyword
         ]
-    ): ToKeyword[Dsl.Comprehension.Container.Map[
+    ): ToKeyword[Dsl.For.Yield.Map[
       Upstream,
       UpstreamElement,
       Element
@@ -80,7 +80,7 @@ object ToView {
       UpstreamKeyword,
       collection.View[UpstreamElement],
       Pure[collection.View[Element]]
-    ]] = { case Dsl.Comprehension.Container.Map(upstream, mapper) =>
+    ]] = { case Dsl.For.Yield.Map(upstream, mapper) =>
       FlatMap(
         upstreamToKeyword(upstream),
         { (upstreamCollection: collection.View[UpstreamElement]) =>
@@ -100,14 +100,14 @@ object ToView {
           Upstream,
           UpstreamKeyword
         ]
-    ): ToKeyword[Dsl.Comprehension.Container.WithFilter[
+    ): ToKeyword[Dsl.For.Yield.WithFilter[
       Upstream,
       Element
     ], FlatMap[
       UpstreamKeyword,
       collection.View[Element],
       Pure[collection.View[Element]]
-    ]] = { case Dsl.Comprehension.Container.WithFilter(upstream, filter) =>
+    ]] = { case Dsl.For.Yield.WithFilter(upstream, filter) =>
       FlatMap(
         upstreamToKeyword(upstream),
         { (upstreamCollection: collection.View[Element]) =>
@@ -124,11 +124,11 @@ object ToView {
         Element
     ](using
         isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, Element]
-    ): ToKeyword[Dsl.Comprehension.Container.WithFilter[
+    ): ToKeyword[Dsl.For.Yield.WithFilter[
       Upstream,
       Element
     ], FlatMap[Upstream, Element, Pure[collection.View[Element]]]] = {
-      case Dsl.Comprehension.Container.WithFilter(upstream, filter) =>
+      case Dsl.For.Yield.WithFilter(upstream, filter) =>
         FlatMap(
           upstream,
           { (element: Element) =>
@@ -147,7 +147,7 @@ object ToView {
         Element
     ](using
         isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, UpstreamElement]
-    ): ToKeyword[Dsl.Comprehension.Container.Map[
+    ): ToKeyword[Dsl.For.Yield.Map[
       Upstream,
       UpstreamElement,
       Element
@@ -155,7 +155,7 @@ object ToView {
       Upstream,
       UpstreamElement,
       Pure[collection.View[Element]]
-    ]] = { case Dsl.Comprehension.Container.Map(upstream, mapper) =>
+    ]] = { case Dsl.For.Yield.Map(upstream, mapper) =>
       FlatMap(
         upstream,
         element => Pure(collection.View.Single(mapper(element)))
@@ -165,13 +165,13 @@ object ToView {
     given [
         Upstream,
         UpstreamElement,
-        Mapped <: Dsl.Comprehension.Container[Element],
+        Mapped <: Dsl.For.Yield[Element],
         Element,
         MappedKeyword
     ](using
         isUpstreamKeyword: Dsl.AsKeyword.IsKeyword[Upstream, UpstreamElement],
         mappedToKeyword: ToKeyword[Mapped, MappedKeyword]
-    ): ToKeyword[Dsl.Comprehension.Container.FlatMap[
+    ): ToKeyword[Dsl.For.Yield.FlatMap[
       Upstream,
       UpstreamElement,
       Mapped,
@@ -180,7 +180,7 @@ object ToView {
       Upstream,
       UpstreamElement,
       MappedKeyword
-    ]] = { case Dsl.Comprehension.Container.FlatMap(upstream, flatMapper) =>
+    ]] = { case Dsl.For.Yield.FlatMap(upstream, flatMapper) =>
       FlatMap(upstream, flatMapper.andThen(mappedToKeyword))
     }
 

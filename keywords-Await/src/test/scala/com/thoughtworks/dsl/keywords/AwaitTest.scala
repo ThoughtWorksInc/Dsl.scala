@@ -60,10 +60,10 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       ast1.type
         <:<
-          Dsl.Comprehension.Container.FlatMap[
+          Dsl.For.Yield.FlatMap[
             Await[Int],
             Int,
-            Dsl.Comprehension.Container.Map[
+            Dsl.For.Yield.Map[
               Each[Int],
               Int,
               Int
@@ -103,7 +103,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       inner2.type
         <:<
-          Dsl.Comprehension.Container.Map[In[Int], Int, Int]
+          Dsl.For.Yield.Map[In[Int], Int, Int]
     ]
     val ast2 = Await(Future(1)).flatMap { i =>
       inner2
@@ -111,10 +111,10 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       ast2.type
         <:<
-          Dsl.Comprehension.Container.FlatMap[
+          Dsl.For.Yield.FlatMap[
             Await[Int],
             Int,
-            Dsl.Comprehension.Container.Map[
+            Dsl.For.Yield.Map[
               In[Int],
               Int,
               Int
@@ -134,10 +134,10 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       ast3.type
         <:<
-          Dsl.Comprehension.Container.FlatMap[
+          Dsl.For.Yield.FlatMap[
             Await[Int],
             Int,
-            Dsl.Comprehension.Container.Map[
+            Dsl.For.Yield.Map[
               In[Int],
               Int,
               Int

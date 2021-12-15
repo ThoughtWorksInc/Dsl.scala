@@ -57,11 +57,11 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
     }
 
   extension [KeywordOrView, Element](keywordOrView: KeywordOrView)(using hasValueOrElement: Dsl.HasValueOrElement[KeywordOrView, Element])
-    def flatMap[Mapped <: Comprehension.Container[MappedElement], MappedElement](flatMapper: Element => Mapped) = Comprehension.Container.FlatMap(keywordOrView, flatMapper)
-    def map[Mapped](mapper: Element => Mapped) = Comprehension.Container.Map(keywordOrView, mapper)
-    def foreach[Nested <: Comprehension.DiscardValue](action: Element => Nested) = Comprehension.DiscardValue.FlatForeach(keywordOrView, action)
-    def foreach(action: Element => Unit) = Comprehension.DiscardValue.Foreach(keywordOrView, action)
-    def withFilter(filter: Element => Boolean) = Comprehension.Container.WithFilter(keywordOrView, filter)
+    def flatMap[Mapped <: For.Yield[MappedElement], MappedElement](flatMapper: Element => Mapped) = For.Yield.FlatMap(keywordOrView, flatMapper)
+    def map[Mapped](mapper: Element => Mapped) = For.Yield.Map(keywordOrView, mapper)
+    def foreach[Nested <: For.Do](action: Element => Nested) = For.Do.FlatForeach(keywordOrView, action)
+    def foreach(action: Element => Unit) = For.Do.Foreach(keywordOrView, action)
+    def withFilter(filter: Element => Boolean) = For.Yield.WithFilter(keywordOrView, filter)
     // TODO: Implement `foreach` and `map` in macros to support !-notation in `do` block or `yield` block
 
 //  // FIXME: Shift
@@ -108,29 +108,31 @@ object Dsl extends LowPriorityDsl0 {
 
   sealed trait HasValueOrElement[KeywordOrView, ValueOrElement]
   object HasValueOrElement {
-    given [KeywordOrView <: Comprehension.Container[Element], Element]: Comprehension.Container[Element] with {}
+    given [KeywordOrView <: For.Yield[Element], Element]: For.Yield[Element] with {}
   }
 
-  /** The reified for-comprehension expression.
+  /** The AST returned from a `for`...`yield` or a `for`...`do` expression.
     *
-    * Note that a [[Comprehension]] does not directly support !-notation.
-    * Instead, [[keywords.As]] is used to convert a [[Comprehension]] to a
+    * Note that a [[For]] does not directly support !-notation.
+    * Instead, [[keywords.ToView]] is used to convert a [[For]] to a
     * [[Keyword]] that supports !-notation.
     */
-  sealed trait Comprehension
-  object Comprehension {
-    sealed trait DiscardValue extends Comprehension
-    object DiscardValue {
-      final case class KeywordForeach[Upstream, UpstreamElement, UnitKeyword](upstream: Upstream, action: UpstreamElement => UnitKeyword) extends DiscardValue
-      final case class Foreach[Upstream, UpstreamElement](upstream: Upstream, action: UpstreamElement => Unit) extends DiscardValue
-      final case class FlatForeach[Upstream, UpstreamElement, Nested <: DiscardValue](upstream: Upstream, action: UpstreamElement => Nested) extends DiscardValue
+  sealed trait For
+  object For {
+    /** The AST returned from a `for`...`do` expression. */
+    sealed trait Do extends For
+    object Do {
+      final case class KeywordForeach[Upstream, UpstreamElement, UnitKeyword](upstream: Upstream, action: UpstreamElement => UnitKeyword) extends Do
+      final case class Foreach[Upstream, UpstreamElement](upstream: Upstream, action: UpstreamElement => Unit) extends Do
+      final case class FlatForeach[Upstream, UpstreamElement, Nested <: Do](upstream: Upstream, action: UpstreamElement => Nested) extends Do
     }
-    sealed trait Container[Element] extends Comprehension
-    object Container {
-      final case class KeywordMap[Upstream, UpstreamElement, ElementKeyword, Element](upstream: Upstream, mapper: UpstreamElement => ElementKeyword) extends Container[Element]
-      final case class Map[Upstream, UpstreamElement, Element](upstream: Upstream, mapper: UpstreamElement => Element) extends Container[Element]
-      final case class FlatMap[Upstream, UpstreamElement, Mapped <: Container[Element], Element](upstream: Upstream, flatMapper: UpstreamElement => Mapped) extends Container[Element]
-      final case class WithFilter[Upstream, Element](upstream: Upstream, filter: Element => Boolean) extends Container[Element]
+    /** The AST returned from a `for`...`yield` expression. */
+    sealed trait Yield[Element] extends For
+    object Yield {
+      final case class KeywordMap[Upstream, UpstreamElement, ElementKeyword, Element](upstream: Upstream, mapper: UpstreamElement => ElementKeyword) extends Yield[Element]
+      final case class Map[Upstream, UpstreamElement, Element](upstream: Upstream, mapper: UpstreamElement => Element) extends Yield[Element]
+      final case class FlatMap[Upstream, UpstreamElement, Mapped <: Yield[Element], Element](upstream: Upstream, flatMapper: UpstreamElement => Mapped) extends Yield[Element]
+      final case class WithFilter[Upstream, Element](upstream: Upstream, filter: Element => Boolean) extends Yield[Element]
     }
   }
 
