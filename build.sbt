@@ -152,11 +152,6 @@ lazy val `keywords-Using` =
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, reset, `keywords-Shift`)
 
-lazy val `keywords-Map` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test)
-
 lazy val `keywords-FlatMap` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
