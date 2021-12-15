@@ -48,16 +48,6 @@ object Each {
     transparent inline def unary_! : A =
       Dsl.shift(Each(asFA(fa))): A
 
-  implicit def eachDsl[Element, Domain, DomainElement](implicit
-      thatIsTraversableOnce: (Element => Domain) => (Element => GenTraversableOnce[DomainElement]),
-      factory: Factory[DomainElement, Domain]
-  ): Dsl[Each[Element], Domain, Element] =
-    new Dsl[Each[Element], Domain, Element] {
-      def cpsApply(keyword: Each[Element], handler: Element => Domain): Domain = {
-        flatMapBreakOut(keyword.elements, thatIsTraversableOnce(handler))
-      }
-    }
-
   private def toLinearSeq[Element](
       i: IterableOnce[Element]
   ): LinearSeq[Element] = {
@@ -108,7 +98,7 @@ object Each {
             }
           )
         case None =>
-          viewHandler(Nil.view)
+          viewHandler(View.Empty)
       }
     }
     loop(

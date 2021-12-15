@@ -32,7 +32,7 @@ import scala.language.higherKinds
   *            val include = !Each(includes)
   *            !Yield("-I")
   *            !Yield(include)
-  *            !Continue
+  *            Stream.empty
   *          }
   *
   *          gccFlagBuilder("main.c", "lib1/include", "lib2/include") should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))

@@ -6,7 +6,8 @@ import com.thoughtworks.dsl.reset, reset._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 class EachSpec extends AnyFreeSpec with Matchers {
 
@@ -14,13 +15,13 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
     "@reset parameter" in {
       val seq = 1 to 10
-      def run(): Seq[Int] = *[Seq] {
+      def run(): Seq[Int] = reset(Seq {
         val plus100 = reset(Seq {
           !Each(seq) + 100
         })
         plus100.length should be(10)
         !Each(plus100)
-      }
+      })
 
       val result = run()
       result.length should be(10)
@@ -29,13 +30,13 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
     "reset block" in {
       val seq = 1 to 10
-      def run(): Seq[Int] = *[Seq] {
+      def run(): Seq[Int] = reset(Seq {
         val plus100 = reset {
           Seq(!Each(seq) + 100)
         }
         plus100.length should be(10)
         !Each(plus100)
-      }
+      })
 
       val result = run()
       result.length should be(10)
@@ -44,13 +45,13 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
     "block without reset should behave the same as a block with a reset" in {
       val seq = 1 to 10
-      def run(): Seq[Int] = *[Seq] {
+      def run(): Seq[Int] = reset {
         val plus100 = {
           val element = !Each(seq)
           Seq(element + 100)
         }
         plus100.length should be(10)
-        !Each(plus100)
+        Seq(!Each(plus100))
       }
 
       val result = run()
@@ -66,12 +67,12 @@ class EachSpec extends AnyFreeSpec with Matchers {
       "explicit @reset" in {
         val seq = 1 to 10
 
-        def run(): Seq[Int] = *[Seq] {
+        def run(): Seq[Int] = reset {
           val plus100: Seq[Int] = Seq {
             !Each(seq) + 100
           }
           plus100.length should be(1)
-          !Each(plus100)
+          Seq(!Each(plus100))
         }
 
         val result = run()
@@ -82,12 +83,12 @@ class EachSpec extends AnyFreeSpec with Matchers {
       "val" in {
         val seq = 1 to 10
 
-        def run(): Seq[Int] = *[Seq] {
+        def run(): Seq[Int] = reset {
           val plus100 = Seq {
             !Each(seq) + 100
           }
           plus100.length should be(1)
-          !Each(plus100)
+          Seq(!Each(plus100))
         }
 
         val result = run()
@@ -98,12 +99,12 @@ class EachSpec extends AnyFreeSpec with Matchers {
       "def" in {
         val seq = 1 to 10
 
-        def run(): Seq[Int] = *[Seq] {
-          def plus100 = *[Seq] {
+        def run(): Seq[Int] = reset {
+          def plus100 = reset apply Seq {
             !Each(seq) + 100
           }
           plus100.length should be(10)
-          !Each(plus100)
+          Seq(!Each(plus100))
         }
 
         val result = run()
@@ -115,8 +116,8 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
   "default parameter" in {
 
-    def foo(s: Seq[Int] = *[Seq] {
-      !Each(Seq(1, 2, 3)) + 100
+    def foo(s: Seq[Int] = reset {
+      Seq(!Each(Seq(1, 2, 3)) + 100)
     }) = s
 
     foo() should be(Seq(101, 102, 103))
@@ -125,8 +126,8 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
   "val in class" in {
     class C {
-      val ascii: Set[Int] = *[Set](
-        !Each(Seq(1, 2, 3, 2)) + 100
+      val ascii: Set[Int] = reset(
+        Set(!Each(Seq(1, 2, 3, 2)) + 100)
       )
     }
 
@@ -136,13 +137,15 @@ class EachSpec extends AnyFreeSpec with Matchers {
   "pattern matching" - {
     "val" in {
       def foo: Seq[String] =
-        *[Seq] {
+        reset {
           // OK
           val s0 = !Each(Seq("a"))
 
-          // not OK
-          val (s1, s2) = !Each(Seq(("b", "c")))
-          s1
+          // How to support the following use case?
+          // val (s1, s2) = !Each(Seq(("b", "c"))) 
+
+          val Seq(s1, s2) = !Each(Seq(Seq("b", "c")))
+          Seq(s1)
         }
 
       foo should be(Seq("b"))
