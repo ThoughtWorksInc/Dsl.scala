@@ -108,7 +108,7 @@ object Each {
             }
           )
         case None =>
-          viewHandler(Nil.view)
+          viewHandler(View.Empty)
       }
     }
     loop(
