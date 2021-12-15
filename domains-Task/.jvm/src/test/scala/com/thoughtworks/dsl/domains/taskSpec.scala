@@ -6,7 +6,7 @@ import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
 import scala.language.implicitConversions
 
-import com.thoughtworks.dsl.keywords.{Using, Each}
+import com.thoughtworks.dsl.keywords.{Using, ToView}
 import com.thoughtworks.dsl.domains._
 import com.thoughtworks.dsl.keywords.Shift
 import com.thoughtworks.dsl.keywords.Shift.given
@@ -43,7 +43,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     val task1: Task[Int] = Task.now(1)
 
     val ts = *[Task]/* .join */ apply Seq {
-      !Each(0 until 10) + !Shift(task1)
+      !ToView.FromIterable(0 until 10) + !Shift(task1)
     }
 
     !Shift(ts) should be(1 until 11)
@@ -180,11 +180,11 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     def composeTask(t0: Task[Seq[Task[Seq[Task[Seq[Task[Seq[Float]]]]]]]]): Task[Seq[Seq[Seq[Seq[Float]]]]] = {
       // TODO: remove explicit type parameters when https://github.com/scala/bug/issues/11068 is fixed
       *[Task]/*.join*/ apply Seq {
-        val t1 = !Each(!Shift(t0))
+        val t1 = !ToView.FromIterable(!Shift(t0))
         !Shift(*[Task]/*.join*/ apply Seq {
-          val t2 = !Each(!Shift(t1))
+          val t2 = !ToView.FromIterable(!Shift(t1))
           !Shift(*[Task]/*.join*/ apply Seq {
-            val t3 = !Each(!Shift(t2))
+            val t3 = !ToView.FromIterable(!Shift(t2))
             !Shift(t3)
           })
         })

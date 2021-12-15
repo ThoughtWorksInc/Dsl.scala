@@ -17,8 +17,6 @@ We also provide some built-in keywords, including:
  * The `Shift` keyword for creating asynchronous tasks as delimited continuations, similar to the `shift` operator in [Scala Continuations](https://github.com/scala/scala-continuations).
  * The `AsynchronousIo.Connect`, `AsynchronousIo.Accept`, `AsynchronousIo.Read` and `AsynchronousIo.Write` keywords for performing I/O on an asynchronous channel.
  * The `Yield` keyword for generating lazy streams, similar to `yield` in C#, Python and JavaScript.
- * The `Each` keyword for iterating on a collection, similar to the list comprehension feature in Scala, Haskell, OCaml, Python and Lisp.
- * The `Continue` keyword LDK for skipping an element in an `Each` collection comprehension, similar to the native `continue` keyword in C/C++ or the `mzero` in Haskell.
  * The `Fork` keyword for duplicating current context, similar to the `fork` system call in POSIX.
  * The `Return` keyword for early returning, similar to the native `return` keyword in Scala.
  * The `Using` keyword to automatically close resources when exiting a scope, similar to the native `using` keyword in C#.
@@ -26,7 +24,7 @@ We also provide some built-in keywords, including:
  * The `NullSafe` keyword for the null safe operator, similar to the `?` operator in Kotlin and Groovy.
  * The `NoneSafe` keyword for the `None` safe operator, similar to the `Maybe` monad in Haskell.
 
-All the above keywords can be used together with each others. For example you can perform list comprehension to manipulate native resources in an asynchronous task by using `Each`, `Using` and `Shift` together.
+All the above keywords can be used together with each others. For example you can perform list comprehension to manipulate native resources in an asynchronous task by using `ToView.FromIterable`, `Using` and `Shift` together.
 
 ## Getting Started
 

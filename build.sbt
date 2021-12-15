@@ -34,8 +34,7 @@ lazy val `domains-Task` =
       `keywords-Shift`,
       reset,
       `domains-Continuation`,
-      `keywords-In` % Test,
-      `keywords-Each` % Test,
+      `keywords-ToView` % Test,
       `keywords-Using` % Test,
       `keywords-Yield` % Test,
       `keywords-ToView` % Test
@@ -44,18 +43,7 @@ lazy val `domains-Task` =
 lazy val `keywords-ToView` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset, `keywords-Each`)
-
-lazy val `keywords-Fork` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(
-      Dsl,
-      reset,
-      `keywords-Shift`,
-      `keywords-ForEach`,
-      `keywords-In`
-    )
+    .dependsOn(Dsl, reset, `keywords-Shift`)
 
 lazy val `keywords-Pure` =
   crossProject(JSPlatform, JVMPlatform)
@@ -128,8 +116,7 @@ lazy val `keywords-AsynchronousIo` =
     .crossType(CrossType.Pure)
     .dependsOn(
       `keywords-Shift`,
-      `keywords-In` % Test,
-      `keywords-Each` % Test,
+      `keywords-ToView` % Test,
       `keywords-Using` % Test,
       `keywords-ToView` % Test,
       `domains-Task` % Test
@@ -155,16 +142,6 @@ lazy val `keywords-NoneSafe` =
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, reset % Test, `keywords-Return`)
 
-lazy val `keywords-For` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test, `keywords-In` % Test)
-
-lazy val `keywords-In` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test, `keywords-Shift`)
-
 lazy val `keywords-Await` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -173,7 +150,7 @@ lazy val `keywords-Await` =
       `domains-Continuation`,
       reset % Test,
       `domains-Task` % Test,
-      `keywords-In` % Test,
+      `keywords-ToView` % Test,
       `keywords-Get` % Test,
       `keywords-Return` % Test,
       `keywords-Yield` % Test,
@@ -191,9 +168,8 @@ lazy val `keywords-Yield` =
     .dependsOn(
       Dsl,
       reset % Test,
-      `keywords-Each` % Test,
+      `keywords-ToView` % Test,
       `keywords-Shift` % Test,
-      `keywords-In` % Test,
     )
 
 lazy val `keywords-Monadic` =
@@ -204,16 +180,6 @@ lazy val `keywords-Monadic` =
 organization in ThisBuild := "com.thoughtworks.dsl"
 
 skip in publish := true
-
-lazy val `keywords-ForEach` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test, `keywords-Each` % Test)
-
-lazy val `keywords-Each` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset, `keywords-Shift`)
 
 lazy val `domains-scalaz` =
   crossProject(JSPlatform, JVMPlatform)

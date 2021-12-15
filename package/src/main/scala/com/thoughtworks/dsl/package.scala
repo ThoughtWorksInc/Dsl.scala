@@ -14,7 +14,7 @@ package com.thoughtworks
   * [[https://github.com/scala/scala-async scala-async]],
   * [[http://monadless.io/ Monadless]],
   * [[https://github.com/pelotom/effectful effectful]]
-  * and [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]].
+  * and [[https://github.com/ThoughtWorksInc/each ThoughtWorks ToView.FromIterable]].
   *
   * = Introduction =
   *
@@ -78,11 +78,11 @@ package com.thoughtworks
   * and it runs asynchronously.
   *
   * This approach can be generalized to any monadic data types.
-  * [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]], [[http://monadless.io/ Monadless]]
+  * [[https://github.com/ThoughtWorksInc/each ThoughtWorks ToView.FromIterable]], [[http://monadless.io/ Monadless]]
   * and [[https://github.com/pelotom/effectful effectful]] are macros
   * that convert ordinary control flow to monadic control flow.
   *
-  * For example, with the help of [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]],
+  * For example, with the help of [[https://github.com/ThoughtWorksInc/each ThoughtWorks ToView.FromIterable]],
   * [[https://github.com/ThoughtWorksInc/Binding.scala Binding.scala]] is used to create reactive HTML templating
   * from ordinary Scala control flow.
   *
@@ -107,11 +107,11 @@ package com.thoughtworks
   * == Collaborative DSLs ==
   *
   * All the above approaches lack of the ability to collaborate with other DSLs.
-  * Each of the above DSLs can be only exclusively enabled in a code block.
+  * ToView.FromIterable of the above DSLs can be only exclusively enabled in a code block.
   * For example,
   * [[https://github.com/scala/scala-continuations scala-continuations]]
   * enables calls to `@cps` method in [[scala.util.continuations.reset]] blocks,
-  * and [[https://github.com/ThoughtWorksInc/each ThoughtWorks Each]]
+  * and [[https://github.com/ThoughtWorksInc/each ThoughtWorks ToView.FromIterable]]
   * enables the magic `each` method for [[scalaz.Monad]] in [[com.thoughtworks.each.Monadic.monadic]] blocks.
   * It is impossible to enable both DSLs in one function.
   *
@@ -505,7 +505,7 @@ package com.thoughtworks
   *          The conversion can be avoided if using [[scala.collection.generic.CanBuildFrom CanBuildFrom]] type class
   *          instead of monads.
   *
-  *          We provide a [[com.thoughtworks.dsl.keywords.Each Each]]
+  *          We provide a [[com.thoughtworks.dsl.keywords.ToView.FromIterable ToView.FromIterable]]
   *          keyword to extract each element in a Scala collection.
   *          The behavior is similar to monad, except the collection type can vary.
   *
@@ -515,7 +515,7 @@ package com.thoughtworks
   *          {{{
   *          import java.io.File
   *          import com.thoughtworks.dsl.keywords.Monadic, Monadic.implicitMonadic
-  *          import com.thoughtworks.dsl.keywords.Each
+  *          import com.thoughtworks.dsl.keywords.ToView.FromIterable
   *          import com.thoughtworks.dsl.domains.scalaz._
   *          import scalaz.std.stream._
   *
@@ -526,7 +526,7 @@ package com.thoughtworks
   *                  // Unable to open `file`
   *                  !Stream.empty[Int]
   *                case children =>
-  *                  val child: File = !Each(children)
+  *                  val child: File = !ToView.FromIterable(children)
   *                  !countEach(child)
   *              }
   *            } else {
@@ -544,7 +544,7 @@ package com.thoughtworks
   *          }}}
   *
   *          Unlike Haskell's do-notation or Idris's !-notation,
-  *          Dsl.scala allows non-monadic keywords like [[com.thoughtworks.dsl.keywords.Each Each]] works along with
+  *          Dsl.scala allows non-monadic keywords like [[com.thoughtworks.dsl.keywords.ToView.FromIterable ToView.FromIterable]] works along with
   *          monads.
   * @example Dsl.scala also supports [[scalaz.MonadTrans]].
   *
