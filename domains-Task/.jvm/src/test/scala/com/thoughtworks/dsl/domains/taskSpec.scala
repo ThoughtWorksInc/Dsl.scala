@@ -6,7 +6,7 @@ import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
 import scala.language.implicitConversions
 
-import com.thoughtworks.dsl.keywords.{Using, Each, Fork}
+import com.thoughtworks.dsl.keywords.{Using, Each}
 import com.thoughtworks.dsl.domains._
 import com.thoughtworks.dsl.keywords.Shift
 import com.thoughtworks.dsl.keywords.Shift.given
@@ -43,7 +43,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     val task1: Task[Int] = Task.now(1)
 
     val ts = *[Task]/* .join */ apply Seq {
-      !Fork(0 until 10) + !Shift(task1)
+      !Each(0 until 10) + !Shift(task1)
     }
 
     !Shift(ts) should be(1 until 11)

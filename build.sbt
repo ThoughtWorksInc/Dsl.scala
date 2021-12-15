@@ -35,7 +35,6 @@ lazy val `domains-Task` =
       reset,
       `domains-Continuation`,
       `keywords-In` % Test,
-      `keywords-Fork` % Test,
       `keywords-Each` % Test,
       `keywords-Using` % Test,
       `keywords-Yield` % Test,
@@ -46,18 +45,6 @@ lazy val `keywords-ToView` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(Dsl, reset, `keywords-Each`)
-
-lazy val `keywords-Fork` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(
-      Dsl,
-      reset,
-      `keywords-Shift`,
-      `keywords-Continue`,
-      `keywords-ForEach`,
-      `keywords-In`
-    )
 
 lazy val `keywords-Pure` =
   crossProject(JSPlatform, JVMPlatform)
