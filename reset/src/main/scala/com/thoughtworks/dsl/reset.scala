@@ -700,7 +700,4 @@ object reset {
     Macros.reset[Value, Value]('value)
   }
 
-  @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
-  def shift[Keyword, Value](keyword: Keyword): Value = ???
-
 }        
