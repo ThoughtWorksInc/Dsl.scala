@@ -194,11 +194,6 @@ organization in ThisBuild := "com.thoughtworks.dsl"
 
 skip in publish := true
 
-lazy val `keywords-ForEach` =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test, `keywords-ToView` % Test)
-
 lazy val `domains-scalaz` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
