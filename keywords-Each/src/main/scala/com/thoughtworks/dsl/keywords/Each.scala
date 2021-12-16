@@ -25,9 +25,11 @@ import scala.collection.mutable.Builder
   *   [[Dsl.For]] if you want to use traditional `for` comprehension instead of
   *   !-notation.
   */
-final case class Each[Element](elements: Traversable[Element])
-    extends Dsl.Keyword.Trait
+opaque type Each[Element] <: Dsl.Keyword.Opaque =
+  Dsl.Keyword.Opaque.Of[Traversable[Element]]
 object Each {
+  def apply[Element]: Iterable[Element] =:= Each[Element] =
+    Dsl.Keyword.Opaque.Of.apply
 
   final case class To[ForYield <: Dsl.For.Yield[Element], Element, Collection](
       factory: Factory[Element, Collection]
@@ -427,7 +429,7 @@ object Each {
     MappedValue
   ] = {
     case (
-          FlatMap(Each(sourceCollection), flatMapper),
+          FlatMap(sourceCollection, flatMapper),
           handler
         ) =>
       @inline def loop(
@@ -471,7 +473,7 @@ object Each {
     Unit
   ] = {
     case (
-          FlatMap(Each(sourceCollection), flatMapper),
+          FlatMap(sourceCollection, flatMapper),
           handler
         ) =>
       @inline def loop(
