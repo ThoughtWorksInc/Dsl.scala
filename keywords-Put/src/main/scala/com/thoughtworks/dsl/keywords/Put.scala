@@ -19,10 +19,10 @@ import com.thoughtworks.dsl.Dsl.IsKeyword
   * {{{
   * import com.thoughtworks.dsl.reset
   * def upperCasedLastCharacter = reset[String => Char] {
-  *   val initialValue = !Get[String]()
+  *   val initialValue = !Get[String]
   *   !Put(initialValue.toUpperCase)
   *
-  *   val upperCased = !Get[String]()
+  *   val upperCased = !Get[String]
   *   Function.const(upperCased.last)
   * }
   * }}}
@@ -41,12 +41,12 @@ import com.thoughtworks.dsl.Dsl.IsKeyword
   * {{{
   * import com.thoughtworks.dsl.reset
   * def formatter = reset[Double => Int => Vector[Any] => String] {
-  *   !Put(!Get[Vector[Any]]() :+ "x=")
-  *   !Put(!Get[Vector[Any]]() :+ !Get[Double]())
-  *   !Put(!Get[Vector[Any]]() :+ ",y=")
-  *   !Put(!Get[Vector[Any]]() :+ !Get[Int]())
+  *   !Put(!Get[Vector[Any]] :+ "x=")
+  *   !Put(!Get[Vector[Any]] :+ !Get[Double])
+  *   !Put(!Get[Vector[Any]] :+ ",y=")
+  *   !Put(!Get[Vector[Any]] :+ !Get[Int])
   *
-  *   !Return((!Get[Vector[Any]]()).mkString)
+  *   !Return((!Get[Vector[Any]]).mkString)
   * }
   *
   * formatter(0.5)(42)(Vector.empty) should be("x=0.5,y=42")

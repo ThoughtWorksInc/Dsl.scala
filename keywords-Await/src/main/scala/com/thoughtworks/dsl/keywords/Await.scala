@@ -95,7 +95,7 @@ import scala.language.implicitConversions
   *   } catch {
   *     case e: IllegalStateException =>
   *       !Await(recoverFuture)
-  *       buffer.append(!Get[Char]())
+  *       buffer.append(!Get[Char])
   *       buffer.append(e.getMessage)
   *   } finally {
   *     buffer.append("!")
