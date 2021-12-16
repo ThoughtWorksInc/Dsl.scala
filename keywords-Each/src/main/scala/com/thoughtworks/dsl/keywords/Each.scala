@@ -26,7 +26,7 @@ import scala.collection.mutable.Builder
   *   !-notation.
   */
 opaque type Each[Element] <: Dsl.Keyword.Opaque =
-  Dsl.Keyword.Opaque.Of[Traversable[Element]]
+  Dsl.Keyword.Opaque.Of[Iterable[Element]]
 object Each {
   def apply[Element]: Iterable[Element] =:= Each[Element] =
     Dsl.Keyword.Opaque.Of.apply
@@ -391,7 +391,7 @@ object Each {
       inline notKeyword: util.NotGiven[
         FA <:< Dsl.Keyword
       ],
-      inline asFA: FA <:< Traversable[A]
+      inline asFA: FA <:< Iterable[A]
   )
     transparent inline def unary_! : A =
       Dsl.shift(Each(asFA(fa))): A
