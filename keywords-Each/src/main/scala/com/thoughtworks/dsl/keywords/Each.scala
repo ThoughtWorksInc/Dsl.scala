@@ -28,6 +28,35 @@ import scala.collection.mutable.Builder
 final case class Each[Element](elements: Traversable[Element])
     extends Dsl.Keyword.Trait
 object Each {
+
+  final case class To[ForYield <: Dsl.For.Yield[Element], Element, Collection](
+      factory: Factory[Element, Collection]
+  )(val forYield: ForYield)
+      extends Dsl.Keyword.Trait
+
+  object To {
+    given To[ForYield <: Dsl.For.Yield[Element], Element, Collection]
+        : Dsl.IsKeyword[To[ForYield, Element, Collection], Collection] with {}
+    given [
+        ForYield <: Dsl.For.Yield[Element],
+        Element,
+        Collection,
+        Domain
+    ](using
+        toViewDsl: Dsl.PolyCont[Each.ToView[ForYield], Domain, View[Element]]
+    ): Dsl.PolyCont[
+      Each.To[ForYield, Element, Collection],
+      Domain,
+      Collection
+    ] = { case (keyword, handler) =>
+      val factory = keyword.factory
+      toViewDsl.cpsApply(
+        ToView(keyword.forYield),
+        { view => handler(view.to(factory)) }
+      )
+    }
+  }
+
   opaque type ToView[Comprehension] <: Dsl.Keyword.Opaque =
     Dsl.Keyword.Opaque.Of[Comprehension]
 
