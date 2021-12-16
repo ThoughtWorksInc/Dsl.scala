@@ -3,24 +3,23 @@ package keywords
 import com.thoughtworks.dsl.Dsl.IsKeyword
 import scala.language.implicitConversions
 
-final case class NoneSafe[A](option: Option[A]) extends AnyVal with Dsl.Keyword.Trait
+opaque type NoneSafe[A] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Option[A]]
 
 object NoneSafe {
   given [A]: IsKeyword[NoneSafe[A], A] with {}
+  def apply[A]: Option[A] =:= NoneSafe[A] = Dsl.Keyword.Opaque.Of.apply
 
   implicit def noneSafeDsl[A, Domain](implicit
       continueDsl: Dsl[Return[None.type], Domain, Nothing]
-  ): Dsl[NoneSafe[A], Domain, A] =
-    new Dsl[NoneSafe[A], Domain, A] {
-      def cpsApply(keyword: NoneSafe[A], handler: A => Domain): Domain = {
-        keyword.option match {
-          case None =>
-            continueDsl.cpsApply(Return(None), identity)
-          case Some(a) =>
-            handler(a)
-        }
+  ): Dsl[NoneSafe[A], Domain, A] = {
+    (keyword: Option[A], handler: A => Domain) =>
+      keyword match {
+        case None =>
+          continueDsl.cpsApply(Return(None), identity)
+        case Some(a) =>
+          handler(a)
       }
-    }
+  }: Dsl[Option[A], Domain, A]
 
   extension [FA, A](inline fa: FA)(using
       inline notKeyword: util.NotGiven[
