@@ -491,18 +491,15 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
-  trait Run[Keyword, Domain, Value] extends (Keyword => Domain)
+  opaque type Run[Keyword, Domain, Value] <: Keyword => Domain =
+    Keyword => Domain
 
   object Run {
 
     given [Keyword, Domain, Value](using
         dsl: /*=>*/ PolyCont[Keyword, Domain, Value],
         lift: /*=>*/ Lift[Value, Domain]
-    ): Run[Keyword, Domain, Value] with {
-      @inline def apply(keyword: Keyword): Domain = {
-        dsl.cpsApply(keyword, lift)
-      }
-    }
+    ): Run[Keyword, Domain, Value] = { dsl.cpsApply(_, lift) }
 
   }
 
