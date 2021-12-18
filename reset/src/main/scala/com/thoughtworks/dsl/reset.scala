@@ -670,7 +670,7 @@ object reset {
     
   }
 
-  private[dsl] object Macros {
+  object Macros {
     def reify[V](body: quoted.Expr[_])(using qctx: Quotes, tv: quoted.Type[V]): quoted.Expr[_] = {
       Macros[qctx.type](resetDescendant = false).reify[V](body/*.underlyingArgument*/)
     }
@@ -682,7 +682,6 @@ object reset {
       // report.warning(result.asTerm.show)
       result
     }
-
   }
 
   transparent inline def reify[Value](inline value: Value): Any = ${
