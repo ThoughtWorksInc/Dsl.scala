@@ -1,5 +1,7 @@
-package com.thoughtworks.dsl.keywords
+package com.thoughtworks.dsl
+package keywords
 
+import reset.`*`
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.Uri.Path
@@ -7,7 +9,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
-import com.thoughtworks.dsl.Dsl.reset
 import org.scalatest.BeforeAndAfterAll
 //import org.scalamock.scalatest.MockFactory
 
@@ -16,17 +17,24 @@ import scala.concurrent.duration._
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
-final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with Directives {
-  implicit val system = ActorSystem()
+final class AwaitSpec
+    extends AsyncFreeSpec
+    with Matchers
+    with BeforeAndAfterAll
+    with Directives {
+  implicit val system: ActorSystem = ActorSystem()
 
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  def downloadTwoPages(): Future[(ByteString, ByteString)] = Future {
-    val response1 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pingUri))))
+  def downloadTwoPages(): Future[(ByteString, ByteString)] = *[Future] {
+    val response1 =
+      !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pingUri))))
     val content1 = !Await(response1.entity.toStrict(timeout = 5.seconds))
-    val response2 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pongUri))))
+    val response2 =
+      !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pongUri))))
     val content2 = !Await(response2.entity.toStrict(timeout = 5.seconds))
     (content1.data, content2.data)
   }
@@ -43,11 +51,11 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
     Http().bindAndHandle(route, "localhost", 0)
   }
   override protected def afterAll(): Unit = {
-    val _ = Future {
+    val _ = *[Future] {
       val binding = !Await(mockServer)
       !Await(binding.unbind())
       system.terminate()
-    }: @reset
+    }
   }
 
   "download two pages" in {
@@ -57,7 +65,7 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
     }
   }
 
-  private def pingUri = Future {
+  private def pingUri = *[Future] {
     Uri.from(
       scheme = "http",
       host = (!Await(mockServer)).localAddress.getHostName,
@@ -66,7 +74,7 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
     )
   }
 
-  private def pongUri = Future {
+  private def pongUri = *[Future] {
     Uri.from(
       scheme = "http",
       host = (!Await(mockServer)).localAddress.getHostName,
@@ -75,44 +83,45 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
     )
   }
 
-  "http get" in ({
+  "http get" in (*[Future] {
     val response = !Await(Http().singleRequest(HttpRequest(uri = !Await(pingUri))))
     response.status should be(StatusCodes.OK)
-  }: @reset)
+  })
 
-  "Downloading two web pages as an asynchronous generator, in the style of !-notation" in ({
-    def downloadTwoPagesGenerator(): Stream[Future[ByteString]] = {
-      val response1 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pingUri))))
-      val content1 = !Await(response1.entity.toStrict(timeout = 5.seconds))
-      !Yield(content1.data)
-      val response2 = !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pongUri))))
-      val content2 = !Await(response2.entity.toStrict(timeout = 5.seconds))
-      !Yield(content2.data)
+  // TODO: Test against `StreamT[Future, ByteString]` instead of `Stream[Future[ByteString]]`
+  // "Downloading two web pages as an asynchronous generator, in the style of !-notation" in (*[Future] {
+  //   def downloadTwoPagesGenerator(): Stream[Future[ByteString]] = {
+  //     val response1 = !Await(Http().Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pingUri))))
+  //     val content1 = !Await(response1.entity.toStrict(timeout = 5.seconds))
+  //     !Yield(content1.data)
+  //     val response2 = !Await(Http().Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pongUri))))
+  //     val content2 = !Await(response2.entity.toStrict(timeout = 5.seconds))
+  //     !Yield(content2.data)
 
-      Stream.empty[Future[ByteString]]
-    }
+  //     Stream.empty[Future[ByteString]]
+  //   }
 
-    val stream = downloadTwoPagesGenerator()
-    (!Await(stream(0))).decodeString(io.Codec.UTF8.charSet) should be("PING!")
-    (!Await(stream(1))).decodeString(io.Codec.UTF8.charSet) should be("PONG!")
-  }: @reset)
+  //   val stream = downloadTwoPagesGenerator()
+  //   (!Await(stream(0))).decodeString(io.Codec.UTF8.charSet) should be("PING!")
+  //   (!Await(stream(1))).decodeString(io.Codec.UTF8.charSet) should be("PONG!")
+  // })
 
-  "multiple http" in ({
+  // "multiple http" in (*[Future] {
 
-    def createAsynchronousStream(): Stream[Future[Int]] = {
-      val response1 = !Await(Http().singleRequest(HttpRequest(uri = !Await(pingUri))))
-      !Yield(response1.status.intValue())
-      response1.discardEntityBytes()
-      val response2 = !Await(Http().singleRequest(HttpRequest(uri = !Await(pongUri))))
-      !Yield(response2.status.intValue())
-      response2.discardEntityBytes()
-      Stream.empty[Future[Int]]
-    }
+  //   def createAsynchronousStream(): Stream[Future[Int]] = {
+  //     val response1 = !Await(Http().Http().singleRequest(HttpRequest(uri = !Await(pingUri))))
+  //     !Yield(response1.status.intValue())
+  //     response1.discardEntityBytes()
+  //     val response2 = !Await(Http().Http().singleRequest(HttpRequest(uri = !Await(pongUri))))
+  //     !Yield(response2.status.intValue())
+  //     response2.discardEntityBytes()
+  //     Stream.empty[Future[Int]]
+  //   }
 
-    val asynchronousStream = createAsynchronousStream()
-    !Await(asynchronousStream(0)) should be(StatusCodes.OK.intValue)
-    !Await(asynchronousStream(1)) should be(StatusCodes.OK.intValue)
+  //   val asynchronousStream = createAsynchronousStream()
+  //   !Await(asynchronousStream(0)) should be(StatusCodes.OK.intValue)
+  //   !Await(asynchronousStream(1)) should be(StatusCodes.OK.intValue)
 
-  }: @reset)
+  // })
 
 }

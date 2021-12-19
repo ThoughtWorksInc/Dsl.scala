@@ -619,7 +619,7 @@ object reset {
                 ${
                   val innerKeywordTree = flatMapper('dslValue.asTerm)
                   innerKeywordTreeOption = Some(innerKeywordTree)
-                  innerKeywordTree.keywordTerm.asExpr
+                  innerKeywordTree.keywordTerm.changeOwner(Symbol.spliceOwner).asExpr
                 }
               }
               val Some(innerKeywordTree) = innerKeywordTreeOption
