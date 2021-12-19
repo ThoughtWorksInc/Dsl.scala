@@ -297,8 +297,8 @@ object reset {
                 Pure(Assign.copy(assign)(pureLhs, pureRhs), term.tpe)
               }
             }
-          case Inlined(_, _, term) =>
-            KeywordTree(term)
+          case Inlined(_, bindings, term) =>
+            KeywordTree(qctx.reflect.Block(bindings, term))
           case whileTerm @ qctx.reflect.While(cond, body) =>
             While(Suspend(KeywordTree(cond)), Suspend(KeywordTree(body)))
           // case returnTree @ qctx.reflect.Return(expr, _from) =>
