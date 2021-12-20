@@ -192,4 +192,8 @@ lazy val `domains-scalaz` =
 
 enablePlugins(ScalaUnidocPlugin)
 
+ScalaUnidoc / unidoc / unidocProjectFilter := {
+  inAnyProject -- inProjects(`keywords-Await`.js)
+}
+
 publishArtifact := false
