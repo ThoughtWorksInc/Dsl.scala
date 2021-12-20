@@ -41,7 +41,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       ast1.type
         <:<
           Dsl.For.Yield.FlatMap[
-            Await[Int],
+            Await[Future[Int]],
             Int,
             Dsl.For.Yield.Map[
               Each[Int],
@@ -76,7 +76,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       ast2.type
         <:<
           Dsl.For.Yield.FlatMap[
-            Await[Int],
+            Await[Future[Int]],
             Int,
             Dsl.For.Yield.Map[
               Each[Int],
@@ -99,7 +99,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       ast3.type
         <:<
           FlatMap[
-            Await[Int],
+            Await[Future[Int]],
             Int,
             FlatMap[
               Each[Int],
@@ -134,8 +134,8 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     val reified = reify {
       !Await(Future(1L))
     }
-    summon[reified.type <:< Typed[Await[Long], Long]]
-    summon[Run[Typed[Await[Long], Long], Future[Long], Long]](reified)
+    summon[reified.type <:< Typed[Await[Future[Long]], Long]]
+    summon[Run[Typed[Await[Future[Long]], Long], Future[Long], Long]](reified)
 
     *[Future] {
       !Await(reified.to[Future]) should be(1L)
@@ -146,10 +146,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     val reified = reify {
       !Await(Future(!Await(Future(1L))))
     }
-    summon[reified.type <:< Typed[FlatMap[Await[Long], Long, Await[Long]], Long]]
+    summon[reified.type <:< Typed[FlatMap[Await[Future[Long]], Long, Await[
+      Future[Long]
+    ]], Long]]
     summon[
       Run[
-        FlatMap[Await[Long], Long, Await[Long]],
+        FlatMap[Await[Future[Long]], Long, Await[Future[Long]]],
         Future[Long],
         Long
       ]
@@ -165,12 +167,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       !Await(Future(i))
     }
     summon[reified.type <:< Typed[
-      FlatMap[Await[String], String, Await[String]],
+      FlatMap[Await[Future[String]], String, Await[Future[String]]],
       String
     ]]
     summon[
       Run[
-        FlatMap[Await[String], String, Await[String]],
+        FlatMap[Await[Future[String]], String, Await[Future[String]]],
         Future[String],
         String
       ]
@@ -193,10 +195,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       }
       !Await(Future(A.j))
     }
-    summon[reified.type <:< Typed[FlatMap[Await[Long], Long, Await[Long]], Long]]
+    summon[reified.type <:< Typed[FlatMap[Await[Future[Long]], Long, Await[
+      Future[Long]
+    ]], Long]]
     summon[
       Run[
-        FlatMap[Await[Long], Long, Await[Long]],
+        FlatMap[Await[Future[Long]], Long, Await[Future[Long]]],
         Future[Long],
         Long
       ]
@@ -214,7 +218,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[FlatMap[
-          Await[Unit],
+          Await[Future[Unit]],
           Unit,
           FlatMap[Return[Unit], Nothing, Pure[Unit]]
         ], Unit]
@@ -232,7 +236,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     // summon[reified.type <:<
     //   Typed[
     //    FlatMap[
-    //      Await[Unit]
+    //      Await[Future[Unit]]
     //     , Unit,Pure[Nothing]]
     //   , Nothing]
     // ]
@@ -329,12 +333,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       reified.type <:<
         Typed[
           keywords.TryCatchFinally[Suspend[
-            Await[String]
+            Await[Future[String]]
           ], Match.WithIndex[0, FlatMap[
-            Await[Int],
+            Await[Future[Int]],
             Int,
             FlatMap[Await[
-              Int
+              Future[Int]
             ], Int, Pure[String]]
           ]]
             +: Nothing, Suspend[Pure[Unit]]],
@@ -358,7 +362,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[keywords.TryFinally[Suspend[
-          Await[Int]
+          Await[Future[Int]]
         ], Suspend[Pure[Unit]]], Int]
     ]
 
@@ -383,17 +387,17 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       reified.type <:<
         Typed[keywords.TryCatch[Suspend[
           FlatMap[
-            Await[Int],
+            Await[Future[Int]],
             Int,
             FlatMap[Await[
-              Int
+              Future[Int]
             ], Int, Pure[String]]
           ]
         ], Match.WithIndex[0, FlatMap[
-          Await[Int],
+          Await[Future[Int]],
           Int,
           FlatMap[Await[
-            Int
+            Future[Int]
           ], Int, Pure[String]]
         ]]
           +: Nothing], String]
@@ -415,11 +419,11 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       reified.type <:<
         Typed[FlatMap[While[
           Suspend[
-            Await[Boolean]
+            Await[Future[Boolean]]
           ],
           Suspend[
             FlatMap[Await[
-              Int
+              Future[Int]
             ], Int, Pure[Unit]]
           ]
         ], Unit, Pure[Long]], Long]
@@ -441,10 +445,10 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[FlatMap[
-          Await[A.type],
+          Await[Future[A.type]],
           A.type,
           FlatMap[
-            Await[String],
+            Await[Future[String]],
             String,
             Pure[String]
           ]
@@ -462,10 +466,10 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[FlatMap[
-          Await[CharSequence],
+          Await[Future[CharSequence]],
           CharSequence,
           FlatMap[Await[
-            CharSequence
+            Future[CharSequence]
           ], CharSequence, Pure[Object]]
         ], Object]
     ]
@@ -502,9 +506,9 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[FlatMap[
-          Await[Int => Int],
+          Await[Future[Int => Int]],
           Int => Int,
-          Await[Any => Boolean]
+          Await[Future[Any => Boolean]]
         ], Any => Boolean]
     ]
     reified.to[Future].map {
@@ -520,9 +524,9 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[FlatMap[
-          FlatMap[Await[Int => Int], Int => Int, Pure[Any => Boolean]],
+          FlatMap[Await[Future[Int => Int]], Int => Int, Pure[Any => Boolean]],
           Any => Boolean,
-          Await[Any => Boolean]
+          Await[Future[Any => Boolean]]
         ], Any => Boolean]
     ]
     reified.to[Future].map {
@@ -538,9 +542,9 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[FlatMap[
-          FlatMap[Await[Int => Int], Int => Int, Pure[Any => Boolean]],
+          FlatMap[Await[Future[Int => Int]], Int => Int, Pure[Any => Boolean]],
           Any => Boolean,
-          Await[Any => Boolean]
+          Await[Future[Any => Boolean]]
         ], Any => Boolean]
     ]
     reified.to[Future].map {
