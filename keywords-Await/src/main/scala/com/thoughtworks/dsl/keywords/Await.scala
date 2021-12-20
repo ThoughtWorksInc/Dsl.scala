@@ -118,9 +118,9 @@ object Await extends AwaitJS {
     Dsl.Keyword.Opaque.Of.apply
   given [FutureResult]: IsKeyword[Await[Future[FutureResult]], FutureResult] with {}
 
-  given [Value, That](using
+  given [FutureResult, That](using
       ExecutionContext
-  ): Dsl[Await[Future[Value]], Future[That], Value] =
+  ): Dsl[Await[Future[FutureResult]], Future[That], FutureResult] =
     _ flatMap _
 
   // // TODO:
