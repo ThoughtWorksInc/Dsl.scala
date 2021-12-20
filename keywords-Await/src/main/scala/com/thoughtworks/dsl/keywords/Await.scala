@@ -111,16 +111,6 @@ object Await {
   @inline def apply[Result]: concurrent.Future[Result] =:= Await[Result] = Dsl.Keyword.Opaque.Of.apply
   given [Result]: IsKeyword[Await[Result], Result] with {}
 
-  implicit def streamAwaitDsl[Value, That](implicit
-      executionContext: ExecutionContext
-  ): Dsl[Await[Value], Stream[Future[That]], Value] =
-    new Dsl[Await[Value], Stream[Future[That]], Value] {
-      def cpsApply(keyword: Await[Value], handler: Value => Stream[Future[That]]): Stream[Future[That]] = {
-        val futureOfStream = keyword.map(handler)
-        new Stream.Cons(futureOfStream.flatMap(_.head), result(futureOfStream, Duration.Inf).tail)
-      }
-    }
-
   implicit def awaitDsl[Value, That](implicit
       executionContext: ExecutionContext
   ): Dsl[Await[Value], Future[That], Value] =
