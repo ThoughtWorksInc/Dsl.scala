@@ -108,7 +108,7 @@ object Dsl extends LowPriorityDsl0 {
 
   sealed trait HasValueOrElement[KeywordOrView, ValueOrElement]
   object HasValueOrElement {
-    given [KeywordOrView <: For.Yield[Element], Element]: For.Yield[Element] with {}
+    given [KeywordOrView <: For.Yield[Element], Element]: HasValueOrElement[KeywordOrView, Element] with {}
   }
 
   /** The AST returned from a `for`...`yield` or a `for`...`do` expression.
