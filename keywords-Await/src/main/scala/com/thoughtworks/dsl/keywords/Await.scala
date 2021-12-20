@@ -8,10 +8,12 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
-/** [[Await]] is a [[Dsl.Keyword Keyword]] to extract value from a [[scala.concurrent.Future]].
+/** [[Await]] is a [[Dsl.Keyword Keyword]] to extract value from a
+  * [[scala.concurrent.Future]].
   *
-  * This keyword is available in functions whose return types are [[scala.concurrent.Future Future]],
-  * [[domains.task.Task]], or any exception aware continuations as `(_ !! Throwable !! _)`.
+  * This keyword is available in functions whose return types are
+  * [[scala.concurrent.Future Future]], [[domains.task.Task]], or any exception
+  * aware continuations as `(_ !! Throwable !! _)`.
   *
   * @example
   *   Given a [[scala.concurrent.Future Future]]:
@@ -23,7 +25,8 @@ import scala.language.implicitConversions
   * }
   * }}}
   *
-  * You can [[Await]] the [[scala.concurrent.Future Future]] in another [[scala.concurrent.Future Future]]
+  * You can [[Await]] the [[scala.concurrent.Future Future]] in another
+  * [[scala.concurrent.Future Future]]
   *
   * {{{
   * def myFuture42 = *[Future] {
@@ -31,7 +34,8 @@ import scala.language.implicitConversions
   * }
   * }}}
   *
-  * A [[scala.concurrent.Future Future]] can be converted to a [[domains.task.Task]] with the help of [[Await]].
+  * A [[scala.concurrent.Future Future]] can be converted to a
+  * [[domains.task.Task]] with the help of [[Await]].
   *
   * {{{
   * import com.thoughtworks.dsl.domains.Task
@@ -41,8 +45,8 @@ import scala.language.implicitConversions
   * }
   * }}}
   *
-  * Then a [[domains.task.Task]] can be converted back to a [[scala.concurrent.Future]] via
-  * [[domains.task.Task.toFuture]].
+  * Then a [[domains.task.Task]] can be converted back to a
+  * [[scala.concurrent.Future]] via [[domains.task.Task.toFuture]].
   *
   * {{{
   * val myAssertionTask = Task {
@@ -77,7 +81,8 @@ import scala.language.implicitConversions
   * myFuture.map(_.toString should be("Oh No!"))
   * }}}
   * @example
-  *   Other keywords, including [[Return]] or [[Get]], can be used together with [[Await]]
+  *   Other keywords, including [[Return]] or [[Get]], can be used together with
+  *   [[Await]]
   * {{{
   * import scala.concurrent.Future
   * import com.thoughtworks.dsl.keywords.{Get, Return}
@@ -106,32 +111,29 @@ import scala.language.implicitConversions
   * @author
   *   杨博 (Yang Bo)
   */
-opaque type Await[Result] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[concurrent.Future[Result]]
-object Await {
-  @inline def apply[Result]: concurrent.Future[Result] =:= Await[Result] = Dsl.Keyword.Opaque.Of.apply
-  given [Result]: IsKeyword[Await[Result], Result] with {}
+opaque type Await[AwaitableValue] <: Dsl.Keyword.Opaque =
+  Dsl.Keyword.Opaque.Of[AwaitableValue]
+object Await extends AwaitJS {
+  @inline def apply[AwaitableValue]: AwaitableValue =:= Await[AwaitableValue] =
+    Dsl.Keyword.Opaque.Of.apply
+  given [FutureResult]: IsKeyword[Await[Future[FutureResult]], FutureResult] with {}
 
-  implicit def awaitDsl[Value, That](implicit
-      executionContext: ExecutionContext
-  ): Dsl[Await[Value], Future[That], Value] =
-    new Dsl[Await[Value], Future[That], Value] {
-      def cpsApply(keyword: Await[Value], handler: Value => Future[That]): Future[That] = {
-        keyword.flatMap(handler)
-      }
-    }
+  given [Value, That](using
+      ExecutionContext
+  ): Dsl[Await[Future[Value]], Future[That], Value] =
+    _ flatMap _
 
-  // // TODO: 
+  // // TODO:
   // implicit def tailRecContinuationAwaitDsl[Value](implicit
   //     executionContext: ExecutionContext
   // ): Dsl[Await[Value], TailRec[Unit] !! Throwable, Value]
 
-  implicit def continuationAwaitDsl[Value](implicit
-      executionContext: ExecutionContext
-  ): Dsl[Await[Value], Unit !! Throwable, Value] =
-    new Dsl[Await[Value], Unit !! Throwable, Value] {
-      def cpsApply(keyword: Await[Value], handler: Value => Unit !! Throwable): Unit !! Throwable =
-        !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
-    }
+  given [Value](using
+      ExecutionContext
+  ): Dsl[Await[Future[Value]], Unit !! Throwable, Value] = {
+    (keyword: Await[Future[Value]], handler: Value => Unit !! Throwable) =>
+      !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
+  }
   extension [FA, A](inline fa: FA)(using
       inline notKeyword: util.NotGiven[
         FA <:< Dsl.Keyword
