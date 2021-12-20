@@ -113,10 +113,10 @@ import scala.language.implicitConversions
   */
 opaque type Await[AwaitableValue] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[AwaitableValue]
-object Await {
+object Await extends AwaitJS {
   @inline def apply[AwaitableValue]: AwaitableValue =:= Await[AwaitableValue] =
     Dsl.Keyword.Opaque.Of.apply
-  given [Result]: IsKeyword[Await[Future[Result]], Result] with {}
+  given [FutureResult]: IsKeyword[Await[Future[FutureResult]], FutureResult] with {}
 
   given [Value, That](using
       ExecutionContext
