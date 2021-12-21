@@ -56,14 +56,6 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
       Dsl.shift[Keyword, Value](from)
     }
 
-  extension [KeywordOrView, Element](keywordOrView: KeywordOrView)(using hasValueOrElement: Dsl.HasValueOrElement[KeywordOrView, Element])
-    def flatMap[Mapped <: For.Yield[MappedElement], MappedElement](flatMapper: Element => Mapped) = For.Yield.FlatMap(keywordOrView, flatMapper)
-    def map[Mapped](mapper: Element => Mapped) = For.Yield.Map(keywordOrView, mapper)
-    def foreach[Nested <: For.Do](action: Element => Nested) = For.Do.FlatForeach(keywordOrView, action)
-    def foreach(action: Element => Unit) = For.Do.Foreach(keywordOrView, action)
-    def withFilter(filter: Element => Boolean) = For.Yield.WithFilter(keywordOrView, filter)
-    // TODO: Implement `foreach` and `map` in macros to support !-notation in `do` block or `yield` block
-
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
 //      implicit restDsl: Dsl[Keyword, LeftDomain, Value],
@@ -106,7 +98,14 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 object Dsl extends LowPriorityDsl0 {
 
-  sealed trait HasValueOrElement[KeywordOrView, ValueOrElement]
+  sealed trait HasValueOrElement[KeywordOrView, Element]:
+    extension (keywordOrView: KeywordOrView)
+      def flatMap[Mapped <: For.Yield[MappedElement], MappedElement](flatMapper: Element => Mapped) = For.Yield.FlatMap(keywordOrView, flatMapper)
+      def map[Mapped](mapper: Element => Mapped) = For.Yield.Map(keywordOrView, mapper)
+      def foreach[Nested <: For.Do](action: Element => Nested) = For.Do.FlatForeach(keywordOrView, action)
+      def foreach(action: Element => Unit) = For.Do.Foreach(keywordOrView, action)
+      def withFilter(filter: Element => Boolean) = For.Yield.WithFilter(keywordOrView, filter)
+      // TODO: Implement `foreach` and `map` in macros to support !-notation in `do` block or `yield` block
   object HasValueOrElement {
     given [KeywordOrView <: For.Yield[Element], Element]: HasValueOrElement[KeywordOrView, Element] with {}
   }
