@@ -126,7 +126,7 @@ import scala.util.control.NonFatal
   *
   * @author 杨博 (Yang Bo)
   */
-object scalaz {
+object scalaz extends LowPriorityScalaz0 {
 
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
@@ -187,50 +187,38 @@ object scalaz {
       }
     }
 
-  implicit def scalazLift[F[_], A, B](implicit
-      applicative: Applicative[F],
-  ): Dsl.Lift.OneStep[A, F[A]] =
-    applicative.pure
-
-  implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](implicit
+  given [F[_[_], _], K, G[_], A, B](using
       monadTrans: MonadTrans[F],
-      rest: ScalazTransformerDsl[H, G, A, B]
-  ): ScalazTransformerDsl[H, [X] =>> F[G, X], A, B] =
-    new ScalazTransformerDsl[H, [X] =>> F[G, X], A, B] {
+      monad: Monad[G]
+  ): Dsl[Monadic[G, A], F[G, B], A] = {
+    (keyword: Monadic[G, A], handler: A => F[G, B]) =>
+      monadTrans(monad)
+        .bind(monadTrans.liftM(Monadic.apply.flip(keyword)))(handler)
+  }
 
-      def monad: Monad[[X] =>> F[G, X]] = monadTrans(rest.monad)
-
-      def lift(fa: H[A]): F[G, A] = monadTrans.liftM(rest.lift(fa))(rest.monad)
-
-    }
-
-  implicit def scalazMonadTransformerDsl0[F[_[_], _], G[_], A, B](implicit
-      monadTrans: MonadTrans[F],
-      monad0: Monad[G]
-  ): ScalazTransformerDsl[G, [X] =>> F[G, X], A, B] =
-    new ScalazTransformerDsl[G, [X] =>> F[G, X], A, B] {
-      def monad = monadTrans(monad0)
-
-      def lift(fa: G[A]): F[G, A] = monadTrans.liftM(fa)
-
-    }
-
-  implicit def scalazMonadicDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[Monadic[F, A], F[B], A] =
+  implicit def scalazMonadicDsl[F[_], A, B](implicit
+      bind: Bind[F]
+  ): Dsl[Monadic[F, A], F[B], A] =
     new Dsl[Monadic[F, A], F[B], A] {
       def cpsApply(keyword: Monadic[F, A], handler: A => F[B]): F[B] = {
         bind.bind(Monadic.apply.flip(keyword))(handler)
       }
     }
 
-  abstract class ScalazTransformerDsl[F[_], G[_], A, B] extends Dsl[Monadic[F, A], G[B], A] {
-    def monad: Monad[G]
-
-    def lift(fa: F[A]): G[A]
-
-    final def cpsApply(keyword: Monadic[F, A], handler: A => G[B]): G[B] = {
-      monad.bind(lift(Monadic.apply.flip(keyword)))(handler)
-    }
-
+  given [F[_[_], _], G[_], A, B](using
+      monadTrans: MonadTrans[F],
+      monad: Monad[G]
+  ): Dsl.Lift.OneStep[G[A], F[G, A]] = {
+    monadTrans.liftM(_)
   }
+
+}
+
+private trait LowPriorityScalaz0 { this: scalaz.type =>
+  implicit def scalazLift[F[_], A](implicit
+      applicative: Applicative[F]
+  ): Dsl.Lift.OneStep[A, F[A]] =
+    applicative.pure
+
 
 }
