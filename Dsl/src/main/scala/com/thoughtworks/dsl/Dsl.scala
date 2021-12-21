@@ -507,21 +507,6 @@ object Dsl extends LowPriorityDsl0 {
   // See https://github.com/lampepfl/dotty/issues/14076
   private opaque type Dotty14076Workaround = Any
 
-  extension [Keyword, Value](keyword: Keyword)(using
-      isKeyword: IsKeyword[Keyword, Value]
-  )
-    @inline def to[Domain[_]](using
-        run: Run[Keyword, Domain[Value], Value]
-    ): Domain[Value] = {
-      run(keyword)
-    }
-
-    @inline def as[Domain](using
-        run: Run[Keyword, Domain, Value]
-    ): Domain = {
-      run(keyword)
-    }
-
   type Keyword = Keyword.Opaque | Keyword.Trait
   object Keyword {
     /** A marker trait that denotes a keyword class, enabling extension method
@@ -542,7 +527,20 @@ object Dsl extends LowPriorityDsl0 {
   }
   
  
-  trait IsKeyword[Keyword, Value] extends HasValueOrElement[Keyword, Value]
+  trait IsKeyword[Keyword, Value] extends HasValueOrElement[Keyword, Value]:
+    extension (keyword: Keyword)
+      @inline def to[Domain[_]](using
+          run: Run[Keyword, Domain[Value], Value]
+      ): Domain[Value] = {
+        run(keyword)
+      }
+
+      @inline def as[Domain](using
+          run: Run[Keyword, Domain, Value]
+      ): Domain = {
+        run(keyword)
+      }
+
 
   extension [Keyword, Domain, Value](keyword: Keyword)
     @inline def cpsApply(using
