@@ -15,7 +15,7 @@ object TryCatch {
       dslTryCatch: Dsl.TryCatch[Value, OuterDomain, BlockDomain],
       blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
       caseDsl: Dsl[CaseKeyword, BlockDomain, Value],
-  ): Dsl[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value] = {
+  ): Dsl.Composed[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value] = {
     case (TryCatch(blockKeyword, cases), handler) =>
       dslTryCatch.tryCatch(
         blockDsl.cpsApply(blockKeyword, _),

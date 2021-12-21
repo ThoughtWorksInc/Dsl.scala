@@ -18,7 +18,7 @@ object While {
   ](using
       conditionDsl: Dsl[ConditionKeyword, Domain, Boolean],
       bodyDsl: Dsl[BodyKeyword, Domain, Any]
-  ): Dsl[
+  ): Dsl.Composed[
     While[ConditionKeyword, BodyKeyword],
     Domain,
     Unit

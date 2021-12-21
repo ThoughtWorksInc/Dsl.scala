@@ -18,7 +18,7 @@ object If {
     Dsl[ConditionKeyword, Domain, Boolean],
     Dsl[ThenKeyword, Domain, Value],
     Dsl[ElseKeyword, Domain, Value],
-  ): Dsl[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] with {
+  ): Dsl.Composed[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] with {
     def cpsApply(keyword: If[ConditionKeyword, ThenKeyword, ElseKeyword], handler: Value => Domain): Domain = {
       keyword.cond.cpsApply{
         case true =>

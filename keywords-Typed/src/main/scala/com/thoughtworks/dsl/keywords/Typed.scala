@@ -9,8 +9,9 @@ object Typed {
       : Dsl.IsKeyword[Typed[Keyword, Value], Value] with {}
   given [Keyword, Domain, Value](using
       dsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Typed[Keyword, Value], Domain, Value] =
-    dsl
+  ): Dsl.Composed[Typed[Keyword, Value], Domain, Value] =
+    // TODO: Let Dsl.Composed be an opaque type
+    dsl.cpsApply(_, _)
 
   @inline def apply[Keyword, Value]: Keyword =:= Typed[Keyword, Value] = Dsl.Keyword.Opaque.Of.apply
 

@@ -18,7 +18,7 @@ object TryFinally {
       dslTryFinally: Dsl.TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
       blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
       finalizerDsl: Dsl[FinalizerKeyword, FinalizerDomain, Unit]
-  ): Dsl[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = {
+  ): Dsl.Composed[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = {
     case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
       dslTryFinally.tryFinally(
         blockDsl.cpsApply(blockKeyword, _),
