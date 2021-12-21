@@ -79,6 +79,15 @@ object ReturnSpec extends TestSuite {
         } == 43)
       }
 
+      "summon Dsl.Run" - {
+        summon[ Dsl.Run[com.thoughtworks.dsl.keywords.FlatMap[
+          com.thoughtworks.dsl.keywords.If[
+            com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Boolean],
+            com.thoughtworks.dsl.keywords.Suspend$package.Suspend[com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Double]],
+            com.thoughtworks.dsl.keywords.Suspend$package.Suspend[com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Double]]
+          ], scala.Double, com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Double]], Double !! Double, Double ]]
+        
+      }
       "condition" - {
         val continuation = *[[X] =>> Double !! X] {
           val b = true

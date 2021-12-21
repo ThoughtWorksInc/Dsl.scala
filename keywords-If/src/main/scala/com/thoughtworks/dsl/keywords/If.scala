@@ -9,6 +9,10 @@ final case class If[ConditionKeyword, ThenKeyword, ElseKeyword](
   elsep: ElseKeyword) extends Dsl.Keyword.Trait
 
 object If {
+  given [ConditionKeyword, ThenKeyword, ThenValue, ElseKeyword, ElseValue](using
+    IsKeyword[ThenKeyword, ThenValue],
+    IsKeyword[ElseKeyword, ElseValue],
+  ): IsKeyword[If[ConditionKeyword, ThenKeyword, ElseKeyword], ThenValue | ElseValue] with {}
   given[ConditionKeyword, ThenKeyword, ElseKeyword, Domain, Value](
     using
     Dsl.PolyCont[ConditionKeyword, Domain, Boolean],
