@@ -17,12 +17,12 @@ object TryCatchFinally {
       blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
       caseDsl: Dsl.Searching[CaseKeyword, BlockDomain, Value],
       finalizerDsl: Dsl.Searching[FinalizerKeyword, FinalizerDomain, Unit]
-  ): Dsl.Composed[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value] = {
+  ): Dsl.Composed[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value] = Dsl.Composed {
     case (TryCatchFinally(blockKeyword, cases, finalizerKeyword), handler) =>
       dslTryCatchFinally.tryCatchFinally(
-        blockDsl.cpsApply(blockKeyword, _),
-        cases.andThen { caseKeyword => caseDsl.cpsApply(caseKeyword, _) },
-        finalizerDsl.cpsApply(finalizerKeyword, _),
+        blockDsl(blockKeyword, _),
+        cases.andThen { caseKeyword => caseDsl(caseKeyword, _) },
+        finalizerDsl(finalizerKeyword, _),
         handler
       )
   }

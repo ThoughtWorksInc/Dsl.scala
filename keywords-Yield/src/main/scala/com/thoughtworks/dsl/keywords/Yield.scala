@@ -13,33 +13,39 @@ import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.language.higherKinds
 
-/** @author 杨博 (Yang Bo)
-  * @example This `Yield` keyword must be put inside a function that returns `Seq[Element]` or `Seq[Element] !! ...`,
-  *          or it will not compile.
+/** @author
+  *   杨博 (Yang Bo)
+  * @example
+  *   This `Yield` keyword must be put inside a function that returns
+  *   `Seq[Element]` or `Seq[Element] !! ...`, or it will not compile.
   *
-  *          {{{
-  *          import com.thoughtworks.dsl.reset, reset._
-  *          "def f(): Int = !Yield(1)" shouldNot compile
-  *          }}}
+  * {{{
+  *           import com.thoughtworks.dsl.reset, reset._
+  *           "def f(): Int = !Yield(1)" shouldNot compile
+  * }}}
   *
-  * @example [[Yield]] keywords can be used together with other keywords.
-  *          {{{
-  *          import com.thoughtworks.dsl.reset, reset._
-  *          def gccFlagBuilder(sourceFile: String, includes: String*) = reset[Stream[String]] {
-  *            !Yield("gcc")
-  *            !Yield("-c")
-  *            !Yield(sourceFile)
-  *            val include = !Each(includes)
-  *            !Yield("-I")
-  *            !Yield(include)
-  *            Stream.empty
-  *          }
+  * @example
+  *   [[Yield]] keywords can be used together with other keywords.
+  * {{{
+  *           import com.thoughtworks.dsl.reset, reset._
+  *           def gccFlagBuilder(sourceFile: String, includes: String*) = reset[Stream[String]] {
+  *             !Yield("gcc")
+  *             !Yield("-c")
+  *             !Yield(sourceFile)
+  *             val include = !Each(includes)
+  *             !Yield("-I")
+  *             !Yield(include)
+  *             Stream.empty
+  *           }
   *
-  *          gccFlagBuilder("main.c", "lib1/include", "lib2/include") should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
-  *          }}}
-  * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
+  *           gccFlagBuilder("main.c", "lib1/include", "lib2/include") should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
+  * }}}
+  * @see
+  *   [[comprehension]] if you want to use traditional `for` comprehension
+  *   instead of !-notation.
   */
-opaque type Yield[+Element] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Element]
+opaque type Yield[+Element] <: Dsl.Keyword.Opaque =
+  Dsl.Keyword.Opaque.Of[Element]
 
 private[keywords] trait LowPriorityYield3 {
 
@@ -47,43 +53,38 @@ private[keywords] trait LowPriorityYield3 {
     From(elements)
   }
 
-  implicit def iteratorYieldFromDsl[A, FromCollection <: TraversableOnce[A]]
+  given [A, FromCollection <: TraversableOnce[A]]
       : Dsl.Atomic[From[FromCollection], Iterator[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], Iterator[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Iterator[A]): Iterator[A] = {
+    Dsl.Atomic[From[FromCollection], Iterator[A], Unit] {
+      (keyword: From[FromCollection], generateTail: Unit => Iterator[A]) =>
         From.apply.flip(keyword).toIterator ++ generateTail(())
-      }
     }
 
-  implicit def iteratorYieldDsl[A, B >: A]: Dsl.Atomic[Yield[A], Iterator[B], Unit] =
-    new Dsl.Atomic[Yield[A], Iterator[B], Unit] {
-      def cpsApply(keyword: Yield[A], generateTail: Unit => Iterator[B]): Iterator[B] = {
+  given [A, B >: A]: Dsl.Atomic[Yield[A], Iterator[B], Unit] =
+    Dsl.Atomic[Yield[A], Iterator[B], Unit] {
+      (keyword: Yield[A], generateTail: Unit => Iterator[B]) =>
         Iterator.single(Yield.apply.flip(keyword)) ++ generateTail(())
-      }
     }
-
 }
 
-
 private[keywords] trait LowPriorityYield1 extends LowPriorityYield3 {
-  implicit def seqYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A], Collection[X] <: SeqOps[
+  given [A, FromCollection <: View.SomeIterableOps[A], Collection[X] <: SeqOps[
     X,
     Collection,
     Collection[X]
   ]]: Dsl.Atomic[From[FromCollection], Collection[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], Collection[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Collection[A]): Collection[A] = {
+    Dsl.Atomic[From[FromCollection], Collection[A], Unit] {
+      (keyword: From[FromCollection], generateTail: Unit => Collection[A]) =>
         From.apply.flip(keyword).toIterable ++: generateTail(())
-      }
     }
 
-  implicit def seqYieldDsl[A, B >: A, Collection[+X] <: SeqOps[X, Collection, Collection[X]]]
+  given [A, B >: A, Collection[+X] <: SeqOps[X, Collection, Collection[X]]]
       : Dsl.Atomic[Yield[A], Collection[B], Unit] =
-    new Dsl.Atomic[Yield[A], Collection[B], Unit] {
-      def cpsApply(keyword: Yield[A], generateTail: Unit => Collection[B]): Collection[B] = {
+    Dsl.Atomic[Yield[A], Collection[B], Unit] {
+      (keyword: Yield[A], generateTail: Unit => Collection[B]) =>
         Yield.apply.flip(keyword) +: generateTail(())
-      }
     }
+
 }
 
 private[keywords] trait LowPriorityYield0 extends LowPriorityYield1
@@ -95,11 +96,40 @@ object Yield extends LowPriorityYield0 {
     From(element0 +: element1 +: elements)
   }
 
-  opaque type From[FromCollection <: TraversableOnce[_]] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[FromCollection]
-  object From {
-    given [FromCollection <: TraversableOnce[_]]: IsKeyword[From[FromCollection], Unit] with {}
+  opaque type From[FromCollection <: TraversableOnce[_]] <: Dsl.Keyword.Opaque =
+    Dsl.Keyword.Opaque.Of[FromCollection]
 
-    def apply[FromCollection <: TraversableOnce[_]]: FromCollection =:= From[FromCollection] = Dsl.Keyword.Opaque.Of.apply
+  private[Yield] trait LowPriorityFrom0 { this: From.type =>
+
+    given [A, FromSomeIterableOps <: View.SomeIterableOps[A]]
+        : Dsl.Atomic[From[FromSomeIterableOps], SeqView[A], Unit] =
+      Dsl.Atomic[From[FromSomeIterableOps], SeqView[A], Unit] {
+        (
+            keyword: From[FromSomeIterableOps],
+            generateTail: Unit => SeqView[A]
+        ) =>
+          new SeqView.Concat(collection.Seq.from(keyword), generateTail(()))
+      }
+
+    given [A, FromSomeIterableOps <: View.SomeIterableOps[A]]
+        : Dsl.Atomic[From[FromSomeIterableOps], IndexedSeqView[A], Unit] =
+      Dsl.Atomic[From[FromSomeIterableOps], IndexedSeqView[A], Unit] {
+        (
+            keyword: From[FromSomeIterableOps],
+            generateTail: Unit => IndexedSeqView[A]
+        ) =>
+          new IndexedSeqView.Concat(
+            collection.IndexedSeq.from(keyword),
+            generateTail(())
+          )
+      }
+  }
+  object From extends LowPriorityFrom0 {
+    given [FromCollection <: TraversableOnce[_]]
+        : IsKeyword[From[FromCollection], Unit] with {}
+
+    def apply[FromCollection <: TraversableOnce[_]]
+        : FromCollection =:= From[FromCollection] = Dsl.Keyword.Opaque.Of.apply
 
     extension [A, E](inline a: A)(using
         inline notKeyword: util.NotGiven[
@@ -109,93 +139,74 @@ object Yield extends LowPriorityYield0 {
     )
       transparent inline def unary_! : Unit =
         !From[Iterable[E]](isIterable(a))
+
+    given [A, FromCollection <: View.SomeIterableOps[A]]
+        : Dsl.Atomic[From[FromCollection], View[A], Unit] =
+      Dsl.Atomic[From[FromCollection], View[A], Unit] {
+        (keyword: From[FromCollection], generateTail: Unit => View[A]) =>
+          new View.Concat(keyword, generateTail(()))
+      }
+
+    given indexedSeqViewYieldFromDsl[A, FromIndexedSeqOps <: IndexedSeqOps[
+      A,
+      CC,
+      C
+    ], CC[_], C]: Dsl.Atomic[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] =
+      Dsl.Atomic[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] {
+        (
+            keyword: From[FromIndexedSeqOps],
+            generateTail: Unit => IndexedSeqView[A]
+        ) =>
+          new IndexedSeqView.Concat(keyword, generateTail(()))
+      }
+
+    given seqViewYieldFromDsl[A, FromCollection <: SeqOps[A, CC, C], CC[_], C]
+        : Dsl.Atomic[From[FromCollection], SeqView[A], Unit] =
+      Dsl.Atomic[From[FromCollection], SeqView[A], Unit] {
+        (keyword: From[FromCollection], generateTail: Unit => SeqView[A]) =>
+          new SeqView.Concat(keyword, generateTail(()))
+      }
+
+    given [A, FromIterable <: Iterable[A]]
+        : Dsl.Atomic[From[FromIterable], LazyList[A], Unit] =
+      Dsl.Atomic[From[FromIterable], LazyList[A], Unit] {
+        (keyword: From[FromIterable], generateTail: Unit => LazyList[A]) =>
+          keyword.to(LazyList) #::: generateTail(())
+      }
+
+    given [A, FromIterable <: Iterable[A]]
+        : Dsl.Atomic[From[FromIterable], Stream[A], Unit] =
+      Dsl.Atomic[From[FromIterable], Stream[A], Unit] {
+        (keyword: From[FromIterable], generateTail: Unit => Stream[A]) =>
+          keyword.toStream #::: generateTail(())
+      }
+
   }
 
-
-
-  implicit def viewYieldFromDsl[A, FromCollection <: View.SomeIterableOps[A]]
-      : Dsl.Atomic[From[FromCollection], View[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], View[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => View[A]): View[A] = {
-        new View.Concat(keyword, generateTail(()))
-      }
-    }
-
-  implicit def indexedSeqViewYieldFromIterableDsl[A, FromCollection <: View.SomeIterableOps[A]]
-      : Dsl.Atomic[From[FromCollection], IndexedSeqView[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], IndexedSeqView[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => IndexedSeqView[A]): IndexedSeqView[A] = {
-        new IndexedSeqView.Concat(collection.IndexedSeq.from(keyword), generateTail(()))
-      }
-    }
-
-  implicit def indexedSeqViewYieldFromDsl[A, FromCollection <: IndexedSeqOps[A, CC, C], CC[_], C]
-      : Dsl.Atomic[From[FromCollection], IndexedSeqView[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], IndexedSeqView[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => IndexedSeqView[A]): IndexedSeqView[A] = {
-        new IndexedSeqView.Concat(keyword, generateTail(()))
-      }
-    }
-
-  implicit def seqViewYieldFromIterableDsl[A, FromCollection <: View.SomeIterableOps[A]]
-      : Dsl.Atomic[From[FromCollection], SeqView[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], SeqView[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => SeqView[A]): SeqView[A] = {
-        new SeqView.Concat(collection.Seq.from(keyword), generateTail(()))
-      }
-    }
-
-  implicit def seqViewYieldFromDsl[A, FromCollection <: SeqOps[A, CC, C], CC[_], C]
-      : Dsl.Atomic[From[FromCollection], SeqView[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], SeqView[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => SeqView[A]): SeqView[A] = {
-        new SeqView.Concat(keyword, generateTail(()))
-      }
-    }
-
-  implicit def seqViewYieldDsl[A, B >: A]: Dsl.Atomic[Yield[A], SeqView[B], Unit] =
-    new Dsl.Atomic[Yield[A], SeqView[B], Unit] {
-      def cpsApply(keyword: Yield[A], generateTail: Unit => SeqView[B]): SeqView[B] = {
+  given [A, B >: A]: Dsl.Atomic[Yield[A], SeqView[B], Unit] =
+    Dsl.Atomic[Yield[A], SeqView[B], Unit] {
+      (keyword: Yield[A], generateTail: Unit => SeqView[B]) =>
         generateTail(()).prepended(keyword)
-      }
     }
 
-  implicit def indexedSeqViewYieldDsl[A, B >: A]: Dsl.Atomic[Yield[A], IndexedSeqView[B], Unit] =
-    new Dsl.Atomic[Yield[A], IndexedSeqView[B], Unit] {
-      def cpsApply(keyword: Yield[A], generateTail: Unit => IndexedSeqView[B]): IndexedSeqView[B] = {
+  given [A, B >: A]: Dsl.Atomic[Yield[A], IndexedSeqView[B], Unit] =
+    Dsl.Atomic[Yield[A], IndexedSeqView[B], Unit] {
+      (keyword: Yield[A], generateTail: Unit => IndexedSeqView[B]) =>
         generateTail(()).prepended(keyword)
-      }
     }
 
-  implicit def viewYieldDsl[A, B >: A]: Dsl.Atomic[Yield[A], View[B], Unit] =
-    new Dsl.Atomic[Yield[A], View[B], Unit] {
-      def cpsApply(keyword: Yield[A], generateTail: Unit => View[B]): View[B] = {
+  given [A, B >: A]: Dsl.Atomic[Yield[A], View[B], Unit] =
+    Dsl.Atomic[Yield[A], View[B], Unit] {
+      (keyword: Yield[A], generateTail: Unit => View[B]) =>
         new View.Concat[B](new View.Single(keyword), generateTail(()))
-      }
     }
 
-  implicit def lazyListYieldFromDsl[A, FromCollection <: Iterable[A]]: Dsl.Atomic[From[FromCollection], LazyList[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], LazyList[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => LazyList[A]): LazyList[A] = {
-        keyword.to(LazyList) #::: generateTail(())
-      }
-    }
-
-  implicit def lazyListYieldDsl[Element, That >: Element]: Dsl.Atomic[Yield[Element], LazyList[That], Unit] =
-    new Dsl.Atomic[Yield[Element], LazyList[That], Unit] {
-      def cpsApply(keyword: Yield[Element], generateTail: Unit => LazyList[That]): LazyList[That] = {
+  given [Element, That >: Element]
+      : Dsl.Atomic[Yield[Element], LazyList[That], Unit] =
+    Dsl.Atomic[Yield[Element], LazyList[That], Unit] {
+      (keyword: Yield[Element], generateTail: Unit => LazyList[That]) =>
         keyword #:: generateTail(())
-      }
     }
-
-
-  implicit def streamYieldFromDsl[A, FromCollection <: Iterable[A]]: Dsl.Atomic[From[FromCollection], Stream[A], Unit] =
-    new Dsl.Atomic[From[FromCollection], Stream[A], Unit] {
-      def cpsApply(keyword: From[FromCollection], generateTail: Unit => Stream[A]): Stream[A] = {
-        keyword.toStream #::: generateTail(())
-      }
-    }
-
 
   extension [A](inline a: A)(using
       inline notKeyword: util.NotGiven[
@@ -205,11 +216,10 @@ object Yield extends LowPriorityYield0 {
     transparent inline def unary_! : Unit =
       !Yield[A](a)
 
-  implicit def streamYieldDsl[Element, That >: Element]: Dsl.Atomic[Yield[Element], Stream[That], Unit] =
-    new Dsl.Atomic[Yield[Element], Stream[That], Unit] {
-      def cpsApply(keyword: Yield[Element], generateTail: Unit => Stream[That]): Stream[That] = {
+  implicit def streamYieldDsl[Element, That >: Element]
+      : Dsl.Atomic[Yield[Element], Stream[That], Unit] =
+    Dsl.Atomic[Yield[Element], Stream[That], Unit] {
+      (keyword: Yield[Element], generateTail: Unit => Stream[That]) =>
         keyword #:: generateTail(())
-      }
     }
-
 }

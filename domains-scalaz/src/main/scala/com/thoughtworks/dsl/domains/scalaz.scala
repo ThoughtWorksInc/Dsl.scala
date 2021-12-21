@@ -192,42 +192,44 @@ object scalaz {
   ): Dsl.Lift.OneStep[A, F[A]] =
     applicative.pure
 
-  implicit def scalazMonadTransformerDsl1[F[_[_], _], H[_], G[_], A, B](implicit
+  given [F[_[_], _], H[_], G[_], A, B](using
       monadTrans: MonadTrans[F],
       rest: ScalazTransformerDsl[H, G, A, B]
-  ): ScalazTransformerDsl[H, [X] =>> F[G, X], A, B] =
-    new ScalazTransformerDsl[H, [X] =>> F[G, X], A, B] {
+  ): Dsl.Atomic[Monadic[H[A]], F[G, B], A] =
+    Dsl.Atomic(new ScalazTransformerDsl[H, [X] =>> F[G, X], A, B] {
 
       def monad: Monad[[X] =>> F[G, X]] = monadTrans(rest.monad)
 
       def lift(fa: H[A]): F[G, A] = monadTrans.liftM(rest.lift(fa))(rest.monad)
 
-    }
+    })
 
-  implicit def scalazMonadTransformerDsl0[F[_[_], _], G[_], A, B](implicit
+  given [F[_[_], _], G[_], A, B](using
       monadTrans: MonadTrans[F],
       monad0: Monad[G]
-  ): ScalazTransformerDsl[G, [X] =>> F[G, X], A, B] =
-    new ScalazTransformerDsl[G, [X] =>> F[G, X], A, B] {
+  ): Dsl.Atomic[Monadic[G[A]], F[G, B], A] =
+    Dsl.Atomic(new ScalazTransformerDsl[G, [X] =>> F[G, X], A, B] {
       def monad = monadTrans(monad0)
 
       def lift(fa: G[A]): F[G, A] = monadTrans.liftM(fa)
 
-    }
+    })
 
-  implicit def scalazMonadicDsl[F[_], A, B](implicit bind: Bind[F]): Dsl.Atomic[Monadic[F[A]], F[B], A] =
-    new Dsl.Atomic[Monadic[F[A]], F[B], A] {
-      def cpsApply(keyword: Monadic[F[A]], handler: A => F[B]): F[B] = {
+  given [F[_], A, B](using
+      bind: Bind[F]
+  ): Dsl.Atomic[Monadic[F[A]], F[B], A] =
+    Dsl.Atomic[Monadic[F[A]], F[B], A] {
+      (keyword: Monadic[F[A]], handler: A => F[B]) =>
         bind.bind(Monadic.apply.flip(keyword))(handler)
-      }
     }
 
-  abstract class ScalazTransformerDsl[F[_], G[_], A, B] extends Dsl.Atomic[Monadic[F[A]], G[B], A] {
+  abstract class ScalazTransformerDsl[F[_], G[_], A, B]
+      extends ((Monadic[F[A]], A => G[B]) => G[B]) {
     def monad: Monad[G]
 
     def lift(fa: F[A]): G[A]
 
-    final def cpsApply(keyword: Monadic[F[A]], handler: A => G[B]): G[B] = {
+    final def apply(keyword: Monadic[F[A]], handler: A => G[B]): G[B] = {
       monad.bind(lift(Monadic.apply.flip(keyword)))(handler)
     }
 

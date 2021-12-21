@@ -9,9 +9,11 @@ object Suspend {
 
   given[Upstream, UpstreamValue](using upstreamIsKeyword: => IsKeyword[Upstream, UpstreamValue]): IsKeyword[Suspend[Upstream], UpstreamValue] with {}
 
-  given[Keyword, Domain, Value](using Dsl.Searching[Keyword, Domain, Value]): Dsl.Composed[Suspend[Keyword], Domain, Value] with {
-    def cpsApply(keyword: Suspend[Keyword], handler: Value => Domain): Domain = {
-      keyword().cpsApply(handler)          
-    }
+  given [Keyword, Domain, Value](using
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Composed[Suspend[Keyword], Domain, Value] = Dsl.Composed {
+    (keyword: Suspend[Keyword], handler: Value => Domain) =>
+      keyword().cpsApply(handler)
   }
+
 }

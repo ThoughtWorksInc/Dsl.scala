@@ -6,7 +6,6 @@ import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.Dsl.IsKeyword
 import com.thoughtworks.dsl.keywords.TryFinally
-import com.thoughtworks.dsl.Dsl.cpsApply
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -87,9 +86,9 @@ object Using {
       IsKeyword[Mapped, MappedValue],
       Dsl.TryFinally[MappedValue, OuterDomain, BlockDomain, FinalizerDomain],
       Dsl.Searching[Mapped, BlockDomain, MappedValue]
-  ): Dsl.Composed[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] = {
+  ): Dsl.Composed[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] = Dsl.Composed {
     case (FlatMap(r, flatMapper: (Using[R] @unchecked => Mapped)), handler) =>
-      reset {
+      reset[OuterDomain] {
         handler(try {
           !flatMapper(r)
         } finally {

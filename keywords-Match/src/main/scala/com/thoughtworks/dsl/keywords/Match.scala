@@ -18,15 +18,14 @@ object Match {
     ](using
         dsl: Dsl.Searching[Keyword, Domain, LastValue],
         valueOfIndex: ValueOf[Index]
-    ): Dsl.Composed[WithIndex[Index, Keyword] +: Nothing, Domain, LastValue] with {
-      def cpsApply(keywordWithIndex: WithIndex[Index, Keyword] +: Nothing, handler: LastValue => Domain): Domain = {
+    ): Dsl.Composed[WithIndex[Index, Keyword] +: Nothing, Domain, LastValue] = Dsl.Composed {
+      (keywordWithIndex: WithIndex[Index, Keyword] +: Nothing, handler: LastValue => Domain) =>
         keywordWithIndex match {
           case WithIndex(valueOfIndex.value, keyword) =>
-            dsl.cpsApply(keyword, handler)
+            dsl(keyword, handler)
           case _ =>
             throw new IllegalArgumentException("Invalid index")
         }
-      }
     }
 
     given [
@@ -39,15 +38,14 @@ object Match {
         leftDsl: Dsl.Searching[LeftKeyword, Domain, Value],
         valueOfIndex: ValueOf[Index],
         restDsl: Dsl.Searching[RestKeyword, Domain, Value]
-    ): Dsl.Composed[WithIndex[Index, LeftKeyword] +: RestKeyword, Domain, Value] with {
-      def cpsApply(keywordUnion: WithIndex[Index, LeftKeyword] +: RestKeyword, handler: Value => Domain): Domain = {
+    ): Dsl.Composed[WithIndex[Index, LeftKeyword] +: RestKeyword, Domain, Value] = Dsl.Composed {
+      (keywordUnion: WithIndex[Index, LeftKeyword] +: RestKeyword, handler: Value => Domain) =>
         keywordUnion match {
           case WithIndex(valueOfIndex.value, leftKeyword) =>
-            leftDsl.cpsApply(leftKeyword.asInstanceOf[LeftKeyword], handler)
+            leftDsl(leftKeyword.asInstanceOf[LeftKeyword], handler)
           case _ =>
-            restDsl.cpsApply(keywordUnion.asInstanceOf[RestKeyword], handler)
+            restDsl(keywordUnion.asInstanceOf[RestKeyword], handler)
         }
-      }
     }
 
 }

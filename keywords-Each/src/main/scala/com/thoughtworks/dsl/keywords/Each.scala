@@ -50,9 +50,9 @@ object Each {
       Each.To[ForYield, Element, Collection],
       Domain,
       Collection
-    ] = { case (keyword, handler) =>
+    ] = Dsl.Composed { (keyword, handler) =>
       val factory = keyword.factory
-      toViewDsl.cpsApply(
+      toViewDsl(
         ToView(keyword.forYield),
         { view => handler(view.to(factory)) }
       )
@@ -369,9 +369,9 @@ object Each {
           Domain,
           Value
         ]
-    ): Dsl.Composed[Each.ToView[Comprehension], Domain, Value] = {
+    ): Dsl.Composed[Each.ToView[Comprehension], Domain, Value] = Dsl.Composed {
       (as, handler) =>
-        polyCont.cpsApply(toKeyword(as), handler)
+        polyCont(toKeyword(as), handler)
     }
   }
 
@@ -417,7 +417,7 @@ object Each {
     FlatMap[Each[Element], MappedKeyword],
     Domain,
     MappedValue
-  ] = {
+  ] = Dsl.Composed {
     case (
           FlatMap(sourceCollection, flatMapper: (Element @unchecked => MappedKeyword)),
           handler
@@ -428,7 +428,7 @@ object Each {
       ): Domain = {
         seqOps.headOption match {
           case Some(head) =>
-            blockDsl.cpsApply(
+            blockDsl(
               flatMapper(head),
               { mappedHead =>
                 loop(
@@ -461,7 +461,7 @@ object Each {
     FlatMap[Each[Element], MappedKeyword],
     Domain,
     Unit
-  ] = {
+  ] = Dsl.Composed {
     case (
           FlatMap(sourceCollection, flatMapper: (Element @unchecked => MappedKeyword)),
           handler
@@ -472,7 +472,7 @@ object Each {
       ): Domain = {
         seqOps.headOption match {
           case Some(head) =>
-            blockDsl.cpsApply(
+            blockDsl(
               flatMapper(head),
               { mappedHead =>
                 loop(

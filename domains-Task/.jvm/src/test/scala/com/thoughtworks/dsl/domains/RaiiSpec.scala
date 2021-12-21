@@ -24,7 +24,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
         case NonFatal(e) =>
           return failureHandler(e)
       }
-    shiftDsl.cpsApply(Shift(protectedContinuation), failureHandler)
+    shiftDsl(Shift(protectedContinuation), failureHandler)
   }
 
   /** Exit the current scope then hang up

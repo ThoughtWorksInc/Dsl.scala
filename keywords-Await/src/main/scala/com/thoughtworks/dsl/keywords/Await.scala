@@ -120,8 +120,8 @@ object Await extends AwaitJS {
 
   given [FutureResult, That](using
       ExecutionContext
-  ): Dsl.Atomic[Await[Future[FutureResult]], Future[That], FutureResult] =
-    _ flatMap _
+  ): Dsl.Atomic[Await[Future[FutureResult]], Future[That], FutureResult] = Dsl.Atomic(
+    _ flatMap _)
 
   // // TODO:
   // implicit def tailRecContinuationAwaitDsl[Value](implicit
@@ -130,7 +130,7 @@ object Await extends AwaitJS {
 
   given [Value](using
       ExecutionContext
-  ): Dsl.Atomic[Await[Future[Value]], Unit !! Throwable, Value] = {
+  ): Dsl.Atomic[Await[Future[Value]], Unit !! Throwable, Value] = Dsl.Atomic {
     (keyword: Await[Future[Value]], handler: Value => Unit !! Throwable) =>
       !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
   }

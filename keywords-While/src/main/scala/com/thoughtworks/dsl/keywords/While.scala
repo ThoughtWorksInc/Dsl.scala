@@ -22,20 +22,15 @@ object While {
     While[ConditionKeyword, BodyKeyword],
     Domain,
     Unit
-  ] with {
-    def cpsApply(
-        keyword: While[ConditionKeyword, BodyKeyword],
-        handler: Unit => Domain
-    ): Domain = {
+  ] = Dsl.Composed {
+    (keyword: While[ConditionKeyword, BodyKeyword], handler: Unit => Domain) =>
       keyword.condition.cpsApply {
         case true =>
           keyword.body.cpsApply { _ =>
-            cpsApply(keyword, handler)
+            keyword.cpsApply(handler)
           }
         case false =>
           handler(())
       }
-    }
-
   }
 }
