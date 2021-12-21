@@ -1,6 +1,6 @@
 libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.4.0-M9"
 
-libraryDependencies += "com.thoughtworks.tryt" %%% "invariant" % "3.0.0-M0+12-ff2275c1" % Test
+libraryDependencies += "com.thoughtworks.tryt" %%% "invariant" % "3.0.0" % Test
 
 libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.4.0-M9" % Test
 
