@@ -28,7 +28,7 @@ import scala.util.control.TailCalls.TailRec
   *     [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   */
 @implicitNotFound("The keyword:\n ${Keyword}\nis not supported inside a function that returns:\n${Domain}.")
-trait Dsl[-Keyword, Domain, +Value]:
+sealed trait Dsl[-Keyword, Domain, +Value]:
   /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
   def cpsApply(keyword: Keyword, handler: Value => Domain): Domain
 
