@@ -104,6 +104,12 @@ object Dsl extends LowPriorityDsl0 {
   ) =:= Derived[Keyword, Domain, Value] =
     summon
 
+  trait IsStackSafe[Domain]
+  object IsStackSafe extends IsStackSafe.LowPriority0:
+    private[IsStackSafe] trait LowPriority0:
+      given [R, A]: IsStackSafe[R => A] with {}
+    given [A]: IsStackSafe[TailRec[A]] with {}
+
   opaque type Derived[-Keyword, Domain, +Value] <: Dsl[Keyword, Domain, Value] =
     Dsl[Keyword, Domain, Value]
   object Derived:
