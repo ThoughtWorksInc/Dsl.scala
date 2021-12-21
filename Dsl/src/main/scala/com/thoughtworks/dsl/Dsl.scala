@@ -505,12 +505,12 @@ object Dsl extends LowPriorityDsl0 {
   type Keyword = Keyword.Opaque | Keyword.Trait
   object Keyword {
     /** A marker trait that denotes a keyword class, enabling extension method
-      * defined in [[Dsl]] for subclasses of [[Keyword]].
+      * defined in [[Dsl]] for subclasses of [[Keyword.Trait]].
       */
     trait Trait extends Any
 
     /** A marker trait that denotes a keyword opaque type, enabling extension
-      * method defined in [[Dsl]] for its subtypes of [[OpaqueKeyword]].
+      * method defined in [[Dsl]] for its subtypes of [[Keyword.Opaque]].
       */
     opaque type Opaque = Any
     object Opaque {
