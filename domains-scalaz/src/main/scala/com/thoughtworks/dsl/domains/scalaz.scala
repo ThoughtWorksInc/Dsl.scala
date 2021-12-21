@@ -220,5 +220,18 @@ private trait LowPriorityScalaz0 { this: scalaz.type =>
   ): Dsl.Lift.OneStep[A, F[A]] =
     applicative.pure
 
-
+  /** The [[Dsl]] instance that converts a keyword to the monad domain type then
+    * flatMap. This instance helps when the keyword supports a domain `D` that
+    * can be lifted to the `F[A]`, while there is not general rule to derive
+    * `F[A]` from `D`. For example, when `F[A]` is a monad transformer and `D`
+    * is the underlying monad type.
+    */
+  given [F[_], K, A, FB, B](using
+      isFB: FB =:= F[B],
+      monad: Bind[F],
+      run: Dsl.Run[K, F[A], A],
+  ): Dsl[K, FB, A] = isFB.liftContra[[X] =>> Dsl[K, X, A]] {
+    (keyword: K, handler: A => F[B]) =>
+      monad.bind(run(keyword))(handler)
+  }
 }
