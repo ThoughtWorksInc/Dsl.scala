@@ -21,7 +21,7 @@ import scala.util.control.NonFatal
   * @see
   *   [[dsl]] for usage of this [[Using]] keyword in continuations
   */
-opaque type Using[R] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R]
+opaque type Using[+R] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R]
 
 object Using {
   given [R]: IsKeyword[Using[R], R] with {}
@@ -87,8 +87,8 @@ object Using {
       IsKeyword[Mapped, MappedValue],
       Dsl.TryFinally[MappedValue, OuterDomain, BlockDomain, FinalizerDomain],
       Dsl.PolyCont[Mapped, BlockDomain, MappedValue]
-  ): Dsl.PolyCont[FlatMap[Using[R], R, Mapped], OuterDomain, MappedValue] = {
-    case (FlatMap(r, flatMapper), handler) =>
+  ): Dsl.PolyCont[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] = {
+    case (FlatMap(r, flatMapper: (Using[R] @unchecked => Mapped)), handler) =>
       reset {
         handler(try {
           !flatMapper(r)

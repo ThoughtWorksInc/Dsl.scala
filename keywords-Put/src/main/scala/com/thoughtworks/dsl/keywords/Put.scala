@@ -61,7 +61,7 @@ import com.thoughtworks.dsl.Dsl.IsKeyword
   * @author
   *   杨博 (Yang Bo)
   */
-opaque type Put[S] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[S]
+opaque type Put[+S] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[S]
 
 object Put {
   given [S]: IsKeyword[Put[S], Unit] with {}

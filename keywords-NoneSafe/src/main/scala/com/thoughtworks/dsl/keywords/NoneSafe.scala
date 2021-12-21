@@ -3,7 +3,7 @@ package keywords
 import com.thoughtworks.dsl.Dsl.IsKeyword
 import scala.language.implicitConversions
 
-opaque type NoneSafe[A] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Option[A]]
+opaque type NoneSafe[+A] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Option[A]]
 
 object NoneSafe {
   given [A]: IsKeyword[NoneSafe[A], A] with {}

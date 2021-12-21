@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package keywords
 
 /** A type annotated keyword */
-opaque type Typed[Keyword, Value] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Keyword]
+opaque type Typed[+Keyword, +Value] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Keyword]
 
 object Typed {
   given [Keyword, Value]

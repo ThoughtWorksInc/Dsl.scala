@@ -111,7 +111,7 @@ import scala.language.implicitConversions
   * @author
   *   杨博 (Yang Bo)
   */
-opaque type Await[AwaitableValue] <: Dsl.Keyword.Opaque =
+opaque type Await[+AwaitableValue] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[AwaitableValue]
 object Await extends AwaitJS {
   @inline def apply[AwaitableValue]: AwaitableValue =:= Await[AwaitableValue] =

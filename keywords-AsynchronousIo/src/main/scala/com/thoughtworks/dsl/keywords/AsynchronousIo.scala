@@ -7,6 +7,7 @@ import java.nio.channels._
 import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
 
 import scala.util.control.NonFatal
+import scala.annotation.unchecked.uncheckedVariance
 
 /** The base keyword to perform asynchronous IO in [[domains.task.Task]]s.
   *
@@ -76,10 +77,15 @@ import scala.util.control.NonFatal
   *          })
   *          }}}
   */
-trait AsynchronousIo[Value] extends Any with Dsl.Keyword.Trait {
+trait AsynchronousIo[+Value] extends Any with Dsl.Keyword.Trait {
 
   /** Starts the asynchronous operations */
-  protected def start[Attachment](attachment: Attachment, handler: CompletionHandler[Value, _ >: Attachment]): Unit
+  protected def start[Attachment](
+      attachment: Attachment,
+      // CompletionHandler is essentially covariant even though Java does not
+      // support covariance
+      handler: CompletionHandler[Value @uncheckedVariance, _ >: Attachment]
+  ): Unit
 }
 
 object AsynchronousIo {

@@ -6,6 +6,7 @@ import utest.{TestSuite, Tests, given}
 import Dsl.Run
 import scala.language.implicitConversions
 import Dsl.IsKeyword
+import scala.util.control.NonFatal
 
 /**
   * @author 杨博 (Yang Bo)
@@ -85,20 +86,50 @@ object ReturnSpec extends TestSuite {
             com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Boolean],
             com.thoughtworks.dsl.keywords.Suspend$package.Suspend[com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Double]],
             com.thoughtworks.dsl.keywords.Suspend$package.Suspend[com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Double]]
-          ], scala.Double, com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Double]], Double !! Double, Double ]]
-        
+          ], com.thoughtworks.dsl.keywords.Pure$package.Pure[scala.Double]], Double !! Double, Double ]]
       }
       "condition" - {
-        val continuation = *[[X] =>> Double !! X] {
+        val continuation = *[[X] =>> AnyRef !! X] {
           val b = true
+          val c = "my string"
+          val d = new StringBuilder
           if (b) {
-            3.14
+            c
           } else {
-            6.28
+            d
           }
         }
 
-        assert(continuation(identity) == 3.14)
+        assert(continuation(identity) == "my string")
+      }
+      "match / case " - {
+        val continuation = *[[X] =>> AnyRef !! X] {
+          val b = true
+          val c = "my string"
+          val d = new StringBuilder
+          b match {
+            case true =>
+              "my string"
+            case false =>
+              d
+          }
+        }
+
+        assert(continuation(identity) == "my string")
+      }
+
+      "try / catch" - {
+        val continuation = *[[X] =>> Unit !! Throwable !! X] {
+          val c = "my string"
+          val d = new StringBuilder
+          try {
+            c
+          } catch {
+            case NonFatal(e) =>
+              d
+          }
+        }
+
       }
     }
 

@@ -25,13 +25,13 @@ import scala.collection.mutable.Builder
   *   [[Dsl.For]] if you want to use traditional `for` comprehension instead of
   *   !-notation.
   */
-opaque type Each[Element] <: Dsl.Keyword.Opaque =
+opaque type Each[+Element] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[Iterable[Element]]
 object Each {
   def apply[Element]: Iterable[Element] =:= Each[Element] =
     Dsl.Keyword.Opaque.Of.apply
 
-  final case class To[ForYield <: Dsl.For.Yield[Element], Element, Collection](
+  final case class To[+ForYield <: Dsl.For.Yield[Element], Element, +Collection](
       factory: Factory[Element, Collection]
   )(val forYield: ForYield)
       extends Dsl.Keyword.Trait
@@ -59,7 +59,7 @@ object Each {
     }
   }
 
-  opaque type ToView[Comprehension] <: Dsl.Keyword.Opaque =
+  opaque type ToView[+Comprehension] <: Dsl.Keyword.Opaque =
     Dsl.Keyword.Opaque.Of[Comprehension]
 
   object ToView {
@@ -101,14 +101,13 @@ object Each {
         Nested,
       ], FlatMap[
         UpstreamKeyword,
-        collection.View[UpstreamElement],
         FlatMap[Each[
           UpstreamElement
-        ], UpstreamElement, NestedKeyword]
+        ], NestedKeyword]
       ]] = { case Dsl.For.Do.FlatForeach(upstream, flatAction) =>
         FlatMap(
           upstreamToKeyword(upstream),
-          { upstreamCollection =>
+          { (upstreamCollection: Iterable[UpstreamElement]) =>
             FlatMap(
               Each(upstreamCollection),
               flatAction.andThen(mappedToKeyword)
@@ -137,14 +136,13 @@ object Each {
         Element
       ], FlatMap[
         UpstreamKeyword,
-        collection.View[UpstreamElement],
         FlatMap[Each[
           UpstreamElement
-        ], UpstreamElement, MappedKeyword]
+        ], MappedKeyword]
       ]] = { case Dsl.For.Yield.FlatMap(upstream, flatMapper) =>
         FlatMap(
           upstreamToKeyword(upstream),
-          { upstreamCollection =>
+          { (upstreamCollection: collection.View[UpstreamElement]) =>
             FlatMap(
               Each(upstreamCollection),
               flatMapper.andThen(mappedToKeyword)
@@ -167,7 +165,6 @@ object Each {
         UpstreamElement,
       ], FlatMap[
         UpstreamKeyword,
-        collection.View[UpstreamElement],
         Pure[Unit]
       ]] = { case Dsl.For.Do.Foreach(upstream, action) =>
         FlatMap(
@@ -196,7 +193,6 @@ object Each {
         Element
       ], FlatMap[
         UpstreamKeyword,
-        collection.View[UpstreamElement],
         Pure[collection.View[Element]]
       ]] = { case Dsl.For.Yield.Map(upstream, mapper) =>
         FlatMap(
@@ -223,7 +219,6 @@ object Each {
         Element
       ], FlatMap[
         UpstreamKeyword,
-        collection.View[Element],
         Pure[collection.View[Element]]
       ]] = { case Dsl.For.Yield.WithFilter(upstream, filter) =>
         FlatMap(
@@ -245,7 +240,7 @@ object Each {
       ): ToKeyword[Dsl.For.Yield.WithFilter[
         Upstream,
         Element
-      ], FlatMap[Upstream, Element, Pure[collection.View[Element]]]] = {
+      ], FlatMap[Upstream, Pure[collection.View[Element]]]] = {
         case Dsl.For.Yield.WithFilter(upstream, filter) =>
           FlatMap(
             upstream,
@@ -269,14 +264,12 @@ object Each {
         UpstreamElement,
       ], FlatMap[
         Upstream,
-        UpstreamElement,
         Pure[Unit]
       ]] = Pure.apply.liftCo[[X] =>> ToKeyword[Dsl.For.Do.Foreach[
         Upstream,
         UpstreamElement,
       ], FlatMap[
         Upstream,
-        UpstreamElement,
         X
       ]]] { case Dsl.For.Do.Foreach(upstream, action) =>
         FlatMap(
@@ -297,12 +290,11 @@ object Each {
         Element
       ], FlatMap[
         Upstream,
-        UpstreamElement,
         Pure[collection.View[Element]]
       ]] = { case Dsl.For.Yield.Map(upstream, mapper) =>
         FlatMap(
           upstream,
-          element => Pure(collection.View.Single(mapper(element)))
+          (upstreamElement: UpstreamElement) => Pure(collection.View.Single(mapper(upstreamElement)))
         )
       }
 
@@ -320,7 +312,6 @@ object Each {
         Nested,
       ], FlatMap[
         Upstream,
-        UpstreamElement,
         NestedKeyword
       ]] = { case Dsl.For.Do.FlatForeach(upstream, flatAction) =>
         FlatMap(upstream, flatAction.andThen(mappedToKeyword))
@@ -342,7 +333,6 @@ object Each {
         Element
       ], FlatMap[
         Upstream,
-        UpstreamElement,
         MappedKeyword
       ]] = { case Dsl.For.Yield.FlatMap(upstream, flatMapper) =>
         FlatMap(upstream, flatMapper.andThen(mappedToKeyword))
@@ -424,12 +414,12 @@ object Each {
       factory: Factory[MappedElement, MappedValue],
       blockDsl: Dsl.PolyCont[MappedKeyword, Domain, MappedValue]
   ): Dsl.PolyCont[
-    FlatMap[Each[Element], Element, MappedKeyword],
+    FlatMap[Each[Element], MappedKeyword],
     Domain,
     MappedValue
   ] = {
     case (
-          FlatMap(sourceCollection, flatMapper),
+          FlatMap(sourceCollection, flatMapper: (Element @unchecked => MappedKeyword)),
           handler
         ) =>
       @inline def loop(
@@ -468,12 +458,12 @@ object Each {
   ](using
       blockDsl: Dsl.PolyCont[MappedKeyword, Domain, Unit]
   ): Dsl.PolyCont[
-    FlatMap[Each[Element], Element, MappedKeyword],
+    FlatMap[Each[Element], MappedKeyword],
     Domain,
     Unit
   ] = {
     case (
-          FlatMap(sourceCollection, flatMapper),
+          FlatMap(sourceCollection, flatMapper: (Element @unchecked => MappedKeyword)),
           handler
         ) =>
       @inline def loop(

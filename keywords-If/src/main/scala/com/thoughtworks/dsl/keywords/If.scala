@@ -3,7 +3,7 @@ package keywords
 import Dsl.IsKeyword
 import Dsl.cpsApply
 
-final case class If[ConditionKeyword, ThenKeyword, ElseKeyword](
+final case class If[+ConditionKeyword, +ThenKeyword, +ElseKeyword](
   cond: ConditionKeyword,
   thenp: ThenKeyword,
   elsep: ElseKeyword) extends Dsl.Keyword.Trait

@@ -13,8 +13,8 @@ import scala.language.implicitConversions
   * @todo
   *   [[Monadic]] should be a [[scala.AnyVal]] after [[https://github.com/scala/bug/issues/10595]] is resolved.
   */
-opaque type Monadic[Functor[_], Value] <: Dsl.Keyword.Opaque =
-  Dsl.Keyword.Opaque.Of[Functor[Value]]
+opaque type Monadic[+FA] <: Dsl.Keyword.Opaque =
+  Dsl.Keyword.Opaque.Of[FA]
 
 object Monadic {
 
@@ -25,9 +25,9 @@ object Monadic {
       inline asFA: FA <:< F[A]
   )
     transparent inline def unary_! : A =
-      Dsl.shift[Monadic[F, A], A](Monadic[F, A](asFA(fa))): A
+      Dsl.shift[Monadic[FA], A](Monadic[FA](fa)): A
 
-  @inline def apply[Functor[_], Value]: Functor[Value] =:= Monadic[Functor, Value] = Dsl.Keyword.Opaque.Of.apply
+  @inline def apply[FA]: FA =:= Monadic[FA] = Dsl.Keyword.Opaque.Of.apply
 
-  given [Functor[_], Value]: IsKeyword[Monadic[Functor, Value], Value] with {}
+  given [FA <: F[A], F[_], A]: IsKeyword[Monadic[FA], A] with {}
 }

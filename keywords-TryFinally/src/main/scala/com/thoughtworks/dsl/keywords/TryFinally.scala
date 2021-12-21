@@ -7,7 +7,7 @@ import scala.util.control.Exception.Catcher
 import scala.concurrent._
 import scala.util.control.NonFatal
 
-case class TryFinally[TryKeyword, FinalizerKeyword](
+case class TryFinally[+TryKeyword, +FinalizerKeyword](
     block: TryKeyword,
     finalizer: FinalizerKeyword
 ) extends Dsl.Keyword.Trait
