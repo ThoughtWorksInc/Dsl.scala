@@ -201,36 +201,47 @@ object Dsl extends LowPriorityDsl0 {
     Domain,
     Value
   ] = Dsl[Keyword, Domain, Value]
-  object Searching extends Searching.AtomicThenComposedThenDerived:
-    private[Searching] trait Derived:
+  object Searching
+      extends Searching.AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived:
+    private[Searching] trait StackUnsafeDerived:
+      given [Keyword, UnsafeDomain, Value](using
+          dsl: Dsl.Derived.StackUnsafe[Keyword, UnsafeDomain, Value]
+      ): Dsl.Searching[Keyword, UnsafeDomain, Value] = dsl
+    private[Searching] trait StackSafeDerivedThenStackUnsafeDerived
+        extends Searching.StackUnsafeDerived:
       given [Keyword, DerivedDomain, Value](using
-          dsl: Dsl.Derived[Keyword, DerivedDomain, Value]
+          dsl: Dsl.Derived.StackSafe[Keyword, DerivedDomain, Value]
       ): Dsl.Searching[Keyword, DerivedDomain, Value] = dsl
-    private[Searching] trait ComposedThenDerived extends Searching.Derived:
+    private[Searching] trait ComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends Searching.StackSafeDerivedThenStackUnsafeDerived:
       given [ComposedKeyword, Domain, Value](using
           dsl: Dsl.Composed[ComposedKeyword, Domain, Value]
       ): Dsl.Searching[ComposedKeyword, Domain, Value] = dsl
-    private[Searching] trait AtomicThenComposedThenDerived
-        extends Searching.ComposedThenDerived:
+    private[Searching] trait AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends Searching.ComposedThenStackSafeDerivedThenStackUnsafeDerived:
       given [Keyword, Domain, Value](using
           dsl: Dsl.Atomic[Keyword, Domain, Value]
       ): Dsl.Searching[Keyword, Domain, Value] = dsl
-    object AtomicThenComposedThenDerived extends AtomicThenComposedThenDerived
+    object AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
 
-    private[Searching] trait Composed:
+    private[Searching] trait ComposedThenStackUnsafeDerived
+        extends Searching.StackUnsafeDerived:
       given [ComposedKeyword, Domain, Value](using
           dsl: Dsl.Composed[ComposedKeyword, Domain, Value]
       ): Dsl.Searching[ComposedKeyword, Domain, Value] = dsl
-    private[Searching] trait DerivedThenComposed extends Searching.Composed:
+    private[Searching] trait StackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends Searching.ComposedThenStackUnsafeDerived:
       given [Keyword, DerivedDomain, Value](using
-          dsl: Dsl.Derived[Keyword, DerivedDomain, Value]
+          dsl: Dsl.Derived.StackSafe[Keyword, DerivedDomain, Value]
       ): Dsl.Searching[Keyword, DerivedDomain, Value] = dsl
-    private[Searching] trait AtomicThenDerivedThenComposed
-        extends Searching.DerivedThenComposed:
+    private[Searching] trait AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends Searching.StackSafeDerivedThenComposedThenStackUnsafeDerived:
       given [Keyword, Domain, Value](using
           dsl: Dsl.Atomic[Keyword, Domain, Value]
       ): Dsl.Searching[Keyword, Domain, Value] = dsl
-    object AtomicThenDerivedThenComposed extends AtomicThenDerivedThenComposed
+    object AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
 
   extension [Keyword, Value](
       inline from: Keyword
