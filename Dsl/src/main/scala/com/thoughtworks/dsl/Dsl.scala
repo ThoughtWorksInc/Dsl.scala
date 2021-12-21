@@ -92,6 +92,10 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 object Dsl extends LowPriorityDsl0 {
 
+  trait Derived[-Keyword, Domain, +Value] extends Dsl[Keyword, Domain, Value]
+  trait Composed[-Keyword, Domain, +Value] extends Dsl[Keyword, Domain, Value]
+  trait Atomic[-Keyword, Domain, +Value] extends Dsl[Keyword, Domain, Value]
+
   extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
     transparent inline def unary_! : Value = {
       Dsl.shift[Keyword, Value](from)
