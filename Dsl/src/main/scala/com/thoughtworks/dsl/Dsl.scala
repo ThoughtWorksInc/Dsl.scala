@@ -50,20 +50,6 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
-  // Must not put transparent inline extension methods directly in Dsl, or the compiler crashes
-  extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
-    transparent inline def unary_! : Value = {
-      Dsl.shift[Keyword, Value](from)
-    }
-
-  extension [KeywordOrView, Element](keywordOrView: KeywordOrView)(using hasValueOrElement: Dsl.HasValueOrElement[KeywordOrView, Element])
-    def flatMap[Mapped <: For.Yield[MappedElement], MappedElement](flatMapper: Element => Mapped) = For.Yield.FlatMap(keywordOrView, flatMapper)
-    def map[Mapped](mapper: Element => Mapped) = For.Yield.Map(keywordOrView, mapper)
-    def foreach[Nested <: For.Do](action: Element => Nested) = For.Do.FlatForeach(keywordOrView, action)
-    def foreach(action: Element => Unit) = For.Do.Foreach(keywordOrView, action)
-    def withFilter(filter: Element => Boolean) = For.Yield.WithFilter(keywordOrView, filter)
-    // TODO: Implement `foreach` and `map` in macros to support !-notation in `do` block or `yield` block
-
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
 //      implicit restDsl: Dsl[Keyword, LeftDomain, Value],
@@ -106,7 +92,19 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 object Dsl extends LowPriorityDsl0 {
 
-  sealed trait HasValueOrElement[KeywordOrView, ValueOrElement]
+  extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
+    transparent inline def unary_! : Value = {
+      Dsl.shift[Keyword, Value](from)
+    }
+
+  sealed trait HasValueOrElement[KeywordOrView, Element]:
+    extension (keywordOrView: KeywordOrView)
+      def flatMap[Mapped <: For.Yield[MappedElement], MappedElement](flatMapper: Element => Mapped) = For.Yield.FlatMap(keywordOrView, flatMapper)
+      def map[Mapped](mapper: Element => Mapped) = For.Yield.Map(keywordOrView, mapper)
+      def foreach[Nested <: For.Do](action: Element => Nested) = For.Do.FlatForeach(keywordOrView, action)
+      def foreach(action: Element => Unit) = For.Do.Foreach(keywordOrView, action)
+      def withFilter(filter: Element => Boolean) = For.Yield.WithFilter(keywordOrView, filter)
+      // TODO: Implement `foreach` and `map` in macros to support !-notation in `do` block or `yield` block
   object HasValueOrElement {
     given [KeywordOrView <: For.Yield[Element], Element]: HasValueOrElement[KeywordOrView, Element] with {}
   }
@@ -503,34 +501,15 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
-  // If I remove this, the compiler crashes.
-  // See https://github.com/lampepfl/dotty/issues/14076
-  private opaque type Dotty14076Workaround = Any
-
-  extension [Keyword, Value](keyword: Keyword)(using
-      isKeyword: IsKeyword[Keyword, Value]
-  )
-    @inline def to[Domain[_]](using
-        run: Run[Keyword, Domain[Value], Value]
-    ): Domain[Value] = {
-      run(keyword)
-    }
-
-    @inline def as[Domain](using
-        run: Run[Keyword, Domain, Value]
-    ): Domain = {
-      run(keyword)
-    }
-
   type Keyword = Keyword.Opaque | Keyword.Trait
   object Keyword {
     /** A marker trait that denotes a keyword class, enabling extension method
-      * defined in [[Dsl]] for subclasses of [[Keyword]].
+      * defined in [[Dsl]] for subclasses of [[Keyword.Trait]].
       */
     trait Trait extends Any
 
     /** A marker trait that denotes a keyword opaque type, enabling extension
-      * method defined in [[Dsl]] for its subtypes of [[OpaqueKeyword]].
+      * method defined in [[Dsl]] for its subtypes of [[Keyword.Opaque]].
       */
     opaque type Opaque = Any
     object Opaque {
@@ -542,7 +521,20 @@ object Dsl extends LowPriorityDsl0 {
   }
   
  
-  trait IsKeyword[Keyword, Value] extends HasValueOrElement[Keyword, Value]
+  trait IsKeyword[Keyword, Value] extends HasValueOrElement[Keyword, Value]:
+    extension (keyword: Keyword)
+      @inline def to[Domain[_]](using
+          run: Run[Keyword, Domain[Value], Value]
+      ): Domain[Value] = {
+        run(keyword)
+      }
+
+      @inline def as[Domain](using
+          run: Run[Keyword, Domain, Value]
+      ): Domain = {
+        run(keyword)
+      }
+
 
   extension [Keyword, Domain, Value](keyword: Keyword)
     @inline def cpsApply(using

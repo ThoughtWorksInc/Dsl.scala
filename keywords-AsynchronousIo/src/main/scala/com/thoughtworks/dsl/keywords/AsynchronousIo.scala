@@ -49,7 +49,6 @@ import scala.util.control.NonFatal
   *          import com.thoughtworks.dsl._
   *          import com.thoughtworks.dsl.keywords._
   *          import com.thoughtworks.dsl.domains.Task
-  *          import com.thoughtworks.dsl.Dsl.to
   *          import java.net.URL
   *          def cat(paths: Path*) = Each.ToView {
   *            for {
