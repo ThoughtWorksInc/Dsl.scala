@@ -40,9 +40,9 @@ opaque type Dsl[-Keyword, Domain, +Value] <: (
 
 private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
-  given deriveFunction1Dsl[Keyword, State, Domain, Value](using
+  private def deriveFunction1Dsl[Keyword, State, Domain, Value](using
       restDsl: Dsl.Searching[Keyword, Domain, Value]
-  ): Dsl.Derived[Keyword, State => Domain, Value] = Dsl.Derived {
+  ): Dsl[Keyword, State => Domain, Value] = Dsl {
     (keyword: Keyword, handler: Value => State => Domain) =>
       val restDsl1 = restDsl
       locally { (state: State) =>
@@ -82,9 +82,9 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 //    }
 //  }
 
-  implicit def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
+  private def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl.Searching[Keyword, LeftDomain, Value]
-  ): Dsl.Derived[Keyword, LeftDomain !! Throwable, Value] = Dsl.Derived {
+  ): Dsl[Keyword, LeftDomain !! Throwable, Value] = Dsl {
     (keyword, handler) => continue =>
       restDsl(
         keyword,
@@ -123,7 +123,7 @@ object Dsl extends LowPriorityDsl0 {
           Keyword,
           (Value => Domain)
       ) => Domain
-  ) =:= Derived[Keyword, Domain, Value] =
+  ) =:= Dsl[Keyword, Domain, Value] =
     summon
 
   trait IsStackSafe[Domain]
@@ -132,16 +132,7 @@ object Dsl extends LowPriorityDsl0 {
       given [R, A]: IsStackSafe[R => A] with {}
     given [A]: IsStackSafe[TailRec[A]] with {}
 
-  opaque type Derived[-Keyword, Domain, +Value] <: Dsl[Keyword, Domain, Value] =
-    Dsl[Keyword, Domain, Value]
   object Derived:
-    def apply[Keyword, Domain, Value]: (
-        (
-            Keyword,
-            (Value => Domain)
-        ) => Domain
-    ) =:= Derived[Keyword, Domain, Value] =
-      summon
     opaque type StackSafe[-Keyword, Domain, +Value] <: Dsl[
       Keyword,
       Domain,
@@ -320,10 +311,10 @@ object Dsl extends LowPriorityDsl0 {
     }
   }
 
-  implicit def derivedTailRecDsl[Keyword, Domain, Value](implicit
+  private def derivedTailRecDsl[Keyword, Domain, Value](implicit
       restDsl: Dsl.Searching[Keyword, Domain, Value]
-  ): Dsl.Derived[Keyword, TailRec[Domain], Value] = Dsl.Derived {
-    (keyword, handler) =>
+  ): Dsl[Keyword, TailRec[Domain], Value] = Dsl {
+    (keyword: Keyword, handler: (Value => TailRec[Domain])) =>
       TailCalls.done {
         restDsl(
           keyword,
@@ -344,10 +335,10 @@ object Dsl extends LowPriorityDsl0 {
   ): Dsl.Derived.StackUnsafe[Keyword, TailRec[Domain], Value] =
     Dsl.Derived.StackUnsafe(derivedTailRecDsl)
 
-  implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
+  private def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl.Searching[Keyword, LeftDomain !! Throwable, Value]
-  ): Dsl.Derived[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
-    Dsl.Derived {
+  ): Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
+    Dsl {
       (
           keyword: Keyword,
           handler: (Value => TailRec[LeftDomain] !! Throwable)
