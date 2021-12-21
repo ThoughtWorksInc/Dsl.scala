@@ -174,9 +174,6 @@ object Dsl extends LowPriorityDsl0 {
 
   private[dsl] type !![R, +A] = (A => R) => R
 
-  def apply[Keyword, Domain, Value](implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
-    typeClass
-
   private def catchNativeException[A](futureContinuation: Future[A] !! A): Future[A] = {
     try {
       futureContinuation(Future.successful)
