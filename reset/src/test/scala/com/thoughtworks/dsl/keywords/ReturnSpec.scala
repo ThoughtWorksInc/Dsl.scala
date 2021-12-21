@@ -91,10 +91,12 @@ object ReturnSpec extends TestSuite {
       "condition" - {
         val continuation = *[[X] =>> Double !! X] {
           val b = true
+          val c = 3.14
+          val d = 6.28
           if (b) {
-            3.14
+            c
           } else {
-            6.28
+            d
           }
         }
 
