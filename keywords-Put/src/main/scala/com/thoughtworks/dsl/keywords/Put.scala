@@ -67,8 +67,8 @@ object Put {
   given [S]: IsKeyword[Put[S], Unit] with {}
   def apply[S]: S =:= Put[S] = Dsl.Keyword.Opaque.Of.apply
 
-  implicit def putDsl[S0, S >: S0, A]: Dsl[Put[S0], S => A, Unit] =
-    new Dsl[Put[S0], S => A, Unit] {
+  implicit def putDsl[S0, S >: S0, A]: Dsl.Atomic[Put[S0], S => A, Unit] =
+    new Dsl.Atomic[Put[S0], S => A, Unit] {
       def cpsApply(keyword: Put[S0], handler: Unit => S => A): S => A = {
         oldValue =>
           handler(())(keyword)

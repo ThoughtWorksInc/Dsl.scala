@@ -34,9 +34,9 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
   given deriveFunction1Dsl[Keyword, FunctionDomain, State, Domain, Value](using
       isFunctionDomain: FunctionDomain =:= (State => Domain),
-      restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, FunctionDomain, Value] = {
-    isFunctionDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
+      restDsl: Dsl.Atomic[Keyword, Domain, Value]
+  ): Dsl.Atomic[Keyword, FunctionDomain, Value] = {
+    isFunctionDomain.substituteContra[[X] =>> Dsl.Atomic[Keyword, X, Value]] {
       (keyword: Keyword, handler: Value => State => Domain) =>
         val restDsl1 = restDsl
         locally { (state: State) =>
@@ -52,10 +52,10 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
-//      implicit restDsl: Dsl[Keyword, LeftDomain, Value],
-//      shiftDsl2: Dsl[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
-//  ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
-//    new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
+//      implicit restDsl: Dsl.Atomic[Keyword, LeftDomain, Value],
+//      shiftDsl2: Dsl.Atomic[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
+//  ): Dsl.Atomic[Keyword, LeftDomain !! RightDomain, Value] = {
+//    new Dsl.Atomic[Keyword, LeftDomain !! RightDomain, Value] {
 //      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
 //        (continue: RightDomain => LeftDomain) =>
 //          restDsl.cpsApply(keyword, { a =>
@@ -67,9 +67,9 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
   implicit def throwableContinuationDsl[Keyword, ThrowableContinuationDomain, LeftDomain, Value](implicit
       isThrowableContinuationDomain: ThrowableContinuationDomain =:= (LeftDomain !! Throwable),
-      restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Dsl[Keyword, ThrowableContinuationDomain, Value] =
-    isThrowableContinuationDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) => continue =>
+      restDsl: Dsl.Atomic[Keyword, LeftDomain, Value]
+  ): Dsl.Atomic[Keyword, ThrowableContinuationDomain, Value] =
+    isThrowableContinuationDomain.substituteContra[[X] =>> Dsl.Atomic[Keyword, X, Value]] { (keyword, handler) => continue =>
       restDsl.cpsApply(
         keyword,
         new (Value => LeftDomain) {
@@ -140,8 +140,8 @@ object Dsl extends LowPriorityDsl0 {
 
   implicit def derivedTailRecDsl[Keyword, TailRecDomain, Domain, Value](implicit
       isTailRecDomain: TailRecDomain =:= TailRec[Domain],
-      restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, TailRecDomain, Value] = isTailRecDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
+      restDsl: Dsl.Atomic[Keyword, Domain, Value]
+  ): Dsl.Atomic[Keyword, TailRecDomain, Value] = isTailRecDomain.substituteContra[[X] =>> Dsl.Atomic[Keyword, X, Value]] {
     (keyword, handler) =>
       TailCalls.done {
         restDsl.cpsApply(
@@ -155,8 +155,8 @@ object Dsl extends LowPriorityDsl0 {
 
   implicit def derivedThrowableTailRecDsl[Keyword, TaskDomain, LeftDomain, Value](implicit
       isTaskDomain: TaskDomain =:= (TailRec[LeftDomain] !! Throwable),
-      restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value]
-  ): Dsl[Keyword, TaskDomain, Value] = isTaskDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
+      restDsl: Dsl.Atomic[Keyword, LeftDomain !! Throwable, Value]
+  ): Dsl.Atomic[Keyword, TaskDomain, Value] = isTaskDomain.substituteContra[[X] =>> Dsl.Atomic[Keyword, X, Value]] {
     (keyword, handler) => tailRecFailureHandler =>
       TailCalls.done(
         restDsl.cpsApply(

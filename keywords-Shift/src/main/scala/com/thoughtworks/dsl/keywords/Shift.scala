@@ -19,8 +19,8 @@ opaque type Shift[R, A] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R !! A]
 private[keywords] trait LowPriorityShift1 {
 
   @inline
-  implicit def stackUnsafeShiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
-    new Dsl[Shift[Domain, Value], Domain, Value] {
+  implicit def stackUnsafeShiftDsl[Domain, Value]: Dsl.Atomic[Shift[Domain, Value], Domain, Value] =
+    new Dsl.Atomic[Shift[Domain, Value], Domain, Value] {
       def cpsApply(shift: Shift[Domain, Value], handler: Value => Domain) =
         Shift.apply.flip(shift)(handler)
     }
@@ -32,7 +32,7 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 { this: Shif
   given [LeftDomain, RightDomain, Value](using
       restDsl: SameDomainStackSafeShiftDsl[LeftDomain, RightDomain]
   ): SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] = {
-    val restDsl0 = apply.liftContra[[X] =>> Dsl[X, LeftDomain, RightDomain]](restDsl);
+    val restDsl0 = apply.liftContra[[X] =>> Dsl.Atomic[X, LeftDomain, RightDomain]](restDsl);
     { (keyword, handler) =>
       keyword { value =>
         restDsl0.cpsApply(handler(value), _)
@@ -45,7 +45,7 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 { this: Shif
 object Shift extends LowPriorityShift0 {
   given [Domain, Value]: IsKeyword[Shift[Domain, Value], Value] with {}
 
-  trait StackSafeShiftDsl[Domain, NewDomain, Value] extends Dsl[Shift[Domain, Value], NewDomain, Value]
+  trait StackSafeShiftDsl[Domain, NewDomain, Value] extends Dsl.Atomic[Shift[Domain, Value], NewDomain, Value]
 
   private[keywords] type SameDomainStackSafeShiftDsl[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
 

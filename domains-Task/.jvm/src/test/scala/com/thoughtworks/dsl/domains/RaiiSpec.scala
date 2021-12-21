@@ -16,7 +16,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
   @inline
   private def jvmCatch[Domain](eh: => Domain !! Throwable)(
       failureHandler: Throwable => Domain
-  )(implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
+  )(implicit shiftDsl: Dsl.Atomic[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
     val protectedContinuation: Domain !! Throwable =
       try {
         eh

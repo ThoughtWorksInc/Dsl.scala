@@ -21,14 +21,14 @@ object Return {
 
   given [ReturnValue, Domain](using
       lift: Lift[ReturnValue, Domain]
-  ): Dsl[Return[ReturnValue], Domain, Nothing] with {
+  ): Dsl.Atomic[Return[ReturnValue], Domain, Nothing] with {
     def cpsApply(keyword: Return[ReturnValue], handler: Nothing => Domain): Domain = {
       lift(keyword)
     }
   }
 
-  implicit def returnDsl[ReturnValue, Domain >: ReturnValue]: Dsl[Return[ReturnValue], Domain, Nothing] =
-    new Dsl[Return[ReturnValue], Domain, Nothing] {
+  implicit def returnDsl[ReturnValue, Domain >: ReturnValue]: Dsl.Atomic[Return[ReturnValue], Domain, Nothing] =
+    new Dsl.Atomic[Return[ReturnValue], Domain, Nothing] {
       def cpsApply(keyword: Return[ReturnValue], handler: Nothing => Domain): Domain = {
         keyword
       }

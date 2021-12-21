@@ -12,11 +12,11 @@ private trait AwaitJS { this: Await.type =>
   given [PromiseResult]
       : Dsl.IsKeyword[Await[js.Promise[PromiseResult]], PromiseResult] with {}
 
-  given [JsPromiseResult, That]: Dsl[Await[js.Promise[JsPromiseResult]], js.Promise[That], JsPromiseResult] =
-    Await.apply.liftCo[[X] =>> Dsl[X, js.Promise[That], JsPromiseResult]](_ `then` _)
+  given [JsPromiseResult, That]: Dsl.Atomic[Await[js.Promise[JsPromiseResult]], js.Promise[That], JsPromiseResult] =
+    Await.apply.liftCo[[X] =>> Dsl.Atomic[X, js.Promise[That], JsPromiseResult]](_ `then` _)
 
-  given [JsPromiseResult, That](using ExecutionContext): Dsl[Await[js.Promise[JsPromiseResult]], Future[That], JsPromiseResult] =
-    Await.apply.liftCo[[X] =>> Dsl[X, Future[That], JsPromiseResult]] { (promise, handler) =>
+  given [JsPromiseResult, That](using ExecutionContext): Dsl.Atomic[Await[js.Promise[JsPromiseResult]], Future[That], JsPromiseResult] =
+    Await.apply.liftCo[[X] =>> Dsl.Atomic[X, Future[That], JsPromiseResult]] { (promise, handler) =>
       promise.toFuture.flatMap(handler)
     }
 
