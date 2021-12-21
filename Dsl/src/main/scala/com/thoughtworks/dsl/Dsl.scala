@@ -113,9 +113,43 @@ object Dsl extends LowPriorityDsl0 {
   opaque type Derived[-Keyword, Domain, +Value] <: Dsl[Keyword, Domain, Value] =
     Dsl[Keyword, Domain, Value]
   object Derived:
-    def apply[Keyword, Domain, Value]
-        : ((Keyword, (Value => Domain)) => Domain) =:= Derived[Keyword, Domain, Value] =
+    def apply[Keyword, Domain, Value]: (
+        (
+            Keyword,
+            (Value => Domain)
+        ) => Domain
+    ) =:= Derived[Keyword, Domain, Value] =
       summon
+    opaque type StackSafe[-Keyword, Domain, +Value] <: Dsl[
+      Keyword,
+      Domain,
+      Value
+    ] =
+      Dsl[Keyword, Domain, Value]
+    object StackSafe:
+      def apply[Keyword, Domain, Value]: (
+          (
+              Keyword,
+              (Value => Domain)
+          ) => Domain
+      ) =:= StackSafe[Keyword, Domain, Value] =
+        summon
+
+    opaque type StackUnsafe[-Keyword, Domain, +Value] <: Dsl[
+      Keyword,
+      Domain,
+      Value
+    ] =
+      Dsl[Keyword, Domain, Value]
+    object StackUnsafe:
+      def apply[Keyword, Domain, Value]: (
+          (
+              Keyword,
+              (Value => Domain)
+          ) => Domain
+      ) =:= StackUnsafe[Keyword, Domain, Value] =
+        summon
+
   opaque type Composed[-Keyword, Domain, +Value] <: Dsl[
     Keyword,
     Domain,
