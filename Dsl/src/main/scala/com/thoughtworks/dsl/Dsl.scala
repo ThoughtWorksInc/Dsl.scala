@@ -51,6 +51,18 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
       }
   }
 
+  given [Keyword, State, Domain, Value](using
+      Dsl.IsStackSafe[Domain],
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Derived.StackSafe[Keyword, State => Domain, Value] =
+    Dsl.Derived.StackSafe(deriveFunction1Dsl)
+
+  given [Keyword, State, Domain, Value](using
+      util.NotGiven[Dsl.IsStackSafe[Domain]],
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Derived.StackUnsafe[Keyword, State => Domain, Value] =
+    Dsl.Derived.StackUnsafe(deriveFunction1Dsl)
+
 }
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
@@ -92,6 +104,16 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
         }
       )
   }
+  given [Keyword, LeftDomain, Value](using
+      Dsl.IsStackSafe[LeftDomain],
+      Dsl.Searching[Keyword, LeftDomain, Value]
+  ): Dsl.Derived.StackSafe[Keyword, LeftDomain !! Throwable, Value] =
+    Dsl.Derived.StackSafe(throwableContinuationDsl)
+  given [Keyword, LeftDomain, Value](using
+      util.NotGiven[Dsl.IsStackSafe[LeftDomain]],
+      Dsl.Searching[Keyword, LeftDomain, Value]
+  ): Dsl.Derived.StackUnsafe[Keyword, LeftDomain !! Throwable, Value] =
+    Dsl.Derived.StackUnsafe(throwableContinuationDsl)
 
 }
 
@@ -300,6 +322,16 @@ object Dsl extends LowPriorityDsl0 {
         )
       }
   }
+  given [Keyword, Domain, Value](using
+      Dsl.IsStackSafe[Domain],
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Derived.StackSafe[Keyword, TailRec[Domain], Value] =
+    Dsl.Derived.StackSafe(derivedTailRecDsl)
+  given [Keyword, Domain, Value](using
+      util.NotGiven[Dsl.IsStackSafe[Domain]],
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Derived.StackUnsafe[Keyword, TailRec[Domain], Value] =
+    Dsl.Derived.StackUnsafe(derivedTailRecDsl)
 
   implicit def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl.Searching[Keyword, LeftDomain !! Throwable, Value]
@@ -322,6 +354,16 @@ object Dsl extends LowPriorityDsl0 {
           }
         )
     }
+  given [Keyword, LeftDomain, TailRecValue](using
+      Dsl.IsStackSafe[LeftDomain],
+      Dsl.Searching[Keyword, LeftDomain !! Throwable, TailRecValue]
+  ): Dsl.Derived.StackSafe[Keyword, TailRec[LeftDomain] !! Throwable, TailRecValue] =
+    Dsl.Derived.StackSafe(derivedThrowableTailRecDsl)
+  given [Keyword, LeftDomain, TailRecValue](using
+      util.NotGiven[Dsl.IsStackSafe[LeftDomain]],
+      Dsl.Searching[Keyword, LeftDomain !! Throwable, TailRecValue]
+  ): Dsl.Derived.StackUnsafe[Keyword, TailRec[LeftDomain] !! Throwable, TailRecValue] =
+    Dsl.Derived.StackUnsafe(derivedThrowableTailRecDsl)
 
   private[dsl] type !![R, +A] = (A => R) => R
 
