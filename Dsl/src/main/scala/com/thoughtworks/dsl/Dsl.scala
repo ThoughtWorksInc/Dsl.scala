@@ -50,12 +50,6 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
-  // Must not put transparent inline extension methods directly in Dsl, or the compiler crashes
-  extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
-    transparent inline def unary_! : Value = {
-      Dsl.shift[Keyword, Value](from)
-    }
-
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
 //      implicit restDsl: Dsl[Keyword, LeftDomain, Value],
@@ -97,6 +91,11 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 }
 
 object Dsl extends LowPriorityDsl0 {
+
+  extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
+    transparent inline def unary_! : Value = {
+      Dsl.shift[Keyword, Value](from)
+    }
 
   sealed trait HasValueOrElement[KeywordOrView, Element]:
     extension (keywordOrView: KeywordOrView)
