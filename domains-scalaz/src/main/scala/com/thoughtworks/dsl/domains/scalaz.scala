@@ -215,19 +215,19 @@ object scalaz {
 
     }
 
-  implicit def scalazMonadicDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[Monadic[F, A], F[B], A] =
-    new Dsl[Monadic[F, A], F[B], A] {
-      def cpsApply(keyword: Monadic[F, A], handler: A => F[B]): F[B] = {
+  implicit def scalazMonadicDsl[F[_], A, B](implicit bind: Bind[F]): Dsl[Monadic[F[A]], F[B], A] =
+    new Dsl[Monadic[F[A]], F[B], A] {
+      def cpsApply(keyword: Monadic[F[A]], handler: A => F[B]): F[B] = {
         bind.bind(Monadic.apply.flip(keyword))(handler)
       }
     }
 
-  abstract class ScalazTransformerDsl[F[_], G[_], A, B] extends Dsl[Monadic[F, A], G[B], A] {
+  abstract class ScalazTransformerDsl[F[_], G[_], A, B] extends Dsl[Monadic[F[A]], G[B], A] {
     def monad: Monad[G]
 
     def lift(fa: F[A]): G[A]
 
-    final def cpsApply(keyword: Monadic[F, A], handler: A => G[B]): G[B] = {
+    final def cpsApply(keyword: Monadic[F[A]], handler: A => G[B]): G[B] = {
       monad.bind(lift(Monadic.apply.flip(keyword)))(handler)
     }
 
