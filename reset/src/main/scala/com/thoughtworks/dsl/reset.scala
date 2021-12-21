@@ -629,7 +629,6 @@ object reset {
               val flatMapObject = '{keywords.FlatMap}.asTerm
               Apply(TypeApply(Select.unique(flatMapObject, "apply"), List(
                 TypeTree.of[K],
-                TypeTree.of[V],
                 TypeTree.of[X],
               )), List(keywordExpr.asTerm, flatMapperTerm)) -> innerKeywordTree.valueType
             }

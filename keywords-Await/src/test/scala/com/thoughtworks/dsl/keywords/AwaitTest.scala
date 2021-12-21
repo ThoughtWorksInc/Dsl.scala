@@ -100,10 +100,8 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
         <:<
           FlatMap[
             Await[Future[Int]],
-            Int,
             FlatMap[
               Each[Int],
-              Int,
               Pure[collection.View[Int]]
             ]
           ]
@@ -146,12 +144,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     val reified = reify {
       !Await(Future(!Await(Future(1L))))
     }
-    summon[reified.type <:< Typed[FlatMap[Await[Future[Long]], Long, Await[
+    summon[reified.type <:< Typed[FlatMap[Await[Future[Long]], Await[
       Future[Long]
     ]], Long]]
     summon[
       Run[
-        FlatMap[Await[Future[Long]], Long, Await[Future[Long]]],
+        FlatMap[Await[Future[Long]], Await[Future[Long]]],
         Future[Long],
         Long
       ]
@@ -167,12 +165,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       !Await(Future(i))
     }
     summon[reified.type <:< Typed[
-      FlatMap[Await[Future[String]], String, Await[Future[String]]],
+      FlatMap[Await[Future[String]], Await[Future[String]]],
       String
     ]]
     summon[
       Run[
-        FlatMap[Await[Future[String]], String, Await[Future[String]]],
+        FlatMap[Await[Future[String]], Await[Future[String]]],
         Future[String],
         String
       ]
@@ -195,12 +193,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       }
       !Await(Future(A.j))
     }
-    summon[reified.type <:< Typed[FlatMap[Await[Future[Long]], Long, Await[
+    summon[reified.type <:< Typed[FlatMap[Await[Future[Long]], Await[
       Future[Long]
     ]], Long]]
     summon[
       Run[
-        FlatMap[Await[Future[Long]], Long, Await[Future[Long]]],
+        FlatMap[Await[Future[Long]], Await[Future[Long]]],
         Future[Long],
         Long
       ]
@@ -219,8 +217,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       reified.type <:<
         Typed[FlatMap[
           Await[Future[Unit]],
-          Unit,
-          FlatMap[Return[Unit], Nothing, Pure[Unit]]
+          FlatMap[Return[Unit], Pure[Unit]]
         ], Unit]
     ]
 
@@ -302,10 +299,9 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
         reified.type <:<
           Typed[FlatMap[
             Pure[Int],
-            Int,
             Match.WithIndex[(0), Pure[LazyList[Nothing]]]
               +:
-                Match.WithIndex[(1), FlatMap[Yield[Int], Unit, Pure[
+                Match.WithIndex[(1), FlatMap[Yield[Int], Pure[
                   LazyList[Int]
                 ]]]
                 +: Nothing
@@ -336,10 +332,9 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
             Await[Future[String]]
           ], Match.WithIndex[0, FlatMap[
             Await[Future[Int]],
-            Int,
             FlatMap[Await[
               Future[Int]
-            ], Int, Pure[String]]
+            ], Pure[String]]
           ]]
             +: Nothing, Suspend[Pure[Unit]]],
           String
@@ -388,17 +383,15 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
         Typed[keywords.TryCatch[Suspend[
           FlatMap[
             Await[Future[Int]],
-            Int,
             FlatMap[Await[
               Future[Int]
-            ], Int, Pure[String]]
+            ], Pure[String]]
           ]
         ], Match.WithIndex[0, FlatMap[
           Await[Future[Int]],
-          Int,
           FlatMap[Await[
             Future[Int]
-          ], Int, Pure[String]]
+          ], Pure[String]]
         ]]
           +: Nothing], String]
     ]
@@ -424,9 +417,9 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
           Suspend[
             FlatMap[Await[
               Future[Int]
-            ], Int, Pure[Unit]]
+            ], Pure[Unit]]
           ]
-        ], Unit, Pure[Long]], Long]
+        ], Pure[Long]], Long]
     ]
     *[Future] {
       !Await(reified.to[Future]) should be(3L)
@@ -444,16 +437,15 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       reified.type <:<
-        Typed[FlatMap[
-          Await[Future[A.type]],
-          A.type,
-          FlatMap[
-            Await[Future[String]],
-            String,
-            Pure[String]
+        com.thoughtworks.dsl.keywords.Typed[
+          com.thoughtworks.dsl.keywords.FlatMap[
+            com.thoughtworks.dsl.keywords.Await[scala.concurrent.Future[A.type]]
+          , 
+            com.thoughtworks.dsl.keywords.FlatMap[
+              com.thoughtworks.dsl.keywords.Await[scala.concurrent.Future[String]]
+            , com.thoughtworks.dsl.keywords.Pure[String]]
           ]
-        ], String]
-    ]
+        , String]    ]
     reified.to[Future].map(_ should be("X"))
   }
 
@@ -465,14 +457,18 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       reified.type <:<
-        Typed[FlatMap[
-          Await[Future[CharSequence]],
-          CharSequence,
-          FlatMap[Await[
-            Future[CharSequence]
-          ], CharSequence, Pure[Object]]
-        ], Object]
-    ]
+        com.thoughtworks.dsl.keywords.Typed[
+          com.thoughtworks.dsl.keywords.FlatMap[
+            com.thoughtworks.dsl.keywords.Await[concurrent.Future[CharSequence]]
+          , 
+            com.thoughtworks.dsl.keywords.FlatMap[
+              com.thoughtworks.dsl.keywords.Await[
+                scala.concurrent.Future[CharSequence]
+              ]
+            , com.thoughtworks.dsl.keywords.Pure[Object]]
+          ],
+        AnyRef
+    ]]
     reified.to[Future].map(_ should be("x"))
   }
 
@@ -505,12 +501,15 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       reified.type <:<
-        Typed[FlatMap[
-          Await[Future[Int => Int]],
-          Int => Int,
-          Await[Future[Any => Boolean]]
-        ], Any => Boolean]
-    ]
+        com.thoughtworks.dsl.keywords.Typed[
+          com.thoughtworks.dsl.keywords.FlatMap[
+            com.thoughtworks.dsl.keywords.Await[scala.concurrent.Future[Int => Int]]
+          , 
+            com.thoughtworks.dsl.keywords.Await[
+              scala.concurrent.Future[Any => Boolean]
+            ]
+          ]
+        , Any => Boolean]    ]
     reified.to[Future].map {
       _ should be(a[Function1[_, _]])
     }
@@ -523,12 +522,17 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       reified.type <:<
-        Typed[FlatMap[
-          FlatMap[Await[Future[Int => Int]], Int => Int, Pure[Any => Boolean]],
-          Any => Boolean,
-          Await[Future[Any => Boolean]]
-        ], Any => Boolean]
-    ]
+        com.thoughtworks.dsl.keywords.Typed[
+          com.thoughtworks.dsl.keywords.FlatMap[
+            com.thoughtworks.dsl.keywords.FlatMap[
+              com.thoughtworks.dsl.keywords.Await[scala.concurrent.Future[Int => Int]]
+            , com.thoughtworks.dsl.keywords.Pure[Any => Boolean]]
+          , 
+            com.thoughtworks.dsl.keywords.Await[
+              scala.concurrent.Future[Any => Boolean]
+            ]
+          ]
+        , Any => Boolean]    ]
     reified.to[Future].map {
       _ should be(a[Function1[_, _]])
     }
@@ -541,11 +545,18 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     }
     summon[
       reified.type <:<
-        Typed[FlatMap[
-          FlatMap[Await[Future[Int => Int]], Int => Int, Pure[Any => Boolean]],
-          Any => Boolean,
-          Await[Future[Any => Boolean]]
-        ], Any => Boolean]
+         com.thoughtworks.dsl.keywords.Typed[
+            com.thoughtworks.dsl.keywords.FlatMap[
+              com.thoughtworks.dsl.keywords.FlatMap[
+                com.thoughtworks.dsl.keywords.Await[scala.concurrent.Future[Int => Int]]
+              , com.thoughtworks.dsl.keywords.Pure[Any => Boolean]]
+            , 
+              com.thoughtworks.dsl.keywords.Await[
+                scala.concurrent.Future[Any => Boolean]
+              ]
+            ]
+          , Any => Boolean]
+        
     ]
     reified.to[Future].map {
       _ should be(a[Function1[_, _]])
