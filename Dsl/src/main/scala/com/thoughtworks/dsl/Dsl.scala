@@ -99,6 +99,25 @@ object Dsl extends LowPriorityDsl0 {
   trait Composed[-Keyword, Domain, +Value] extends Dsl[Keyword, Domain, Value]
   trait Atomic[-Keyword, Domain, +Value] extends Dsl[Keyword, Domain, Value]
 
+  opaque type Searching[-Keyword, Domain, +Value] <: Dsl[Keyword, Domain, Value] = Dsl[Keyword, Domain, Value]
+  object Searching extends Searching.AtomicThenComposedThenDerived:
+    private[Searching] trait Derived:
+      given [Keyword, Domain, Value](using dsl: Dsl.Derived[Keyword, Domain, Value]): Dsl.Searching[Keyword, Domain, Value] = dsl
+    private[Searching] trait ComposedThenDerived extends Searching.Derived:
+      given [Keyword, Domain, Value](using dsl: Dsl.Composed[Keyword, Domain, Value]): Dsl.Searching[Keyword, Domain, Value] = dsl
+    private[Searching] trait AtomicThenComposedThenDerived extends Searching.ComposedThenDerived:
+      given [Keyword, Domain, Value](using dsl: Dsl.Atomic[Keyword, Domain, Value]): Dsl.Searching[Keyword, Domain, Value] = dsl
+    object AtomicThenComposedThenDerived extends AtomicThenComposedThenDerived
+
+    private[Searching] trait Composed:
+      given [Keyword, Domain, Value](using dsl: Dsl.Composed[Keyword, Domain, Value]): Dsl.Searching[Keyword, Domain, Value] = dsl
+    private[Searching] trait DerivedThenComposed extends Searching.Composed:
+      given [Keyword, Domain, Value](using dsl: Dsl.Derived[Keyword, Domain, Value]): Dsl.Searching[Keyword, Domain, Value] = dsl
+    private[Searching] trait AtomicThenDerivedThenComposed extends Searching.DerivedThenComposed:
+      given [Keyword, Domain, Value](using dsl: Dsl.Atomic[Keyword, Domain, Value]): Dsl.Searching[Keyword, Domain, Value] = dsl
+    object AtomicThenDerivedThenComposed extends AtomicThenDerivedThenComposed
+
+
   extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
     transparent inline def unary_! : Value = {
       Dsl.shift[Keyword, Value](from)
