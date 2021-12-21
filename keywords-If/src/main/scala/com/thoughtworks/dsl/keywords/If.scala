@@ -15,9 +15,9 @@ object If {
   ): IsKeyword[If[ConditionKeyword, ThenKeyword, ElseKeyword], ThenValue | ElseValue] with {}
   given[ConditionKeyword, ThenKeyword, ElseKeyword, Domain, Value](
     using
-    Dsl[ConditionKeyword, Domain, Boolean],
-    Dsl[ThenKeyword, Domain, Value],
-    Dsl[ElseKeyword, Domain, Value],
+    Dsl.Searching[ConditionKeyword, Domain, Boolean],
+    Dsl.Searching[ThenKeyword, Domain, Value],
+    Dsl.Searching[ElseKeyword, Domain, Value],
   ): Dsl.Composed[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] with {
     def cpsApply(keyword: If[ConditionKeyword, ThenKeyword, ElseKeyword], handler: Value => Domain): Domain = {
       keyword.cond.cpsApply{

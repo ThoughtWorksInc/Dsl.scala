@@ -8,7 +8,7 @@ object Typed {
   given [Keyword, Value]
       : Dsl.IsKeyword[Typed[Keyword, Value], Value] with {}
   given [Keyword, Domain, Value](using
-      dsl: Dsl[Keyword, Domain, Value]
+      dsl: Dsl.Searching[Keyword, Domain, Value]
   ): Dsl.Composed[Typed[Keyword, Value], Domain, Value] =
     // TODO: Let Dsl.Composed be an opaque type
     dsl.cpsApply(_, _)

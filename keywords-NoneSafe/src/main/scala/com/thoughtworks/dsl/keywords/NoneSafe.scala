@@ -10,7 +10,7 @@ object NoneSafe {
   def apply[A]: Option[A] =:= NoneSafe[A] = Dsl.Keyword.Opaque.Of.apply
 
   implicit def noneSafeDsl[A, Domain](implicit
-      continueDsl: Dsl.Atomic[Return[None.type], Domain, Nothing]
+      continueDsl: Dsl.Searching[Return[None.type], Domain, Nothing]
   ): Dsl.Atomic[NoneSafe[A], Domain, A] = {
     (keyword: Option[A], handler: A => Domain) =>
       keyword match {

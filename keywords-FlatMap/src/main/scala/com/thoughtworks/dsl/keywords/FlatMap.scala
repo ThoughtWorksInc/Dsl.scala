@@ -22,8 +22,8 @@ object FlatMap {
       MappedValue,
       Domain
   ](using
-      upstreamDsl: Dsl[Upstream, Domain, UpstreamValue],
-      nestedDsl: Dsl[Mapped, Domain, MappedValue]
+      upstreamDsl: Dsl.Searching[Upstream, Domain, UpstreamValue],
+      nestedDsl: Dsl.Searching[Mapped, Domain, MappedValue]
   ): Dsl.Composed[FlatMap[Upstream, Mapped], Domain, MappedValue] with {
     def cpsApply(
         keyword: FlatMap[Upstream, Mapped],

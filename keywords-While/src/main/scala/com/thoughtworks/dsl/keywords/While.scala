@@ -16,8 +16,8 @@ object While {
       BodyKeyword,
       Domain
   ](using
-      conditionDsl: Dsl[ConditionKeyword, Domain, Boolean],
-      bodyDsl: Dsl[BodyKeyword, Domain, Any]
+      conditionDsl: Dsl.Searching[ConditionKeyword, Domain, Boolean],
+      bodyDsl: Dsl.Searching[BodyKeyword, Domain, Any]
   ): Dsl.Composed[
     While[ConditionKeyword, BodyKeyword],
     Domain,

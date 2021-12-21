@@ -45,7 +45,7 @@ object Each {
         Collection,
         Domain
     ](using
-        toViewDsl: Dsl[Each.ToView[ForYield], Domain, View[Element]]
+        toViewDsl: Dsl.Searching[Each.ToView[ForYield], Domain, View[Element]]
     ): Dsl.Composed[
       Each.To[ForYield, Element, Collection],
       Domain,
@@ -364,7 +364,7 @@ object Each {
           Keyword,
           Value
         ],
-        polyCont: Dsl[
+        polyCont: Dsl.Searching[
           Keyword,
           Domain,
           Value
@@ -412,7 +412,7 @@ object Each {
         MappedValue
       ],
       factory: Factory[MappedElement, MappedValue],
-      blockDsl: Dsl[MappedKeyword, Domain, MappedValue]
+      blockDsl: Dsl.Searching[MappedKeyword, Domain, MappedValue]
   ): Dsl.Composed[
     FlatMap[Each[Element], MappedKeyword],
     Domain,
@@ -456,7 +456,7 @@ object Each {
       MappedKeyword,
       Domain
   ](using
-      blockDsl: Dsl[MappedKeyword, Domain, Unit]
+      blockDsl: Dsl.Searching[MappedKeyword, Domain, Unit]
   ): Dsl.Composed[
     FlatMap[Each[Element], MappedKeyword],
     Domain,

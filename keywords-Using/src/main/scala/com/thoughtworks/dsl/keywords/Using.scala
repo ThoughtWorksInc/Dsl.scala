@@ -86,7 +86,7 @@ object Using {
   ](using
       IsKeyword[Mapped, MappedValue],
       Dsl.TryFinally[MappedValue, OuterDomain, BlockDomain, FinalizerDomain],
-      Dsl[Mapped, BlockDomain, MappedValue]
+      Dsl.Searching[Mapped, BlockDomain, MappedValue]
   ): Dsl.Composed[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] = {
     case (FlatMap(r, flatMapper: (Using[R] @unchecked => Mapped)), handler) =>
       reset {

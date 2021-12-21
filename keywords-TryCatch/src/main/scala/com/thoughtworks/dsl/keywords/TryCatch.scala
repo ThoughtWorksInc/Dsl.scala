@@ -13,8 +13,8 @@ object TryCatch {
   given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword](
       using
       dslTryCatch: Dsl.TryCatch[Value, OuterDomain, BlockDomain],
-      blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
-      caseDsl: Dsl[CaseKeyword, BlockDomain, Value],
+      blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
+      caseDsl: Dsl.Searching[CaseKeyword, BlockDomain, Value],
   ): Dsl.Composed[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value] = {
     case (TryCatch(blockKeyword, cases), handler) =>
       dslTryCatch.tryCatch(

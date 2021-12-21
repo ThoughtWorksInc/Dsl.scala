@@ -16,8 +16,8 @@ object TryFinally {
 
   given [Value, OuterDomain, BlockKeyword, BlockDomain, FinalizerKeyword, FinalizerDomain](using
       dslTryFinally: Dsl.TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
-      blockDsl: Dsl[BlockKeyword, BlockDomain, Value],
-      finalizerDsl: Dsl[FinalizerKeyword, FinalizerDomain, Unit]
+      blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
+      finalizerDsl: Dsl.Searching[FinalizerKeyword, FinalizerDomain, Unit]
   ): Dsl.Composed[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = {
     case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
       dslTryFinally.tryFinally(

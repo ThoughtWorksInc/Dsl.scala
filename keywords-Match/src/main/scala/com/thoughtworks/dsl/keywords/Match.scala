@@ -16,7 +16,7 @@ object Match {
         Domain,
         LastValue
     ](using
-        dsl: Dsl[Keyword, Domain, LastValue],
+        dsl: Dsl.Searching[Keyword, Domain, LastValue],
         valueOfIndex: ValueOf[Index]
     ): Dsl.Composed[WithIndex[Index, Keyword] +: Nothing, Domain, LastValue] with {
       def cpsApply(keywordWithIndex: WithIndex[Index, Keyword] +: Nothing, handler: LastValue => Domain): Domain = {
@@ -36,9 +36,9 @@ object Match {
         Domain,
         Value
     ](using
-        leftDsl: Dsl[LeftKeyword, Domain, Value],
+        leftDsl: Dsl.Searching[LeftKeyword, Domain, Value],
         valueOfIndex: ValueOf[Index],
-        restDsl: Dsl[RestKeyword, Domain, Value]
+        restDsl: Dsl.Searching[RestKeyword, Domain, Value]
     ): Dsl.Composed[WithIndex[Index, LeftKeyword] +: RestKeyword, Domain, Value] with {
       def cpsApply(keywordUnion: WithIndex[Index, LeftKeyword] +: RestKeyword, handler: Value => Domain): Domain = {
         keywordUnion match {
