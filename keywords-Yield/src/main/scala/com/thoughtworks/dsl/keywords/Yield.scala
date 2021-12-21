@@ -39,7 +39,7 @@ import scala.language.higherKinds
   *          }}}
   * @see [[comprehension]] if you want to use traditional `for` comprehension instead of !-notation.
   */
-opaque type Yield[Element] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Element]
+opaque type Yield[+Element] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Element]
 
 private[keywords] trait LowPriorityYield3 {
 

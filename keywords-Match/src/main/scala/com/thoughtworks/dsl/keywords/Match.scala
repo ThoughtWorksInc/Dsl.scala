@@ -7,7 +7,7 @@ object Match {
   export FlatMap.apply
   case class WithIndex[Index <: Int, +Keyword](index: Index, keyword: Keyword) extends Dsl.Keyword.Trait
 
-  opaque type +:[A, B] = A | B
+  opaque type +:[+A, +B] = A | B
 
   given [
       Index <: Int,

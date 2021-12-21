@@ -21,7 +21,7 @@ import scala.util.control.NonFatal
   * @see
   *   [[dsl]] for usage of this [[Using]] keyword in continuations
   */
-opaque type Using[R] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R]
+opaque type Using[+R] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R]
 
 object Using {
   given [R]: IsKeyword[Using[R], R] with {}

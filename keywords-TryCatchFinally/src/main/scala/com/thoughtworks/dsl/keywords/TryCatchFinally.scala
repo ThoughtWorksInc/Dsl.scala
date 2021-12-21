@@ -4,7 +4,7 @@ import Dsl.!!
 import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 
-case class TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword](
+case class TryCatchFinally[+BlockKeyword, +CaseKeyword, +FinalizerKeyword](
     block: BlockKeyword,
     cases: Catcher[CaseKeyword],
     finalizer: FinalizerKeyword

@@ -25,13 +25,13 @@ import scala.collection.mutable.Builder
   *   [[Dsl.For]] if you want to use traditional `for` comprehension instead of
   *   !-notation.
   */
-opaque type Each[Element] <: Dsl.Keyword.Opaque =
+opaque type Each[+Element] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[Iterable[Element]]
 object Each {
   def apply[Element]: Iterable[Element] =:= Each[Element] =
     Dsl.Keyword.Opaque.Of.apply
 
-  final case class To[ForYield <: Dsl.For.Yield[Element], Element, Collection](
+  final case class To[+ForYield <: Dsl.For.Yield[Element], Element, +Collection](
       factory: Factory[Element, Collection]
   )(val forYield: ForYield)
       extends Dsl.Keyword.Trait
@@ -59,7 +59,7 @@ object Each {
     }
   }
 
-  opaque type ToView[Comprehension] <: Dsl.Keyword.Opaque =
+  opaque type ToView[+Comprehension] <: Dsl.Keyword.Opaque =
     Dsl.Keyword.Opaque.Of[Comprehension]
 
   object ToView {
