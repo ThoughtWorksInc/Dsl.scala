@@ -193,7 +193,7 @@ object Dsl extends LowPriorityDsl0 {
     Value
   ] = Dsl[Keyword, Domain, Value]
   object Searching
-      extends Searching.AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived:
+      extends Searching.AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived:
     private[Searching] trait StackUnsafeDerived:
       given [Keyword, UnsafeDomain, Value](using
           dsl: Dsl.Derived.StackUnsafe[Keyword, UnsafeDomain, Value]
