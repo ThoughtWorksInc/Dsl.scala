@@ -513,7 +513,7 @@ object Dsl extends LowPriorityDsl0 {
       */
     opaque type Opaque = Any
     object Opaque {
-      opaque type Of[Self] <: Self & Opaque = Self
+      opaque type Of[+Self] <: Self & Opaque = Self
       object Of {
         def apply[Self]: Self =:= Of[Self] = summon
       }
