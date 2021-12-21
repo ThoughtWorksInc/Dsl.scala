@@ -16,9 +16,9 @@ object While {
       BodyKeyword,
       Domain
   ](using
-      conditionDsl: Dsl.PolyCont[ConditionKeyword, Domain, Boolean],
-      bodyDsl: Dsl.PolyCont[BodyKeyword, Domain, Any]
-  ): Dsl.PolyCont[
+      conditionDsl: Dsl[ConditionKeyword, Domain, Boolean],
+      bodyDsl: Dsl[BodyKeyword, Domain, Any]
+  ): Dsl[
     While[ConditionKeyword, BodyKeyword],
     Domain,
     Unit

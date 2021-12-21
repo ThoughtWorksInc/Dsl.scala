@@ -22,9 +22,9 @@ object FlatMap {
       MappedValue,
       Domain
   ](using
-      upstreamDsl: Dsl.PolyCont[Upstream, Domain, UpstreamValue],
-      nestedDsl: Dsl.PolyCont[Mapped, Domain, MappedValue]
-  ): Dsl.PolyCont[FlatMap[Upstream, Mapped], Domain, MappedValue] with {
+      upstreamDsl: Dsl[Upstream, Domain, UpstreamValue],
+      nestedDsl: Dsl[Mapped, Domain, MappedValue]
+  ): Dsl[FlatMap[Upstream, Mapped], Domain, MappedValue] with {
     def cpsApply(
         keyword: FlatMap[Upstream, Mapped],
         handler: MappedValue => Domain

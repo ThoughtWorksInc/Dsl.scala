@@ -15,10 +15,10 @@ object If {
   ): IsKeyword[If[ConditionKeyword, ThenKeyword, ElseKeyword], ThenValue | ElseValue] with {}
   given[ConditionKeyword, ThenKeyword, ElseKeyword, Domain, Value](
     using
-    Dsl.PolyCont[ConditionKeyword, Domain, Boolean],
-    Dsl.PolyCont[ThenKeyword, Domain, Value],
-    Dsl.PolyCont[ElseKeyword, Domain, Value],
-  ): Dsl.PolyCont[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] with {
+    Dsl[ConditionKeyword, Domain, Boolean],
+    Dsl[ThenKeyword, Domain, Value],
+    Dsl[ElseKeyword, Domain, Value],
+  ): Dsl[If[ConditionKeyword, ThenKeyword, ElseKeyword], Domain, Value] with {
     def cpsApply(keyword: If[ConditionKeyword, ThenKeyword, ElseKeyword], handler: Value => Domain): Domain = {
       keyword.cond.cpsApply{
         case true =>

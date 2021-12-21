@@ -86,8 +86,8 @@ object Using {
   ](using
       IsKeyword[Mapped, MappedValue],
       Dsl.TryFinally[MappedValue, OuterDomain, BlockDomain, FinalizerDomain],
-      Dsl.PolyCont[Mapped, BlockDomain, MappedValue]
-  ): Dsl.PolyCont[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] = {
+      Dsl[Mapped, BlockDomain, MappedValue]
+  ): Dsl[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] = {
     case (FlatMap(r, flatMapper: (Using[R] @unchecked => Mapped)), handler) =>
       reset {
         handler(try {

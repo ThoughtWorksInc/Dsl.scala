@@ -28,7 +28,10 @@ import scala.util.control.TailCalls.TailRec
   *     [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   */
 @implicitNotFound("The keyword:\n ${Keyword}\nis not supported inside a function that returns:\n${Domain}.")
-trait Dsl[-Keyword, Domain, +Value] extends Dsl.PolyCont[Keyword, Domain, Value]
+trait Dsl[-Keyword, Domain, +Value]:
+  /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
+  def cpsApply(keyword: Keyword, handler: Value => Domain): Domain
+
 
 private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
@@ -483,20 +486,13 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
-  trait PolyCont[-Keyword, Domain, +Value] {
-
-    /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
-    def cpsApply(keyword: Keyword, handler: Value => Domain): Domain
-
-  }
-
   opaque type Run[Keyword, Domain, Value] <: Keyword => Domain =
     Keyword => Domain
 
   object Run {
 
     given [Keyword, Domain, Value](using
-        dsl: /*=>*/ PolyCont[Keyword, Domain, Value],
+        dsl: /*=>*/ Dsl[Keyword, Domain, Value],
         lift: /*=>*/ Lift[Value, Domain]
     ): Run[Keyword, Domain, Value] = { dsl.cpsApply(_, lift) }
 
@@ -539,7 +535,7 @@ object Dsl extends LowPriorityDsl0 {
 
   extension [Keyword, Domain, Value](keyword: Keyword)
     @inline def cpsApply(using
-        dsl: PolyCont[Keyword, Domain, Value]
+        dsl: Dsl[Keyword, Domain, Value]
     )(handler: Value => Domain)(using DummyImplicit): Domain = {
       dsl.cpsApply(keyword, handler)
     }

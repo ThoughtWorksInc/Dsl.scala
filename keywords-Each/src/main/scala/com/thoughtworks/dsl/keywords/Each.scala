@@ -45,8 +45,8 @@ object Each {
         Collection,
         Domain
     ](using
-        toViewDsl: Dsl.PolyCont[Each.ToView[ForYield], Domain, View[Element]]
-    ): Dsl.PolyCont[
+        toViewDsl: Dsl[Each.ToView[ForYield], Domain, View[Element]]
+    ): Dsl[
       Each.To[ForYield, Element, Collection],
       Domain,
       Collection
@@ -364,12 +364,12 @@ object Each {
           Keyword,
           Value
         ],
-        polyCont: Dsl.PolyCont[
+        polyCont: Dsl[
           Keyword,
           Domain,
           Value
         ]
-    ): Dsl.PolyCont[Each.ToView[Comprehension], Domain, Value] = {
+    ): Dsl[Each.ToView[Comprehension], Domain, Value] = {
       (as, handler) =>
         polyCont.cpsApply(toKeyword(as), handler)
     }
@@ -412,8 +412,8 @@ object Each {
         MappedValue
       ],
       factory: Factory[MappedElement, MappedValue],
-      blockDsl: Dsl.PolyCont[MappedKeyword, Domain, MappedValue]
-  ): Dsl.PolyCont[
+      blockDsl: Dsl[MappedKeyword, Domain, MappedValue]
+  ): Dsl[
     FlatMap[Each[Element], MappedKeyword],
     Domain,
     MappedValue
@@ -456,8 +456,8 @@ object Each {
       MappedKeyword,
       Domain
   ](using
-      blockDsl: Dsl.PolyCont[MappedKeyword, Domain, Unit]
-  ): Dsl.PolyCont[
+      blockDsl: Dsl[MappedKeyword, Domain, Unit]
+  ): Dsl[
     FlatMap[Each[Element], MappedKeyword],
     Domain,
     Unit
