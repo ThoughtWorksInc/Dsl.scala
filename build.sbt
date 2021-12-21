@@ -193,6 +193,7 @@ lazy val `domains-scalaz` =
 enablePlugins(ScalaUnidocPlugin)
 
 ScalaUnidoc / unidoc / unidocProjectFilter := {
+  // Exclude the `keywords-Await`.js due to https://github.com/lampepfl/dotty/issues/14143
   inAnyProject -- inProjects(`keywords-Await`.js)
 }
 
