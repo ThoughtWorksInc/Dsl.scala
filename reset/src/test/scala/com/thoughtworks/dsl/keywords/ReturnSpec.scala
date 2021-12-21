@@ -89,10 +89,10 @@ object ReturnSpec extends TestSuite {
         
       }
       "condition" - {
-        val continuation = *[[X] =>> Double !! X] {
+        val continuation = *[[X] =>> AnyRef !! X] {
           val b = true
-          val c = 3.14
-          val d = 6.28
+          val c = "my string"
+          val d = new StringBuilder
           if (b) {
             c
           } else {
@@ -100,7 +100,7 @@ object ReturnSpec extends TestSuite {
           }
         }
 
-        assert(continuation(identity) == 3.14)
+        assert(continuation(identity) == "my string")
       }
     }
 
