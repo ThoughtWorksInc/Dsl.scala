@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.Dsl
 import Dsl.IsKeyword
 import scala.util.NotGiven
 
-final case class FlatMap[Upstream, UpstreamValue, Mapped](
+final case class FlatMap[+Upstream, UpstreamValue, +Mapped](
     upstream: Upstream,
     flatMapper: UpstreamValue => Mapped
 ) extends Dsl.Keyword.Trait
@@ -17,12 +17,13 @@ object FlatMap {
 
   given [
       Upstream,
+      RealUpstreamValue,
       UpstreamValue,
       Mapped,
       MappedValue,
       Domain
   ](using
-      upstreamDsl: Dsl.PolyCont[Upstream, Domain, UpstreamValue],
+      upstreamDsl: Dsl.PolyCont[Upstream, Domain, RealUpstreamValue],
       nestedDsl: Dsl.PolyCont[Mapped, Domain, MappedValue]
   ): Dsl.PolyCont[FlatMap[Upstream, UpstreamValue, Mapped], Domain, MappedValue] with {
     def cpsApply(
@@ -33,7 +34,7 @@ object FlatMap {
       upstreamDsl.cpsApply(
         upstream,
         { upstreamValue =>
-          nestedDsl.cpsApply(flatMapper(upstreamValue), handler)
+          nestedDsl.cpsApply(flatMapper(upstreamValue.asInstanceOf[UpstreamValue]), handler)
         }
       )
     }

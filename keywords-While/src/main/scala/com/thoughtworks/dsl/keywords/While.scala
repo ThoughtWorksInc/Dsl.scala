@@ -4,8 +4,8 @@ import Dsl.IsKeyword
 import Dsl.cpsApply
 
 case class While[
-    ConditionKeyword,
-    BodyKeyword
+    +ConditionKeyword,
+    +BodyKeyword
 ](
     condition: ConditionKeyword,
     body: BodyKeyword
