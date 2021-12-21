@@ -502,10 +502,6 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
-  // If I remove this, the compiler crashes.
-  // See https://github.com/lampepfl/dotty/issues/14076
-  private opaque type Dotty14076Workaround = Any
-
   type Keyword = Keyword.Opaque | Keyword.Trait
   object Keyword {
     /** A marker trait that denotes a keyword class, enabling extension method
