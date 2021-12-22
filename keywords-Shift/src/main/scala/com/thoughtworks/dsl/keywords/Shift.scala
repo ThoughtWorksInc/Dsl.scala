@@ -14,7 +14,47 @@ import scala.language.implicitConversions
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
-/** @author
+/** A keyword that extracts the value from a [[domains.Continuation]].
+  * @note
+  *   This [[Shift]] keyword includes special treatment for exception handling
+  *   and stack safety. Always use `Shift(cont).cpsApply { x => ... }` instead
+  *   of `cont { x => ... }` to register a handler for the continuation,
+  *   otherwise exception might be uncaught or stack might overflow.
+  * @example
+  *   Given a continuation whose type is `Unit !! Throwable !! Int`, it is
+  *   considered as having an exception handler. When an exception is thrown,
+  * {{{
+  *   import scala.util.control.TailCalls.TailRec
+  *   type !![R, +A] = (A => R) => R
+  *   val cont: Unit !! Throwable !! Int = _ {
+  *     if (System.nanoTime() > 0) {
+  *       throw new Exception("my-exception")
+  *     } else {
+  *       42
+  *     }
+  *   }
+  * }}}
+  *
+  * Then `cpsApply` should catch the exception:
+  * {{{
+  *   Shift(cont).cpsApply[Unit !! Throwable] { i: Int => (failureHandler: Throwable => Unit) =>
+  *     fail("unreachable code")
+  *   } { e: Throwable =>
+  *     e.getMessage should be("my-exception")
+  *   }
+  * }}}
+  *
+  * However, `cont.apply` does not catch the exception:
+  * {{{
+  *   an[Exception] should be thrownBy {
+  *     cont.apply { i => failureHandler =>
+  *       fail("unreachable code")
+  *     } { e =>
+  *       e.getMessage should be("my-exception")
+  *     }
+  *   }
+  * }}}
+  * @author
   *   杨博 (Yang Bo)
   */
 opaque type Shift[R, A] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R !! A]
