@@ -167,8 +167,8 @@ object AsynchronousIo {
     }
   }
 
-  given [Value]: Dsl.Atomic[AsynchronousIo[Value], Unit !! Throwable, Value] =
-    Dsl.Atomic { (keyword, handler) =>
+  given [Value]: Dsl.Original[AsynchronousIo[Value], Unit !! Throwable, Value] =
+    Dsl.Original { (keyword, handler) =>
       keyword.start(_, completionHandler(handler))
     }
 

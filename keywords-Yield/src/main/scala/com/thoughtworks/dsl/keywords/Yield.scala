@@ -54,14 +54,14 @@ private[keywords] trait LowPriorityYield3 {
   }
 
   given [A, FromCollection <: TraversableOnce[A]]
-      : Dsl.Atomic[From[FromCollection], Iterator[A], Unit] =
-    Dsl.Atomic[From[FromCollection], Iterator[A], Unit] {
+      : Dsl.Original[From[FromCollection], Iterator[A], Unit] =
+    Dsl.Original[From[FromCollection], Iterator[A], Unit] {
       (keyword: From[FromCollection], generateTail: Unit => Iterator[A]) =>
         From.apply.flip(keyword).toIterator ++ generateTail(())
     }
 
-  given [A, B >: A]: Dsl.Atomic[Yield[A], Iterator[B], Unit] =
-    Dsl.Atomic[Yield[A], Iterator[B], Unit] {
+  given [A, B >: A]: Dsl.Original[Yield[A], Iterator[B], Unit] =
+    Dsl.Original[Yield[A], Iterator[B], Unit] {
       (keyword: Yield[A], generateTail: Unit => Iterator[B]) =>
         Iterator.single(Yield.apply.flip(keyword)) ++ generateTail(())
     }
@@ -72,15 +72,15 @@ private[keywords] trait LowPriorityYield1 extends LowPriorityYield3 {
     X,
     Collection,
     Collection[X]
-  ]]: Dsl.Atomic[From[FromCollection], Collection[A], Unit] =
-    Dsl.Atomic[From[FromCollection], Collection[A], Unit] {
+  ]]: Dsl.Original[From[FromCollection], Collection[A], Unit] =
+    Dsl.Original[From[FromCollection], Collection[A], Unit] {
       (keyword: From[FromCollection], generateTail: Unit => Collection[A]) =>
         From.apply.flip(keyword).toIterable ++: generateTail(())
     }
 
   given [A, B >: A, Collection[+X] <: SeqOps[X, Collection, Collection[X]]]
-      : Dsl.Atomic[Yield[A], Collection[B], Unit] =
-    Dsl.Atomic[Yield[A], Collection[B], Unit] {
+      : Dsl.Original[Yield[A], Collection[B], Unit] =
+    Dsl.Original[Yield[A], Collection[B], Unit] {
       (keyword: Yield[A], generateTail: Unit => Collection[B]) =>
         Yield.apply.flip(keyword) +: generateTail(())
     }
@@ -102,8 +102,8 @@ object Yield extends LowPriorityYield0 {
   private[Yield] trait LowPriorityFrom0 { this: From.type =>
 
     given [A, FromSomeIterableOps <: View.SomeIterableOps[A]]
-        : Dsl.Atomic[From[FromSomeIterableOps], SeqView[A], Unit] =
-      Dsl.Atomic[From[FromSomeIterableOps], SeqView[A], Unit] {
+        : Dsl.Original[From[FromSomeIterableOps], SeqView[A], Unit] =
+      Dsl.Original[From[FromSomeIterableOps], SeqView[A], Unit] {
         (
             keyword: From[FromSomeIterableOps],
             generateTail: Unit => SeqView[A]
@@ -112,8 +112,8 @@ object Yield extends LowPriorityYield0 {
       }
 
     given [A, FromSomeIterableOps <: View.SomeIterableOps[A]]
-        : Dsl.Atomic[From[FromSomeIterableOps], IndexedSeqView[A], Unit] =
-      Dsl.Atomic[From[FromSomeIterableOps], IndexedSeqView[A], Unit] {
+        : Dsl.Original[From[FromSomeIterableOps], IndexedSeqView[A], Unit] =
+      Dsl.Original[From[FromSomeIterableOps], IndexedSeqView[A], Unit] {
         (
             keyword: From[FromSomeIterableOps],
             generateTail: Unit => IndexedSeqView[A]
@@ -141,8 +141,8 @@ object Yield extends LowPriorityYield0 {
         !From[Iterable[E]](isIterable(a))
 
     given [A, FromCollection <: View.SomeIterableOps[A]]
-        : Dsl.Atomic[From[FromCollection], View[A], Unit] =
-      Dsl.Atomic[From[FromCollection], View[A], Unit] {
+        : Dsl.Original[From[FromCollection], View[A], Unit] =
+      Dsl.Original[From[FromCollection], View[A], Unit] {
         (keyword: From[FromCollection], generateTail: Unit => View[A]) =>
           new View.Concat(keyword, generateTail(()))
       }
@@ -151,8 +151,8 @@ object Yield extends LowPriorityYield0 {
       A,
       CC,
       C
-    ], CC[_], C]: Dsl.Atomic[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] =
-      Dsl.Atomic[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] {
+    ], CC[_], C]: Dsl.Original[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] =
+      Dsl.Original[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] {
         (
             keyword: From[FromIndexedSeqOps],
             generateTail: Unit => IndexedSeqView[A]
@@ -161,49 +161,49 @@ object Yield extends LowPriorityYield0 {
       }
 
     given seqViewYieldFromDsl[A, FromCollection <: SeqOps[A, CC, C], CC[_], C]
-        : Dsl.Atomic[From[FromCollection], SeqView[A], Unit] =
-      Dsl.Atomic[From[FromCollection], SeqView[A], Unit] {
+        : Dsl.Original[From[FromCollection], SeqView[A], Unit] =
+      Dsl.Original[From[FromCollection], SeqView[A], Unit] {
         (keyword: From[FromCollection], generateTail: Unit => SeqView[A]) =>
           new SeqView.Concat(keyword, generateTail(()))
       }
 
     given [A, FromIterable <: Iterable[A]]
-        : Dsl.Atomic[From[FromIterable], LazyList[A], Unit] =
-      Dsl.Atomic[From[FromIterable], LazyList[A], Unit] {
+        : Dsl.Original[From[FromIterable], LazyList[A], Unit] =
+      Dsl.Original[From[FromIterable], LazyList[A], Unit] {
         (keyword: From[FromIterable], generateTail: Unit => LazyList[A]) =>
           keyword.to(LazyList) #::: generateTail(())
       }
 
     given [A, FromIterable <: Iterable[A]]
-        : Dsl.Atomic[From[FromIterable], Stream[A], Unit] =
-      Dsl.Atomic[From[FromIterable], Stream[A], Unit] {
+        : Dsl.Original[From[FromIterable], Stream[A], Unit] =
+      Dsl.Original[From[FromIterable], Stream[A], Unit] {
         (keyword: From[FromIterable], generateTail: Unit => Stream[A]) =>
           keyword.toStream #::: generateTail(())
       }
 
   }
 
-  given [A, B >: A]: Dsl.Atomic[Yield[A], SeqView[B], Unit] =
-    Dsl.Atomic[Yield[A], SeqView[B], Unit] {
+  given [A, B >: A]: Dsl.Original[Yield[A], SeqView[B], Unit] =
+    Dsl.Original[Yield[A], SeqView[B], Unit] {
       (keyword: Yield[A], generateTail: Unit => SeqView[B]) =>
         generateTail(()).prepended(keyword)
     }
 
-  given [A, B >: A]: Dsl.Atomic[Yield[A], IndexedSeqView[B], Unit] =
-    Dsl.Atomic[Yield[A], IndexedSeqView[B], Unit] {
+  given [A, B >: A]: Dsl.Original[Yield[A], IndexedSeqView[B], Unit] =
+    Dsl.Original[Yield[A], IndexedSeqView[B], Unit] {
       (keyword: Yield[A], generateTail: Unit => IndexedSeqView[B]) =>
         generateTail(()).prepended(keyword)
     }
 
-  given [A, B >: A]: Dsl.Atomic[Yield[A], View[B], Unit] =
-    Dsl.Atomic[Yield[A], View[B], Unit] {
+  given [A, B >: A]: Dsl.Original[Yield[A], View[B], Unit] =
+    Dsl.Original[Yield[A], View[B], Unit] {
       (keyword: Yield[A], generateTail: Unit => View[B]) =>
         new View.Concat[B](new View.Single(keyword), generateTail(()))
     }
 
   given [Element, That >: Element]
-      : Dsl.Atomic[Yield[Element], LazyList[That], Unit] =
-    Dsl.Atomic[Yield[Element], LazyList[That], Unit] {
+      : Dsl.Original[Yield[Element], LazyList[That], Unit] =
+    Dsl.Original[Yield[Element], LazyList[That], Unit] {
       (keyword: Yield[Element], generateTail: Unit => LazyList[That]) =>
         keyword #:: generateTail(())
     }
@@ -217,8 +217,8 @@ object Yield extends LowPriorityYield0 {
       !Yield[A](a)
 
   implicit def streamYieldDsl[Element, That >: Element]
-      : Dsl.Atomic[Yield[Element], Stream[That], Unit] =
-    Dsl.Atomic[Yield[Element], Stream[That], Unit] {
+      : Dsl.Original[Yield[Element], Stream[That], Unit] =
+    Dsl.Original[Yield[Element], Stream[That], Unit] {
       (keyword: Yield[Element], generateTail: Unit => Stream[That]) =>
         keyword #:: generateTail(())
     }

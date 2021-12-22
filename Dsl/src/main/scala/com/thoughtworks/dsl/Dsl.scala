@@ -69,10 +69,10 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
-//      implicit restDsl: Dsl.Atomic[Keyword, LeftDomain, Value],
-//      shiftDsl2: Dsl.Atomic[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
-//  ): Dsl.Atomic[Keyword, LeftDomain !! RightDomain, Value] = {
-//    new Dsl.Atomic[Keyword, LeftDomain !! RightDomain, Value] {
+//      implicit restDsl: Dsl.Original[Keyword, LeftDomain, Value],
+//      shiftDsl2: Dsl.Original[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
+//  ): Dsl.Original[Keyword, LeftDomain !! RightDomain, Value] = {
+//    new Dsl.Original[Keyword, LeftDomain !! RightDomain, Value] {
 //      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
 //        (continue: RightDomain => LeftDomain) =>
 //          restDsl.cpsApply(keyword, { a =>
@@ -176,15 +176,15 @@ object Dsl extends LowPriorityDsl0 {
         ) => Domain
     ) =:= Composed[Keyword, Domain, Value] =
       summon
-  opaque type Atomic[-Keyword, Domain, +Value] <: Dsl[Keyword, Domain, Value] =
+  opaque type Original[-Keyword, Domain, +Value] <: Dsl[Keyword, Domain, Value] =
     Dsl[Keyword, Domain, Value]
-  object Atomic:
+  object Original:
     def apply[Keyword, Domain, Value]: (
         (
             Keyword,
             (Value => Domain)
         ) => Domain
-    ) =:= Atomic[Keyword, Domain, Value] =
+    ) =:= Original[Keyword, Domain, Value] =
       summon
 
   opaque type Searching[-Keyword, Domain, +Value] <: Dsl[
@@ -211,7 +211,7 @@ object Dsl extends LowPriorityDsl0 {
     private[Searching] trait AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
         extends Searching.ComposedThenStackSafeDerivedThenStackUnsafeDerived:
       given [Keyword, Domain, Value](using
-          dsl: Dsl.Atomic[Keyword, Domain, Value]
+          dsl: Dsl.Original[Keyword, Domain, Value]
       ): Dsl.Searching[Keyword, Domain, Value] = dsl
     object AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
         extends AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
@@ -229,7 +229,7 @@ object Dsl extends LowPriorityDsl0 {
     private[Searching] trait AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
         extends Searching.StackSafeDerivedThenComposedThenStackUnsafeDerived:
       given [Keyword, Domain, Value](using
-          dsl: Dsl.Atomic[Keyword, Domain, Value]
+          dsl: Dsl.Original[Keyword, Domain, Value]
       ): Dsl.Searching[Keyword, Domain, Value] = dsl
     object AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
         extends AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived

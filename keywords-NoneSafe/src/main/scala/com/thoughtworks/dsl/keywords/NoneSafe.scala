@@ -12,7 +12,7 @@ object NoneSafe {
 
   given [A, Domain](using
       continueDsl: Dsl.Searching[Return[None.type], Domain, Nothing]
-  ): Dsl.Atomic[NoneSafe[A], Domain, A] = Dsl.Atomic[Option[A], Domain, A] {
+  ): Dsl.Original[NoneSafe[A], Domain, A] = Dsl.Original[Option[A], Domain, A] {
     (keyword: Option[A], handler: A => Domain) =>
       keyword match {
         case None =>
