@@ -12,39 +12,56 @@ import scala.util.{Failure, Success, Try}
 import scala.util.control.{NonFatal, TailCalls}
 import scala.util.control.TailCalls.TailRec
 
-/** The domain-specific interpreter for `Keyword` in `Domain`, which is a dependent type type class that registers an
-  * asynchronous callback function, to handle the `Value` inside `Keyword`.
+/** The domain-specific interpreter for `Keyword` in `Domain`, which is a
+  * dependent type type class that registers an asynchronous callback function,
+  * to handle the `Value` inside `Keyword`.
   *
   * @tparam Value
   *   The value held inside `Keyword`.
   * @author
   *   杨博 (Yang Bo)
   * @example
-  *   Creating a collaborative DSL in [[https://github.com/ThoughtWorksInc/Dsl.scala Dsl.scala]] is easy. Only two steps
-  *   are required:
+  *   Creating a collaborative DSL in
+  *   [[https://github.com/ThoughtWorksInc/Dsl.scala Dsl.scala]] is easy. Only
+  *   two steps are required:
   *
-  *   - Defining their domain-specific [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
+  *   - Defining their domain-specific
+  *     [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   *   - Implementing this [[Dsl]] type class, which is an interpreter for an
   *     [[com.thoughtworks.dsl.Dsl.Keyword Keyword]].
   */
-@implicitNotFound("The keyword:\n ${Keyword}\nis not supported inside a function that returns:\n${Domain}.")
-trait Dsl[-Keyword, Domain, +Value] extends Dsl.PolyCont[Keyword, Domain, Value]
+@implicitNotFound(
+  "The keyword:\n ${Keyword}\nis not supported inside a function that returns:\n${Domain}."
+)
+opaque type Dsl[-Keyword, Domain, +Value] <: (
+    Keyword,
+    (Value => Domain)
+) => Domain = (Keyword, (Value => Domain)) => Domain
 
 private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
-  given deriveFunction1Dsl[Keyword, FunctionDomain, State, Domain, Value](using
-      isFunctionDomain: FunctionDomain =:= (State => Domain),
-      restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, FunctionDomain, Value] = {
-    isFunctionDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
-      (keyword: Keyword, handler: Value => State => Domain) =>
-        val restDsl1 = restDsl
-        locally { (state: State) =>
-          val handler1 = handler
-          restDsl1.cpsApply(keyword, handler1(_)(state))
-        }
-    }
+  private def deriveFunction1Dsl[Keyword, State, Domain, Value](using
+      restDsl: Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl[Keyword, State => Domain, Value] = Dsl {
+    (keyword: Keyword, handler: Value => State => Domain) =>
+      val restDsl1 = restDsl
+      locally { (state: State) =>
+        val handler1 = handler
+        restDsl1(keyword, handler1(_)(state))
+      }
   }
+
+  given [Keyword, State, Domain, Value](using
+      Dsl.IsStackSafe[Domain],
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Derived.StackSafe[Keyword, State => Domain, Value] =
+    Dsl.Derived.StackSafe(deriveFunction1Dsl)
+
+  given [Keyword, State, Domain, Value](using
+      util.NotGiven[Dsl.IsStackSafe[Domain]],
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Derived.StackUnsafe[Keyword, State => Domain, Value] =
+    Dsl.Derived.StackUnsafe(deriveFunction1Dsl)
 
 }
 
@@ -52,10 +69,10 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 //  // FIXME: Shift
 //  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
-//      implicit restDsl: Dsl[Keyword, LeftDomain, Value],
-//      shiftDsl2: Dsl[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
-//  ): Dsl[Keyword, LeftDomain !! RightDomain, Value] = {
-//    new Dsl[Keyword, LeftDomain !! RightDomain, Value] {
+//      implicit restDsl: Dsl.Atomic[Keyword, LeftDomain, Value],
+//      shiftDsl2: Dsl.Atomic[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
+//  ): Dsl.Atomic[Keyword, LeftDomain !! RightDomain, Value] = {
+//    new Dsl.Atomic[Keyword, LeftDomain !! RightDomain, Value] {
 //      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
 //        (continue: RightDomain => LeftDomain) =>
 //          restDsl.cpsApply(keyword, { a =>
@@ -65,13 +82,13 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 //    }
 //  }
 
-  implicit def throwableContinuationDsl[Keyword, ThrowableContinuationDomain, LeftDomain, Value](implicit
-      isThrowableContinuationDomain: ThrowableContinuationDomain =:= (LeftDomain !! Throwable),
-      restDsl: Dsl[Keyword, LeftDomain, Value]
-  ): Dsl[Keyword, ThrowableContinuationDomain, Value] =
-    isThrowableContinuationDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] { (keyword, handler) => continue =>
-      restDsl.cpsApply(
+  private def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
+      restDsl: Dsl.Searching[Keyword, LeftDomain, Value]
+  ): Dsl[Keyword, LeftDomain !! Throwable, Value] = Dsl {
+    (keyword, handler) => continue =>
+      restDsl(
         keyword,
+        // Use `new` to support the `return`
         new (Value => LeftDomain) {
           def apply(value: Value): LeftDomain = {
             val protectedContinuation =
@@ -86,61 +103,220 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
           }
         }
       )
-    }
+  }
+  given [Keyword, LeftDomain, Value](using
+      Dsl.IsStackSafe[LeftDomain],
+      Dsl.Searching[Keyword, LeftDomain, Value]
+  ): Dsl.Derived.StackSafe[Keyword, LeftDomain !! Throwable, Value] =
+    Dsl.Derived.StackSafe(throwableContinuationDsl)
+  given [Keyword, LeftDomain, Value](using
+      util.NotGiven[Dsl.IsStackSafe[LeftDomain]],
+      Dsl.Searching[Keyword, LeftDomain, Value]
+  ): Dsl.Derived.StackUnsafe[Keyword, LeftDomain !! Throwable, Value] =
+    Dsl.Derived.StackUnsafe(throwableContinuationDsl)
 
 }
 
 object Dsl extends LowPriorityDsl0 {
+  def apply[Keyword, Domain, Value]: (
+      (
+          Keyword,
+          (Value => Domain)
+      ) => Domain
+  ) =:= Dsl[Keyword, Domain, Value] =
+    summon
 
-  extension [Keyword, Value](inline from: Keyword)(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
+  trait IsStackSafe[Domain]
+  object IsStackSafe extends IsStackSafe.LowPriority0:
+    private[IsStackSafe] trait LowPriority0:
+      given [R, A]: IsStackSafe[R => A] with {}
+    given [A]: IsStackSafe[TailRec[A]] with {}
+
+  object Derived:
+    opaque type StackSafe[-Keyword, Domain, +Value] <: Dsl[
+      Keyword,
+      Domain,
+      Value
+    ] =
+      Dsl[Keyword, Domain, Value]
+    object StackSafe:
+      def apply[Keyword, Domain, Value]: (
+          (
+              Keyword,
+              (Value => Domain)
+          ) => Domain
+      ) =:= StackSafe[Keyword, Domain, Value] =
+        summon
+
+    opaque type StackUnsafe[-Keyword, Domain, +Value] <: Dsl[
+      Keyword,
+      Domain,
+      Value
+    ] =
+      Dsl[Keyword, Domain, Value]
+    object StackUnsafe:
+      def apply[Keyword, Domain, Value]: (
+          (
+              Keyword,
+              (Value => Domain)
+          ) => Domain
+      ) =:= StackUnsafe[Keyword, Domain, Value] =
+        summon
+
+  opaque type Composed[-Keyword, Domain, +Value] <: Dsl[
+    Keyword,
+    Domain,
+    Value
+  ] = Dsl[Keyword, Domain, Value]
+  object Composed:
+    def apply[Keyword, Domain, Value]: (
+        (
+            Keyword,
+            (Value => Domain)
+        ) => Domain
+    ) =:= Composed[Keyword, Domain, Value] =
+      summon
+  opaque type Atomic[-Keyword, Domain, +Value] <: Dsl[Keyword, Domain, Value] =
+    Dsl[Keyword, Domain, Value]
+  object Atomic:
+    def apply[Keyword, Domain, Value]: (
+        (
+            Keyword,
+            (Value => Domain)
+        ) => Domain
+    ) =:= Atomic[Keyword, Domain, Value] =
+      summon
+
+  opaque type Searching[-Keyword, Domain, +Value] <: Dsl[
+    Keyword,
+    Domain,
+    Value
+  ] = Dsl[Keyword, Domain, Value]
+  object Searching
+      extends Searching.AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived:
+    private[Searching] trait StackUnsafeDerived:
+      given [Keyword, UnsafeDomain, Value](using
+          dsl: Dsl.Derived.StackUnsafe[Keyword, UnsafeDomain, Value]
+      ): Dsl.Searching[Keyword, UnsafeDomain, Value] = dsl
+    private[Searching] trait StackSafeDerivedThenStackUnsafeDerived
+        extends Searching.StackUnsafeDerived:
+      given [Keyword, DerivedDomain, Value](using
+          dsl: Dsl.Derived.StackSafe[Keyword, DerivedDomain, Value]
+      ): Dsl.Searching[Keyword, DerivedDomain, Value] = dsl
+    private[Searching] trait ComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends Searching.StackSafeDerivedThenStackUnsafeDerived:
+      given [ComposedKeyword, Domain, Value](using
+          dsl: Dsl.Composed[ComposedKeyword, Domain, Value]
+      ): Dsl.Searching[ComposedKeyword, Domain, Value] = dsl
+    private[Searching] trait AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends Searching.ComposedThenStackSafeDerivedThenStackUnsafeDerived:
+      given [Keyword, Domain, Value](using
+          dsl: Dsl.Atomic[Keyword, Domain, Value]
+      ): Dsl.Searching[Keyword, Domain, Value] = dsl
+    object AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
+
+    private[Searching] trait ComposedThenStackUnsafeDerived
+        extends Searching.StackUnsafeDerived:
+      given [ComposedKeyword, Domain, Value](using
+          dsl: Dsl.Composed[ComposedKeyword, Domain, Value]
+      ): Dsl.Searching[ComposedKeyword, Domain, Value] = dsl
+    private[Searching] trait StackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends Searching.ComposedThenStackUnsafeDerived:
+      given [Keyword, DerivedDomain, Value](using
+          dsl: Dsl.Derived.StackSafe[Keyword, DerivedDomain, Value]
+      ): Dsl.Searching[Keyword, DerivedDomain, Value] = dsl
+    private[Searching] trait AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends Searching.StackSafeDerivedThenComposedThenStackUnsafeDerived:
+      given [Keyword, Domain, Value](using
+          dsl: Dsl.Atomic[Keyword, Domain, Value]
+      ): Dsl.Searching[Keyword, Domain, Value] = dsl
+    object AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+
+  extension [Keyword, Value](
+      inline from: Keyword
+  )(using inline asKeyword: Dsl.IsKeyword[Keyword, Value])
     transparent inline def unary_! : Value = {
       Dsl.shift[Keyword, Value](from)
     }
 
   sealed trait HasValueOrElement[KeywordOrView, Element]:
     extension (keywordOrView: KeywordOrView)
-      def flatMap[Mapped <: For.Yield[MappedElement], MappedElement](flatMapper: Element => Mapped) = For.Yield.FlatMap(keywordOrView, flatMapper)
-      def map[Mapped](mapper: Element => Mapped) = For.Yield.Map(keywordOrView, mapper)
-      def foreach[Nested <: For.Do](action: Element => Nested) = For.Do.FlatForeach(keywordOrView, action)
-      def foreach(action: Element => Unit) = For.Do.Foreach(keywordOrView, action)
-      def withFilter(filter: Element => Boolean) = For.Yield.WithFilter(keywordOrView, filter)
-      // TODO: Implement `foreach` and `map` in macros to support !-notation in `do` block or `yield` block
+      def flatMap[Mapped <: For.Yield[MappedElement], MappedElement](
+          flatMapper: Element => Mapped
+      ) = For.Yield.FlatMap(keywordOrView, flatMapper)
+      def map[Mapped](mapper: Element => Mapped) =
+        For.Yield.Map(keywordOrView, mapper)
+      def foreach[Nested <: For.Do](action: Element => Nested) =
+        For.Do.FlatForeach(keywordOrView, action)
+      def foreach(action: Element => Unit) =
+        For.Do.Foreach(keywordOrView, action)
+      def withFilter(filter: Element => Boolean) =
+        For.Yield.WithFilter(keywordOrView, filter)
+  // TODO: Implement `foreach` and `map` in macros to support !-notation in `do` block or `yield` block
   object HasValueOrElement {
-    given [KeywordOrView <: For.Yield[Element], Element]: HasValueOrElement[KeywordOrView, Element] with {}
+    given [KeywordOrView <: For.Yield[Element], Element]
+        : HasValueOrElement[KeywordOrView, Element] with {}
   }
 
   /** The AST returned from a `for`...`yield` or a `for`...`do` expression.
     *
-    * Note that a [[For]] does not directly support !-notation.
-    * Instead, [[keywords.Each.ToView]] is used to convert a [[For]] to a
-    * [[Keyword]] that supports !-notation.
+    * Note that a [[For]] does not directly support !-notation. Instead,
+    * [[keywords.Each.ToView]] is used to convert a [[For]] to a [[Keyword]]
+    * that supports !-notation.
     */
   sealed trait For
   object For {
+
     /** The AST returned from a `for`...`do` expression. */
     sealed trait Do extends For
     object Do {
-      final case class KeywordForeach[Upstream, UpstreamElement, UnitKeyword](upstream: Upstream, action: UpstreamElement => UnitKeyword) extends Do
-      final case class Foreach[Upstream, UpstreamElement](upstream: Upstream, action: UpstreamElement => Unit) extends Do
-      final case class FlatForeach[Upstream, UpstreamElement, Nested <: Do](upstream: Upstream, action: UpstreamElement => Nested) extends Do
+      final case class KeywordForeach[Upstream, UpstreamElement, UnitKeyword](
+          upstream: Upstream,
+          action: UpstreamElement => UnitKeyword
+      ) extends Do
+      final case class Foreach[Upstream, UpstreamElement](
+          upstream: Upstream,
+          action: UpstreamElement => Unit
+      ) extends Do
+      final case class FlatForeach[Upstream, UpstreamElement, Nested <: Do](
+          upstream: Upstream,
+          action: UpstreamElement => Nested
+      ) extends Do
     }
+
     /** The AST returned from a `for`...`yield` expression. */
     sealed trait Yield[Element] extends For
     object Yield {
-      final case class KeywordMap[Upstream, UpstreamElement, ElementKeyword, Element](upstream: Upstream, mapper: UpstreamElement => ElementKeyword) extends Yield[Element]
-      final case class Map[Upstream, UpstreamElement, Element](upstream: Upstream, mapper: UpstreamElement => Element) extends Yield[Element]
-      final case class FlatMap[Upstream, UpstreamElement, Mapped <: Yield[Element], Element](upstream: Upstream, flatMapper: UpstreamElement => Mapped) extends Yield[Element]
-      final case class WithFilter[Upstream, Element](upstream: Upstream, filter: Element => Boolean) extends Yield[Element]
+      final case class KeywordMap[
+          Upstream,
+          UpstreamElement,
+          ElementKeyword,
+          Element
+      ](upstream: Upstream, mapper: UpstreamElement => ElementKeyword)
+          extends Yield[Element]
+      final case class Map[Upstream, UpstreamElement, Element](
+          upstream: Upstream,
+          mapper: UpstreamElement => Element
+      ) extends Yield[Element]
+      final case class FlatMap[Upstream, UpstreamElement, Mapped <: Yield[
+        Element
+      ], Element](upstream: Upstream, flatMapper: UpstreamElement => Mapped)
+          extends Yield[Element]
+      final case class WithFilter[Upstream, Element](
+          upstream: Upstream,
+          filter: Element => Boolean
+      ) extends Yield[Element]
     }
   }
 
-  implicit def derivedTailRecDsl[Keyword, TailRecDomain, Domain, Value](implicit
-      isTailRecDomain: TailRecDomain =:= TailRec[Domain],
-      restDsl: Dsl[Keyword, Domain, Value]
-  ): Dsl[Keyword, TailRecDomain, Value] = isTailRecDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
-    (keyword, handler) =>
+  private def derivedTailRecDsl[Keyword, Domain, Value](implicit
+      restDsl: Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl[Keyword, TailRec[Domain], Value] = Dsl {
+    (keyword: Keyword, handler: (Value => TailRec[Domain])) =>
       TailCalls.done {
-        restDsl.cpsApply(
+        restDsl(
           keyword,
           { value =>
             handler(value).result
@@ -148,32 +324,54 @@ object Dsl extends LowPriorityDsl0 {
         )
       }
   }
+  given [Keyword, Domain, Value](using
+      Dsl.IsStackSafe[Domain],
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Derived.StackSafe[Keyword, TailRec[Domain], Value] =
+    Dsl.Derived.StackSafe(derivedTailRecDsl)
+  given [Keyword, Domain, Value](using
+      util.NotGiven[Dsl.IsStackSafe[Domain]],
+      Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Derived.StackUnsafe[Keyword, TailRec[Domain], Value] =
+    Dsl.Derived.StackUnsafe(derivedTailRecDsl)
 
-  implicit def derivedThrowableTailRecDsl[Keyword, TaskDomain, LeftDomain, Value](implicit
-      isTaskDomain: TaskDomain =:= (TailRec[LeftDomain] !! Throwable),
-      restDsl: Dsl[Keyword, LeftDomain !! Throwable, Value]
-  ): Dsl[Keyword, TaskDomain, Value] = isTaskDomain.substituteContra[[X] =>> Dsl[Keyword, X, Value]] {
-    (keyword, handler) => tailRecFailureHandler =>
-      TailCalls.done(
-        restDsl.cpsApply(
-          keyword,
-          { value => failureHandler =>
-            handler(value) { e =>
-              TailCalls.done(failureHandler(e))
-            }.result
+  private def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
+      restDsl: Dsl.Searching[Keyword, LeftDomain !! Throwable, Value]
+  ): Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
+    Dsl {
+      (
+          keyword: Keyword,
+          handler: (Value => TailRec[LeftDomain] !! Throwable)
+      ) => (tailRecFailureHandler: Throwable => TailRec[LeftDomain]) =>
+        TailCalls.done(
+          restDsl(
+            keyword,
+            { value => failureHandler =>
+              handler(value) { e =>
+                TailCalls.done(failureHandler(e))
+              }.result
+            }
+          ) { e =>
+            tailRecFailureHandler(e).result
           }
-        ) { e =>
-          tailRecFailureHandler(e).result
-        }
-      )
-  }
+        )
+    }
+  given [Keyword, LeftDomain, TailRecValue](using
+      Dsl.IsStackSafe[LeftDomain],
+      Dsl.Searching[Keyword, LeftDomain !! Throwable, TailRecValue]
+  ): Dsl.Derived.StackSafe[Keyword, TailRec[LeftDomain] !! Throwable, TailRecValue] =
+    Dsl.Derived.StackSafe(derivedThrowableTailRecDsl)
+  given [Keyword, LeftDomain, TailRecValue](using
+      util.NotGiven[Dsl.IsStackSafe[LeftDomain]],
+      Dsl.Searching[Keyword, LeftDomain !! Throwable, TailRecValue]
+  ): Dsl.Derived.StackUnsafe[Keyword, TailRec[LeftDomain] !! Throwable, TailRecValue] =
+    Dsl.Derived.StackUnsafe(derivedThrowableTailRecDsl)
 
   private[dsl] type !![R, +A] = (A => R) => R
 
-  def apply[Keyword, Domain, Value](implicit typeClass: Dsl[Keyword, Domain, Value]): Dsl[Keyword, Domain, Value] =
-    typeClass
-
-  private def catchNativeException[A](futureContinuation: Future[A] !! A): Future[A] = {
+  private def catchNativeException[A](
+      futureContinuation: Future[A] !! A
+  ): Future[A] = {
     try {
       futureContinuation(Future.successful)
     } catch {
@@ -182,10 +380,12 @@ object Dsl extends LowPriorityDsl0 {
     }
   }
 
-  /** The type class to support `try` ... `catch` ... `finally` expression for `OutputDomain`.
+  /** The type class to support `try` ... `catch` ... `finally` expression for
+    * `OutputDomain`.
     *
-    * !-notation is allowed by default for `? !! Throwable` and [[scala.concurrent.Future Future]] domains, with the
-    * help of this type class.
+    * !-notation is allowed by default for `? !! Throwable` and
+    * [[scala.concurrent.Future Future]] domains, with the help of this type
+    * class.
     */
   @implicitNotFound(
     "The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
@@ -201,8 +401,18 @@ object Dsl extends LowPriorityDsl0 {
 
   object TryCatchFinally {
 
-    implicit def fromTryCatchTryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain](implicit
-        tryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
+    implicit def fromTryCatchTryFinally[
+        Value,
+        OuterDomain,
+        BlockDomain,
+        FinalizerDomain
+    ](implicit
+        tryFinally: TryFinally[
+          Value,
+          OuterDomain,
+          BlockDomain,
+          FinalizerDomain
+        ],
         tryCatch: TryCatch[Value, BlockDomain, BlockDomain]
     ): TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] = {
       (
@@ -233,21 +443,26 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   private[dsl] trait LowPriorityTryCatch {
-    implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, State](implicit
-        restTryCatch: TryCatch[Value, OuterDomain, BlockDomain]
+    implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, State](
+        implicit restTryCatch: TryCatch[Value, OuterDomain, BlockDomain]
     ): TryCatch[Value, State => OuterDomain, State => BlockDomain] = {
       (
           block: (State => BlockDomain) !! Value,
           catcher: Catcher[(State => BlockDomain) !! Value],
           outerSuccessHandler: Value => State => OuterDomain
       ) => (state: State) =>
-        def withState(blockContinuation: (State => BlockDomain) !! Value) = { (blockHandler: (Value => BlockDomain)) =>
-          blockContinuation { (value: Value) => (state: State) =>
-            blockHandler(value)
-          }(state)
+        def withState(blockContinuation: (State => BlockDomain) !! Value) = {
+          (blockHandler: (Value => BlockDomain)) =>
+            blockContinuation { (value: Value) => (state: State) =>
+              blockHandler(value)
+            }(state)
         }
 
-        restTryCatch.tryCatch(withState(block), catcher.andThen(withState _), outerSuccessHandler(_)(state))
+        restTryCatch.tryCatch(
+          withState(block),
+          catcher.andThen(withState _),
+          outerSuccessHandler(_)(state)
+        )
     }
   }
 
@@ -348,22 +563,43 @@ object Dsl extends LowPriorityDsl0 {
   }
 
   private[dsl] trait LowPriorityTryFinally {
-    implicit def liftFunction1TryCatch[Value, OuterDomain, BlockDomain, FinalizerDomain, State](implicit
-        restTryFinally: TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain]
-    ): TryFinally[Value, State => OuterDomain, State => BlockDomain, State => FinalizerDomain] = {
+    implicit def liftFunction1TryCatch[
+        Value,
+        OuterDomain,
+        BlockDomain,
+        FinalizerDomain,
+        State
+    ](implicit
+        restTryFinally: TryFinally[
+          Value,
+          OuterDomain,
+          BlockDomain,
+          FinalizerDomain
+        ]
+    ): TryFinally[
+      Value,
+      State => OuterDomain,
+      State => BlockDomain,
+      State => FinalizerDomain
+    ] = {
       (
           block: (State => BlockDomain) !! Value,
           finalizer: (State => FinalizerDomain) !! Unit,
           outerSuccessHandler: Value => State => OuterDomain
       ) => state =>
-        def withState[Domain, Value](blockContinuation: (State => Domain) !! Value) = {
-          (blockHandler: (Value => Domain)) =>
-            blockContinuation { (value: Value) => (state: State) =>
-              blockHandler(value)
-            }(state)
+        def withState[Domain, Value](
+            blockContinuation: (State => Domain) !! Value
+        ) = { (blockHandler: (Value => Domain)) =>
+          blockContinuation { (value: Value) => (state: State) =>
+            blockHandler(value)
+          }(state)
         }
 
-        restTryFinally.tryFinally(withState(block), withState(finalizer), outerSuccessHandler(_)(state))
+        restTryFinally.tryFinally(
+          withState(block),
+          withState(finalizer),
+          outerSuccessHandler(_)(state)
+        )
     }
   }
 
@@ -371,7 +607,9 @@ object Dsl extends LowPriorityDsl0 {
 
     implicit def futureTryFinally[BlockValue, OuterValue](implicit
         executionContext: ExecutionContext
-    ): TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[Unit]] = {
+    ): TryFinally[BlockValue, Future[OuterValue], Future[BlockValue], Future[
+      Unit
+    ]] = {
       (
           block: Future[BlockValue] !! BlockValue,
           finalizer: Future[Unit] !! Unit,
@@ -395,40 +633,45 @@ object Dsl extends LowPriorityDsl0 {
           }
     }
 
-    implicit def throwableContinuationTryFinally[LeftDomain, Value]
-        : TryFinally[Value, LeftDomain !! Throwable, LeftDomain !! Throwable, LeftDomain !! Throwable] = {
-      (block, finalizer, outerSuccessHandler) => outerFailureHandler =>
-        @inline
-        def injectFinalizer(finalizerHandler: Unit => LeftDomain !! Throwable): LeftDomain = {
-          locally {
-            try {
-              finalizer(finalizerHandler)
-            } catch {
-              case NonFatal(e) =>
-                return outerFailureHandler(e)
-            }
-          }(outerFailureHandler)
-        }
-
-        @inline
-        def hookedFailureHandler(e: Throwable) =
-          injectFinalizer { (_: Unit) =>
-            _(e)
-          }
-
-        def runBlock(): LeftDomain = {
-          (try {
-            block { value => hookedFailureHandler =>
-              injectFinalizer { (_: Unit) =>
-                outerSuccessHandler(value)
-              }
-            }
+    implicit def throwableContinuationTryFinally[LeftDomain, Value]: TryFinally[
+      Value,
+      LeftDomain !! Throwable,
+      LeftDomain !! Throwable,
+      LeftDomain !! Throwable
+    ] = { (block, finalizer, outerSuccessHandler) => outerFailureHandler =>
+      @inline
+      def injectFinalizer(
+          finalizerHandler: Unit => LeftDomain !! Throwable
+      ): LeftDomain = {
+        locally {
+          try {
+            finalizer(finalizerHandler)
           } catch {
             case NonFatal(e) =>
-              return hookedFailureHandler(e)
-          })(hookedFailureHandler)
+              return outerFailureHandler(e)
+          }
+        }(outerFailureHandler)
+      }
+
+      @inline
+      def hookedFailureHandler(e: Throwable) =
+        injectFinalizer { (_: Unit) =>
+          _(e)
         }
-        runBlock()
+
+      def runBlock(): LeftDomain = {
+        (try {
+          block { value => hookedFailureHandler =>
+            injectFinalizer { (_: Unit) =>
+              outerSuccessHandler(value)
+            }
+          }
+        } catch {
+          case NonFatal(e) =>
+            return hookedFailureHandler(e)
+        })(hookedFailureHandler)
+      }
+      runBlock()
     }
   }
 
@@ -464,14 +707,16 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
 
-    private[Lift] trait LowPriorityOneStep0 extends LowPriorityOneStep1 { this: OneStep.type =>
+    private[Lift] trait LowPriorityOneStep0 extends LowPriorityOneStep1 {
+      this: OneStep.type =>
       given [R, F, A]: OneStep[R, A => R] = { r => Function.const(r) }
     }
 
     object OneStep extends LowPriorityOneStep0 {
 
       import Dsl.!!
-      given [LeftDomain, RightDomain]: OneStep[RightDomain, LeftDomain !! RightDomain] = r => _(r)
+      given [LeftDomain, RightDomain]
+          : OneStep[RightDomain, LeftDomain !! RightDomain] = r => _(r)
 
       given [Element](using
           ExecutionContext
@@ -482,27 +727,21 @@ object Dsl extends LowPriorityDsl0 {
 
   }
 
-  trait PolyCont[-Keyword, Domain, +Value] {
-
-    /** Registers an asynchronous callback `handler` on `keyword`, to handle the `Value`. */
-    def cpsApply(keyword: Keyword, handler: Value => Domain): Domain
-
-  }
-
   opaque type Run[Keyword, Domain, Value] <: Keyword => Domain =
     Keyword => Domain
 
   object Run {
 
     given [Keyword, Domain, Value](using
-        dsl: /*=>*/ PolyCont[Keyword, Domain, Value],
+        dsl: /*=>*/ Dsl.Searching[Keyword, Domain, Value],
         lift: /*=>*/ Lift[Value, Domain]
-    ): Run[Keyword, Domain, Value] = { dsl.cpsApply(_, lift) }
+    ): Run[Keyword, Domain, Value] = { dsl.apply(_, lift) }
 
   }
 
   type Keyword = Keyword.Opaque | Keyword.Trait
   object Keyword {
+
     /** A marker trait that denotes a keyword class, enabling extension method
       * defined in [[Dsl]] for subclasses of [[Keyword.Trait]].
       */
@@ -519,8 +758,7 @@ object Dsl extends LowPriorityDsl0 {
       }
     }
   }
-  
- 
+
   trait IsKeyword[Keyword, Value] extends HasValueOrElement[Keyword, Value]:
     extension (keyword: Keyword)
       @inline def to[Domain[_]](using
@@ -535,15 +773,16 @@ object Dsl extends LowPriorityDsl0 {
         run(keyword)
       }
 
-
   extension [Keyword, Domain, Value](keyword: Keyword)
     @inline def cpsApply(using
-        dsl: PolyCont[Keyword, Domain, Value]
+        dsl: Dsl.Searching[Keyword, Domain, Value]
     )(handler: Value => Domain)(using DummyImplicit): Domain = {
-      dsl.cpsApply(keyword, handler)
+      dsl(keyword, handler)
     }
 
-  @annotation.compileTimeOnly("""This method must be called only inside a `reset` or `*` code block.""")
+  @annotation.compileTimeOnly(
+    """This method must be called only inside a `reset` or `*` code block."""
+  )
   def shift[Keyword, Value](keyword: Keyword): Value = ???
 
 }

@@ -8,29 +8,32 @@ import scala.language.implicitConversions
 import Dsl.IsKeyword
 import Dsl.Lift
 
-/** A [[Dsl.Keyword]] to early return a lifted value from the enclosing function.
+/** A [[Dsl.Keyword]] to early return a lifted value from the enclosing
+  * function.
   *
   * @author
   *   杨博 (Yang Bo)
   */
-opaque type Return[+ReturnValue] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[ReturnValue]
+opaque type Return[+ReturnValue] <: Dsl.Keyword.Opaque =
+  Dsl.Keyword.Opaque.Of[ReturnValue]
 object Return {
-  @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] = Dsl.Keyword.Opaque.Of.apply
+  @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] =
+    Dsl.Keyword.Opaque.Of.apply
 
   given [ReturnValue]: IsKeyword[Return[ReturnValue], Nothing] with {}
 
   given [ReturnValue, Domain](using
       lift: Lift[ReturnValue, Domain]
-  ): Dsl[Return[ReturnValue], Domain, Nothing] with {
-    def cpsApply(keyword: Return[ReturnValue], handler: Nothing => Domain): Domain = {
+  ): Dsl.Atomic[Return[ReturnValue], Domain, Nothing] = Dsl.Atomic {
+    (keyword: Return[ReturnValue], handler: Nothing => Domain) =>
       lift(keyword)
-    }
+
   }
 
-  implicit def returnDsl[ReturnValue, Domain >: ReturnValue]: Dsl[Return[ReturnValue], Domain, Nothing] =
-    new Dsl[Return[ReturnValue], Domain, Nothing] {
-      def cpsApply(keyword: Return[ReturnValue], handler: Nothing => Domain): Domain = {
+  given [ReturnValue, Domain >: ReturnValue]
+      : Dsl.Atomic[Return[ReturnValue], Domain, Nothing] =
+    Dsl.Atomic[Return[ReturnValue], Domain, Nothing] {
+      (keyword: Return[ReturnValue], handler: Nothing => Domain) =>
         keyword
-      }
     }
 }

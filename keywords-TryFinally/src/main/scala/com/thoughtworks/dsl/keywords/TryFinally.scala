@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
 import Dsl.!!
-import Dsl.cpsApply
 import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 import scala.concurrent._
@@ -16,13 +15,13 @@ object TryFinally {
 
   given [Value, OuterDomain, BlockKeyword, BlockDomain, FinalizerKeyword, FinalizerDomain](using
       dslTryFinally: Dsl.TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
-      blockDsl: Dsl.PolyCont[BlockKeyword, BlockDomain, Value],
-      finalizerDsl: Dsl.PolyCont[FinalizerKeyword, FinalizerDomain, Unit]
-  ): Dsl.PolyCont[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = {
+      blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
+      finalizerDsl: Dsl.Searching[FinalizerKeyword, FinalizerDomain, Unit]
+  ): Dsl.Composed[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = Dsl.Composed {
     case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
       dslTryFinally.tryFinally(
-        blockDsl.cpsApply(blockKeyword, _),
-        finalizerDsl.cpsApply(finalizerKeyword, _),
+        blockDsl(blockKeyword, _),
+        finalizerDsl(finalizerKeyword, _),
         handler
       )
   }

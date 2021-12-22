@@ -4,7 +4,10 @@ import Dsl.IsKeyword
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
-import com.thoughtworks.dsl.keywords.Shift.{SameDomainStackSafeShiftDsl, StackSafeShiftDsl}
+import com.thoughtworks.dsl.keywords.Shift.{
+  SameDomainStackSafeShiftDsl,
+  StackSafeShiftDsl
+}
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -19,35 +22,54 @@ opaque type Shift[R, A] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R !! A]
 private[keywords] trait LowPriorityShift1 {
 
   @inline
-  implicit def stackUnsafeShiftDsl[Domain, Value]: Dsl[Shift[Domain, Value], Domain, Value] =
-    new Dsl[Shift[Domain, Value], Domain, Value] {
-      def cpsApply(shift: Shift[Domain, Value], handler: Value => Domain) =
+  implicit def stackUnsafeShiftDsl[Domain, Value]
+      : Dsl.Atomic[Shift[Domain, Value], Domain, Value] =
+    Dsl.Atomic[Shift[Domain, Value], Domain, Value] {
+      (shift: Shift[Domain, Value], handler: Value => Domain) =>
         Shift.apply.flip(shift)(handler)
     }
 
 }
 
-private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 { this: Shift.type =>
+private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
+  this: Shift.type =>
 
   given [LeftDomain, RightDomain, Value](using
       restDsl: SameDomainStackSafeShiftDsl[LeftDomain, RightDomain]
-  ): SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] = {
-    val restDsl0 = apply.liftContra[[X] =>> Dsl[X, LeftDomain, RightDomain]](restDsl);
-    { (keyword, handler) =>
-      keyword { value =>
-        restDsl0.cpsApply(handler(value), _)
+  ): SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] =
+    SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] {
+      val restDsl0 =
+        apply
+          .liftContra[[X] =>> Dsl.Atomic[X, LeftDomain, RightDomain]](restDsl);
+      { (keyword, handler) =>
+        keyword { value =>
+          restDsl0(handler(value), _)
+        }
       }
     }
-  }
 
 }
 
 object Shift extends LowPriorityShift0 {
   given [Domain, Value]: IsKeyword[Shift[Domain, Value], Value] with {}
 
-  trait StackSafeShiftDsl[Domain, NewDomain, Value] extends Dsl[Shift[Domain, Value], NewDomain, Value]
+  opaque type StackSafeShiftDsl[Domain, NewDomain, Value] <: Dsl.Atomic[Shift[
+    Domain,
+    Value
+  ], NewDomain, Value] = Dsl.Atomic[Shift[Domain, Value], NewDomain, Value]
+  object StackSafeShiftDsl:
+    def apply[Domain, NewDomain, Value]: (
+        (
+            Shift[Domain, Value],
+            Value => NewDomain
+        ) => NewDomain
+    ) =:= StackSafeShiftDsl[Domain, NewDomain, Value] =
+      Dsl.Atomic.apply[Shift[Domain, Value], NewDomain, Value]
 
-  private[keywords] type SameDomainStackSafeShiftDsl[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
+  private[keywords] type SameDomainStackSafeShiftDsl[Domain, Value] =
+    StackSafeShiftDsl[Domain, Domain, Value]
+  object SameDomainStackSafeShiftDsl:
+    def apply[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
 
   extension [C, R, A](inline fa: C)(using
       inline notKeyword: util.NotGiven[
@@ -58,8 +80,10 @@ object Shift extends LowPriorityShift0 {
     transparent inline def unary_! : A =
       Dsl.shift[Shift[R, A], A](Shift[R, A](asContinuation(fa))): A
 
-
-  private def shiftTailRec[R, Value](continuation: TailRec[R] !! Value, handler: Value => TailRec[R]) = {
+  private def shiftTailRec[R, Value](
+      continuation: TailRec[R] !! Value,
+      handler: Value => TailRec[R]
+  ) = {
     continuation { a =>
       val handler1 = handler
       TailCalls.tailcall(handler1(a))
@@ -67,14 +91,19 @@ object Shift extends LowPriorityShift0 {
   }
 
   @inline
-  implicit def tailRecShiftDsl[R, Value]: SameDomainStackSafeShiftDsl[TailRec[R], Value] =
-    new SameDomainStackSafeShiftDsl[TailRec[R], Value] {
-      def cpsApply(keyword: Shift[TailRec[R], Value], handler: Value => TailRec[R]): TailRec[R] = {
+  given tailRecShiftDsl[R, Value]
+      : SameDomainStackSafeShiftDsl[TailRec[R], Value] =
+    SameDomainStackSafeShiftDsl {
+      (
+          keyword: Shift[TailRec[R], Value],
+          handler: Value => TailRec[R]
+      ) =>
         shiftTailRec(keyword, handler)
-      }
+
     }
 
-  private abstract class TrampolineContinuation[LeftDomain] extends (LeftDomain !! Throwable) {
+  private abstract class TrampolineContinuation[LeftDomain]
+      extends (LeftDomain !! Throwable) {
     protected def step(): LeftDomain !! Throwable
 
     @tailrec
@@ -108,14 +137,14 @@ object Shift extends LowPriorityShift0 {
     }
 
   @inline
-  implicit def stackSafeThrowableShiftDsl[LeftDomain, Value]
+  given [LeftDomain, Value]
       : SameDomainStackSafeShiftDsl[LeftDomain !! Throwable, Value] =
-    new SameDomainStackSafeShiftDsl[LeftDomain !! Throwable, Value] {
+    SameDomainStackSafeShiftDsl[LeftDomain !! Throwable, Value] {
 
-      def cpsApply(
+      (
           keyword: Shift[LeftDomain !! Throwable, Value],
           handler: Value => LeftDomain !! Throwable
-      ): !![LeftDomain, Throwable] =
+      ) =>
         suspend(keyword, handler)
     }
 
@@ -143,13 +172,20 @@ object Shift extends LowPriorityShift0 {
   }
 
   @inline
-  implicit def taskStackSafeShiftDsl[LeftDomain, RightDomain, Value]
-      : StackSafeShiftDsl[LeftDomain !! Throwable, LeftDomain !! Throwable !! RightDomain, Value] =
-    new StackSafeShiftDsl[LeftDomain !! Throwable, LeftDomain !! Throwable !! RightDomain, Value] {
-      def cpsApply(
+  given [LeftDomain, RightDomain, Value]: StackSafeShiftDsl[
+    LeftDomain !! Throwable,
+    LeftDomain !! Throwable !! RightDomain,
+    Value
+  ] =
+    StackSafeShiftDsl[
+      LeftDomain !! Throwable,
+      LeftDomain !! Throwable !! RightDomain,
+      Value
+    ] {
+      (
           keyword: Shift[!![LeftDomain, Throwable], Value],
           handler: Value => !![!![LeftDomain, Throwable], RightDomain]
-      ): !![!![LeftDomain, Throwable], RightDomain] =
+      ) =>
         taskFlatMap(keyword, handler)
     }
 

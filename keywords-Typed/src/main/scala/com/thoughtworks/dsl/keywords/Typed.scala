@@ -8,9 +8,9 @@ object Typed {
   given [Keyword, Value]
       : Dsl.IsKeyword[Typed[Keyword, Value], Value] with {}
   given [Keyword, Domain, Value](using
-      dsl: Dsl.PolyCont[Keyword, Domain, Value]
-  ): Dsl.PolyCont[Typed[Keyword, Value], Domain, Value] =
-    dsl
+      dsl: Dsl.Searching[Keyword, Domain, Value]
+  ): Dsl.Composed[Typed[Keyword, Value], Domain, Value] =
+    Dsl.Composed(dsl)
 
   @inline def apply[Keyword, Value]: Keyword =:= Typed[Keyword, Value] = Dsl.Keyword.Opaque.Of.apply
 

@@ -16,26 +16,21 @@ object While {
       BodyKeyword,
       Domain
   ](using
-      conditionDsl: Dsl.PolyCont[ConditionKeyword, Domain, Boolean],
-      bodyDsl: Dsl.PolyCont[BodyKeyword, Domain, Any]
-  ): Dsl.PolyCont[
+      conditionDsl: Dsl.Searching[ConditionKeyword, Domain, Boolean],
+      bodyDsl: Dsl.Searching[BodyKeyword, Domain, Any]
+  ): Dsl.Composed[
     While[ConditionKeyword, BodyKeyword],
     Domain,
     Unit
-  ] with {
-    def cpsApply(
-        keyword: While[ConditionKeyword, BodyKeyword],
-        handler: Unit => Domain
-    ): Domain = {
+  ] = Dsl.Composed {
+    (keyword: While[ConditionKeyword, BodyKeyword], handler: Unit => Domain) =>
       keyword.condition.cpsApply {
         case true =>
           keyword.body.cpsApply { _ =>
-            cpsApply(keyword, handler)
+            keyword.cpsApply(handler)
           }
         case false =>
           handler(())
       }
-    }
-
   }
 }

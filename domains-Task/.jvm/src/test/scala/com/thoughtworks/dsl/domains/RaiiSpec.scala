@@ -16,7 +16,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
   @inline
   private def jvmCatch[Domain](eh: => Domain !! Throwable)(
       failureHandler: Throwable => Domain
-  )(implicit shiftDsl: Dsl[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
+  )(implicit shiftDsl: Dsl.Searching[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
     val protectedContinuation: Domain !! Throwable =
       try {
         eh
@@ -24,7 +24,7 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
         case NonFatal(e) =>
           return failureHandler(e)
       }
-    shiftDsl.cpsApply(Shift(protectedContinuation), failureHandler)
+    shiftDsl(Shift(protectedContinuation), failureHandler)
   }
 
   /** Exit the current scope then hang up

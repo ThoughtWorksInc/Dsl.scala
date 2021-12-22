@@ -167,8 +167,9 @@ object AsynchronousIo {
     }
   }
 
-  implicit def asynchronousIoDsl[Value]: Dsl[AsynchronousIo[Value], Unit !! Throwable, Value] = { (keyword, handler) =>
-    keyword.start(_, completionHandler(handler))
-  }
+  given [Value]: Dsl.Atomic[AsynchronousIo[Value], Unit !! Throwable, Value] =
+    Dsl.Atomic { (keyword, handler) =>
+      keyword.start(_, completionHandler(handler))
+    }
 
 }

@@ -45,14 +45,14 @@ object Each {
         Collection,
         Domain
     ](using
-        toViewDsl: Dsl.PolyCont[Each.ToView[ForYield], Domain, View[Element]]
-    ): Dsl.PolyCont[
+        toViewDsl: Dsl.Searching[Each.ToView[ForYield], Domain, View[Element]]
+    ): Dsl.Composed[
       Each.To[ForYield, Element, Collection],
       Domain,
       Collection
-    ] = { case (keyword, handler) =>
+    ] = Dsl.Composed { (keyword, handler) =>
       val factory = keyword.factory
-      toViewDsl.cpsApply(
+      toViewDsl(
         ToView(keyword.forYield),
         { view => handler(view.to(factory)) }
       )
@@ -364,14 +364,14 @@ object Each {
           Keyword,
           Value
         ],
-        polyCont: Dsl.PolyCont[
+        polyCont: Dsl.Searching[
           Keyword,
           Domain,
           Value
         ]
-    ): Dsl.PolyCont[Each.ToView[Comprehension], Domain, Value] = {
+    ): Dsl.Composed[Each.ToView[Comprehension], Domain, Value] = Dsl.Composed {
       (as, handler) =>
-        polyCont.cpsApply(toKeyword(as), handler)
+        polyCont(toKeyword(as), handler)
     }
   }
 
@@ -412,12 +412,12 @@ object Each {
         MappedValue
       ],
       factory: Factory[MappedElement, MappedValue],
-      blockDsl: Dsl.PolyCont[MappedKeyword, Domain, MappedValue]
-  ): Dsl.PolyCont[
+      blockDsl: Dsl.Searching[MappedKeyword, Domain, MappedValue]
+  ): Dsl.Composed[
     FlatMap[Each[Element], MappedKeyword],
     Domain,
     MappedValue
-  ] = {
+  ] = Dsl.Composed {
     case (
           FlatMap(sourceCollection, flatMapper: (Element @unchecked => MappedKeyword)),
           handler
@@ -428,7 +428,7 @@ object Each {
       ): Domain = {
         seqOps.headOption match {
           case Some(head) =>
-            blockDsl.cpsApply(
+            blockDsl(
               flatMapper(head),
               { mappedHead =>
                 loop(
@@ -456,12 +456,12 @@ object Each {
       MappedKeyword,
       Domain
   ](using
-      blockDsl: Dsl.PolyCont[MappedKeyword, Domain, Unit]
-  ): Dsl.PolyCont[
+      blockDsl: Dsl.Searching[MappedKeyword, Domain, Unit]
+  ): Dsl.Composed[
     FlatMap[Each[Element], MappedKeyword],
     Domain,
     Unit
-  ] = {
+  ] = Dsl.Composed {
     case (
           FlatMap(sourceCollection, flatMapper: (Element @unchecked => MappedKeyword)),
           handler
@@ -472,7 +472,7 @@ object Each {
       ): Domain = {
         seqOps.headOption match {
           case Some(head) =>
-            blockDsl.cpsApply(
+            blockDsl(
               flatMapper(head),
               { mappedHead =>
                 loop(

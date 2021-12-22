@@ -137,7 +137,7 @@ object reset {
         helper
       }
 
-    val List(shiftSymbol) = Symbol.classSymbol("com.thoughtworks.dsl.Dsl$").declaredMethod("shift")
+    val List(shiftSymbol) = Symbol.requiredModule("com.thoughtworks.dsl.Dsl").declaredMethod("shift")
 
     sealed trait KeywordTree {
       def keywordTerm: Term

@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
 import Dsl.!!
-import Dsl.cpsApply
 import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 import scala.concurrent._
@@ -13,13 +12,13 @@ object TryCatch {
   given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword](
       using
       dslTryCatch: Dsl.TryCatch[Value, OuterDomain, BlockDomain],
-      blockDsl: Dsl.PolyCont[BlockKeyword, BlockDomain, Value],
-      caseDsl: Dsl.PolyCont[CaseKeyword, BlockDomain, Value],
-  ): Dsl.PolyCont[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value] = {
+      blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
+      caseDsl: Dsl.Searching[CaseKeyword, BlockDomain, Value],
+  ): Dsl.Composed[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value] = Dsl.Composed {
     case (TryCatch(blockKeyword, cases), handler) =>
       dslTryCatch.tryCatch(
-        blockDsl.cpsApply(blockKeyword, _),
-        cases.andThen { caseKeyword => caseDsl.cpsApply(caseKeyword, _) },
+        blockDsl(blockKeyword, _),
+        cases.andThen { caseKeyword => caseDsl(caseKeyword, _) },
         handler
       )
   }

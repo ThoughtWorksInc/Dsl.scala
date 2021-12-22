@@ -6,9 +6,9 @@ import Dsl.IsKeyword
 opaque type Pure[+Value] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[Value]
 object Pure {
   given [Domain, Value](using
-      shiftDsl: Dsl.PolyCont[Shift[Domain, Value], Domain, Value]
-  ): Dsl[Pure[Value], Domain, Value] = { (keyword: Pure[Value], handler: Value => Domain) =>
-    shiftDsl.cpsApply(Shift(_(keyword)), handler)
+      shiftDsl: Dsl.Searching[Shift[Domain, Value], Domain, Value]
+  ): Dsl.Atomic[Pure[Value], Domain, Value] = Dsl.Atomic { (keyword: Pure[Value], handler: Value => Domain) =>
+    shiftDsl(Shift(_(keyword)), handler)
   }
 
   given [PureValue]: IsKeyword[Pure[PureValue], PureValue] with {}
