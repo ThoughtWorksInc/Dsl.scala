@@ -132,7 +132,15 @@ object Dsl extends LowPriorityDsl0 {
       given [R, A]: IsStackSafe[R => A] with {}
     given [A]: IsStackSafe[TailRec[A]] with {}
 
+  /** Includes [[Dsl]]s derived from other [[Dsl]]s for the same [[Keyword]] in
+    * a simpler domain. For example, a [[Dsl.Derived.StackUnsafe]] for
+    * [[keywords.Yield]] in the domain `Vector[Int] !! String` is derived from
+    * the [[Dsl]] for [[keywords.Yield]] in the domain `Vector[Int]`.
+    */
   object Derived:
+    /** A [[Dsl]] derived from a stack-safe domain, e.g. [[domains.Task]] or
+      * [[scala.util.control.TailCalls.TailRec]].
+      */
     opaque type StackSafe[-Keyword, Domain, +Value] <: Dsl[
       Keyword,
       Domain,
@@ -148,6 +156,9 @@ object Dsl extends LowPriorityDsl0 {
       ) =:= StackSafe[Keyword, Domain, Value] =
         summon
 
+    /** A [[Dsl]] derived from a stack-unsafe domain, e.g.
+      * [[scala.concurrent.Future]]
+      */
     opaque type StackUnsafe[-Keyword, Domain, +Value] <: Dsl[
       Keyword,
       Domain,
@@ -163,6 +174,11 @@ object Dsl extends LowPriorityDsl0 {
       ) =:= StackUnsafe[Keyword, Domain, Value] =
         summon
 
+  /** An [[Dsl]] for a control flow [[Keyword]], composed of other [[Dsl]]s for
+    * subtree of the [[Keyword]]. For example, a [[Dsl.Composed]] for
+    * [[keywords.If]] is composed of the [[Dsl]] for the condition, the [[Dsl]]
+    * for the `then` clause, and the [[Dsl]] for the `else` clause.
+    */
   opaque type Composed[-Keyword, Domain, +Value] <: Dsl[
     Keyword,
     Domain,
@@ -176,7 +192,15 @@ object Dsl extends LowPriorityDsl0 {
         ) => Domain
     ) =:= Composed[Keyword, Domain, Value] =
       summon
-  opaque type Original[-Keyword, Domain, +Value] <: Dsl[Keyword, Domain, Value] =
+
+  /** An original [[Dsl]] for a [[Keyword]], i.e. neither [[Derived.StackSafe]]
+    * nor [[Derived.StackUnsafe]] nor [[Composed]].
+    */
+  opaque type Original[-Keyword, Domain, +Value] <: Dsl[
+    Keyword,
+    Domain,
+    Value
+  ] =
     Dsl[Keyword, Domain, Value]
   object Original:
     def apply[Keyword, Domain, Value]: (
@@ -359,12 +383,16 @@ object Dsl extends LowPriorityDsl0 {
   given [Keyword, LeftDomain, TailRecValue](using
       Dsl.IsStackSafe[LeftDomain],
       Dsl.Searching[Keyword, LeftDomain !! Throwable, TailRecValue]
-  ): Dsl.Derived.StackSafe[Keyword, TailRec[LeftDomain] !! Throwable, TailRecValue] =
+  ): Dsl.Derived.StackSafe[Keyword, TailRec[
+    LeftDomain
+  ] !! Throwable, TailRecValue] =
     Dsl.Derived.StackSafe(derivedThrowableTailRecDsl)
   given [Keyword, LeftDomain, TailRecValue](using
       util.NotGiven[Dsl.IsStackSafe[LeftDomain]],
       Dsl.Searching[Keyword, LeftDomain !! Throwable, TailRecValue]
-  ): Dsl.Derived.StackUnsafe[Keyword, TailRec[LeftDomain] !! Throwable, TailRecValue] =
+  ): Dsl.Derived.StackUnsafe[Keyword, TailRec[
+    LeftDomain
+  ] !! Throwable, TailRecValue] =
     Dsl.Derived.StackUnsafe(derivedThrowableTailRecDsl)
 
   private[dsl] type !![R, +A] = (A => R) => R
