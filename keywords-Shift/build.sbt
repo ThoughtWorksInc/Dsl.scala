@@ -1,6 +1,3 @@
-scalacOptions in Compile ++= {
-  scalaBinaryVersion.value match {
-    case "2.11" => Some("–Xexperimental")
-    case _      => None
-  }
-}
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.10" % Test
+
+enablePlugins(Example)

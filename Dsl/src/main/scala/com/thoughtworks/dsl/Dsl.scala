@@ -773,10 +773,10 @@ object Dsl extends LowPriorityDsl0 {
         run(keyword)
       }
 
-  extension [Keyword, Domain, Value](keyword: Keyword)
-    @inline def cpsApply(using
+  extension [Keyword, Value](keyword: Keyword)
+    @inline def cpsApply[Domain](using
         dsl: Dsl.Searching[Keyword, Domain, Value]
-    )(handler: Value => Domain)(using DummyImplicit): Domain = {
+    )(handler: Value => Domain): Domain = {
       dsl(keyword, handler)
     }
 
