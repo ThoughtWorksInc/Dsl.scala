@@ -241,8 +241,8 @@ object scalaz extends scalaz.LowPriority0 {
   given [F[_], A, G[_], B](using
       monad: Bind[F],
       lift: Dsl.Lift[G[A], F[A]]
-  ): Dsl.Atomic[Monadic[G[A]], F[B], A] =
-    Dsl.Atomic { (keyword: Monadic[G[A]], handler: A => F[B]) =>
+  ): Dsl.Original[Monadic[G[A]], F[B], A] =
+    Dsl.Original { (keyword: Monadic[G[A]], handler: A => F[B]) =>
       monad.bind(lift(Monadic.apply.flip(keyword)))(
         handler
       )

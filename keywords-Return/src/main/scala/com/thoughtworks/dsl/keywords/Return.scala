@@ -24,15 +24,15 @@ object Return {
 
   given [ReturnValue, Domain](using
       lift: Lift[ReturnValue, Domain]
-  ): Dsl.Atomic[Return[ReturnValue], Domain, Nothing] = Dsl.Atomic {
+  ): Dsl.Original[Return[ReturnValue], Domain, Nothing] = Dsl.Original {
     (keyword: Return[ReturnValue], handler: Nothing => Domain) =>
       lift(keyword)
 
   }
 
   given [ReturnValue, Domain >: ReturnValue]
-      : Dsl.Atomic[Return[ReturnValue], Domain, Nothing] =
-    Dsl.Atomic[Return[ReturnValue], Domain, Nothing] {
+      : Dsl.Original[Return[ReturnValue], Domain, Nothing] =
+    Dsl.Original[Return[ReturnValue], Domain, Nothing] {
       (keyword: Return[ReturnValue], handler: Nothing => Domain) =>
         keyword
     }

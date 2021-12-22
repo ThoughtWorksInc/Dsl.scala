@@ -67,8 +67,8 @@ object Put {
   given [S]: IsKeyword[Put[S], Unit] with {}
   def apply[S]: S =:= Put[S] = Dsl.Keyword.Opaque.Of.apply
 
-  given [S0, S >: S0, A]: Dsl.Atomic[Put[S0], S => A, Unit] =
-    Dsl.Atomic[Put[S0], S => A, Unit] {
+  given [S0, S >: S0, A]: Dsl.Original[Put[S0], S => A, Unit] =
+    Dsl.Original[Put[S0], S => A, Unit] {
       (keyword: Put[S0], handler: Unit => S => A) => oldValue =>
         handler(())(keyword)
     }
