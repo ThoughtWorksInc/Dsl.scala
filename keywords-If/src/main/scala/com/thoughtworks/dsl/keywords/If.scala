@@ -5,8 +5,8 @@ import Dsl.cpsApply
 
 final case class If[+ConditionKeyword, +ThenKeyword, +ElseKeyword](
     cond: ConditionKeyword,
-    thenp: ThenKeyword,
-    elsep: ElseKeyword
+    thenp: () => ThenKeyword,
+    elsep: () => ElseKeyword
 ) extends Dsl.Keyword.Trait
 
 object If {
@@ -32,9 +32,9 @@ object If {
     ) =>
       keyword.cond.cpsApply {
         case true =>
-          keyword.thenp.cpsApply(handler)
+          keyword.thenp().cpsApply(handler)
         case false =>
-          keyword.elsep.cpsApply(handler)
+          keyword.elsep().cpsApply(handler)
       }
   }
 }

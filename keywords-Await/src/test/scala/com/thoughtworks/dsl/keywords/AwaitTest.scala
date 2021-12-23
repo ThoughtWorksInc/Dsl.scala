@@ -17,6 +17,37 @@ import scala.util.Failure
 import scala.util.Success
 
 class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
+  "div by zero" ignore {
+    val future = *[Future] {
+      !Pure(())
+      !Suspend(() => Pure(0 / 0))
+    }
+    inside(future.value) {
+      case Some(Failure(e)) =>
+        e should be(an[ArithmeticException])
+    }
+  }
+  "Suspend(div by zero)" ignore {
+    val future = *[Future] {
+      !Suspend(() => Pure(()))
+      !Suspend(() => Pure(0 / 0))
+    }
+    inside(future.value) {
+      case Some(Failure(e)) =>
+        e should be(an[ArithmeticException])
+    }
+  }
+
+  "Shift(div by zero)" ignore {
+    val future = *[Future] {
+      !Shift[Future[Int], Unit](_(()))
+      !Suspend(() => Pure(0 / 0))
+    }
+    inside(future.value) {
+      case Some(Failure(e)) =>
+        e should be(an[ArithmeticException])
+    }
+  }
 
   "testReturnIf" in {
     val reified = reify {
@@ -328,15 +359,17 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[
-          keywords.TryCatchFinally[Suspend[
-            Await[Future[String]]
-          ], Match.WithIndex[0, FlatMap[
-            Await[Future[Int]],
-            FlatMap[Await[
-              Future[Int]
-            ], Pure[String]]
-          ]]
-            +: Nothing, Suspend[Pure[Unit]]],
+          keywords.TryCatchFinally[
+            Await[Future[String]],
+            Match.WithIndex[0, FlatMap[
+              Await[Future[Int]],
+              FlatMap[Await[
+                Future[Int]
+              ], Pure[String]]
+            ]]
+              +: Nothing,
+            Pure[Unit]
+          ],
           String
         ]
     ]
@@ -356,9 +389,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       reified.type <:<
-        Typed[keywords.TryFinally[Suspend[
-          Await[Future[Int]]
-        ], Suspend[Pure[Unit]]], Int]
+        Typed[keywords.TryFinally[Await[Future[Int]], Pure[Unit]], Int]
     ]
 
     reified.as[Future[Int]].transform { t =>
@@ -380,13 +411,11 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       reified.type <:<
-        Typed[keywords.TryCatch[Suspend[
-          FlatMap[
-            Await[Future[Int]],
-            FlatMap[Await[
-              Future[Int]
-            ], Pure[String]]
-          ]
+        Typed[keywords.TryCatch[FlatMap[
+          Await[Future[Int]],
+          FlatMap[Await[
+            Future[Int]
+          ], Pure[String]]
         ], Match.WithIndex[0, FlatMap[
           Await[Future[Int]],
           FlatMap[Await[
@@ -411,14 +440,10 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     summon[
       reified.type <:<
         Typed[FlatMap[While[
-          Suspend[
-            Await[Future[Boolean]]
-          ],
-          Suspend[
-            FlatMap[Await[
-              Future[Int]
-            ], Pure[Unit]]
-          ]
+          Await[Future[Boolean]],
+          FlatMap[Await[
+            Future[Int]
+          ], Pure[Unit]]
         ], Pure[Long]], Long]
     ]
     *[Future] {
