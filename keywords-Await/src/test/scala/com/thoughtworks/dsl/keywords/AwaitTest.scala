@@ -17,6 +17,37 @@ import scala.util.Failure
 import scala.util.Success
 
 class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
+  "div by zero" ignore {
+    val future = *[Future] {
+      !Pure(())
+      !Suspend(() => Pure(0 / 0))
+    }
+    inside(future.value) {
+      case Some(Failure(e)) =>
+        e should be(an[ArithmeticException])
+    }
+  }
+  "Suspend(div by zero)" ignore {
+    val future = *[Future] {
+      !Suspend(() => Pure(()))
+      !Suspend(() => Pure(0 / 0))
+    }
+    inside(future.value) {
+      case Some(Failure(e)) =>
+        e should be(an[ArithmeticException])
+    }
+  }
+
+  "Shift(div by zero)" ignore {
+    val future = *[Future] {
+      !Shift[Future[Int], Unit](_(()))
+      !Suspend(() => Pure(0 / 0))
+    }
+    inside(future.value) {
+      case Some(Failure(e)) =>
+        e should be(an[ArithmeticException])
+    }
+  }
 
   "testReturnIf" in {
     val reified = reify {
