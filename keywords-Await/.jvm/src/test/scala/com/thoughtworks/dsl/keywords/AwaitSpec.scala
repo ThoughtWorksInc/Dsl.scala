@@ -15,10 +15,12 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.Inside
+import scala.util.Failure
 
 /** @author 杨博 (Yang Bo)
   */
-final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with Directives {
+final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll with Directives with Inside {
   implicit val system = ActorSystem()
 
   implicit val materializer = ActorMaterializer()
@@ -115,4 +117,14 @@ final class AwaitSpec extends AsyncFreeSpec with Matchers with BeforeAndAfterAll
 
   }: @reset)
 
+  "div by zero" ignore {
+    val future: Future[Int] = Future {
+      0 / 0
+      !Await(Future(1))
+    } : @reset
+    inside(future.value) {
+      case Some(Failure(e)) =>
+        e should be(an[ArithmeticException])
+    }
+  }
 }
