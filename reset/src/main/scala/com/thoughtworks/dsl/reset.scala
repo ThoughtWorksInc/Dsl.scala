@@ -279,12 +279,11 @@ object reset {
             )
           case Try(expr, cases, Some(finalizer)) =>
             TryCatchFinally(
-              Suspend(KeywordTree(expr)),
-              cases.map {
-                case caseDef @ CaseDef(pattern, guard, body) =>
-                  caseDef -> KeywordTree(body)
+              KeywordTree(expr),
+              cases.map { case caseDef @ CaseDef(pattern, guard, body) =>
+                caseDef -> KeywordTree(body)
               },
-              Suspend(KeywordTree(finalizer)),
+              KeywordTree(finalizer),
               term.tpe
             )
           case typed @ qctx.reflect.Typed(expr, tpt) =>
@@ -469,34 +468,64 @@ object reset {
       }
     }
 
-    case class TryCatchFinally(expr: KeywordTree, cases: Seq[(CaseDef, KeywordTree)], finalizer: KeywordTree, valueType: TypeRepr) extends KeywordTree {
+    case class TryCatchFinally(
+        expr: KeywordTree,
+        cases: Seq[(CaseDef, KeywordTree)],
+        finalizer: KeywordTree,
+        valueType: TypeRepr
+    ) extends KeywordTree {
       lazy val keywordTerm = {
         usingCases[Term, Throwable](cases, valueType) {
-          [Set, Value] => 
-          (pf: quoted.Expr[PartialFunction[Throwable, Set]]) =>
-          (setType: quoted.Type[Set], valueType: quoted.Type[Value]) =>
-            given quoted.Type[Set] = setType
-            given quoted.Type[Value] = valueType
-            expr.usingKeyword[Term, Value] { [K, V <: Value] =>
-              (tryKeywordExpr: quoted.Expr[K]) =>
-              (tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
-              given quoted.Type[K] = tryKeywordTpe
-              given quoted.Type[V] = tryValueTpe
-              finalizer.usingKeyword {
-                [FinalizerKeyword, FinalizerValue] =>
-                (finalizerKeywordExpr: quoted.Expr[FinalizerKeyword]) =>
-                (finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
-                  given quoted.Type[FinalizerKeyword] = finalizerKeywordType
-                  given quoted.Type[FinalizerValue] = finalizerValueType
-                  '{
-                    com.thoughtworks.dsl.keywords.TryCatchFinally(
-                      $tryKeywordExpr,
-                      $pf,
-                      $finalizerKeywordExpr
-                    )
-                  }.asTerm
+          [Set, Value] =>
+            (pf: quoted.Expr[PartialFunction[Throwable, Set]]) =>
+              (setType: quoted.Type[Set], valueType: quoted.Type[Value]) =>
+                given quoted.Type[Set] = setType
+                given quoted.Type[Value] = valueType
+                expr.usingKeyword[Term, Value] {
+                  [TryKeyword, TryValue <: Value] =>
+                    (tryKeywordExpr: quoted.Expr[TryKeyword]) =>
+                      (
+                          tryKeywordTpe: quoted.Type[TryKeyword],
+                          tryValueTpe: quoted.Type[TryValue]
+                      ) =>
+                        given quoted.Type[TryKeyword] = tryKeywordTpe
+                        given quoted.Type[TryValue] = tryValueTpe
+                        finalizer.usingKeyword {
+                          [FinalizerKeyword, FinalizerValue] =>
+                            (finalizerKeywordExpr: quoted.Expr[
+                              FinalizerKeyword
+                            ]) =>
+                              (
+                                  finalizerKeywordType: quoted.Type[
+                                    FinalizerKeyword
+                                  ],
+                                  finalizerValueType: quoted.Type[
+                                    FinalizerValue
+                                  ]
+                              ) =>
+                                given quoted.Type[FinalizerKeyword] =
+                                  finalizerKeywordType
+                                given quoted.Type[FinalizerValue] =
+                                  finalizerValueType
+                                '{
+                                  com.thoughtworks.dsl.keywords.TryCatchFinally(
+                                    () =>
+                                      ${
+                                        tryKeywordExpr.asTerm
+                                          .changeOwner(Symbol.spliceOwner)
+                                          .asExprOf[TryKeyword]
+                                      },
+                                    $pf,
+                                    () =>
+                                      ${
+                                        finalizerKeywordExpr.asTerm
+                                          .changeOwner(Symbol.spliceOwner)
+                                          .asExprOf[FinalizerKeyword]
+                                      },
+                                  )
+                                }.asTerm
+                      }
               }
-            }
         }
       }
     }

@@ -5,9 +5,9 @@ import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 
 case class TryCatchFinally[+BlockKeyword, +CaseKeyword, +FinalizerKeyword](
-    block: BlockKeyword,
+    block: () => BlockKeyword,
     cases: Catcher[CaseKeyword],
-    finalizer: FinalizerKeyword
+    finalizer: () => FinalizerKeyword
 ) extends Dsl.Keyword.Trait
 object TryCatchFinally {
 
@@ -20,9 +20,10 @@ object TryCatchFinally {
   ): Dsl.Composed[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value] = Dsl.Composed {
     case (TryCatchFinally(blockKeyword, cases, finalizerKeyword), handler) =>
       dslTryCatchFinally.tryCatchFinally(
-        blockDsl(blockKeyword, _),
+        // TODO: Use Suspend to catch the exception
+        blockDsl(blockKeyword(), _),
         cases.andThen { caseKeyword => caseDsl(caseKeyword, _) },
-        finalizerDsl(finalizerKeyword, _),
+        finalizerDsl(finalizerKeyword(), _),
         handler
       )
   }
