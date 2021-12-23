@@ -7,8 +7,8 @@ import scala.concurrent._
 import scala.util.control.NonFatal
 
 case class TryFinally[+TryKeyword, +FinalizerKeyword](
-    block: TryKeyword,
-    finalizer: FinalizerKeyword
+    block: () => TryKeyword,
+    finalizer: () => FinalizerKeyword
 ) extends Dsl.Keyword.Trait
 
 object TryFinally {
@@ -20,8 +20,9 @@ object TryFinally {
   ): Dsl.Composed[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = Dsl.Composed {
     case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
       dslTryFinally.tryFinally(
-        blockDsl(blockKeyword, _),
-        finalizerDsl(finalizerKeyword, _),
+        // TODO: Use Suspend to catch the exception
+        blockDsl(blockKeyword(), _),
+        finalizerDsl(finalizerKeyword(), _),
         handler
       )
   }

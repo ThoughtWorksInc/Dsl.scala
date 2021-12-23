@@ -273,8 +273,8 @@ object reset {
             )
           case Try(expr, Nil, Some(finalizer)) =>
             TryFinally(
-              Suspend(KeywordTree(expr)),
-              Suspend(KeywordTree(finalizer)),
+              KeywordTree(expr),
+              KeywordTree(finalizer),
               term.tpe
             )
           case Try(expr, cases, Some(finalizer)) =>
@@ -501,30 +501,58 @@ object reset {
       }
     }
 
-    case class TryFinally(expr: KeywordTree, finalizer: KeywordTree, valueType: TypeRepr) extends KeywordTree {
+    case class TryFinally(
+        expr: KeywordTree,
+        finalizer: KeywordTree,
+        valueType: TypeRepr
+    ) extends KeywordTree {
       lazy val keywordTerm = {
-        valueType.usingType { [Value] => (tv: quoted.Type[Value]) =>
-          given  quoted.Type[Value] = tv
-          expr.usingKeyword[Term, Value] {
-            [K, V <: Value] =>
-            (tryKeywordExpr: quoted.Expr[K]) =>
-            (tryKeywordType: quoted.Type[K], tryValueType: quoted.Type[V]) =>
-              given quoted.Type[K] = tryKeywordType
-              given quoted.Type[V] = tryValueType
-              finalizer.usingKeyword {
-                [FinalizerKeyword, FinalizerValue] =>
-                (finalizerKeywordExpr: quoted.Expr[FinalizerKeyword]) =>
-                (finalizerKeywordType: quoted.Type[FinalizerKeyword], finalizerValueType: quoted.Type[FinalizerValue]) =>
-                  given quoted.Type[FinalizerKeyword] = finalizerKeywordType
-                  given quoted.Type[FinalizerValue] = finalizerValueType
-                  '{
-                    com.thoughtworks.dsl.keywords.TryFinally(
-                      $tryKeywordExpr,
-                      $finalizerKeywordExpr
-                    )
-                  }.asTerm
-              }
-          }
+        valueType.usingType {
+          [Value] =>
+            (tv: quoted.Type[Value]) =>
+              given quoted.Type[Value] = tv
+              expr.usingKeyword[Term, Value] {
+                [TryKeyword, TryValue <: Value] =>
+                  (tryKeywordExpr: quoted.Expr[TryKeyword]) =>
+                    (
+                        tryKeywordType: quoted.Type[TryKeyword],
+                        tryValueType: quoted.Type[TryValue]
+                    ) =>
+                      given quoted.Type[TryKeyword] = tryKeywordType
+                      given quoted.Type[TryValue] = tryValueType
+                      finalizer.usingKeyword {
+                        [FinalizerKeyword, FinalizerValue] =>
+                          (finalizerKeywordExpr: quoted.Expr[
+                            FinalizerKeyword
+                          ]) =>
+                            (
+                                finalizerKeywordType: quoted.Type[
+                                  FinalizerKeyword
+                                ],
+                                finalizerValueType: quoted.Type[FinalizerValue]
+                            ) =>
+                              given quoted.Type[FinalizerKeyword] =
+                                finalizerKeywordType
+                              given quoted.Type[FinalizerValue] =
+                                finalizerValueType
+                              '{
+                                com.thoughtworks.dsl.keywords.TryFinally(
+                                  () =>
+                                    ${
+                                      tryKeywordExpr.asTerm
+                                        .changeOwner(Symbol.spliceOwner)
+                                        .asExprOf[TryKeyword]
+                                    },
+                                  () =>
+                                    ${
+                                      finalizerKeywordExpr.asTerm
+                                        .changeOwner(Symbol.spliceOwner)
+                                        .asExprOf[FinalizerKeyword]
+                                    },
+                                )
+                              }.asTerm
+                    }
+            }
         }
       }
     }

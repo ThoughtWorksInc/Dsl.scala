@@ -387,9 +387,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       reified.type <:<
-        Typed[keywords.TryFinally[Suspend[
-          Await[Future[Int]]
-        ], Suspend[Pure[Unit]]], Int]
+        Typed[keywords.TryFinally[Await[Future[Int]], Pure[Unit]], Int]
     ]
 
     reified.as[Future[Int]].transform { t =>
