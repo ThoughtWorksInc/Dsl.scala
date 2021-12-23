@@ -300,7 +300,7 @@ object reset {
           case Inlined(_, bindings, term) =>
             KeywordTree(qctx.reflect.Block(bindings, term))
           case whileTerm @ qctx.reflect.While(cond, body) =>
-            While(Suspend(KeywordTree(cond)), Suspend(KeywordTree(body)))
+            While(KeywordTree(cond), KeywordTree(body))
           // case returnTree @ qctx.reflect.Return(expr, _from) =>
           //   KeywordTree(expr).flatMap { pureExpr =>
           //     Return(pureExpr, expr.tpe)
@@ -570,22 +570,41 @@ object reset {
     case class While(cond: KeywordTree, body: KeywordTree) extends KeywordTree {
       def valueType = TypeRepr.of[Unit]
       lazy val keywordTerm = {
-        cond.usingKeyword{
+        cond.usingKeyword {
           [CondKeyword, CondValue] =>
-          (condExpr: quoted.Expr[CondKeyword]) =>
-          (condKeywordTpe: quoted.Type[CondKeyword], condValueTpe: quoted.Type[CondValue]) =>
-            given quoted.Type[CondKeyword] = condKeywordTpe
-            given quoted.Type[CondValue] = condValueTpe
-            body.usingKeyword {
-              [BodyKeyword, BodyValue] =>
-              (bodyExpr: quoted.Expr[BodyKeyword]) =>
-              (bodyKeywordTpe: quoted.Type[BodyKeyword], bodyValueTpe: quoted.Type[BodyValue]) =>
-                given quoted.Type[BodyKeyword] = bodyKeywordTpe
-                given quoted.Type[BodyValue] = bodyValueTpe
-                '{
-                  com.thoughtworks.dsl.keywords.While($condExpr, $bodyExpr)
-                }.asTerm          
-            }
+            (condExpr: quoted.Expr[CondKeyword]) =>
+              (
+                  condKeywordTpe: quoted.Type[CondKeyword],
+                  condValueTpe: quoted.Type[CondValue]
+              ) =>
+                given quoted.Type[CondKeyword] = condKeywordTpe
+                given quoted.Type[CondValue] = condValueTpe
+                body.usingKeyword {
+                  [BodyKeyword, BodyValue] =>
+                    (bodyExpr: quoted.Expr[BodyKeyword]) =>
+                      (
+                          bodyKeywordTpe: quoted.Type[BodyKeyword],
+                          bodyValueTpe: quoted.Type[BodyValue]
+                      ) =>
+                        given quoted.Type[BodyKeyword] = bodyKeywordTpe
+                        given quoted.Type[BodyValue] = bodyValueTpe
+                        '{
+                          com.thoughtworks.dsl.keywords.While(
+                            () =>
+                              ${
+                                condExpr.asTerm
+                                  .changeOwner(Symbol.spliceOwner)
+                                  .asExprOf[CondKeyword]
+                              },
+                            () =>
+                              ${
+                                bodyExpr.asTerm
+                                  .changeOwner(Symbol.spliceOwner)
+                                  .asExprOf[BodyKeyword]
+                              }
+                          )
+                        }.asTerm
+              }
         }
       }
     }
