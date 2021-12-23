@@ -249,8 +249,8 @@ object reset {
           case qctx.reflect.If(cond, thenp, elsep) =>
             If(
               KeywordTree(cond),
-              Suspend(KeywordTree(thenp)),
-              Suspend(KeywordTree(elsep)),
+              KeywordTree(thenp),
+              KeywordTree(elsep),
               term.tpe
             )
           case qctx.reflect.Match(upstream, cases) =>
@@ -385,37 +385,63 @@ object reset {
       }
     }
 
-    case class If(cond: KeywordTree, thenp: KeywordTree, elsep: KeywordTree, valueType: TypeRepr) extends KeywordTree {
+    case class If(
+        cond: KeywordTree,
+        thenp: KeywordTree,
+        elsep: KeywordTree,
+        valueType: TypeRepr
+    ) extends KeywordTree {
       lazy val keywordTerm = cond.usingKeyword[Term, Boolean] {
         [CondKeyword, CondValue <: Boolean] =>
-        (condExpr: quoted.Expr[CondKeyword]) =>
-        ( condKeywordType: quoted.Type[CondKeyword], condValueType: quoted.Type[CondValue]) =>
-          given quoted.Type[CondKeyword] = condKeywordType
-          given quoted.Type[CondValue] = condValueType
-          thenp.usingKeyword[Term, Boolean] {
-            [ThenpKeyword, ThenpValue <: Boolean] =>
-            (thenpExpr: quoted.Expr[ThenpKeyword]) =>
-            (thenpKeywordType: quoted.Type[ThenpKeyword], thenpValueType: quoted.Type[ThenpValue]) =>
-              given quoted.Type[ThenpKeyword] = thenpKeywordType
-              given quoted.Type[ThenpValue] = thenpValueType
-              elsep.usingKeyword[Term, Boolean] {
-                [ElsepKeyword, ElsepValue <: Boolean] =>
-                (elsepExpr: quoted.Expr[ElsepKeyword]) =>
-                (elsepKeywordType: quoted.Type[ElsepKeyword], elsepValueType: quoted.Type[ElsepValue]) =>
-                  given quoted.Type[ElsepKeyword] = elsepKeywordType
-                  given quoted.Type[ElsepValue] = elsepValueType
-                  valueType.usingType { [Result] => (resultType: quoted.Type[Result]) =>
-                    given quoted.Type[Result] = resultType
-                    '{
-                      com.thoughtworks.dsl.keywords.If(
-                        $condExpr,
-                        $thenpExpr,
-                        $elsepExpr,
-                      )
-                    }.asTerm
-                  }
-              }
-          }
+          (condExpr: quoted.Expr[CondKeyword]) =>
+            (
+                condKeywordType: quoted.Type[CondKeyword],
+                condValueType: quoted.Type[CondValue]
+            ) =>
+              given quoted.Type[CondKeyword] = condKeywordType
+              given quoted.Type[CondValue] = condValueType
+              thenp.usingKeyword[Term, Boolean] {
+                [ThenpKeyword, ThenpValue <: Boolean] =>
+                  (thenpExpr: quoted.Expr[ThenpKeyword]) =>
+                    (
+                        thenpKeywordType: quoted.Type[ThenpKeyword],
+                        thenpValueType: quoted.Type[ThenpValue]
+                    ) =>
+                      given quoted.Type[ThenpKeyword] = thenpKeywordType
+                      given quoted.Type[ThenpValue] = thenpValueType
+                      elsep.usingKeyword[Term, Boolean] {
+                        [ElsepKeyword, ElsepValue <: Boolean] =>
+                          (elsepExpr: quoted.Expr[ElsepKeyword]) =>
+                            (
+                                elsepKeywordType: quoted.Type[ElsepKeyword],
+                                elsepValueType: quoted.Type[ElsepValue]
+                            ) =>
+                              given quoted.Type[ElsepKeyword] = elsepKeywordType
+                              given quoted.Type[ElsepValue] = elsepValueType
+                              valueType.usingType {
+                                [Result] =>
+                                  (resultType: quoted.Type[Result]) =>
+                                    given quoted.Type[Result] = resultType
+                                    '{
+                                      com.thoughtworks.dsl.keywords.If(
+                                        $condExpr,
+                                        () =>
+                                          ${
+                                            thenpExpr.asTerm
+                                              .changeOwner(Symbol.spliceOwner)
+                                              .asExprOf[ThenpKeyword]
+                                          },
+                                        () =>
+                                          ${
+                                            elsepExpr.asTerm
+                                              .changeOwner(Symbol.spliceOwner)
+                                              .asExprOf[ElsepKeyword]
+                                          }
+                                      )
+                                    }.asTerm
+                            }
+                    }
+            }
       }
     }
 
