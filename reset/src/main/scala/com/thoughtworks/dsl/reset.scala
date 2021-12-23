@@ -264,10 +264,9 @@ object reset {
             )
           case Try(expr, cases, None) =>
             TryCatch(
-              Suspend(KeywordTree(expr)),
-              cases.map {
-                case caseDef @ CaseDef(pattern, guard, body) =>
-                  caseDef -> KeywordTree(body)
+              KeywordTree(expr),
+              cases.map { case caseDef @ CaseDef(pattern, guard, body) =>
+                caseDef -> KeywordTree(body)
               },
               term.tpe
             )
@@ -586,26 +585,40 @@ object reset {
       }
     }
 
-    case class TryCatch(expr: KeywordTree, cases: Seq[(CaseDef, KeywordTree)], valueType: TypeRepr) extends KeywordTree {
+    case class TryCatch(
+        expr: KeywordTree,
+        cases: Seq[(CaseDef, KeywordTree)],
+        valueType: TypeRepr
+    ) extends KeywordTree {
       lazy val keywordTerm = {
         usingCases[Term, Throwable](cases, valueType) {
-          [Set, Value] => 
-          (pf: quoted.Expr[PartialFunction[Throwable, Set]]) =>
-          (setType: quoted.Type[Set], vt: quoted.Type[Value]) =>
-            given quoted.Type[Set] = setType
-            given quoted.Type[Value] = vt
-            expr.usingKeyword[Term, Value] { [K, V <: Value] =>
-              (tryKeywordExpr: quoted.Expr[K]) =>
-              (tryKeywordTpe: quoted.Type[K], tryValueTpe: quoted.Type[V]) =>
-                given quoted.Type[K] = tryKeywordTpe
-                given quoted.Type[V] = tryValueTpe
-                '{
-                  com.thoughtworks.dsl.keywords.TryCatch[K, Set](
-                    $tryKeywordExpr,
-                    $pf
-                  )
-                }.asTerm
-            }
+          [Set, Value] =>
+            (pf: quoted.Expr[PartialFunction[Throwable, Set]]) =>
+              (setType: quoted.Type[Set], vt: quoted.Type[Value]) =>
+                given quoted.Type[Set] = setType
+                given quoted.Type[Value] = vt
+                expr.usingKeyword[Term, Value] {
+                  [TryKeyword, TryValue <: Value] =>
+                    (tryKeywordExpr: quoted.Expr[TryKeyword]) =>
+                      (
+                          tryKeywordTpe: quoted.Type[TryKeyword],
+                          tryValueTpe: quoted.Type[TryValue]
+                      ) =>
+                        given quoted.Type[TryKeyword] = tryKeywordTpe
+                        given quoted.Type[TryValue] = tryValueTpe
+                        '{
+                          com.thoughtworks.dsl.keywords
+                            .TryCatch[TryKeyword, Set](
+                              () =>
+                                ${
+                                  tryKeywordExpr.asTerm
+                                    .changeOwner(Symbol.spliceOwner)
+                                    .asExprOf[TryKeyword]
+                                },
+                              $pf
+                            )
+                        }.asTerm
+              }
         }
       }
     }

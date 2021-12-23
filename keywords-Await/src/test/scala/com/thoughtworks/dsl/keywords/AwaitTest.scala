@@ -411,13 +411,11 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
 
     summon[
       reified.type <:<
-        Typed[keywords.TryCatch[Suspend[
-          FlatMap[
-            Await[Future[Int]],
-            FlatMap[Await[
-              Future[Int]
-            ], Pure[String]]
-          ]
+        Typed[keywords.TryCatch[FlatMap[
+          Await[Future[Int]],
+          FlatMap[Await[
+            Future[Int]
+          ], Pure[String]]
         ], Match.WithIndex[0, FlatMap[
           Await[Future[Int]],
           FlatMap[Await[
