@@ -31,10 +31,14 @@ final class AwaitSpec
 
   def downloadTwoPages(): Future[(ByteString, ByteString)] = *[Future] {
     val response1 =
-      !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pingUri))))
+      !Await(
+        Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pingUri)))
+      )
     val content1 = !Await(response1.entity.toStrict(timeout = 5.seconds))
     val response2 =
-      !Await(Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pongUri))))
+      !Await(
+        Http().singleRequest(HttpRequest(HttpMethods.GET, !Await(pongUri)))
+      )
     val content2 = !Await(response2.entity.toStrict(timeout = 5.seconds))
     (content1.data, content2.data)
   }
@@ -84,7 +88,8 @@ final class AwaitSpec
   }
 
   "http get" in (*[Future] {
-    val response = !Await(Http().singleRequest(HttpRequest(uri = !Await(pingUri))))
+    val response =
+      !Await(Http().singleRequest(HttpRequest(uri = !Await(pingUri))))
     response.status should be(StatusCodes.OK)
   })
 

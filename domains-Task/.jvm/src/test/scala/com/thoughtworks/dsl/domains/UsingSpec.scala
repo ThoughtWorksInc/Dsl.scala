@@ -8,11 +8,13 @@ import org.scalatest.Assertion
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 class UsingSpec extends AnyFreeSpec with Matchers {
 
-  def successContinuation[Domain](domain: Domain): (Domain !! Throwable) = Continuation.empty(domain)
+  def successContinuation[Domain](domain: Domain): (Domain !! Throwable) =
+    Continuation.empty(domain)
 
   "AutoCloseable" - {
 
@@ -21,24 +23,25 @@ class UsingSpec extends AnyFreeSpec with Matchers {
       "arm" in {
         var isOpen = false
 
-        def raii: Stream[Int] !! Throwable !! Assertion = *[[X] =>> Stream[Int] !! Throwable !! X] {
-          !Yield(1)
-          isOpen should be(false)
-          val a = !Using {
-            !Yield(2)
-            new AutoCloseable {
-              isOpen should be(false)
-              isOpen = true
+        def raii: Stream[Int] !! Throwable !! Assertion =
+          *[[X] =>> Stream[Int] !! Throwable !! X] {
+            !Yield(1)
+            isOpen should be(false)
+            val a = !Using {
+              !Yield(2)
+              new AutoCloseable {
+                isOpen should be(false)
+                isOpen = true
 
-              def close(): Unit = {
-                isOpen should be(true)
-                isOpen = false
+                def close(): Unit = {
+                  isOpen should be(true)
+                  isOpen = false
+                }
               }
             }
+            !Yield(3)
+            isOpen should be(true)
           }
-          !Yield(3)
-          isOpen should be(true)
-        }
 
         isOpen should be(false)
 

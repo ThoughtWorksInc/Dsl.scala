@@ -13,11 +13,26 @@ case class TryFinally[+TryKeyword, +FinalizerKeyword](
 
 object TryFinally {
 
-  given [Value, OuterDomain, BlockKeyword, BlockDomain, FinalizerKeyword, FinalizerDomain](using
-      dslTryFinally: Dsl.TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
+  given [
+      Value,
+      OuterDomain,
+      BlockKeyword,
+      BlockDomain,
+      FinalizerKeyword,
+      FinalizerDomain
+  ](using
+      dslTryFinally: Dsl.TryFinally[
+        Value,
+        OuterDomain,
+        BlockDomain,
+        FinalizerDomain
+      ],
       blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
       finalizerDsl: Dsl.Searching[FinalizerKeyword, FinalizerDomain, Unit]
-  ): Dsl.Composed[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = Dsl.Composed {
+  ): Dsl.Composed[TryFinally[
+    BlockKeyword,
+    FinalizerKeyword
+  ], OuterDomain, Value] = Dsl.Composed {
     case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
       dslTryFinally.tryFinally(
         // TODO: Use Suspend to catch the exception

@@ -151,7 +151,8 @@ object Yield extends LowPriorityYield0 {
       A,
       CC,
       C
-    ], CC[_], C]: Dsl.Original[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] =
+    ], CC[_], C]
+        : Dsl.Original[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] =
       Dsl.Original[From[FromIndexedSeqOps], IndexedSeqView[A], Unit] {
         (
             keyword: From[FromIndexedSeqOps],

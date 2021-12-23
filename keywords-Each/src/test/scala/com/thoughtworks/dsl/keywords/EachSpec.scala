@@ -142,7 +142,7 @@ class EachSpec extends AnyFreeSpec with Matchers {
           val s0 = !Each(Seq("a"))
 
           // How to support the following use case?
-          // val (s1, s2) = !Each(Seq(("b", "c"))) 
+          // val (s1, s2) = !Each(Seq(("b", "c")))
 
           val Seq(s1, s2) = !Each(Seq(Seq("b", "c")))
           Seq(s1)

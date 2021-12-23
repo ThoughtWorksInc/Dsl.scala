@@ -9,14 +9,17 @@ import scala.util.control.NonFatal
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 final class RaiiSpec extends AnyFreeSpec with Matchers {
 
   @inline
   private def jvmCatch[Domain](eh: => Domain !! Throwable)(
       failureHandler: Throwable => Domain
-  )(implicit shiftDsl: Dsl.Searching[Shift[Domain, Throwable], Domain, Throwable]): Domain = {
+  )(implicit
+      shiftDsl: Dsl.Searching[Shift[Domain, Throwable], Domain, Throwable]
+  ): Domain = {
     val protectedContinuation: Domain !! Throwable =
       try {
         eh
@@ -29,9 +32,13 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
 
   /** Exit the current scope then hang up
     */
-  def successContinuation[LeftDomain](domain: LeftDomain): (LeftDomain !! Throwable) = Continuation.empty(domain)
+  def successContinuation[LeftDomain](
+      domain: LeftDomain
+  ): (LeftDomain !! Throwable) = Continuation.empty(domain)
 
-  def failureContinuation[LeftDomain](throwable: Throwable): (LeftDomain !! Throwable) =
+  def failureContinuation[LeftDomain](
+      throwable: Throwable
+  ): (LeftDomain !! Throwable) =
     Continuation.now(throwable)
 
   "Given a continuation that throws an exception" - {
@@ -64,17 +71,18 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
   }
   "try/catch" - {
     "yield and catch" in {
-      def continuation: Stream[Int] !! Throwable !! String = *[[X] =>> Stream[Int] !! Throwable !! X] {
-        val tryResult =
-          try {
-            0 / 0
-          } catch {
-            case e: ArithmeticException =>
-              !Yield(3)
-              "catch"
-          }
-        "returns " + tryResult
-      }
+      def continuation: Stream[Int] !! Throwable !! String =
+        *[[X] =>> Stream[Int] !! Throwable !! X] {
+          val tryResult =
+            try {
+              0 / 0
+            } catch {
+              case e: ArithmeticException =>
+                !Yield(3)
+                "catch"
+            }
+          "returns " + tryResult
+        }
       continuation { (result: String) =>
         result should be("returns catch")
         successContinuation(Stream.empty)
@@ -140,14 +148,15 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
     }
 
     "empty finally" in {
-      def continuation: Stream[Int] !! Throwable !! String = *[[X] =>> Stream[Int] !! Throwable !! X] {
-        val tryResult =
-          try {
-            0 / 0
-            !Yield(-1)
-          } finally {}
-        "returns " + tryResult
-      }
+      def continuation: Stream[Int] !! Throwable !! String =
+        *[[X] =>> Stream[Int] !! Throwable !! X] {
+          val tryResult =
+            try {
+              0 / 0
+              !Yield(-1)
+            } finally {}
+          "returns " + tryResult
+        }
 
       jvmCatch(continuation { (result: String) =>
         failureContinuation(new AssertionError())
@@ -157,17 +166,18 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
       } should be(Seq())
     }
     "rethrow" in {
-      def continuation: Stream[Int] !! Throwable !! String = *[[X] =>> Stream[Int] !! Throwable !! X] {
-        val tryResult =
-          try {
-            0 / 0
-          } catch {
-            case e: ArithmeticException =>
-              !Yield(42)
-              throw e
-          }
-        "returns " + tryResult
-      }
+      def continuation: Stream[Int] !! Throwable !! String =
+        *[[X] =>> Stream[Int] !! Throwable !! X] {
+          val tryResult =
+            try {
+              0 / 0
+            } catch {
+              case e: ArithmeticException =>
+                !Yield(42)
+                throw e
+            }
+          "returns " + tryResult
+        }
       continuation { (result: String) =>
         failureContinuation(new AssertionError())
       } { e =>
@@ -177,33 +187,34 @@ final class RaiiSpec extends AnyFreeSpec with Matchers {
     }
 
     "complex" in {
-      def continuation: Stream[Int] !! Throwable !! String = *[[X] =>> Stream[Int] !! Throwable !! X] {
-        !Yield(0)
-        val tryResult =
-          try {
-            !Yield(1)
-            try {} catch {
+      def continuation: Stream[Int] !! Throwable !! String =
+        *[[X] =>> Stream[Int] !! Throwable !! X] {
+          !Yield(0)
+          val tryResult =
+            try {
+              !Yield(1)
+              try {} catch {
+                case e: ArithmeticException =>
+                  !Yield(2)
+              }
+              !Yield(3)
+
+              0 / 0
+              !Yield(4)
+              "try"
+            } catch {
               case e: ArithmeticException =>
-                !Yield(2)
+                !Yield(5)
+                "catch"
+            } finally {
+              !Yield(6)
+
+              def ignoredFinalResult = "finally"
+              ignoredFinalResult
             }
-            !Yield(3)
-
-            0 / 0
-            !Yield(4)
-            "try"
-          } catch {
-            case e: ArithmeticException =>
-              !Yield(5)
-              "catch"
-          } finally {
-            !Yield(6)
-
-            def ignoredFinalResult = "finally"
-            ignoredFinalResult
-          }
-        !Yield(7)
-        "returns " + tryResult
-      }
+          !Yield(7)
+          "returns " + tryResult
+        }
 
       continuation { (result: String) =>
         result should be("returns catch")

@@ -11,7 +11,6 @@ object Continuation {
   val !! = this
   type !![R, +A] = Continuation[R, A]
 
-
   @inline
   def now[R, A](a: A): R !! A = _(a)
 
@@ -40,7 +39,9 @@ object Continuation {
 
   def fromTryContinuation[LeftDomain, Value](
       continuation: LeftDomain !! Try[Value]
-  )(successHandler: Value => LeftDomain !! Throwable)(failureHandler: Throwable => LeftDomain): LeftDomain = {
+  )(
+      successHandler: Value => LeftDomain !! Throwable
+  )(failureHandler: Throwable => LeftDomain): LeftDomain = {
     continuation(
       new (Try[Value] => LeftDomain) {
         def apply(result: Try[Value]): LeftDomain = {

@@ -5,7 +5,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import com.thoughtworks.dsl.reset, reset._
 import org.scalatest.matchers.should.Matchers
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 class ForEachSpec extends AnyFreeSpec with Matchers {
 

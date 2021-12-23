@@ -9,7 +9,8 @@ import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
 import scala.runtime.NonLocalReturnControl
 
-/** @author 杨博 (Yang Bo)
+/** @author
+  *   杨博 (Yang Bo)
   */
 class YieldSpec213 extends AnyFreeSpec with Matchers {
 
@@ -138,7 +139,9 @@ class YieldSpec213 extends AnyFreeSpec with Matchers {
         if (true) {
           !Yield(1)
         }
-        if ({ !Yield(2); false }) {
+        if
+          ({ !Yield(2); false
+        }) {
           !Yield(3)
         } else {
           !Yield(4)
