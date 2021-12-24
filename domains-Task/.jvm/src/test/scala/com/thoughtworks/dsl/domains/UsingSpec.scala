@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package domains
 
 import Continuation.!!
-import com.thoughtworks.dsl.reset, reset._
+import com.thoughtworks.dsl.macros.Reset.Default.*
 import com.thoughtworks.dsl.keywords.{Using, Yield}
 import org.scalatest.Assertion
 import org.scalatest.freespec.AnyFreeSpec

@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 
-import reset.`*`
+import com.thoughtworks.dsl.macros.Reset.Default.`*`
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.Uri.Path

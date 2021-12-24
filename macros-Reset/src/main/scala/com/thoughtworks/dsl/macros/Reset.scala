@@ -1,11 +1,14 @@
 package com.thoughtworks
 package dsl
-import keywords._
+package macros
 import com.thoughtworks.dsl.keywords._, Match._
 import scala.quoted.Quotes
 import collection.immutable.Queue
 import scala.util.control.Exception.Catcher
-/**
+/** Macros to translate the [[reset]] operator of a delimited continuation,
+  * where all the control flows are an AST of [[keywords]], interpreted by the
+  * [[Dsl]] type class.
+  *
   * @example
   *   Suppose you are generating a random integer less than 100, whose first digit and second digit is different. A
   *   solution is generating integers in an infinite loop, and [[Return]] from the loop when the generated integer
@@ -15,7 +18,7 @@ import scala.util.control.Exception.Catcher
   * import scala.util.Random
   * import scala.util.control.TailCalls
   * import scala.util.control.TailCalls.TailRec
-  * import com.thoughtworks.dsl.reset
+  * import com.thoughtworks.dsl.macros.Reset.Default.reset
   * def randomInt(): TailRec[Int] = reset {
   *   while (true) {
   *     val r = Random.nextInt(100)
@@ -38,6 +41,7 @@ import scala.util.control.Exception.Catcher
   * import scala.util.Random
   * import scala.util.control.TailCalls
   * import scala.util.control.TailCalls.TailRec
+  * import com.thoughtworks.dsl.macros.Reset.Default.reset
   * def randomInt(): TailRec[Int] = reset {
   *   while (true) {
   *     val r = Random.nextInt(100)
@@ -53,26 +57,27 @@ import scala.util.control.Exception.Catcher
   * r % 10 should not be r / 10
   * }}}
   */
-trait reset:
+trait Reset:
   type ShouldResetNestedFunctions <: Boolean & Singleton
 
   transparent inline def reify[Value](inline value: Value): Any = ${
-    reset.Macros.reify[ShouldResetNestedFunctions, Value]('value)
+    Reset.Macros.reify[ShouldResetNestedFunctions, Value]('value)
   }
 
   class *[Functor[_]]() {
     inline def apply[Value](inline value: Value): Functor[Value] = ${
-      reset.Macros.reset[ShouldResetNestedFunctions, Value, Functor[Value]]('value)
+      Reset.Macros.reset[ShouldResetNestedFunctions, Value, Functor[Value]]('value)
     }
   }
   inline def *[Domain[_]]: *[Domain] = new *[Domain]
 
-  inline def apply[Value](inline value: Value): Value = ${
-    reset.Macros.reset[ShouldResetNestedFunctions, Value, Value]('value)
+  inline def reset[Value](inline value: Value): Value = ${
+    Reset.Macros.reset[ShouldResetNestedFunctions, Value, Value]('value)
   }
 
-object reset extends reset.DefaultOptions {
-  trait DefaultOptions extends reset:
+object Reset {
+  /** A [[Reset]] translator with default options */
+  val Default = new Reset:
     type ShouldResetNestedFunctions = false
 
   private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
