@@ -6,9 +6,8 @@ import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
 import scala.language.implicitConversions
 
-import com.thoughtworks.dsl.keywords.{Using, Each}
+import com.thoughtworks.dsl.keywords.*, Match.+:
 import com.thoughtworks.dsl.domains._
-import com.thoughtworks.dsl.keywords.Shift
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.TailCalls
@@ -21,12 +20,71 @@ import org.scalatest.matchers.should.Matchers
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
+  "O(2^n) algorithm should not stack overflow" in {
+    def fibonacci(n: Int): Task[Int] = {
+      val reified = reify {
+        n match {
+          case 0 =>
+            0
+          case 1 =>
+            1
+          case _ =>
+            !Shift(fibonacci(n - 1)) + !Shift(fibonacci(n - 2))
+        }
+      }
+      summon[
+        reified.type <:<
+          Typed[FlatMap[
+            Pure[n.type],
+            Match.WithIndex[(0), Pure[(0)]]
+              +:
+                Match.WithIndex[(1), Pure[(1)]]
+                +:
+                Match.WithIndex[(2), FlatMap[
+                  Shift[Task.TaskDomain, Int],
+                  FlatMap[Shift[Task.TaskDomain, Int], Pure[Int]]
+                ]]
+                +: Nothing
+          ], Int]
+      ]
+      Task {
+
+        n match {
+          case 0 =>
+            0
+          case 1 =>
+            1
+          case _ =>
+            !Shift(fibonacci(n - 1)) + !Shift(fibonacci(n - 2))
+        }
+      }
+    }
+    Task.toFuture(fibonacci(25)).map {
+      _ should be(75025)
+    }
+  }
   "tailRecursion" in Task.toFuture(Task {
-    def loop(i: Int = 0, accumulator: Int = 0): Task[Int] = Task {
-      if (i < 10000) {
+    def loop(i: Int = 0, accumulator: Int = 0): Task[Int] = {
+      val reified = reify(if (i < 10000) {
         !Shift(loop(i + 1, accumulator + i))
       } else {
         accumulator
+      })
+      summon[reified.type <:< Typed[
+        If[Pure[
+          Boolean
+        ], Shift[
+          Task.TaskDomain,
+          Int
+        ], Pure[Int]],
+        Int
+      ]]
+      Task {
+        if (i < 10000) {
+          !Shift(loop(i + 1, accumulator + i))
+        } else {
+          accumulator
+        }
       }
     }
 
@@ -42,7 +100,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
     val task1: Task[Int] = Task.now(1)
 
-    val ts = *[Task]/* .join */ apply Seq {
+    val ts = *[Task] /* .join */ apply Seq {
       !Each(0 until 10) + !Shift(task1)
     }
 
