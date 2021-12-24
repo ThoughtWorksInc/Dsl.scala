@@ -51,7 +51,7 @@ object ReturnSpec extends TestSuite {
       new Reset {
         type ShouldResetNestedFunctions = true
       }.reset {
-        def continuation = { (!Return(42)): Int!!String }
+        def continuation: Int !! String = { !Return(42) }
         val result = continuation { s =>
           throw new java.lang.AssertionError(s)
         }

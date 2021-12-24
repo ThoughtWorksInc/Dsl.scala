@@ -93,35 +93,47 @@ object Reset {
 
     def resetDefDef(defDef: DefDef): DefDef = {
       val DefDef(name, typeParamsAndParams, tpt, rhsOption) = defDef
-      rhsOption match {
-        case Some(rhs) if shouldResetNestedFunctions =>
-          rhs match {
-            case matchTree @ qctx.reflect.Match(scrutinee, cases) =>
-              DefDef.copy(defDef)(
-                name, typeParamsAndParams, tpt, Some(
-                  qctx.reflect.Match.copy(matchTree)(
-                    scrutinee,
-                    cases.map {
-                      case caseDef @ CaseDef(pattern, guard, caseRhs) =>
-                        CaseDef.copy(caseDef)(pattern, guard, resetTerm(caseRhs))
-                    }
+      tpt.tpe.asType match {
+        case '[valueType] =>
+          rhsOption match {
+            case Some(rhs) if shouldResetNestedFunctions =>
+              rhs match {
+                case matchTree @ qctx.reflect.Match(scrutinee, cases) =>
+                  DefDef.copy(defDef)(
+                    name,
+                    typeParamsAndParams,
+                    tpt,
+                    Some(
+                      qctx.reflect.Match.copy(matchTree)(
+                        scrutinee,
+                        cases.map {
+                          case caseDef @ CaseDef(pattern, guard, caseRhs) =>
+                            CaseDef.copy(caseDef)(
+                              pattern,
+                              guard,
+                              reset[valueType, valueType](
+                                caseRhs.asExprOf[valueType]
+                              ).asTerm
+                            )
+                        }
+                      )
+                    )
                   )
-                )
-              )
+                case _ =>
+                  DefDef.copy(defDef)(
+                    name,
+                    typeParamsAndParams,
+                    tpt,
+                    Some(
+                      reset[valueType, valueType](
+                        rhs.asExprOf[valueType]
+                      ).asTerm
+                    )
+                  )
+              }
             case _ =>
-              DefDef.copy(defDef)(
-                name, typeParamsAndParams, tpt, Some(resetTerm(rhs))
-              )
+              defDef
           }
-        case _ =>
-          defDef
-      }
-    }
-
-    def resetTerm(term: Term): Term = {
-      term.usingExpr { [Value] => (body: quoted.Expr[Value]) => (tv: quoted.Type[Value]) ?=>
-        // given quoted.Type[Value] = tv
-        reset[Value, Value](body).asTerm
       }
     }
 
