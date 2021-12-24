@@ -84,7 +84,7 @@ object Using {
       FinalizerDomain
   ](using
       IsKeyword[Mapped, MappedValue],
-      Dsl.TryFinally[MappedValue, OuterDomain, BlockDomain, FinalizerDomain],
+      TryFinally.DslComposer[OuterDomain, MappedValue, BlockDomain],
       Dsl.Searching[Mapped, BlockDomain, MappedValue]
   ): Dsl.Composed[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] =
     Dsl.Composed {

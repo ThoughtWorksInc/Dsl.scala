@@ -1,4 +1,5 @@
-package com.thoughtworks.dsl.domains
+package com.thoughtworks.dsl
+package domains
 
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
@@ -7,7 +8,6 @@ import scala.language.higherKinds
 import scala.language.implicitConversions
 import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans}
 import com.thoughtworks.dsl.keywords.{Monadic, Return}
-import com.thoughtworks.dsl.Dsl.{TryCatch, TryFinally}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
@@ -146,62 +146,36 @@ object scalaz extends scalaz.LowPriority0 {
     }
   }
 
-  implicit def scalazTryFinally[F[_], A, B](implicit
+  given [F[_], A, B](using
       monadError: MonadThrowable[F]
-  ): TryFinally[A, F[B], F[A], F[Unit]] =
-    new TryFinally[A, F[B], F[A], F[Unit]] {
-      def tryFinally(
-          block: F[A] !! A,
-          finalizer: F[Unit] !! Unit,
-          outerSuccessHandler: A => F[B]
-      ): F[B] = {
-        @inline
-        def injectFinalizer[A](f: Unit => F[A]): F[A] = {
-          monadError.bind(catchNativeException(finalizer))(f)
+  ): keywords.TryCatch.DslComposer[F[B], A, F[A]] =
+    keywords.TryCatch.DslComposer {
+      [BlockKeyword, CaseKeyword] =>
+        (
+            blockDsl: Dsl.Searching[BlockKeyword, F[A], A],
+            caseDsl: Dsl.Searching[CaseKeyword, F[A], A]
+        ) ?=>
+          Dsl.Composed[keywords.TryCatch[BlockKeyword, CaseKeyword], F[B], A] {
+            case (keywords.TryCatch(block, catcher), outerSuccessHandler) =>
+              import monadError.monadErrorSyntax._
+              val blockDomain =
+                try {
+                  summon[Dsl.Run[BlockKeyword, F[A], A]](block())
+                } catch {
+                  case NonFatal(e) =>
+                    monadError.raiseError(e)
+                }
+              blockDomain
+                .handleError { 
+                  case catcher(recovered) =>
+                    summon[Dsl.Run[CaseKeyword, F[A], A]](recovered)
+                  case e: Throwable =>
+                    throw e
+                }
+                .flatMap(outerSuccessHandler)
         }
-        monadError.bind(monadError.handleError(catchNativeException(block)) {
-          (e: Throwable) =>
-            injectFinalizer { (_: Unit) =>
-              monadError.raiseError(e)
-            }
-        }) { a =>
-          injectFinalizer { (_: Unit) =>
-            outerSuccessHandler(a)
-          }
-        }
-      }
     }
 
-  implicit def scalazTryCatch[F[_], A, B](implicit
-      monadError: MonadThrowable[F]
-  ): TryCatch[A, F[B], F[A]] =
-    new TryCatch[A, F[B], F[A]] {
-      def tryCatch(
-          block: F[A] !! A,
-          catcher: Catcher[F[A] !! A],
-          outerSuccessHandler: A => F[B]
-      ): F[B] = {
-        import monadError.monadErrorSyntax._
-        catchNativeException(block)
-          .handleError { e =>
-            def recover(): F[A] = {
-              (try {
-                catcher.lift(e)
-              } catch {
-                case NonFatal(extractorException) =>
-                  return monadError.raiseError(extractorException)
-              }) match {
-                case None =>
-                  monadError.raiseError(e)
-                case Some(recovered) =>
-                  catchNativeException(recovered)
-              }
-            }
-            recover()
-          }
-          .flatMap(outerSuccessHandler)
-      }
-    }
   private[scalaz] trait LowPriority0:
     /** The [[Dsl]] instance that converts a keyword to the monad domain type
       * then flatMap. This instance helps when the keyword supports a domain `D`

@@ -10,7 +10,6 @@ case class TryCatchFinally[+BlockKeyword, +CaseKeyword, +FinalizerKeyword](
     finalizer: () => FinalizerKeyword
 ) extends Dsl.Keyword.Trait
 object TryCatchFinally {
-
   given [
       Value,
       OuterDomain,
@@ -20,28 +19,23 @@ object TryCatchFinally {
       FinalizerKeyword,
       FinalizerDomain
   ](using
-      dslTryCatchFinally: Dsl.TryCatchFinally[
-        Value,
-        OuterDomain,
-        BlockDomain,
-        FinalizerDomain
-      ],
-      blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
-      caseDsl: Dsl.Searching[CaseKeyword, BlockDomain, Value],
-      finalizerDsl: Dsl.Searching[FinalizerKeyword, FinalizerDomain, Unit]
+      Dsl.Searching[TryFinally[
+        TryCatch[BlockKeyword, CaseKeyword],
+        FinalizerKeyword
+      ], OuterDomain, Value]
   ): Dsl.Composed[TryCatchFinally[
     BlockKeyword,
     CaseKeyword,
     FinalizerKeyword
   ], OuterDomain, Value] = Dsl.Composed {
-    case (TryCatchFinally(blockKeyword, cases, finalizerKeyword), handler) =>
-      dslTryCatchFinally.tryCatchFinally(
-        // TODO: Use Suspend to catch the exception
-        blockDsl(blockKeyword(), _),
-        cases.andThen { caseKeyword => caseDsl(caseKeyword, _) },
-        finalizerDsl(finalizerKeyword(), _),
-        handler
-      )
+    case (
+          TryCatchFinally(
+            block,
+            catcher,
+            finalizer
+          ),
+          handler
+        ) =>
+      TryFinally(() => TryCatch(block, catcher), finalizer).cpsApply(handler)
   }
-
 }
