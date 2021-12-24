@@ -80,7 +80,7 @@ object Reset {
   val Default = new Reset:
     type ShouldResetNestedFunctions = false
 
-  private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
+  private class Macros[Q <: Quotes](shouldResetNestedFunctions: Boolean)(using val qctx: Q) {
     import qctx.reflect.{_, given}
 
     def reify[V](body: quoted.Expr[_])(using valueType: quoted.Type[V]): quoted.Expr[_] = {
@@ -94,7 +94,7 @@ object Reset {
     def resetDefDef(defDef: DefDef): DefDef = {
       val DefDef(name, typeParamsAndParams, tpt, rhsOption) = defDef
       rhsOption match {
-        case Some(rhs) if resetDescendant =>
+        case Some(rhs) if shouldResetNestedFunctions =>
           rhs match {
             case matchTree @ qctx.reflect.Match(scrutinee, cases) =>
               DefDef.copy(defDef)(
@@ -823,7 +823,7 @@ object Reset {
           report.error("ShouldResetNestedFunctions is not defined", body)
           '{ ??? }
         case Some(translateNestedFunction) =>
-          Macros[qctx.type](resetDescendant =
+          Macros[qctx.type](shouldResetNestedFunctions =
             quoted.Type.valueOfConstant[ShouldResetNestedFunctions].get
           ).reify[V](body /*.underlyingArgument*/ )
       }
@@ -843,7 +843,7 @@ object Reset {
           report.error("ShouldResetNestedFunctions is not defined", body)
           '{ ??? }
         case Some(translateNestedFunction) =>
-          val result = Macros[qctx.type](resetDescendant =
+          val result = Macros[qctx.type](shouldResetNestedFunctions =
             quoted.Type.valueOfConstant[ShouldResetNestedFunctions].get
           ).reset[From, To](body /*.underlyingArgument*/ )
           // report.warning(result.asTerm.show(using qctx.reflect.Printer.TreeStructure))
