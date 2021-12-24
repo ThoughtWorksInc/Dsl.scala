@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package keywords
 
 import com.thoughtworks.dsl.Dsl.!!
-import com.thoughtworks.dsl.reset, reset._
+import com.thoughtworks.dsl.macros.Reset.Default.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -100,9 +100,9 @@ class EachSpec extends AnyFreeSpec with Matchers {
         val seq = 1 to 10
 
         def run(): Seq[Int] = reset {
-          def plus100 = reset apply Seq {
+          def plus100 = reset(Seq {
             !Each(seq) + 100
-          }
+          })
           plus100.length should be(10)
           Seq(!Each(plus100))
         }

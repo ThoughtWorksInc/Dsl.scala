@@ -3,7 +3,7 @@ package domains
 
 import com.thoughtworks.dsl.keywords.{Shift, Yield}
 import com.thoughtworks.dsl.domains._, Continuation.!!
-import com.thoughtworks.dsl.reset, reset._
+import com.thoughtworks.dsl.macros.Reset.Default.*
 
 import scala.util.control.NonFatal
 import org.scalatest.freespec.AnyFreeSpec

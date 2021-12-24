@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.domains.Continuation, Continuation.!!
 import com.thoughtworks.dsl.keywords.Pure
 import com.thoughtworks.dsl.keywords.Suspend
 import com.thoughtworks.dsl.keywords.Shift
-import com.thoughtworks.dsl.reset, reset._
+import com.thoughtworks.dsl.macros.Reset.Default.*
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -92,20 +92,18 @@ object Task extends TaskPlatformSpecificFunctions {
   /** Returns a task that does nothing but let the succeeding tasks run on
     * `executionContext`
     *
-    * @example
-    *   All the code after a `!switchExecutionContext` should be executed on
-    *   `executionContext`
-    * {{{
-    *           import com.thoughtworks.dsl.reset, reset._
-    *           import com.thoughtworks.dsl.domains.Task
-    *           import org.scalatest.Assertion
-    *           import scala.concurrent.ExecutionContext
-    *           import com.thoughtworks.dsl.keywords.Shift
-    *           def myTask: Task[Assertion] = Task {
-    *             val originalThread = Thread.currentThread
-    *             !Shift(Task.switchExecutionContext(ExecutionContext.global))
-    *             Thread.currentThread should not be originalThread
-    *           }
+    * @example All the code after a `!switchExecutionContext` should be executed on `executionContext`
+    *          {{{
+    *          import com.thoughtworks.dsl.macros.Reset.Default.*
+    *          import com.thoughtworks.dsl.domains.Task
+    *          import org.scalatest.Assertion
+    *          import scala.concurrent.ExecutionContext
+    *          import com.thoughtworks.dsl.keywords.Shift
+    *          def myTask: Task[Assertion] = Task {
+    *            val originalThread = Thread.currentThread
+    *            !Shift(Task.switchExecutionContext(ExecutionContext.global))
+    *            Thread.currentThread should not be originalThread
+    *          }
     *
     *           Task.toFuture(myTask)
     *

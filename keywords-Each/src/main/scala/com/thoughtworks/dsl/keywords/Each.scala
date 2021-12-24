@@ -17,7 +17,7 @@ import scala.collection.mutable.Builder
   *   [[Each]] keywords can be used to calculate cartesian product.
   *
   * {{{
-  *           import com.thoughtworks.dsl.reset, reset._
+  *           import com.thoughtworks.dsl.macros.Reset.Default.*
   *           def cartesianProduct = reset (List(!Each(Array(1, 2, 3)) * !Each(Vector(1, 10, 100, 1000))))
   *           cartesianProduct should be(List(1, 10, 100, 1000, 2, 20, 200, 2000, 3, 30, 300, 3000))
   * }}}

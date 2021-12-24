@@ -20,14 +20,14 @@ import scala.language.higherKinds
   *   `Seq[Element]` or `Seq[Element] !! ...`, or it will not compile.
   *
   * {{{
-  *           import com.thoughtworks.dsl.reset, reset._
+  *           import com.thoughtworks.dsl.macros.Reset.Default.*
   *           "def f(): Int = !Yield(1)" shouldNot compile
   * }}}
   *
   * @example
   *   [[Yield]] keywords can be used together with other keywords.
   * {{{
-  *           import com.thoughtworks.dsl.reset, reset._
+  *           import com.thoughtworks.dsl.macros.Reset.Default.*
   *           def gccFlagBuilder(sourceFile: String, includes: String*) = reset[Stream[String]] {
   *             !Yield("gcc")
   *             !Yield("-c")

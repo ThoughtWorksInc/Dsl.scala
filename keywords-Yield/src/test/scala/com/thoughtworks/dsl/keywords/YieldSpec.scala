@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import reset._
+import com.thoughtworks.dsl.macros.Reset.Default.*
 import com.thoughtworks.dsl.Dsl.!!
 import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}

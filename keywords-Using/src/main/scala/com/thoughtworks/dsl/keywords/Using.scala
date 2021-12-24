@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 
-import com.thoughtworks.dsl.reset, reset._
+import com.thoughtworks.dsl.macros.Reset.Default.*
 import com.thoughtworks.dsl.Dsl
 import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.Dsl.IsKeyword
@@ -53,7 +53,7 @@ object Using {
     *           import scala.concurrent.Future
     *           import com.thoughtworks.dsl.keywords.Using.scopeExit
     *           import com.thoughtworks.dsl.keywords.Using.unary_!
-    *           import com.thoughtworks.dsl.reset, reset._
+    *           import com.thoughtworks.dsl.macros.Reset.Default.*
     *           var n = 1
     *           def multiplicationAfterAddition = *[Future] {
     *             !scopeExit { () =>

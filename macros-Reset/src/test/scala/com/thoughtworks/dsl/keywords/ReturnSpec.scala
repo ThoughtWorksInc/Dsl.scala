@@ -1,7 +1,8 @@
 package com.thoughtworks.dsl
 package keywords
 import com.thoughtworks.dsl.Dsl.!!
-import reset.{_, given}
+import com.thoughtworks.dsl.macros.Reset
+import com.thoughtworks.dsl.macros.Reset.Default.*
 import utest.{TestSuite, Tests, given}
 import Dsl.Run
 import scala.language.implicitConversions
@@ -44,6 +45,18 @@ object ReturnSpec extends TestSuite {
         throw new java.lang.AssertionError(s)
       }
       assert(result == 42)
+    }
+
+    "reset nested function" - {
+      new Reset {
+        type ShouldResetNestedFunctions = true
+      }.reset {
+        def continuation: Int !! String = { !Return(42) }
+        val result = continuation { s =>
+          throw new java.lang.AssertionError(s)
+        }
+        assert(result == 42)
+      }
     }
 
     "return the right domain" - {

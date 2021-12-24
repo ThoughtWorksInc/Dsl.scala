@@ -4,7 +4,7 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 lazy val Dsl =
   crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure).build()
 
-lazy val reset =
+lazy val `macros-Reset` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(
@@ -25,14 +25,14 @@ lazy val reset =
 lazy val `domains-Continuation` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(reset)
+    .dependsOn(`macros-Reset`)
 
 lazy val `domains-Task` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(
       `keywords-Shift`,
-      reset,
+      `macros-Reset`,
       `domains-Continuation`,
       `keywords-Using` % Test,
       `keywords-Yield` % Test,
@@ -42,7 +42,7 @@ lazy val `domains-Task` =
 lazy val `keywords-Each` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test, `keywords-Pure`, `keywords-FlatMap`)
+    .dependsOn(Dsl, `macros-Reset` % Test, `keywords-Pure`, `keywords-FlatMap`)
 
 lazy val `keywords-Pure` =
   crossProject(JSPlatform, JVMPlatform)
@@ -97,14 +97,14 @@ lazy val `keywords-Return` =
 lazy val `keywords-Get` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test)
+    .dependsOn(Dsl, `macros-Reset` % Test)
 
 lazy val `keywords-Put` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(
       Dsl,
-      reset % Test,
+      `macros-Reset` % Test,
       `keywords-Get` % Test,
       `keywords-Yield` % Test,
       `keywords-Return` % Test
@@ -128,7 +128,7 @@ lazy val `keywords-Shift` =
 lazy val `keywords-Using` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset, `keywords-Shift`)
+    .dependsOn(Dsl, `macros-Reset`, `keywords-Shift`)
 
 lazy val `keywords-FlatMap` =
   crossProject(JSPlatform, JVMPlatform)
@@ -138,7 +138,7 @@ lazy val `keywords-FlatMap` =
 lazy val `keywords-NoneSafe` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test, `keywords-Return`)
+    .dependsOn(Dsl, `macros-Reset` % Test, `keywords-Return`)
 
 lazy val `keywords-Await` =
   crossProject(JSPlatform, JVMPlatform)
@@ -146,7 +146,7 @@ lazy val `keywords-Await` =
     .dependsOn(
       Dsl,
       `domains-Continuation`,
-      reset % Test,
+      `macros-Reset` % Test,
       `domains-Task` % Test,
       `keywords-Get` % Test,
       `keywords-Return` % Test,
@@ -157,14 +157,14 @@ lazy val `keywords-Await` =
 lazy val `scala-async` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(`keywords-Await`, reset)
+    .dependsOn(`keywords-Await`, `macros-Reset`)
 
 lazy val `keywords-Yield` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(
       Dsl,
-      reset % Test,
+      `macros-Reset` % Test,
       `keywords-Each` % Test,
       `keywords-Shift` % Test
     )
@@ -172,7 +172,7 @@ lazy val `keywords-Yield` =
 lazy val `keywords-Monadic` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, reset % Test)
+    .dependsOn(Dsl, `macros-Reset` % Test)
 
 organization in ThisBuild := "com.thoughtworks.dsl"
 
@@ -183,7 +183,7 @@ lazy val `domains-scalaz` =
     .crossType(CrossType.Pure)
     .dependsOn(
       Dsl,
-      reset % Test,
+      `macros-Reset` % Test,
       `keywords-Monadic`,
       `keywords-Return`,
       `keywords-TryCatch`,
