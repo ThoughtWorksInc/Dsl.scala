@@ -21,6 +21,21 @@ import org.scalatest.matchers.should.Matchers
   */
 final class taskSpec extends AsyncFreeSpec with Matchers {
 
+  "O(2^n) algorithm should not stack overflow" in {
+    def fibonacci(n: Int): Task[Int] = Task {
+      n match {
+        case 0 =>
+          0
+        case 1 =>
+          1
+        case _ =>
+          !Shift(fibonacci(n - 1)) + !Shift(fibonacci(n - 2))
+      }
+    }
+    Task.toFuture(fibonacci(25)).map {
+      _ should be(75025)
+    }
+  }
   "tailRecursion" in Task.toFuture(Task {
     def loop(i: Int = 0, accumulator: Int = 0): Task[Int] = Task {
       if (i < 10000) {
