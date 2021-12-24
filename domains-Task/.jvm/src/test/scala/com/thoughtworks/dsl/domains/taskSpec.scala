@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 
-import com.thoughtworks.dsl.reset, reset._
+import com.thoughtworks.dsl.macros.Reset.Default.*
 import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
 import scala.language.implicitConversions

@@ -4,6 +4,7 @@ package domains
 import scala.util._
 import scala.util.control.NonFatal
 import com.thoughtworks.dsl.keywords.Pure
+import com.thoughtworks.dsl.macros.Reset.Default.reset
 
 type Continuation[R, +A] = (A => R) => R
 

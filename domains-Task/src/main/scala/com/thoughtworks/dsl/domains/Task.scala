@@ -5,7 +5,7 @@ import com.thoughtworks.dsl.domains.Continuation, Continuation.!!
 import com.thoughtworks.dsl.keywords.Pure
 import com.thoughtworks.dsl.keywords.Suspend
 import com.thoughtworks.dsl.keywords.Shift
-import com.thoughtworks.dsl.reset, reset._
+import com.thoughtworks.dsl.macros.Reset.Default.*
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
@@ -89,7 +89,7 @@ object Task extends TaskPlatformSpecificFunctions {
     *
     * @example All the code after a `!switchExecutionContext` should be executed on `executionContext`
     *          {{{
-    *          import com.thoughtworks.dsl.reset, reset._
+    *          import com.thoughtworks.dsl.macros.Reset.Default.*
     *          import com.thoughtworks.dsl.domains.Task
     *          import org.scalatest.Assertion
     *          import scala.concurrent.ExecutionContext

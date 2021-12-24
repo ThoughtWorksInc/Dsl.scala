@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 
-import reset.{`*`, reify}
+import com.thoughtworks.dsl.macros.Reset.Default.*
 import Dsl.!!
 import Dsl.Run
 import Dsl.IsKeyword

@@ -1,11 +1,14 @@
 package com.thoughtworks
 package dsl
-import keywords._
+package macros
 import com.thoughtworks.dsl.keywords._, Match._
 import scala.quoted.Quotes
 import collection.immutable.Queue
 import scala.util.control.Exception.Catcher
-/**
+/** Macros to translate the [[reset]] operator of a delimited continuation,
+  * where all the control flows are an AST of [[keywords]], interpreted by the
+  * [[Dsl]] type class.
+  *
   * @example
   *   Suppose you are generating a random integer less than 100, whose first digit and second digit is different. A
   *   solution is generating integers in an infinite loop, and [[Return]] from the loop when the generated integer
@@ -15,7 +18,7 @@ import scala.util.control.Exception.Catcher
   * import scala.util.Random
   * import scala.util.control.TailCalls
   * import scala.util.control.TailCalls.TailRec
-  * import com.thoughtworks.dsl.reset
+  * import com.thoughtworks.dsl.macros.Reset.Default.reset
   * def randomInt(): TailRec[Int] = reset {
   *   while (true) {
   *     val r = Random.nextInt(100)
@@ -38,6 +41,7 @@ import scala.util.control.Exception.Catcher
   * import scala.util.Random
   * import scala.util.control.TailCalls
   * import scala.util.control.TailCalls.TailRec
+  * import com.thoughtworks.dsl.macros.Reset.Default.reset
   * def randomInt(): TailRec[Int] = reset {
   *   while (true) {
   *     val r = Random.nextInt(100)
@@ -53,9 +57,30 @@ import scala.util.control.Exception.Catcher
   * r % 10 should not be r / 10
   * }}}
   */
-object reset {
+trait Reset:
+  type ShouldResetNestedFunctions <: Boolean & Singleton
 
-  private class Macros[Q <: Quotes](resetDescendant: Boolean)(using val qctx: Q) {
+  transparent inline def reify[Value](inline value: Value): Any = ${
+    Reset.Macros.reify[ShouldResetNestedFunctions, Value]('value)
+  }
+
+  class *[Functor[_]]() {
+    inline def apply[Value](inline value: Value): Functor[Value] = ${
+      Reset.Macros.reset[ShouldResetNestedFunctions, Value, Functor[Value]]('value)
+    }
+  }
+  inline def *[Domain[_]]: *[Domain] = new *[Domain]
+
+  inline def reset[Value](inline value: Value): Value = ${
+    Reset.Macros.reset[ShouldResetNestedFunctions, Value, Value]('value)
+  }
+
+object Reset {
+  /** A [[Reset]] translator with default options */
+  val Default = new Reset:
+    type ShouldResetNestedFunctions = false
+
+  private class Macros[Q <: Quotes](shouldResetNestedFunctions: Boolean)(using val qctx: Q) {
     import qctx.reflect.{_, given}
 
     def reify[V](body: quoted.Expr[_])(using valueType: quoted.Type[V]): quoted.Expr[_] = {
@@ -68,35 +93,47 @@ object reset {
 
     def resetDefDef(defDef: DefDef): DefDef = {
       val DefDef(name, typeParamsAndParams, tpt, rhsOption) = defDef
-      rhsOption match {
-        case Some(rhs) if resetDescendant =>
-          rhs match {
-            case matchTree @ qctx.reflect.Match(scrutinee, cases) =>
-              DefDef.copy(defDef)(
-                name, typeParamsAndParams, tpt, Some(
-                  qctx.reflect.Match.copy(matchTree)(
-                    scrutinee,
-                    cases.map {
-                      case caseDef @ CaseDef(pattern, guard, caseRhs) =>
-                        CaseDef.copy(caseDef)(pattern, guard, resetTerm(caseRhs))
-                    }
+      tpt.tpe.asType match {
+        case '[valueType] =>
+          rhsOption match {
+            case Some(rhs) if shouldResetNestedFunctions =>
+              rhs match {
+                case matchTree @ qctx.reflect.Match(scrutinee, cases) =>
+                  DefDef.copy(defDef)(
+                    name,
+                    typeParamsAndParams,
+                    tpt,
+                    Some(
+                      qctx.reflect.Match.copy(matchTree)(
+                        scrutinee,
+                        cases.map {
+                          case caseDef @ CaseDef(pattern, guard, caseRhs) =>
+                            CaseDef.copy(caseDef)(
+                              pattern,
+                              guard,
+                              reset[valueType, valueType](
+                                caseRhs.asExprOf[valueType]
+                              ).asTerm
+                            )
+                        }
+                      )
+                    )
                   )
-                )
-              )
+                case _ =>
+                  DefDef.copy(defDef)(
+                    name,
+                    typeParamsAndParams,
+                    tpt,
+                    Some(
+                      reset[valueType, valueType](
+                        rhs.asExprOf[valueType]
+                      ).asTerm
+                    )
+                  )
+              }
             case _ =>
-              DefDef.copy(defDef)(
-                name, typeParamsAndParams, tpt, Some(resetTerm(rhs))
-              )
+              defDef
           }
-        case _ =>
-          defDef
-      }
-    }
-
-    def resetTerm(term: Term): Term = {
-      term.usingExpr { [Value] => (body: quoted.Expr[Value]) => (tv: quoted.Type[Value]) ?=>
-        // given quoted.Type[Value] = tv
-        reset[Value, Value](body).asTerm
       }
     }
 
@@ -785,32 +822,47 @@ object reset {
   }
 
   object Macros {
-    def reify[V](body: quoted.Expr[_])(using qctx: Quotes, tv: quoted.Type[V]): quoted.Expr[_] = {
-      Macros[qctx.type](resetDescendant = false).reify[V](body/*.underlyingArgument*/)
+    def reify[ShouldResetNestedFunctions <: Boolean & Singleton, V](
+        body: quoted.Expr[_]
+    )(using
+        qctx: Quotes,
+        translateNestedFunctions: quoted.Type[ShouldResetNestedFunctions],
+        tv: quoted.Type[V]
+    ): quoted.Expr[_] = {
+      import quoted.quotes.reflect.*
+      quoted.Type.valueOfConstant[ShouldResetNestedFunctions] match {
+        case None =>
+          report.error("ShouldResetNestedFunctions is not defined", body)
+          '{ ??? }
+        case Some(translateNestedFunction) =>
+          Macros[qctx.type](shouldResetNestedFunctions =
+            quoted.Type.valueOfConstant[ShouldResetNestedFunctions].get
+          ).reify[V](body /*.underlyingArgument*/ )
+      }
     }
 
-    def reset[From, To](body: quoted.Expr[From])(using qctx: Quotes, fromType: quoted.Type[From], toType: quoted.Type[To]): quoted.Expr[To] = {
-      import qctx.reflect.{_, given}
-      val result: quoted.Expr[To] = Macros[qctx.type](resetDescendant = false).reset(body/*.underlyingArgument*/)
-      // report.warning(result.asTerm.show(using qctx.reflect.Printer.TreeStructure))
-      // report.warning(result.asTerm.show)
-      result
+    def reset[ShouldResetNestedFunctions <: Boolean & Singleton, From, To](
+        body: quoted.Expr[From]
+    )(using
+        qctx: Quotes,
+        translateNestedFunctions: quoted.Type[ShouldResetNestedFunctions],
+        fromType: quoted.Type[From],
+        toType: quoted.Type[To]
+    ): quoted.Expr[To] = {
+      import quoted.quotes.reflect.{_, given}
+      quoted.Type.valueOfConstant[ShouldResetNestedFunctions] match {
+        case None =>
+          report.error("ShouldResetNestedFunctions is not defined", body)
+          '{ ??? }
+        case Some(translateNestedFunction) =>
+          val result = Macros[qctx.type](shouldResetNestedFunctions =
+            quoted.Type.valueOfConstant[ShouldResetNestedFunctions].get
+          ).reset[From, To](body /*.underlyingArgument*/ )
+          // report.warning(result.asTerm.show(using qctx.reflect.Printer.TreeStructure))
+          // report.warning(result.asTerm.show)
+          result
+      }
     }
   }
 
-  transparent inline def reify[Value](inline value: Value): Any = ${
-    Macros.reify[Value]('value)
-  }
-
-  class *[Functor[_]]() {
-    inline def apply[Value](inline value: Value): Functor[Value] = ${
-      Macros.reset[Value, Functor[Value]]('value)
-    }
-  }
-  inline def *[Domain[_]]: *[Domain] = new *[Domain]
-
-  inline def apply[Value](inline value: Value): Value = ${
-    Macros.reset[Value, Value]('value)
-  }
-
-}        
+}

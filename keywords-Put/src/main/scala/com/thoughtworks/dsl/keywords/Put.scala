@@ -20,7 +20,7 @@ import com.thoughtworks.dsl.Dsl.IsKeyword
   *   and returns the upper-cased last character of the parameter.
   *
   * {{{
-  * import com.thoughtworks.dsl.reset
+  * import com.thoughtworks.dsl.macros.Reset.Default.reset
   * def upperCasedLastCharacter = reset[String => Char] {
   *   val initialValue = !Get[String]
   *   !Put(initialValue.toUpperCase)
@@ -44,7 +44,7 @@ import com.thoughtworks.dsl.Dsl.IsKeyword
   * `Vector[Any]` of string buffers.
   *
   * {{{
-  * import com.thoughtworks.dsl.reset
+  * import com.thoughtworks.dsl.macros.Reset.Default.reset
   * def formatter = reset[Double => Int => Vector[Any] => String] {
   *   !Put(!Get[Vector[Any]] :+ "x=")
   *   !Put(!Get[Vector[Any]] :+ !Get[Double])
