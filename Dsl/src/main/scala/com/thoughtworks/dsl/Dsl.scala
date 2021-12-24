@@ -408,61 +408,6 @@ object Dsl extends LowPriorityDsl0 {
     }
   }
 
-  /** The type class to support `try` ... `catch` ... `finally` expression for
-    * `OutputDomain`.
-    *
-    * !-notation is allowed by default for `? !! Throwable` and
-    * [[scala.concurrent.Future Future]] domains, with the help of this type
-    * class.
-    */
-  @implicitNotFound(
-    "The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
-  )
-  @deprecated(
-    "Dsl.TryCatch / Dsl.TryFinally / Dsl.TryCatchFinally will be removed",
-    "2.0.0"
-  )
-  trait TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
-    def tryCatchFinally(
-        block: BlockDomain !! Value,
-        catcher: Catcher[BlockDomain !! Value],
-        finalizer: FinalizerDomain !! Unit,
-        outerSuccessHandler: Value => OuterDomain
-    ): OuterDomain
-  }
-
-  object TryCatchFinally {
-
-    implicit def fromTryCatchTryFinally[
-        Value,
-        OuterDomain,
-        BlockDomain,
-        FinalizerDomain
-    ](implicit
-        tryFinally: TryFinally[
-          Value,
-          OuterDomain,
-          BlockDomain,
-          FinalizerDomain
-        ],
-        tryCatch: TryCatch[Value, BlockDomain, BlockDomain]
-    ): TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] = {
-      (
-          block: BlockDomain !! Value,
-          catcher: Catcher[BlockDomain !! Value],
-          finalizer: FinalizerDomain !! Unit,
-          outerSuccessHandler: Value => OuterDomain
-      ) =>
-        tryFinally.tryFinally(
-          {
-            tryCatch.tryCatch(block, catcher, _)
-          },
-          finalizer,
-          outerSuccessHandler
-        )
-    }
-  }
-
   @implicitNotFound(
     "The `try` ... `catch` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
   )
