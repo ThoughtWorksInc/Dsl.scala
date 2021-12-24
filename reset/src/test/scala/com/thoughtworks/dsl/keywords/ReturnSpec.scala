@@ -46,6 +46,18 @@ object ReturnSpec extends TestSuite {
       assert(result == 42)
     }
 
+    "reset nested function" - {
+      new reset {
+        type ShouldResetNestedFunctions = true
+      }.apply {
+        def continuation = { (!Return(42)): Int!!String }
+        val result = continuation { s =>
+          throw new java.lang.AssertionError(s)
+        }
+        assert(result == 42)
+      }
+    }
+
     "return the right domain" - {
       def continuation: Int !! String = reset[Int !! String]{!Return("right value") }
 
