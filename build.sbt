@@ -186,6 +186,8 @@ lazy val `domains-scalaz` =
       reset % Test,
       `keywords-Monadic`,
       `keywords-Return`,
+      `keywords-TryCatch`,
+      `keywords-TryFinally`,
       `keywords-Shift` % Test,
       `keywords-Yield` % Test
     )
