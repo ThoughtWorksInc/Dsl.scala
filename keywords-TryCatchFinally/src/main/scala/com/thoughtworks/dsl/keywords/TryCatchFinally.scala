@@ -10,18 +10,63 @@ case class TryCatchFinally[+BlockKeyword, +CaseKeyword, +FinalizerKeyword](
     finalizer: () => FinalizerKeyword
 ) extends Dsl.Keyword.Trait
 object TryCatchFinally extends TryCatchFinally.LegacyInstances {
+  given [
+      Value,
+      OuterDomain,
+      BlockKeyword,
+      BlockDomain,
+      CaseKeyword,
+      FinalizerKeyword,
+      FinalizerDomain
+  ](using
+      Dsl.Searching[TryFinally[
+        TryCatch[BlockKeyword, CaseKeyword],
+        FinalizerKeyword
+      ], OuterDomain, Value]
+  ): Dsl.Composed[TryCatchFinally[
+    BlockKeyword,
+    CaseKeyword,
+    FinalizerKeyword
+  ], OuterDomain, Value] = Dsl.Composed {
+    case (
+          TryCatchFinally(
+            block,
+            catcher,
+            finalizer
+          ),
+          handler
+        ) =>
+      TryFinally(TryCatch(block, catcher), finalizer).cpsApply(handler)
+  }
+
   trait LegacyInstances:
     @deprecated(
       "Dsl.TryCatch / Dsl.TryFinally / Dsl.TryCatchFinally will be removed",
       "2.0.0"
     )
-    given [Value, OuterDomain, BlockKeyword, BlockDomain, CaseKeyword, FinalizerKeyword, FinalizerDomain](
-        using
-        dslTryCatchFinally: Dsl.TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
+    given [
+        Value,
+        OuterDomain,
+        BlockKeyword,
+        BlockDomain,
+        CaseKeyword,
+        FinalizerKeyword,
+        FinalizerDomain
+    ](using
+        dslTryCatchFinally: Dsl.TryCatchFinally[
+          Value,
+          OuterDomain,
+          BlockDomain,
+          FinalizerDomain
+        ],
         blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
         caseDsl: Dsl.Searching[CaseKeyword, BlockDomain, Value],
         finalizerDsl: Dsl.Searching[FinalizerKeyword, FinalizerDomain, Unit]
-    ): Dsl.Composed[TryCatchFinally[BlockKeyword, CaseKeyword, FinalizerKeyword], OuterDomain, Value] = Dsl.Composed {
+    ): Dsl.Composed[TryCatchFinally[
+      BlockKeyword,
+      CaseKeyword,
+      FinalizerKeyword
+    ], OuterDomain, Value] = Dsl.Composed {
       case (TryCatchFinally(blockKeyword, cases, finalizerKeyword), handler) =>
         dslTryCatchFinally.tryCatchFinally(
           // TODO: Use Suspend to catch the exception
