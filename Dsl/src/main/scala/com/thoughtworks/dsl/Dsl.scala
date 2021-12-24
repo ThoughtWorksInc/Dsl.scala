@@ -418,6 +418,10 @@ object Dsl extends LowPriorityDsl0 {
   @implicitNotFound(
     "The `try` ... `catch` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
   )
+  @deprecated(
+    "Dsl.TryCatch / Dsl.TryFinally / Dsl.TryCatchFinally will be removed",
+    "2.0.0"
+  )
   trait TryCatchFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
     def tryCatchFinally(
         block: BlockDomain !! Value,
@@ -461,6 +465,10 @@ object Dsl extends LowPriorityDsl0 {
 
   @implicitNotFound(
     "The `try` ... `catch` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
+  )
+  @deprecated(
+    "Dsl.TryCatch / Dsl.TryFinally / Dsl.TryCatchFinally will be removed",
+    "2.0.0"
   )
   trait TryCatch[Value, OuterDomain, BlockDomain] {
     def tryCatch(
@@ -581,6 +589,10 @@ object Dsl extends LowPriorityDsl0 {
 
   @implicitNotFound(
     "The `try` ... `finally` expression cannot contain !-notation inside a function that returns ${OuterDomain}."
+  )
+  @deprecated(
+    "Dsl.TryCatch / Dsl.TryFinally / Dsl.TryCatchFinally will be removed",
+    "2.0.0"
   )
   trait TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain] {
     def tryFinally(

@@ -11,20 +11,24 @@ case class TryFinally[+TryKeyword, +FinalizerKeyword](
     finalizer: () => FinalizerKeyword
 ) extends Dsl.Keyword.Trait
 
-object TryFinally {
-
-  given [Value, OuterDomain, BlockKeyword, BlockDomain, FinalizerKeyword, FinalizerDomain](using
-      dslTryFinally: Dsl.TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
-      blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
-      finalizerDsl: Dsl.Searching[FinalizerKeyword, FinalizerDomain, Unit]
-  ): Dsl.Composed[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = Dsl.Composed {
-    case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
-      dslTryFinally.tryFinally(
-        // TODO: Use Suspend to catch the exception
-        blockDsl(blockKeyword(), _),
-        finalizerDsl(finalizerKeyword(), _),
-        handler
-      )
-  }
+object TryFinally extends TryFinally.LegacyInstances {
+  trait LegacyInstances:
+    @deprecated(
+      "Dsl.TryCatch / Dsl.TryFinally / Dsl.TryCatchFinally will be removed",
+      "2.0.0"
+    )
+    given [Value, OuterDomain, BlockKeyword, BlockDomain, FinalizerKeyword, FinalizerDomain](using
+        dslTryFinally: Dsl.TryFinally[Value, OuterDomain, BlockDomain, FinalizerDomain],
+        blockDsl: Dsl.Searching[BlockKeyword, BlockDomain, Value],
+        finalizerDsl: Dsl.Searching[FinalizerKeyword, FinalizerDomain, Unit]
+    ): Dsl.Composed[TryFinally[BlockKeyword, FinalizerKeyword], OuterDomain, Value] = Dsl.Composed {
+      case (TryFinally(blockKeyword, finalizerKeyword), handler) =>
+        dslTryFinally.tryFinally(
+          // TODO: Use Suspend to catch the exception
+          blockDsl(blockKeyword(), _),
+          finalizerDsl(finalizerKeyword(), _),
+          handler
+        )
+    }
 
 }
