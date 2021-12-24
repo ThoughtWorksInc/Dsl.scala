@@ -84,17 +84,18 @@ object Using {
       FinalizerDomain
   ](using
       IsKeyword[Mapped, MappedValue],
-      Dsl.TryFinally[MappedValue, OuterDomain, BlockDomain, FinalizerDomain],
+      TryFinally.DslComposer[OuterDomain, MappedValue, BlockDomain],
       Dsl.Searching[Mapped, BlockDomain, MappedValue]
-  ): Dsl.Composed[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] = Dsl.Composed {
-    case (FlatMap(r, flatMapper: (Using[R] @unchecked => Mapped)), handler) =>
-      reset[OuterDomain] {
-        handler(try {
-          !flatMapper(r)
-        } finally {
-          r.close()
-        })
-      }
-  }
+  ): Dsl.Composed[FlatMap[Using[R], Mapped], OuterDomain, MappedValue] =
+    Dsl.Composed {
+      case (FlatMap(r, flatMapper: (Using[R] @unchecked => Mapped)), handler) =>
+        reset[OuterDomain] {
+          handler(try {
+            !flatMapper(r)
+          } finally {
+            r.close()
+          })
+        }
+    }
 
 }

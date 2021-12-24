@@ -77,7 +77,7 @@ lazy val `keywords-TryCatchFinally` =
 lazy val `keywords-TryFinally` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Match`)
+    .dependsOn(Dsl, `keywords-TryCatch`)
 
 lazy val `keywords-While` =
   crossProject(JSPlatform, JVMPlatform)

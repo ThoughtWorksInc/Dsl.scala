@@ -8,7 +8,6 @@ import scala.language.higherKinds
 import scala.language.implicitConversions
 import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans}
 import com.thoughtworks.dsl.keywords.{Monadic, Return}
-import com.thoughtworks.dsl.Dsl.{TryFinally}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
@@ -146,31 +145,6 @@ object scalaz extends scalaz.LowPriority0 {
         monadThrowable.raiseError(e)
     }
   }
-  implicit def scalazTryFinally[F[_], A, B](implicit
-      monadError: MonadThrowable[F]
-  ): TryFinally[A, F[B], F[A], F[Unit]] =
-    new TryFinally[A, F[B], F[A], F[Unit]] {
-      def tryFinally(
-          block: F[A] !! A,
-          finalizer: F[Unit] !! Unit,
-          outerSuccessHandler: A => F[B]
-      ): F[B] = {
-        @inline
-        def injectFinalizer[A](f: Unit => F[A]): F[A] = {
-          monadError.bind(catchNativeException(finalizer))(f)
-        }
-        monadError.bind(monadError.handleError(catchNativeException(block)) {
-          (e: Throwable) =>
-            injectFinalizer { (_: Unit) =>
-              monadError.raiseError(e)
-            }
-        }) { a =>
-          injectFinalizer { (_: Unit) =>
-            outerSuccessHandler(a)
-          }
-        }
-      }
-    }
 
   given [F[_], A, B](using
       monadError: MonadThrowable[F]
