@@ -42,7 +42,7 @@ import com.thoughtworks.dsl.keywords.Await
   * val sumLengths: Future[Int] = async {
   *   await(fetchURL("https://scala-lang.org")).length + await(fetchURL("https://docs.scala-lang.org")).length
   * }
-  * 
+  *
   * async {
   *   await(sumLengths) should be > 50000
   * }

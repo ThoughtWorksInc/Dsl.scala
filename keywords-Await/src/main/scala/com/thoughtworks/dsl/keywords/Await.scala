@@ -116,12 +116,13 @@ opaque type Await[+AwaitableValue] <: Dsl.Keyword.Opaque =
 object Await extends AwaitJS {
   @inline def apply[AwaitableValue]: AwaitableValue =:= Await[AwaitableValue] =
     Dsl.Keyword.Opaque.Of.apply
-  given [FutureResult]: IsKeyword[Await[Future[FutureResult]], FutureResult] with {}
+  given [FutureResult]: IsKeyword[Await[Future[FutureResult]], FutureResult]
+    with {}
 
   given [FutureResult, That](using
       ExecutionContext
-  ): Dsl.Original[Await[Future[FutureResult]], Future[That], FutureResult] = Dsl.Original(
-    _ flatMap _)
+  ): Dsl.Original[Await[Future[FutureResult]], Future[That], FutureResult] =
+    Dsl.Original(_ flatMap _)
 
   // // TODO:
   // implicit def tailRecContinuationAwaitDsl[Value](implicit
@@ -130,10 +131,11 @@ object Await extends AwaitJS {
 
   given [Value](using
       ExecutionContext
-  ): Dsl.Original[Await[Future[Value]], Unit !! Throwable, Value] = Dsl.Original {
-    (keyword: Await[Future[Value]], handler: Value => Unit !! Throwable) =>
-      !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
-  }
+  ): Dsl.Original[Await[Future[Value]], Unit !! Throwable, Value] =
+    Dsl.Original {
+      (keyword: Await[Future[Value]], handler: Value => Unit !! Throwable) =>
+        !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
+    }
   extension [FA, A](inline fa: FA)(using
       inline notKeyword: util.NotGiven[
         FA <:< Dsl.Keyword

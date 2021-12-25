@@ -166,7 +166,7 @@ lazy val `keywords-Yield` =
       Dsl,
       `macros-Reset` % Test,
       `keywords-Each` % Test,
-      `keywords-Shift` % Test,
+      `keywords-Shift` % Test
     )
 
 lazy val `keywords-Monadic` =

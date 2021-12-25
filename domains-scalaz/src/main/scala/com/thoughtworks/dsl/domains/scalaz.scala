@@ -166,7 +166,7 @@ object scalaz extends scalaz.LowPriority0 {
                     monadError.raiseError(e)
                 }
               blockDomain
-                .handleError { 
+                .handleError {
                   case catcher(recovered) =>
                     summon[Dsl.Run[CaseKeyword, F[A], A]](recovered)
                   case e: Throwable =>
