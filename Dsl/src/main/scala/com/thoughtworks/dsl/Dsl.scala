@@ -151,6 +151,10 @@ object Dsl extends LowPriorityDsl0 {
       protectedContinuation(handler)
     }
   }
+  private[dsl] object TrampolineContinuation {
+    def apply[LeftDomain](continuation: TrampolineContinuation[LeftDomain]) =
+      continuation
+  }
 
   trait IsStackSafe[Domain]
   object IsStackSafe extends IsStackSafe.LowPriority0:
