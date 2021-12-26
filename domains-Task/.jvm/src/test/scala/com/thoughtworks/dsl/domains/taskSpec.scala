@@ -117,7 +117,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     a[MyException] should be thrownBy task1
   }
 
-  "rethrow" ignore Task.toFuture(Task {
+  "rethrow" in Task.toFuture(Task {
     class MyException extends Exception
     val task1: Task[Int] = Task {
       throw new MyException
@@ -133,7 +133,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
             case myException: MyException =>
               throw myException
           }
-        }  catch {
+        } catch {
           case myException: MyException =>
             "my exception"
         }
