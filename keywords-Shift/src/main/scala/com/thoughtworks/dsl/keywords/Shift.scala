@@ -142,37 +142,11 @@ object Shift extends LowPriorityShift0 {
 
     }
 
-  private abstract class TrampolineContinuation[LeftDomain]
-      extends (LeftDomain !! Throwable) {
-    protected def step(): LeftDomain !! Throwable
-
-    @tailrec
-    private final def last(): LeftDomain !! Throwable = {
-      step() match {
-        case trampoline: TrampolineContinuation[LeftDomain] =>
-          trampoline.last()
-        case notTrampoline =>
-          notTrampoline
-      }
-    }
-
-    final def apply(handler: Throwable => LeftDomain): LeftDomain = {
-      val protectedContinuation: LeftDomain !! Throwable =
-        try {
-          last()
-        } catch {
-          case NonFatal(e) =>
-            return handler(e)
-        }
-      protectedContinuation(handler)
-    }
-  }
-
   private def suspend[LeftDomain, Value](
       continuation: LeftDomain !! Throwable !! Value,
       handler: Value => LeftDomain !! Throwable
-  ): TrampolineContinuation[LeftDomain] =
-    new TrampolineContinuation[LeftDomain] {
+  ): Dsl.TrampolineContinuation[LeftDomain] =
+    new Dsl.TrampolineContinuation[LeftDomain] {
       protected def step() = continuation(handler)
     }
 
@@ -192,8 +166,8 @@ object Shift extends LowPriorityShift0 {
       handler: Value => LeftDomain !! Throwable !! RightDomain,
       value: Value,
       continue: RightDomain => LeftDomain !! Throwable
-  ): TrampolineContinuation[LeftDomain] =
-    new TrampolineContinuation[LeftDomain] {
+  ): Dsl.TrampolineContinuation[LeftDomain] =
+    new Dsl.TrampolineContinuation[LeftDomain] {
       protected def step() = {
         handler(value)(continue)
       }

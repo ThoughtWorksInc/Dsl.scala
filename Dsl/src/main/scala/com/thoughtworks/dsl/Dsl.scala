@@ -126,6 +126,32 @@ object Dsl extends LowPriorityDsl0 {
   ) =:= Dsl[Keyword, Domain, Value] =
     summon
 
+  private[dsl] abstract class TrampolineContinuation[LeftDomain]
+      extends (LeftDomain !! Throwable) {
+    protected def step(): LeftDomain !! Throwable
+
+    @tailrec
+    private final def last(): LeftDomain !! Throwable = {
+      step() match {
+        case trampoline: TrampolineContinuation[LeftDomain] =>
+          trampoline.last()
+        case notTrampoline =>
+          notTrampoline
+      }
+    }
+
+    final def apply(handler: Throwable => LeftDomain): LeftDomain = {
+      val protectedContinuation: LeftDomain !! Throwable =
+        try {
+          last()
+        } catch {
+          case NonFatal(e) =>
+            return handler(e)
+        }
+      protectedContinuation(handler)
+    }
+  }
+
   trait IsStackSafe[Domain]
   object IsStackSafe extends IsStackSafe.LowPriority0:
     private[IsStackSafe] trait LowPriority0:
