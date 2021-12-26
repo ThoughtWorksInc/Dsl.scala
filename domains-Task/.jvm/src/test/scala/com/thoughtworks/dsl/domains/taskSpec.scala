@@ -116,6 +116,31 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
     a[MyException] should be thrownBy task1
   }
 
+  "rethrow" ignore Task.toFuture(Task {
+    class MyException extends Exception
+    val task1: Task[Int] = Task {
+      throw new MyException
+    }
+
+    val task2 = Task {
+      val v =
+        try {
+          try {
+            !Shift(task1)
+            "no exception"
+          } catch {
+            case myException: MyException =>
+              throw myException
+          }
+        }  catch {
+          case myException: MyException =>
+            "my exception"
+        }
+      s"try: $v"
+    }
+    !Shift(task2) should be("try: my exception")
+  })
+
   "try" in Task.toFuture(Task {
     class MyException extends Exception
     val task1: Task[Int] = Task {
