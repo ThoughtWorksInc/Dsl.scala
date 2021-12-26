@@ -67,7 +67,7 @@ lazy val `keywords-Match` =
 lazy val `keywords-TryCatch` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .dependsOn(Dsl, `keywords-Shift`, `keywords-Match`)
+    .dependsOn(Dsl, `keywords-Shift`, `keywords-Fence`, `keywords-Match`)
 
 lazy val `keywords-TryCatchFinally` =
   crossProject(JSPlatform, JVMPlatform)
@@ -85,6 +85,11 @@ lazy val `keywords-While` =
     .dependsOn(Dsl)
 
 lazy val `keywords-Suspend` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .dependsOn(Dsl)
+
+lazy val `keywords-Fence` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(Dsl)
@@ -166,7 +171,7 @@ lazy val `keywords-Yield` =
       Dsl,
       `macros-Reset` % Test,
       `keywords-Each` % Test,
-      `keywords-Shift` % Test,
+      `keywords-Shift` % Test
     )
 
 lazy val `keywords-Monadic` =

@@ -50,6 +50,7 @@ object ReturnSpec extends TestSuite {
     "reset nested function" - {
       new Reset {
         type ShouldResetNestedFunctions = true
+        type DontSuspend = true
       }.reset {
         def continuation: Int !! String = { !Return(42) }
         val result = continuation { s =>

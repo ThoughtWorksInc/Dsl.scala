@@ -59,35 +59,55 @@ import scala.util.control.Exception.Catcher
   */
 trait Reset:
   type ShouldResetNestedFunctions <: Boolean & Singleton
+  type DontSuspend <: Boolean & Singleton
 
   transparent inline def reify[Value](inline value: Value): Any = ${
-    Reset.Macros.reify[ShouldResetNestedFunctions, Value]('value)
+    Reset.Macros.reify[ShouldResetNestedFunctions, DontSuspend, Value]('value)
   }
 
   class *[Functor[_]]() {
     inline def apply[Value](inline value: Value): Functor[Value] = ${
-      Reset.Macros.reset[ShouldResetNestedFunctions, Value, Functor[Value]]('value)
+      Reset.Macros
+        .reset[ShouldResetNestedFunctions, DontSuspend, Value, Functor[Value]](
+          'value
+        )
     }
   }
   inline def *[Domain[_]]: *[Domain] = new *[Domain]
 
   inline def reset[Value](inline value: Value): Value = ${
-    Reset.Macros.reset[ShouldResetNestedFunctions, Value, Value]('value)
+    Reset.Macros.reset[ShouldResetNestedFunctions, DontSuspend, Value, Value](
+      'value
+    )
   }
 
 object Reset {
+
   /** A [[Reset]] translator with default options */
   val Default = new Reset:
     type ShouldResetNestedFunctions = false
+    type DontSuspend = false
 
-  private class Macros[Q <: Quotes](shouldResetNestedFunctions: Boolean)(using val qctx: Q) {
+  private class Macros[Q <: Quotes](
+      shouldResetNestedFunctions: Boolean,
+      dontSuspend: Boolean
+  )(using val qctx: Q) {
     import qctx.reflect.{_, given}
 
-    def reify[V](body: quoted.Expr[_])(using valueType: quoted.Type[V]): quoted.Expr[_] = {
+    def reify[V](
+        body: quoted.Expr[_]
+    )(using valueType: quoted.Type[V]): quoted.Expr[_] = {
       val bodyTerm = body.asTerm.underlyingArgument
-      val reifiedTerm = KeywordTree(bodyTerm).keywordTerm
-      reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => (tk: quoted.Type[K]) ?=>
-        '{keywords.Typed[K, V]($k)}: quoted.Expr[_]
+      val reifiedTerm = if (dontSuspend) {
+        KeywordTree(bodyTerm).keywordTerm
+      } else {
+        Suspend(KeywordTree(bodyTerm)).keywordTerm
+      }
+      reifiedTerm.usingExpr {
+        [K] =>
+          (k: quoted.Expr[K]) =>
+            (tk: quoted.Type[K]) ?=>
+              '{ keywords.Typed[K, V]($k) }: quoted.Expr[_]
       }
     }
 
@@ -139,10 +159,14 @@ object Reset {
 
     def reset[Value, Domain](body: quoted.Expr[Value])(using valueType: quoted.Type[Value], domainType: quoted.Type[Domain]): quoted.Expr[Domain] = {
       KeywordTree(body.asTerm.underlyingArgument) match {
-        case Pure(pure, _) if TypeRepr.of[Value] <:< TypeRepr.of[Domain] =>
+        case Pure(pure, _) if dontSuspend && TypeRepr.of[Value] <:< TypeRepr.of[Domain] =>
           pure.asExprOf[Domain]
         case keywordTree =>
-          val reifiedTerm = keywordTree.keywordTerm
+          val reifiedTerm = if (dontSuspend) {
+            keywordTree.keywordTerm
+          } else {
+            Suspend(keywordTree).keywordTerm
+          }
           reifiedTerm.usingExpr { [K] => (k: quoted.Expr[K]) => ( keywordType: quoted.Type[K]) ?=>
             {
 
@@ -822,11 +846,16 @@ object Reset {
   }
 
   object Macros {
-    def reify[ShouldResetNestedFunctions <: Boolean & Singleton, V](
+    def reify[
+        ShouldResetNestedFunctions <: Boolean & Singleton,
+        DontSuspend <: Boolean & Singleton,
+        V
+    ](
         body: quoted.Expr[_]
     )(using
         qctx: Quotes,
         translateNestedFunctions: quoted.Type[ShouldResetNestedFunctions],
+        dontSuspend: quoted.Type[DontSuspend],
         tv: quoted.Type[V]
     ): quoted.Expr[_] = {
       import quoted.quotes.reflect.*
@@ -835,17 +864,30 @@ object Reset {
           report.error("ShouldResetNestedFunctions is not defined", body)
           '{ ??? }
         case Some(translateNestedFunction) =>
-          Macros[qctx.type](shouldResetNestedFunctions =
-            quoted.Type.valueOfConstant[ShouldResetNestedFunctions].get
-          ).reify[V](body /*.underlyingArgument*/ )
+          quoted.Type.valueOfConstant[DontSuspend] match {
+            case None =>
+              report.error("DontSuspend is not defined", body)
+              '{ ??? }
+            case Some(dontSuspend) =>
+              Macros[qctx.type](
+                shouldResetNestedFunctions = translateNestedFunction,
+                dontSuspend = dontSuspend
+              ).reify[V](body /*.underlyingArgument*/ )
+          }
       }
     }
 
-    def reset[ShouldResetNestedFunctions <: Boolean & Singleton, From, To](
+    def reset[
+        ShouldResetNestedFunctions <: Boolean & Singleton,
+        DontSuspend <: Boolean & Singleton,
+        From,
+        To
+    ](
         body: quoted.Expr[From]
     )(using
         qctx: Quotes,
         translateNestedFunctions: quoted.Type[ShouldResetNestedFunctions],
+        dontSuspend: quoted.Type[DontSuspend],
         fromType: quoted.Type[From],
         toType: quoted.Type[To]
     ): quoted.Expr[To] = {
@@ -855,14 +897,20 @@ object Reset {
           report.error("ShouldResetNestedFunctions is not defined", body)
           '{ ??? }
         case Some(translateNestedFunction) =>
-          val result = Macros[qctx.type](shouldResetNestedFunctions =
-            quoted.Type.valueOfConstant[ShouldResetNestedFunctions].get
-          ).reset[From, To](body /*.underlyingArgument*/ )
-          // report.warning(result.asTerm.show(using qctx.reflect.Printer.TreeStructure))
-          // report.warning(result.asTerm.show)
-          result
+          quoted.Type.valueOfConstant[DontSuspend] match {
+            case None =>
+              report.error("DontSuspend is not defined", body)
+              '{ ??? }
+            case Some(dontSuspend) =>
+              val result = Macros[qctx.type](
+                shouldResetNestedFunctions = translateNestedFunction,
+                dontSuspend = dontSuspend
+              ).reset[From, To](body /*.underlyingArgument*/ )
+              // report.warning(result.asTerm.show(using qctx.reflect.Printer.TreeStructure))
+              // report.warning(result.asTerm.show)
+              result
+          }
       }
     }
   }
-
 }

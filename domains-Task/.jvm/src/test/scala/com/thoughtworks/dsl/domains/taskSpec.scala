@@ -1,6 +1,7 @@
 package com.thoughtworks.dsl
 package domains
 
+import com.thoughtworks.dsl.macros.Reset
 import com.thoughtworks.dsl.macros.Reset.Default.*
 import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
@@ -34,7 +35,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       }
       summon[
         reified.type <:<
-          Typed[FlatMap[
+          Typed[Suspend[FlatMap[
             Pure[n.type],
             Match.WithIndex[(0), Pure[(0)]]
               +:
@@ -45,7 +46,7 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
                   FlatMap[Shift[Task.TaskDomain, Int], Pure[Int]]
                 ]]
                 +: Nothing
-          ], Int]
+          ]], Int]
       ]
       Task {
 
@@ -70,15 +71,12 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       } else {
         accumulator
       })
-      summon[reified.type <:< Typed[
-        If[Pure[
-          Boolean
-        ], Shift[
-          Task.TaskDomain,
-          Int
-        ], Pure[Int]],
+      summon[reified.type <:< Typed[Suspend[If[Pure[
+        Boolean
+      ], Shift[
+        Task.TaskDomain,
         Int
-      ]]
+      ], Pure[Int]]], Int]]
       Task {
         if (i < 10000) {
           !Shift(loop(i + 1, accumulator + i))
@@ -110,11 +108,39 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
   "*[Task] does not necessarily suspend or catch exceptions" in {
     class MyException extends Exception
-    def task1: Task[Int] = *[Task] {
+    def task1: Task[Int] = new Reset {
+      type ShouldResetNestedFunctions = false
+      type DontSuspend = true
+    }.*[Task] {
       throw new MyException
     }
     a[MyException] should be thrownBy task1
   }
+
+  "rethrow" in Task.toFuture(Task {
+    class MyException extends Exception
+    val task1: Task[Int] = Task {
+      throw new MyException
+    }
+
+    val task2 = Task {
+      val v =
+        try {
+          try {
+            !Shift(task1)
+            "no exception"
+          } catch {
+            case myException: MyException =>
+              throw myException
+          }
+        } catch {
+          case myException: MyException =>
+            "my exception"
+        }
+      s"try: $v"
+    }
+    !Shift(task2) should be("try: my exception")
+  })
 
   "try" in Task.toFuture(Task {
     class MyException extends Exception
