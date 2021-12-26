@@ -125,22 +125,31 @@ object Dsl extends LowPriorityDsl0 {
       ) => Domain
   ) =:= Dsl[Keyword, Domain, Value] =
     summon
-
-  private[dsl] abstract class TrampolineContinuation[LeftDomain]
-      extends (LeftDomain !! Throwable) {
-    protected def step(): LeftDomain !! Throwable
-
+  private[dsl] abstract class TrampolineFunction1[-A, +R] extends (A => R) {
+    protected def step(): A => R
     @tailrec
-    private final def last(): LeftDomain !! Throwable = {
+    protected final def last(): A => R = {
       step() match {
-        case trampoline: TrampolineContinuation[LeftDomain] =>
+        case trampoline: TrampolineFunction1[A, R] =>
           trampoline.last()
         case notTrampoline =>
           notTrampoline
       }
     }
 
-    final def apply(handler: Throwable => LeftDomain): LeftDomain = {
+    def apply(state: A): R = {
+      last()(state)
+    }
+
+  }
+  object TrampolineFunction1 {
+    def apply[A, R](trampoline: TrampolineFunction1[A, R]) = trampoline
+  }
+
+  private[dsl] abstract class TrampolineContinuation[LeftDomain]
+      extends TrampolineFunction1[Throwable => LeftDomain, LeftDomain] {
+
+    override final def apply(handler: Throwable => LeftDomain): LeftDomain = {
       val protectedContinuation: LeftDomain !! Throwable =
         try {
           last()
