@@ -89,6 +89,18 @@ lazy val `keywords-Suspend` =
     .crossType(CrossType.Pure)
     .dependsOn(Dsl)
 
+lazy val `keywords-Fence` =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure)
+    .dependsOn(
+      Dsl,
+      `macros-Reset` % Test,
+      `domains-Continuation` % Test,
+      `keywords-Yield` % Test,
+      `keywords-Get` % Test,
+      `keywords-Put` % Test
+    )
+
 lazy val `keywords-Return` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
@@ -166,7 +178,7 @@ lazy val `keywords-Yield` =
       Dsl,
       `macros-Reset` % Test,
       `keywords-Each` % Test,
-      `keywords-Shift` % Test,
+      `keywords-Shift` % Test
     )
 
 lazy val `keywords-Monadic` =
