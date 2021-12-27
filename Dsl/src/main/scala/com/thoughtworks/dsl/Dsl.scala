@@ -375,42 +375,6 @@ object Dsl extends LowPriorityDsl0 {
   ): Dsl.Derived.StackUnsafe[Keyword, TailRec[Domain], Value] =
     Dsl.Derived.StackUnsafe(derivedTailRecDsl)
 
-  private def derivedThrowableTailRecDsl[Keyword, LeftDomain, Value](implicit
-      restDsl: Dsl.Searching[Keyword, LeftDomain !! Throwable, Value]
-  ): Dsl[Keyword, TailRec[LeftDomain] !! Throwable, Value] =
-    Dsl {
-      (
-          keyword: Keyword,
-          handler: (Value => TailRec[LeftDomain] !! Throwable)
-      ) => (tailRecFailureHandler: Throwable => TailRec[LeftDomain]) =>
-        TailCalls.done(
-          restDsl(
-            keyword,
-            { value => failureHandler =>
-              handler(value) { e =>
-                TailCalls.done(failureHandler(e))
-              }.result
-            }
-          ) { e =>
-            tailRecFailureHandler(e).result
-          }
-        )
-    }
-  given [Keyword, LeftDomain, TailRecValue](using
-      Dsl.IsStackSafe[LeftDomain],
-      Dsl.Searching[Keyword, LeftDomain !! Throwable, TailRecValue]
-  ): Dsl.Derived.StackSafe[Keyword, TailRec[
-    LeftDomain
-  ] !! Throwable, TailRecValue] =
-    Dsl.Derived.StackSafe(derivedThrowableTailRecDsl)
-  given [Keyword, LeftDomain, TailRecValue](using
-      util.NotGiven[Dsl.IsStackSafe[LeftDomain]],
-      Dsl.Searching[Keyword, LeftDomain !! Throwable, TailRecValue]
-  ): Dsl.Derived.StackUnsafe[Keyword, TailRec[
-    LeftDomain
-  ] !! Throwable, TailRecValue] =
-    Dsl.Derived.StackUnsafe(derivedThrowableTailRecDsl)
-
   private[dsl] type !![R, +A] = (A => R) => R
 
   @FunctionalInterface
