@@ -119,7 +119,8 @@ lazy val `keywords-AsynchronousIo` =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
     .dependsOn(
-      `keywords-Shift`,
+      `keywords-Fence`,
+      `keywords-Shift` % Test,
       `keywords-Each` % Test,
       `keywords-Using` % Test,
       `domains-Task` % Test

@@ -147,29 +147,32 @@ object AsynchronousIo {
     }
   }
 
-  private def completionHandler[Value](successHandler: Value => (Unit !! Throwable)) = {
-    new CompletionHandler[Value, Throwable => Unit] {
-      def failed(exc: Throwable, failureHandler: Throwable => Unit): Unit = {
-        failureHandler(exc)
-      }
-
-      def completed(result: Value, failureHandler: Throwable => Unit): Unit = {
-        val protectedContinuation =
-          try {
-            successHandler(result)
-          } catch {
-            case NonFatal(e) =>
-              val () = failureHandler(e)
-              return
-          }
-        protectedContinuation(failureHandler)
-      }
-    }
-  }
-
-  given [Value]: Dsl.Original[AsynchronousIo[Value], Unit !! Throwable, Value] =
+  given [Domain, Value](using
+      fenceDsl: Dsl.Searching[Fence.type, Domain, Unit],
+      liftUnit: Dsl.Lift[Unit, Domain]
+  ): Dsl.Original[AsynchronousIo[Value], Domain, Value] =
     Dsl.Original { (keyword, handler) =>
-      keyword.start(_, completionHandler(handler))
+      liftUnit(
+        keyword.start(
+          handler,
+          new CompletionHandler[Value, Value => Domain] {
+            def failed(
+                exception: Throwable,
+                handler: Value => Domain
+            ): Unit = {
+              fenceDsl(Fence, (_: Unit) => throw exception)
+            }
+
+            def completed(
+                result: Value,
+                handler: Value => Domain
+            ): Unit = {
+              fenceDsl(Fence, (_: Unit) => handler(result))
+            }
+          }
+        )
+      )
+
     }
 
 }
