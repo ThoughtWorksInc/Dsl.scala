@@ -67,43 +67,20 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
-//  // FIXME: Shift
-//  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
-//      implicit restDsl: Dsl.Original[Keyword, LeftDomain, Value],
-//      shiftDsl2: Dsl.Original[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
-//  ): Dsl.Original[Keyword, LeftDomain !! RightDomain, Value] = {
-//    new Dsl.Original[Keyword, LeftDomain !! RightDomain, Value] {
-//      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
-//        (continue: RightDomain => LeftDomain) =>
-//          restDsl.cpsApply(keyword, { a =>
-//            restDsl2.cpsApply(handler(a), continue)
-//          })
-//      }
-//    }
-//  }
-
   private def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl.Searching[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! Throwable, Value] = Dsl {
-    (keyword, handler) => continue =>
+    (keyword, handler) => (continue: Throwable => LeftDomain) =>
       restDsl(
         keyword,
-        // Use `new` to support the `return`
-        new (Value => LeftDomain) {
-          def apply(value: Value): LeftDomain = {
-            val protectedContinuation =
-              try {
-                handler(value)
-              } catch {
-                case NonFatal(e) =>
-                  return continue(e)
-              }
-            // FIXME: Shift[Domain, Throwable]
-            protectedContinuation(continue)
-          }
+        { value =>
+          TrampolineContinuation { () =>
+            handler(value)
+          }(continue)
         }
       )
   }
+
   given [Keyword, LeftDomain, Value](using
       Dsl.IsStackSafe[LeftDomain],
       Dsl.Searching[Keyword, LeftDomain, Value]
@@ -125,6 +102,45 @@ object Dsl extends LowPriorityDsl0 {
       ) => Domain
   ) =:= Dsl[Keyword, Domain, Value] =
     summon
+  private[dsl] abstract class TrampolineFunction1[-A, +R] extends (A => R) {
+    protected def step(): A => R
+    @tailrec
+    protected final def last(): A => R = {
+      step() match {
+        case trampoline: TrampolineFunction1[A, R] =>
+          trampoline.last()
+        case notTrampoline =>
+          notTrampoline
+      }
+    }
+
+    def apply(state: A): R = {
+      last()(state)
+    }
+
+  }
+  object TrampolineFunction1 {
+    def apply[A, R](trampoline: TrampolineFunction1[A, R]) = trampoline
+  }
+
+  private[dsl] abstract class TrampolineContinuation[LeftDomain]
+      extends TrampolineFunction1[Throwable => LeftDomain, LeftDomain] {
+
+    override final def apply(handler: Throwable => LeftDomain): LeftDomain = {
+      val protectedContinuation: LeftDomain !! Throwable =
+        try {
+          last()
+        } catch {
+          case NonFatal(e) =>
+            return handler(e)
+        }
+      protectedContinuation(handler)
+    }
+  }
+  private[dsl] object TrampolineContinuation {
+    def apply[LeftDomain](continuation: TrampolineContinuation[LeftDomain]) =
+      continuation
+  }
 
   trait IsStackSafe[Domain]
   object IsStackSafe extends IsStackSafe.LowPriority0:

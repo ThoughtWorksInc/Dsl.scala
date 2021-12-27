@@ -1,6 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 import Dsl.IsKeyword
+import Dsl.!!
 import Dsl.cpsApply
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
@@ -17,19 +18,26 @@ object Suspend extends Suspend.LowPriority0 {
       upstreamIsKeyword: => IsKeyword[Upstream, UpstreamValue]
   ): IsKeyword[Suspend[Upstream], UpstreamValue] with {}
 
-  private[Suspend] trait LowPriority0:
+  private[Suspend] trait LowPriority1:
     given [Keyword, Domain, Value](using
         Dsl.Searching[Keyword, Domain, Value]
     ): Dsl.Composed[Suspend[Keyword], Domain, Value] = Dsl.Composed {
       (keyword: Suspend[Keyword], handler: Value => Domain) =>
         keyword().cpsApply(handler)
     }
+  private[Suspend] trait LowPriority0 extends LowPriority1:
+    given [Keyword, State, Domain, Value](using
+        Dsl.Searching[Keyword, State => Domain, Value]
+    ): Dsl.Composed[Suspend[Keyword], State => Domain, Value] = Dsl.Composed {
+    (keyword: Suspend[Keyword], handler: Value => State => Domain) =>
+      Dsl.TrampolineFunction1(() => keyword().cpsApply(handler))
+    }
 
-  given [Keyword, State, Domain, Value](using
-      Dsl.Searching[Keyword, State => Domain, Value]
-  ): Dsl.Composed[Suspend[Keyword], State => Domain, Value] = Dsl.Composed {
-    (keyword: Suspend[Keyword], handler: Value => State => Domain) => value =>
-      keyword().cpsApply(handler)(value)
+  given [Keyword, Domain, Value](using
+      Dsl.Searching[Keyword, Domain !! Throwable, Value]
+  ): Dsl.Composed[Suspend[Keyword], Domain !! Throwable, Value] = Dsl.Composed {
+    (keyword: Suspend[Keyword], handler: Value => (Domain !! Throwable)) =>
+      Dsl.TrampolineContinuation(() => keyword().cpsApply(handler))
   }
 
   given [Keyword, Result, Value](using
