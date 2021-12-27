@@ -67,43 +67,20 @@ private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
 
 private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
-//  // FIXME: Shift
-//  implicit def continuationDsl[Keyword, LeftDomain, RightDomain, Value](
-//      implicit restDsl: Dsl.Original[Keyword, LeftDomain, Value],
-//      shiftDsl2: Dsl.Original[Shift[LeftDomain, RightDomain], LeftDomain, RightDomain]
-//  ): Dsl.Original[Keyword, LeftDomain !! RightDomain, Value] = {
-//    new Dsl.Original[Keyword, LeftDomain !! RightDomain, Value] {
-//      def cpsApply(keyword: Keyword, handler: Value => LeftDomain !! RightDomain): LeftDomain !! RightDomain = {
-//        (continue: RightDomain => LeftDomain) =>
-//          restDsl.cpsApply(keyword, { a =>
-//            restDsl2.cpsApply(handler(a), continue)
-//          })
-//      }
-//    }
-//  }
-
   private def throwableContinuationDsl[Keyword, LeftDomain, Value](implicit
       restDsl: Dsl.Searching[Keyword, LeftDomain, Value]
   ): Dsl[Keyword, LeftDomain !! Throwable, Value] = Dsl {
-    (keyword, handler) => continue =>
+    (keyword, handler) => (continue: Throwable => LeftDomain) =>
       restDsl(
         keyword,
-        // Use `new` to support the `return`
-        new (Value => LeftDomain) {
-          def apply(value: Value): LeftDomain = {
-            val protectedContinuation =
-              try {
-                handler(value)
-              } catch {
-                case NonFatal(e) =>
-                  return continue(e)
-              }
-            // FIXME: Shift[Domain, Throwable]
-            protectedContinuation(continue)
-          }
+        { value =>
+          TrampolineContinuation { () =>
+            handler(value)
+          }(continue)
         }
       )
   }
+
   given [Keyword, LeftDomain, Value](using
       Dsl.IsStackSafe[LeftDomain],
       Dsl.Searching[Keyword, LeftDomain, Value]
