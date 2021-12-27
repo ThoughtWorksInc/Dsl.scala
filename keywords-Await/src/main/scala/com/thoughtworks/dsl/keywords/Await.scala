@@ -7,6 +7,7 @@ import scala.concurrent.Await.result
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
+import scala.util.*
 
 /** [[Await]] is a [[Dsl.Keyword Keyword]] to extract value from a
   * [[scala.concurrent.Future]].
@@ -113,27 +114,41 @@ import scala.language.implicitConversions
   */
 opaque type Await[+AwaitableValue] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[AwaitableValue]
-object Await extends AwaitJS {
+object Await extends AwaitJS with Await.LowPriority0 {
   @inline def apply[AwaitableValue]: AwaitableValue =:= Await[AwaitableValue] =
     Dsl.Keyword.Opaque.Of.apply
-  given [FutureResult]: IsKeyword[Await[Future[FutureResult]], FutureResult] with {}
+  given [FutureResult]: IsKeyword[Await[Future[FutureResult]], FutureResult]
+    with {}
 
   given [FutureResult, That](using
       ExecutionContext
-  ): Dsl.Original[Await[Future[FutureResult]], Future[That], FutureResult] = Dsl.Original(
-    _ flatMap _)
+  ): Dsl.Original[Await[Future[FutureResult]], Future[That], FutureResult] =
+    Dsl.Original(_ flatMap _)
 
   // // TODO:
   // implicit def tailRecContinuationAwaitDsl[Value](implicit
   //     executionContext: ExecutionContext
   // ): Dsl.Original[Await[Value], TailRec[Unit] !! Throwable, Value]
+  private[Await] trait LowPriority0:
+    inline given [Domain, Value](using
+        fenceDsl: Dsl.Searching[Fence.type, Domain, Unit],
+        liftUnit: Dsl.Lift[Unit, Domain],
+        executionContext: ExecutionContext,
+    ): Dsl.Composed[Await[Future[Value]], Domain, Value] = Dsl.Composed {
+      println(compiletime.codeOf(
+        {(x: Domain) => ()}
+      ))
 
-  given [Value](using
-      ExecutionContext
-  ): Dsl.Original[Await[Future[Value]], Unit !! Throwable, Value] = Dsl.Original {
-    (keyword: Await[Future[Value]], handler: Value => Unit !! Throwable) =>
-      !!.fromTryContinuation[Unit, Value](keyword.onComplete)(handler)
-  }
+      (keyword: Await[Future[Value]], handler: Value => Domain) =>
+        keyword.onComplete {
+          case Failure(e) =>
+            fenceDsl(Fence, (_: Unit) => throw e)
+          case Success(result) =>
+            fenceDsl(Fence, (_: Unit) => handler(result))
+        }
+        liftUnit(())
+    }
+
   extension [FA, A](inline fa: FA)(using
       inline notKeyword: util.NotGiven[
         FA <:< Dsl.Keyword
