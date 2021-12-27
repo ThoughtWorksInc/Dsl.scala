@@ -92,7 +92,9 @@ object TryCatch extends TryCatch.LowPriority0 {
   given [
       LeftDomain,
       Value
-  ]: DslComposer[LeftDomain !! Throwable, Value, LeftDomain !! Throwable] =
+  ](using
+      fenceDsl: Dsl.Searching[Fence.type, LeftDomain, Unit]
+  ): DslComposer[LeftDomain !! Throwable, Value, LeftDomain !! Throwable] =
     DslComposer {
       [BlockKeyword, CaseKeyword] =>
         (
@@ -116,50 +118,40 @@ object TryCatch extends TryCatch.LowPriority0 {
                   outerSuccessHandler: (Value => LeftDomain !! Throwable)
                 ) =>
               outerFailureHandler =>
-                // TODO: Simplify the implementation. We should allow it to throw native unhandled exceptions instead of handling it, assuming there will be another exception handler for it
-                def innerFailureHandler(e: Throwable): LeftDomain = {
-                  catcher.lift(e) match {
-                    case None =>
+                def success(a: Value): LeftDomain !! Throwable = {
+                  failureHandler =>
+                    try {
+                      // TODO: Trampoline
+                      fenceDsl(
+                        Fence,
+                        _ => outerSuccessHandler(a)(outerFailureHandler)
+                      )
+                    } catch {
+                      case NonFatal(nativeThrown) =>
+                        outerFailureHandler(nativeThrown)
+                    }
+                }
+                def innerFailureHandler(e: Throwable) = {
+                  e match {
+                    case catcher(recovered) =>
+                      caseDsl(recovered, success)(outerFailureHandler)
+                    case e =>
                       outerFailureHandler(e)
-                    case Some(recovered) =>
-                      @inline
-                      def recoveredHandler(): LeftDomain = {
-                        locally {
-                          try {
-                            recovered.cpsApply(outerSuccessHandler)
-                          } catch {
-                            case NonFatal(nativeThrown) =>
-                              return outerFailureHandler(nativeThrown)
-                          }
-                        }(outerFailureHandler)
-                      }
-                      recoveredHandler()
                   }
                 }
-
-                def runBlock(): LeftDomain = {
-                  (try {
-                    block().cpsApply { a => hookedFailureHandler =>
-                      @inline
-                      def successHandler(): LeftDomain = {
-                        locally {
-                          try {
-                            outerSuccessHandler(a)
-                          } catch {
-                            case NonFatal(nativeThrown) =>
-                              return outerFailureHandler(nativeThrown)
-                          }
-                        }(outerFailureHandler)
-                      }
-
-                      successHandler()
-                    }
-                  } catch {
-                    case NonFatal(e) =>
-                      return innerFailureHandler(e)
-                  })(innerFailureHandler)
+                try {
+                  fenceDsl(
+                    Fence,
+                    _ =>
+                      blockDsl(
+                        block(),
+                        success
+                      )(innerFailureHandler)
+                  )
+                } catch {
+                  case NonFatal(e) =>
+                    innerFailureHandler(e)
                 }
-                runBlock()
         }
     }
 
