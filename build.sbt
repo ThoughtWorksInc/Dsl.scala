@@ -152,6 +152,7 @@ lazy val `keywords-Await` =
     .dependsOn(
       Dsl,
       `domains-Continuation`,
+      `domains-Fence`,
       `macros-Reset` % Test,
       `domains-Task` % Test,
       `keywords-Get` % Test,
