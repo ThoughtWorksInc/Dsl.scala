@@ -29,8 +29,8 @@ object Suspend extends Suspend.LowPriority0 {
     given [Keyword, State, Domain, Value](using
         Dsl.Searching[Keyword, State => Domain, Value]
     ): Dsl.Composed[Suspend[Keyword], State => Domain, Value] = Dsl.Composed {
-    (keyword: Suspend[Keyword], handler: Value => State => Domain) =>
-      Dsl.TrampolineFunction1(() => keyword().cpsApply(handler))
+      (keyword: Suspend[Keyword], handler: Value => State => Domain) =>
+        Dsl.TrampolineFunction1(() => keyword().cpsApply(handler))
     }
 
   given [Keyword, Domain, Value](using

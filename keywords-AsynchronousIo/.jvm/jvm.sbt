@@ -2,7 +2,8 @@ enablePlugins(Example)
 
 import meta._
 exampleSuperTypes := {
-  val (init"_root_.org.scalatest.freespec.AnyFreeSpec" +: traits) = exampleSuperTypes.value
+  val (init"_root_.org.scalatest.freespec.AnyFreeSpec" +: traits) =
+    exampleSuperTypes.value
   init"_root_.org.scalatest.freespec.AsyncFreeSpec" +: traits
 }
 

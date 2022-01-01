@@ -31,7 +31,11 @@ object Each {
   def apply[Element]: Iterable[Element] =:= Each[Element] =
     Dsl.Keyword.Opaque.Of.apply
 
-  final case class To[+ForYield <: Dsl.For.Yield[Element], Element, +Collection](
+  final case class To[
+      +ForYield <: Dsl.For.Yield[Element],
+      Element,
+      +Collection
+  ](
       factory: Factory[Element, Collection]
   )(val forYield: ForYield)
       extends Dsl.Keyword.Trait
@@ -64,8 +68,7 @@ object Each {
 
   object ToView {
 
-    def apply[Comprehension]
-        : Comprehension =:= Each.ToView[Comprehension] =
+    def apply[Comprehension]: Comprehension =:= Each.ToView[Comprehension] =
       Dsl.Keyword.Opaque.Of.apply
 
     def toKeyword[ComprehensionOrKeyword, Keyword](
@@ -294,7 +297,8 @@ object Each {
       ]] = { case Dsl.For.Yield.Map(upstream, mapper) =>
         FlatMap(
           upstream,
-          (upstreamElement: UpstreamElement) => Pure(collection.View.Single(mapper(upstreamElement)))
+          (upstreamElement: UpstreamElement) =>
+            Pure(collection.View.Single(mapper(upstreamElement)))
         )
       }
 
@@ -350,8 +354,7 @@ object Each {
           Keyword,
           Value
         ]
-    ): Dsl.IsKeyword[Each.ToView[Comprehension], Value]
-      with {}
+    ): Dsl.IsKeyword[Each.ToView[Comprehension], Value] with {}
 
     given [
         Comprehension,
@@ -419,7 +422,10 @@ object Each {
     MappedValue
   ] = Dsl.Composed {
     case (
-          FlatMap(sourceCollection, flatMapper: (Element @unchecked => MappedKeyword)),
+          FlatMap(
+            sourceCollection,
+            flatMapper: (Element @unchecked => MappedKeyword)
+          ),
           handler
         ) =>
       @inline def loop(
@@ -463,7 +469,10 @@ object Each {
     Unit
   ] = Dsl.Composed {
     case (
-          FlatMap(sourceCollection, flatMapper: (Element @unchecked => MappedKeyword)),
+          FlatMap(
+            sourceCollection,
+            flatMapper: (Element @unchecked => MappedKeyword)
+          ),
           handler
         ) =>
       @inline def loop(
