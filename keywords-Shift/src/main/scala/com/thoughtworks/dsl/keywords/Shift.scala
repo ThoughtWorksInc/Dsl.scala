@@ -80,7 +80,9 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
     SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] {
       val restDsl0 =
         apply
-          .liftContra[[X] =>> Dsl.Original[X, LeftDomain, RightDomain]](restDsl);
+          .liftContra[[X] =>> Dsl.Original[X, LeftDomain, RightDomain]](
+            restDsl
+          );
       { (keyword, handler) =>
         keyword { value =>
           restDsl0(handler(value), _)
