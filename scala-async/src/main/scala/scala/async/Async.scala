@@ -22,7 +22,7 @@ import com.thoughtworks.dsl.keywords.Await
   * }
   * }}}
   * @example
-  * {{{
+  *   {{{
   * val sumLengths: Future[Int] = async {
   *   val body1 = fetchURL("https://scala-lang.org")
   *   val body2 = fetchURL("https://docs.scala-lang.org")
@@ -32,7 +32,7 @@ import com.thoughtworks.dsl.keywords.Await
   * async {
   *   await(sumLengths) should be > 50000
   * }
-  * }}}
+  *   }}}
   * @example
   *   Note that in the following program, the second fetch does *not* start
   *   until after the first. If you need to start tasks in parallel, you must do

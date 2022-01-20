@@ -17,13 +17,13 @@ import scala.language.implicitConversions
   *
   * @example
   *   Given a [[scala.concurrent.Future Future]]:
-  * {{{
+  *   {{{
   * import com.thoughtworks.dsl.macros.Reset.Default.*
   * import scala.concurrent.Future
   * val myFuture40 = Future {
   *   40
   * }
-  * }}}
+  *   }}}
   *
   * You can [[Await]] the [[scala.concurrent.Future Future]] in another
   * [[scala.concurrent.Future Future]]
@@ -56,7 +56,7 @@ import scala.language.implicitConversions
   * }}}
   * @example
   *   `!Await` can be used together with `try` / `catch` / `finally`.
-  * {{{
+  *   {{{
   * import scala.concurrent.Future
   * import com.thoughtworks.dsl.macros.Reset.Default.*
   * val buffer = new StringBuffer
@@ -79,11 +79,11 @@ import scala.language.implicitConversions
   *   }
   * }
   * myFuture.map(_.toString should be("Oh No!"))
-  * }}}
+  *   }}}
   * @example
   *   Other keywords, including [[Return]] or [[Get]], can be used together with
   *   [[Await]]
-  * {{{
+  *   {{{
   * import scala.concurrent.Future
   * import com.thoughtworks.dsl.keywords.{Get, Return}
   * import com.thoughtworks.dsl.macros.Reset.Default.*
@@ -107,7 +107,7 @@ import scala.language.implicitConversions
   *   }
   * })
   * myFuture(' ').map(_.toString should be("Oh No!"))
-  * }}}
+  *   }}}
   * @author
   *   杨博 (Yang Bo)
   */

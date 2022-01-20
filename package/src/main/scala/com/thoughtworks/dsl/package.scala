@@ -209,7 +209,7 @@ package com.thoughtworks
   * [[scala.collection.immutable.Stream Stream]] of logs, the return type is now
   * `Stream[String] !! JSONType`, where
   * [[com.thoughtworks.dsl.Dsl.$bang$bang !!]] is `(JSONType => Stream[String])
-  * => Stream[String]`, an alias of continuation-passing style function,
+  * \=> Stream[String]`, an alias of continuation-passing style function,
   * indicating it produces both a [[scala.util.parsing.json.JSONType JSONType]]
   * and a [[scala.Stream Stream]] of logs.
   *

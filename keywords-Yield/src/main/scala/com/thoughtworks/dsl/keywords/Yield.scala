@@ -26,7 +26,7 @@ import scala.language.higherKinds
   *
   * @example
   *   [[Yield]] keywords can be used together with other keywords.
-  * {{{
+  *   {{{
   *           import com.thoughtworks.dsl.macros.Reset.Default.*
   *           def gccFlagBuilder(sourceFile: String, includes: String*) = reset[Stream[String]] {
   *             !Yield("gcc")
@@ -39,7 +39,7 @@ import scala.language.higherKinds
   *           }
   *
   *           gccFlagBuilder("main.c", "lib1/include", "lib2/include") should be(Stream("gcc", "-c", "main.c", "-I", "lib1/include", "-I", "lib2/include"))
-  * }}}
+  *   }}}
   * @see
   *   [[comprehension]] if you want to use traditional `for` comprehension
   *   instead of !-notation.

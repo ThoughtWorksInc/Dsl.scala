@@ -95,7 +95,7 @@ object Task extends TaskPlatformSpecificFunctions {
     * @example
     *   All the code after a `!switchExecutionContext` should be executed on
     *   `executionContext`
-    * {{{
+    *   {{{
     *           import com.thoughtworks.dsl.macros.Reset.Default.*
     *           import com.thoughtworks.dsl.domains.Task
     *           import org.scalatest.Assertion
@@ -109,7 +109,7 @@ object Task extends TaskPlatformSpecificFunctions {
     *
     *           Task.toFuture(myTask)
     *
-    * }}}
+    *   }}}
     */
   @inline
   def switchExecutionContext(executionContext: ExecutionContext): Task[Unit] = {
