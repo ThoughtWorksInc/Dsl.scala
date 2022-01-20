@@ -23,7 +23,7 @@ import scala.util.control.TailCalls.TailRec
   * @example
   *   Given a continuation whose type is `Unit !! Throwable !! Int`, it is
   *   considered as having an exception handler. When an exception is thrown,
-  * {{{
+  *   {{{
   *   import scala.util.control.TailCalls.TailRec
   *   type !![R, +A] = (A => R) => R
   *   val cont: Unit !! Throwable !! Int = _ {
@@ -33,7 +33,7 @@ import scala.util.control.TailCalls.TailRec
   *       42
   *     }
   *   }
-  * }}}
+  *   }}}
   *
   * Then `cpsApply` should catch the exception:
   * {{{
