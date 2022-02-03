@@ -979,7 +979,7 @@ object Reset {
         DontSuspend <: Boolean & Singleton,
         V
     ](
-        body: quoted.Expr[_]
+        body: quoted.Expr[V]
     )(using
         qctx: Quotes,
         translateNestedFunctions: quoted.Type[ShouldResetNestedFunctions],
