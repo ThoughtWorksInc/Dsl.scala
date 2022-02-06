@@ -190,7 +190,7 @@ object Reset {
                     case failure: ImplicitSearchFailure =>
                       report.error(
                         s"The keyword ${quoted.Type.show[K]} is not supported in a `reset` block that returns ${quoted.Type
-                          .show[Domain]}\n${failure.explanation}",
+                            .show[Domain]}\n${failure.explanation}",
                         body.asTerm.underlyingArgument.pos
                       )
                       body.asTerm.asExprOf[Domain]
