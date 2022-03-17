@@ -16,9 +16,9 @@ class ForEachSpec extends AnyFreeSpec with Matchers {
       val seq = 1 to 10
 
       def run(): Unit = reset[Unit] {
-        val plus100 = Seq {
+        val plus100 = Seq(
           !Each(seq) + 100
-        }
+        )
         plus100.length should be(1)
         !Each(plus100)
       }

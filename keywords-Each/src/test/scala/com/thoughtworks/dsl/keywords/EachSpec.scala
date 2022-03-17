@@ -15,27 +15,20 @@ class EachSpec extends AnyFreeSpec with Matchers {
 
     "@reset parameter" in {
       val seq = 1 to 10
-      def run(): Seq[Int] = reset(Seq {
-        val plus100 = reset(Seq {
-          !Each(seq) + 100
-        })
-        plus100.length should be(10)
-        !Each(plus100)
-      })
-
-      val result = run()
-      result.length should be(10)
-      result.last should be(110)
+      val plus100 = reify(
+        Seq { !Each(seq) + 100 }
+      )
+      "plus100.to[Seq[Int]]" shouldNot typeCheck
     }
 
     "reset block" in {
       val seq = 1 to 10
-      def run(): Seq[Int] = reset(Seq {
-        val plus100 = reset {
+      def run() = reset({
+        val plus100: Seq[Int] = reset {
           Seq(!Each(seq) + 100)
         }
         plus100.length should be(10)
-        !Each(plus100)
+        Seq(!Each(plus100))
       })
 
       val result = run()
@@ -43,7 +36,7 @@ class EachSpec extends AnyFreeSpec with Matchers {
       result.last should be(110)
     }
 
-    "block without reset should behave the same as a block with a reset" in {
+    "block without reset should not behave the same as a block with a reset" in {
       val seq = 1 to 10
       def run(): Seq[Int] = reset {
         val plus100 = {
@@ -64,14 +57,16 @@ class EachSpec extends AnyFreeSpec with Matchers {
   "nested" - {
 
     "each" - {
-      "explicit @reset" in {
+      "block" in {
         val seq = 1 to 10
 
         def run(): Seq[Int] = reset {
-          val plus100: Seq[Int] = Seq {
-            !Each(seq) + 100
+          val plus100: Seq[Int] = {
+            Seq(
+              !Each(seq) + 100
+            )
           }
-          plus100.length should be(1)
+          plus100.length should be(10)
           Seq(!Each(plus100))
         }
 
@@ -84,9 +79,9 @@ class EachSpec extends AnyFreeSpec with Matchers {
         val seq = 1 to 10
 
         def run(): Seq[Int] = reset {
-          val plus100 = Seq {
+          val plus100 = Seq(
             !Each(seq) + 100
-          }
+          )
           plus100.length should be(1)
           Seq(!Each(plus100))
         }
@@ -100,9 +95,11 @@ class EachSpec extends AnyFreeSpec with Matchers {
         val seq = 1 to 10
 
         def run(): Seq[Int] = reset {
-          def plus100 = reset(Seq {
-            !Each(seq) + 100
-          })
+          def plus100 = reset(
+            Seq(
+              !Each(seq) + 100
+            )
+          )
           plus100.length should be(10)
           Seq(!Each(plus100))
         }
