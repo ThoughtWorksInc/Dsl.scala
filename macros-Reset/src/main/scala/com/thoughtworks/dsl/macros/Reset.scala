@@ -100,7 +100,7 @@ object Reset {
     def reify[V](
         body: quoted.Expr[_]
     )(using valueType: quoted.Type[V]): quoted.Expr[_] = {
-      val bodyTerm = body.asTerm.underlyingArgument
+      val bodyTerm = body.asTerm/*.underlyingArgument*/
       val reifiedTerm = if (dontSuspend) {
         KeywordTree(bodyTerm).keywordTerm
       } else {
@@ -164,7 +164,7 @@ object Reset {
         valueType: quoted.Type[Value],
         domainType: quoted.Type[Domain]
     ): quoted.Expr[Domain] = {
-      KeywordTree(body.asTerm.underlyingArgument) match {
+      KeywordTree(body.asTerm/*.underlyingArgument*/) match {
         case Pure(pure, _)
             if dontSuspend && TypeRepr.of[Value] <:< TypeRepr.of[Domain] =>
           pure.asExprOf[Domain]
@@ -299,6 +299,10 @@ object Reset {
               }
             }
             loop(elems, Queue.empty)
+          case namedArg@NamedArg(name, arg)=>
+            KeywordTree(arg).flatMap { pureArg =>
+              Pure(NamedArg.copy(namedArg)(name, pureArg), term.tpe)
+            }
           case select @ Select(qualifier, name) =>
             KeywordTree(qualifier).flatMap { pureQualifier =>
               Pure(Select.copy(select)(pureQualifier, name), term.tpe)
@@ -398,6 +402,8 @@ object Reset {
                 Pure(Assign.copy(assign)(pureLhs, pureRhs), term.tpe)
               }
             }
+          case Inlined(_, Seq(), term) =>
+            KeywordTree(term)
           case Inlined(_, bindings, term) =>
             KeywordTree(qctx.reflect.Block(bindings, term))
           case whileTerm @ qctx.reflect.While(cond, body) =>
@@ -1000,7 +1006,7 @@ object Reset {
               Macros[qctx.type](
                 shouldResetNestedFunctions = translateNestedFunction,
                 dontSuspend = dontSuspend
-              ).reify[V](body /*.underlyingArgument*/ )
+              ).reify[V](body /*/*.underlyingArgument*/*/ )
           }
       }
     }

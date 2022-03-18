@@ -98,8 +98,10 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
 
     val task1: Task[Int] = Task.now(1)
 
-    val ts = *[Task] /* .join */ apply Seq {
-      !Each(0 until 10) + !Shift(task1)
+    val ts = *[Task] {
+      Seq(
+        !Each(0 until 10) + !Shift(task1)
+      )
     }
 
     !Shift(ts) should be(1 until 11)
