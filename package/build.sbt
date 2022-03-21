@@ -14,7 +14,7 @@ libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.15.4" % Optional
 libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.2.8" % Optional
 libraryDependencies += "io.monix" %% "monix" % "3.4.0" % Optional
 libraryDependencies += "com.typesafe.akka" %% "akka-http" % "10.2.9" % Optional cross CrossVersion.for3Use2_13
-libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.6.18" % Optional cross CrossVersion.for3Use2_13 intransitive ()
+libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.6.19" % Optional cross CrossVersion.for3Use2_13 intransitive ()
 
 import Ordering.Implicits._
 sourceGenerators in Test := {
