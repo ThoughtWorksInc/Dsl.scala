@@ -10,7 +10,7 @@ addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.1.2")
 
 addSbtPlugin("com.thoughtworks.example" % "sbt-example" % "9.2.0")
 
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.1.0")
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.2.0")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.9.0")
 
