@@ -19,12 +19,15 @@ import scala.util.Success
 class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   "div by zero" in {
     val reified = reify(0 / 0)
-    summon[reified.type <:< com.thoughtworks.dsl.keywords.Typed[
-      com.thoughtworks.dsl.keywords.Suspend[
-        com.thoughtworks.dsl.keywords.Pure[Int]
-      ],
-      Int
-    ]]
+    summon[
+      reified.type <:<
+        com.thoughtworks.dsl.keywords.Typed[
+          com.thoughtworks.dsl.keywords.Suspend[
+            com.thoughtworks.dsl.keywords.Pure[Int]
+          ],
+          Int
+        ]
+    ]
     val future = *[Future] {
       0 / 0
     }
@@ -73,18 +76,17 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       inner1
     }
     summon[
-      ast1.type
-        <:<
-          Dsl.For.Yield.FlatMap[
-            Await[Future[Int]],
+      ast1.type <:<
+        Dsl.For.Yield.FlatMap[
+          Await[Future[Int]],
+          Int,
+          Dsl.For.Yield.Map[
+            Each[Int],
             Int,
-            Dsl.For.Yield.Map[
-              Each[Int],
-              Int,
-              Int
-            ],
             Int
-          ]
+          ],
+          Int
+        ]
     ]
 
     *[Future] {
@@ -100,26 +102,23 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       j <- Each(0 until 10)
     } yield 111
     summon[
-      inner2.type
-        <:<
-          Dsl.For.Yield.Map[Each[Int], Int, Int]
+      inner2.type <:< Dsl.For.Yield.Map[Each[Int], Int, Int]
     ]
     val ast2 = Await(Future(1)).flatMap { i =>
       inner2
     }
     summon[
-      ast2.type
-        <:<
-          Dsl.For.Yield.FlatMap[
-            Await[Future[Int]],
+      ast2.type <:<
+        Dsl.For.Yield.FlatMap[
+          Await[Future[Int]],
+          Int,
+          Dsl.For.Yield.Map[
+            Each[Int],
             Int,
-            Dsl.For.Yield.Map[
-              Each[Int],
-              Int,
-              Int
-            ],
             Int
-          ]
+          ],
+          Int
+        ]
     ]
     succeed
   }
@@ -131,15 +130,14 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       j <- Each(0 until 10)
     } yield 111)
     summon[
-      ast3.type
-        <:<
+      ast3.type <:<
+        FlatMap[
+          Await[Future[Int]],
           FlatMap[
-            Await[Future[Int]],
-            FlatMap[
-              Each[Int],
-              Pure[collection.View[Int]]
-            ]
+            Each[Int],
+            Pure[collection.View[Int]]
           ]
+        ]
     ]
     succeed
   }
@@ -183,9 +181,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
     val reified = reify {
       !Await(Future(!Await(Future(1L))))
     }
-    summon[reified.type <:< Typed[Suspend[FlatMap[Await[Future[Long]], Await[
-      Future[Long]
-    ]]], Long]]
+    summon[
+      reified.type <:<
+        Typed[Suspend[FlatMap[Await[Future[Long]], Await[
+          Future[Long]
+        ]]], Long]
+    ]
     summon[
       Run[
         FlatMap[Await[Future[Long]], Await[Future[Long]]],
@@ -203,9 +204,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       val i = !Await(Future(super.getClass.getSimpleName))
       !Await(Future(i))
     }
-    summon[reified.type <:< Typed[Suspend[
-      FlatMap[Await[Future[String]], Await[Future[String]]]
-    ], String]]
+    summon[
+      reified.type <:<
+        Typed[Suspend[
+          FlatMap[Await[Future[String]], Await[Future[String]]]
+        ], String]
+    ]
     summon[
       Run[
         FlatMap[Await[Future[String]], Await[Future[String]]],
@@ -231,9 +235,12 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
       }
       !Await(Future(A.j))
     }
-    summon[reified.type <:< Typed[Suspend[FlatMap[Await[Future[Long]], Await[
-      Future[Long]
-    ]]], Long]]
+    summon[
+      reified.type <:<
+        Typed[Suspend[FlatMap[Await[Future[Long]], Await[
+          Future[Long]
+        ]]], Long]
+    ]
     summon[
       Run[
         FlatMap[Await[Future[Long]], Await[Future[Long]]],
@@ -334,12 +341,10 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
         reified.type <:<
           Typed[Suspend[FlatMap[
             Pure[Int],
-            Match.WithIndex[(0), Pure[LazyList[Nothing]]]
-              +:
-                Match.WithIndex[(1), FlatMap[Yield[Int], Pure[
-                  LazyList[Int]
-                ]]]
-                +: Nothing
+            Match.WithIndex[(0), Pure[LazyList[Nothing]]] +:
+              Match.WithIndex[(1), FlatMap[Yield[Int], Pure[
+                LazyList[Int]
+              ]]] +: Nothing
           ]], LazyList[Int]]
       ]
       reified.as[LazyList[Int]]
@@ -369,8 +374,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
             FlatMap[Await[
               Future[Int]
             ], Pure[String]]
-          ]]
-            +: Nothing,
+          ]] +: Nothing,
           Pure[Unit]
         ]], String]
     ]
@@ -422,8 +426,7 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
           FlatMap[Await[
             Future[Int]
           ], Pure[String]]
-        ]]
-          +: Nothing]], String]
+        ]] +: Nothing]], String]
     ]
     reified.to[Future].map {
       _ should be("Cannot divide 3 by 0")

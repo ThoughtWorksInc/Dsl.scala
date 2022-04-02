@@ -14,6 +14,5 @@ class DottyIssue14510Spec extends AnyFreeSpec with Matchers {
 
     compareEnumValue() should be(true)
 
-
   }
 }
