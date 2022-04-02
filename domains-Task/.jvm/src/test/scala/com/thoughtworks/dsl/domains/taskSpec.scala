@@ -37,15 +37,12 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
         reified.type <:<
           Typed[Suspend[FlatMap[
             Pure[n.type],
-            Match.WithIndex[(0), Pure[(0)]]
-              +:
-                Match.WithIndex[(1), Pure[(1)]]
-                +:
-                Match.WithIndex[(2), FlatMap[
-                  Shift[Task.TaskDomain, Int],
-                  FlatMap[Shift[Task.TaskDomain, Int], Pure[Int]]
-                ]]
-                +: Nothing
+            Match.WithIndex[(0), Pure[(0)]] +:
+              Match.WithIndex[(1), Pure[(1)]] +:
+              Match.WithIndex[(2), FlatMap[
+                Shift[Task.TaskDomain, Int],
+                FlatMap[Shift[Task.TaskDomain, Int], Pure[Int]]
+              ]] +: Nothing
           ]], Int]
       ]
       Task {
@@ -71,12 +68,15 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       } else {
         accumulator
       })
-      summon[reified.type <:< Typed[Suspend[If[Pure[
-        Boolean
-      ], Shift[
-        Task.TaskDomain,
-        Int
-      ], Pure[Int]]], Int]]
+      summon[
+        reified.type <:<
+          Typed[Suspend[If[Pure[
+            Boolean
+          ], Shift[
+            Task.TaskDomain,
+            Int
+          ], Pure[Int]]], Int]
+      ]
       Task {
         if (i < 10000) {
           !Shift(loop(i + 1, accumulator + i))
