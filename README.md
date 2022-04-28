@@ -1,6 +1,6 @@
 # Dsl.scala <a href="http://thoughtworks.com/"><img align="right" src="https://www.thoughtworks.com/imgs/tw-logo.png" title="ThoughtWorks" height="15"/></a>
 
-[![Build Status](https://travis-ci.org/ThoughtWorksInc/Dsl.scala.svg?branch=master)](https://travis-ci.org/ThoughtWorksInc/Dsl.scala)
+[![Scala CI](https://github.com/ThoughtWorksInc/Dsl.scala/actions/workflows/scala.yml/badge.svg?branch=1.5.x)](https://github.com/ThoughtWorksInc/Dsl.scala/actions/workflows/scala.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/com.thoughtworks.dsl/dsl_2.13.svg)](https://search.maven.org/search?q=g:com.thoughtworks.dsl)
 [![Scaladoc](https://javadoc.io/badge/com.thoughtworks.dsl/dsl_2.12.svg?label=scaladoc)](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/index.html) [![Join the chat at https://gitter.im/ThoughtWorksInc/Dsl.scala](https://badges.gitter.im/ThoughtWorksInc/Dsl.scala.svg)](https://gitter.im/ThoughtWorksInc/Dsl.scala?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
