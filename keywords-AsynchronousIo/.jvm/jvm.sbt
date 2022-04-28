@@ -7,6 +7,6 @@ exampleSuperTypes := {
   init"_root_.org.scalatest.freespec.AsyncFreeSpec" +: traits
 }
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.11" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.12" % Test
 
 libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.2.8" % Test

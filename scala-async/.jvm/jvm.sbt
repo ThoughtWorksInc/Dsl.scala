@@ -4,7 +4,7 @@ libraryDependencies += "com.typesafe.akka" %% "akka-actor-typed" % "2.6.19" % Te
 
 libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.6.19" % Test cross CrossVersion.for3Use2_13
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.11" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.12" % Test
 
 enablePlugins(Example)
 
