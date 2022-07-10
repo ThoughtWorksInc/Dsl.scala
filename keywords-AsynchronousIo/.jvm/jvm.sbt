@@ -9,4 +9,4 @@ exampleSuperTypes := {
 
 libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.12" % Test
 
-libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.2.8" % Test
+libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.3.0" % Test
