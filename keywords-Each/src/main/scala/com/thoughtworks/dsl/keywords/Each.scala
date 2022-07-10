@@ -83,7 +83,7 @@ object Each {
     object ToKeyword {
 
       def apply[ComprehensionOrKeyword, Keyword]: (
-          ComprehensionOrKeyword => Keyword
+        ComprehensionOrKeyword => Keyword
       ) =:= ToKeyword[ComprehensionOrKeyword, Keyword] = summon
 
       given [

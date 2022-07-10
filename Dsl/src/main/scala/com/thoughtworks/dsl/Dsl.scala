@@ -96,10 +96,10 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 object Dsl extends LowPriorityDsl0 {
   def apply[Keyword, Domain, Value]: (
-      (
-          Keyword,
-          (Value => Domain)
-      ) => Domain
+    (
+        Keyword,
+        (Value => Domain)
+    ) => Domain
   ) =:= Dsl[Keyword, Domain, Value] =
     summon
   private[dsl] abstract class TrampolineFunction1[-A, +R] extends (A => R) {
@@ -165,10 +165,10 @@ object Dsl extends LowPriorityDsl0 {
       Dsl[Keyword, Domain, Value]
     object StackSafe:
       def apply[Keyword, Domain, Value]: (
-          (
-              Keyword,
-              (Value => Domain)
-          ) => Domain
+        (
+            Keyword,
+            (Value => Domain)
+        ) => Domain
       ) =:= StackSafe[Keyword, Domain, Value] =
         summon
 
@@ -183,10 +183,10 @@ object Dsl extends LowPriorityDsl0 {
       Dsl[Keyword, Domain, Value]
     object StackUnsafe:
       def apply[Keyword, Domain, Value]: (
-          (
-              Keyword,
-              (Value => Domain)
-          ) => Domain
+        (
+            Keyword,
+            (Value => Domain)
+        ) => Domain
       ) =:= StackUnsafe[Keyword, Domain, Value] =
         summon
 
@@ -202,10 +202,10 @@ object Dsl extends LowPriorityDsl0 {
   ] = Dsl[Keyword, Domain, Value]
   object Composed:
     def apply[Keyword, Domain, Value]: (
-        (
-            Keyword,
-            (Value => Domain)
-        ) => Domain
+      (
+          Keyword,
+          (Value => Domain)
+      ) => Domain
     ) =:= Composed[Keyword, Domain, Value] =
       summon
 
@@ -220,10 +220,10 @@ object Dsl extends LowPriorityDsl0 {
     Dsl[Keyword, Domain, Value]
   object Original:
     def apply[Keyword, Domain, Value]: (
-        (
-            Keyword,
-            (Value => Domain)
-        ) => Domain
+      (
+          Keyword,
+          (Value => Domain)
+      ) => Domain
     ) =:= Original[Keyword, Domain, Value] =
       summon
 
