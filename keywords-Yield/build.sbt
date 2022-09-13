@@ -1,8 +1,8 @@
-libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.0" % Test
+libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.1" % Test
 
 testFrameworks += new TestFramework("utest.runner.Framework")
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.12" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.13" % Test
 
 scalacOptions in Compile ++= {
   scalaBinaryVersion.value match {
