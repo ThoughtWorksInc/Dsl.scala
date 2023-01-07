@@ -16,9 +16,11 @@ import Dsl.Lift
   */
 opaque type Return[+ReturnValue] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[ReturnValue]
+@inline def Return[ReturnValue](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): ReturnValue =:= Return[ReturnValue] =
+  Dsl.Keyword.Opaque.Of
 object Return {
-  @inline def apply[ReturnValue]: ReturnValue =:= Return[ReturnValue] =
-    Dsl.Keyword.Opaque.Of.apply
 
   given [ReturnValue]: IsKeyword[Return[ReturnValue], Nothing] with {}
 

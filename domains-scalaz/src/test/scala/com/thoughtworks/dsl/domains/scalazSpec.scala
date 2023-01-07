@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package domains
 
 import com.thoughtworks.dsl.macros.Reset.Default.*
-import com.thoughtworks.dsl.Dsl.!!
+
 import _root_.scalaz.\/
 import _root_.scalaz.\/-
 import _root_.scalaz.OptionT

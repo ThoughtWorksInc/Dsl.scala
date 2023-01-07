@@ -46,6 +46,9 @@ import scala.language.higherKinds
   */
 opaque type Yield[+Element] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[Element]
+def Yield[Element](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): Element =:= Yield[Element] = Dsl.Keyword.Opaque.Of
 
 private[keywords] trait LowPriorityYield3 {
 
@@ -57,13 +60,13 @@ private[keywords] trait LowPriorityYield3 {
       : Dsl.Original[From[FromCollection], Iterator[A], Unit] =
     Dsl.Original[From[FromCollection], Iterator[A], Unit] {
       (keyword: From[FromCollection], generateTail: Unit => Iterator[A]) =>
-        From.apply.flip(keyword).toIterator ++ generateTail(())
+        From.flip(keyword).toIterator ++ generateTail(())
     }
 
   given [A, B >: A]: Dsl.Original[Yield[A], Iterator[B], Unit] =
     Dsl.Original[Yield[A], Iterator[B], Unit] {
       (keyword: Yield[A], generateTail: Unit => Iterator[B]) =>
-        Iterator.single(Yield.apply.flip(keyword)) ++ generateTail(())
+        Iterator.single(Yield.flip(keyword)) ++ generateTail(())
     }
 }
 
@@ -75,14 +78,14 @@ private[keywords] trait LowPriorityYield1 extends LowPriorityYield3 {
   ]]: Dsl.Original[From[FromCollection], Collection[A], Unit] =
     Dsl.Original[From[FromCollection], Collection[A], Unit] {
       (keyword: From[FromCollection], generateTail: Unit => Collection[A]) =>
-        From.apply.flip(keyword).toIterable ++: generateTail(())
+        From.flip(keyword).toIterable ++: generateTail(())
     }
 
   given [A, B >: A, Collection[+X] <: SeqOps[X, Collection, Collection[X]]]
       : Dsl.Original[Yield[A], Collection[B], Unit] =
     Dsl.Original[Yield[A], Collection[B], Unit] {
       (keyword: Yield[A], generateTail: Unit => Collection[B]) =>
-        Yield.apply.flip(keyword) +: generateTail(())
+        Yield.flip(keyword) +: generateTail(())
     }
 
 }
@@ -91,7 +94,6 @@ private[keywords] trait LowPriorityYield0 extends LowPriorityYield1
 object Yield extends LowPriorityYield0 {
 
   given [Element]: IsKeyword[Yield[Element], Unit] with {}
-  def apply[Element]: Element =:= Yield[Element] = Dsl.Keyword.Opaque.Of.apply
   def apply[A](element0: A, element1: A, elements: A*) = {
     From(element0 +: element1 +: elements)
   }
@@ -124,12 +126,12 @@ object Yield extends LowPriorityYield0 {
           )
       }
   }
+  def From[FromCollection <: TraversableOnce[_]](using
+      dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+  ): FromCollection =:= From[FromCollection] = Dsl.Keyword.Opaque.Of
   object From extends LowPriorityFrom0 {
     given [FromCollection <: TraversableOnce[_]]
         : IsKeyword[From[FromCollection], Unit] with {}
-
-    def apply[FromCollection <: TraversableOnce[_]]
-        : FromCollection =:= From[FromCollection] = Dsl.Keyword.Opaque.Of.apply
 
     extension [A, E](inline a: A)(using
         inline notKeyword: util.NotGiven[

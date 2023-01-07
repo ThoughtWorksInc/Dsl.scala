@@ -6,9 +6,11 @@ import scala.language.implicitConversions
 opaque type NoneSafe[+A] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[Option[A]]
 
+def NoneSafe[A](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): Option[A] =:= NoneSafe[A] = Dsl.Keyword.Opaque.Of
 object NoneSafe {
   given [A]: IsKeyword[NoneSafe[A], A] with {}
-  def apply[A]: Option[A] =:= NoneSafe[A] = Dsl.Keyword.Opaque.Of.apply
 
   given [A, Domain](using
       continueDsl: Dsl.Searching[Return[None.type], Domain, Nothing]

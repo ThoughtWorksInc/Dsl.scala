@@ -3,7 +3,7 @@ package keywords
 
 import com.thoughtworks.dsl.macros.Reset.Default.*
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.!!
+
 import com.thoughtworks.dsl.Dsl.IsKeyword
 import com.thoughtworks.dsl.keywords.TryFinally
 
@@ -21,6 +21,9 @@ import scala.util.control.NonFatal
   *   [[dsl]] for usage of this [[Using]] keyword in continuations
   */
 opaque type Using[+R] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[R]
+def Using[R](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): R =:= Using[R] = Dsl.Keyword.Opaque.Of
 
 object Using {
   given [R]: IsKeyword[Using[R], R] with {}
@@ -72,8 +75,6 @@ object Using {
     * }}}
     */
   def scopeExit(r: ScopeExitHandler): Using[ScopeExitHandler] = Using(r)
-
-  def apply[R]: R =:= Using[R] = Dsl.Keyword.Opaque.Of.apply
 
   given [
       R <: AutoCloseable,

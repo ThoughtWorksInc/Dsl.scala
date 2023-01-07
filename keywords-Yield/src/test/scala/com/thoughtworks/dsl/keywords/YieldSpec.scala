@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 import com.thoughtworks.dsl.macros.Reset.Default.*
-import com.thoughtworks.dsl.Dsl.!!
+
 import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
 import scala.runtime.NonLocalReturnControl
@@ -407,7 +407,7 @@ object YieldSpec extends TestSuite {
   }
 }
 
-import com.thoughtworks.dsl.Dsl.!!
+
 
 import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
