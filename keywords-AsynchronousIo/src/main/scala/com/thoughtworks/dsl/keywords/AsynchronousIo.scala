@@ -4,7 +4,7 @@ import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels._
 
-import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
+import com.thoughtworks.dsl.Dsl.IsKeyword
 
 import scala.util.control.NonFatal
 import scala.annotation.unchecked.uncheckedVariance

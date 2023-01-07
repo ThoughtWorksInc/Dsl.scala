@@ -2,7 +2,6 @@ package com.thoughtworks.dsl
 package domains
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.!!
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
@@ -217,7 +216,7 @@ object scalaz extends scalaz.LowPriority0 {
       lift: Dsl.Lift[G[A], F[A]]
   ): Dsl.Original[Monadic[G[A]], F[B], A] =
     Dsl.Original { (keyword: Monadic[G[A]], handler: A => F[B]) =>
-      monad.bind(lift(Monadic.apply.flip(keyword)))(
+      monad.bind(lift(Monadic.flip(keyword)))(
         handler
       )
     }

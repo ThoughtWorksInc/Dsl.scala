@@ -62,10 +62,12 @@ import com.thoughtworks.dsl.Dsl.IsKeyword
   *   杨博 (Yang Bo)
   */
 opaque type Put[+S] <: Dsl.Keyword.Opaque = Dsl.Keyword.Opaque.Of[S]
+def Put[S](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): S =:= Put[S] = Dsl.Keyword.Opaque.Of
 
 object Put {
   given [S]: IsKeyword[Put[S], Unit] with {}
-  def apply[S]: S =:= Put[S] = Dsl.Keyword.Opaque.Of.apply
 
   given [S0, S >: S0, A]: Dsl.Original[Put[S0], S => A, Unit] =
     Dsl.Original[Put[S0], S => A, Unit] {

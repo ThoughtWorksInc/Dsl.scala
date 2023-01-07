@@ -1,6 +1,5 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.!!
 import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 import scala.concurrent._
@@ -27,19 +26,18 @@ object TryCatch extends TryCatch.LowPriority0 {
         Dsl.Searching[BlockKeyword, BlockDomain, Value],
         Dsl.Searching[CaseKeyword, BlockDomain, Value]
     ) ?=> Dsl.Composed[TryCatch[BlockKeyword, CaseKeyword], OuterDomain, Value]
-  object DslComposer:
-    def apply[OuterDomain, Value, BlockDomain]: (
-      [
-          BlockKeyword,
-          CaseKeyword
-      ] => (
-          Dsl.Searching[BlockKeyword, BlockDomain, Value],
-          Dsl.Searching[CaseKeyword, BlockDomain, Value]
-      ) ?=> Dsl.Composed[TryCatch[
+  def DslComposer[OuterDomain, Value, BlockDomain]: (
+    [
         BlockKeyword,
         CaseKeyword
-      ], OuterDomain, Value]
-    ) =:= DslComposer[OuterDomain, Value, BlockDomain] = summon
+    ] => (
+        Dsl.Searching[BlockKeyword, BlockDomain, Value],
+        Dsl.Searching[CaseKeyword, BlockDomain, Value]
+    ) ?=> Dsl.Composed[TryCatch[
+      BlockKeyword,
+      CaseKeyword
+    ], OuterDomain, Value]
+  ) =:= DslComposer[OuterDomain, Value, BlockDomain] = summon
 
   private[TryCatch] trait LowPriority0:
     given [

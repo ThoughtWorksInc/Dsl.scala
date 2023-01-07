@@ -2,7 +2,7 @@ package com.thoughtworks.dsl
 package keywords
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
+import com.thoughtworks.dsl.Dsl.IsKeyword
 
 import scala.collection._
 import scala.language.implicitConversions
@@ -27,9 +27,12 @@ import scala.collection.mutable.Builder
   */
 opaque type Each[+Element] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[Iterable[Element]]
+
+def Each[Element](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): Iterable[Element] =:= Each[Element] =
+  Dsl.Keyword.Opaque.Of
 object Each {
-  def apply[Element]: Iterable[Element] =:= Each[Element] =
-    Dsl.Keyword.Opaque.Of.apply
 
   final case class To[
       +ForYield <: Dsl.For.Yield[Element],
@@ -66,10 +69,11 @@ object Each {
   opaque type ToView[+Comprehension] <: Dsl.Keyword.Opaque =
     Dsl.Keyword.Opaque.Of[Comprehension]
 
+  def ToView[Comprehension](using
+      dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+  ): Comprehension =:= Each.ToView[Comprehension] =
+    Dsl.Keyword.Opaque.Of
   object ToView {
-
-    def apply[Comprehension]: Comprehension =:= Each.ToView[Comprehension] =
-      Dsl.Keyword.Opaque.Of.apply
 
     def toKeyword[ComprehensionOrKeyword, Keyword](
         comprehension: ComprehensionOrKeyword
@@ -268,7 +272,7 @@ object Each {
       ], FlatMap[
         Upstream,
         Pure[Unit]
-      ]] = Pure.apply.liftCo[[X] =>> ToKeyword[Dsl.For.Do.Foreach[
+      ]] = Pure.liftCo[[X] =>> ToKeyword[Dsl.For.Do.Foreach[
         Upstream,
         UpstreamElement,
       ], FlatMap[

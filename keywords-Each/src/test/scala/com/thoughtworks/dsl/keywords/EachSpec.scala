@@ -1,7 +1,7 @@
 package com.thoughtworks.dsl
 package keywords
 
-import com.thoughtworks.dsl.Dsl.!!
+
 import com.thoughtworks.dsl.macros.Reset.Default.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers

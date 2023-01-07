@@ -3,7 +3,6 @@ package keywords
 import Dsl.IsKeyword
 
 import com.thoughtworks.dsl.Dsl
-import com.thoughtworks.dsl.Dsl.!!
 import com.thoughtworks.dsl.keywords.Shift.{
   SameDomainStackSafeShiftDsl,
   StackSafeShiftDsl
@@ -64,9 +63,8 @@ private[keywords] trait LowPriorityShift1 {
   @inline
   implicit def stackUnsafeShiftDsl[Domain, Value]
       : Dsl.Original[Shift[Domain, Value], Domain, Value] =
-    Dsl.Original[Shift[Domain, Value], Domain, Value] {
-      (shift: Shift[Domain, Value], handler: Value => Domain) =>
-        Shift.apply.flip(shift)(handler)
+    Dsl.Original { (shift: Shift[Domain, Value], handler: Value => Domain) =>
+      Shift.flip(shift)(handler)
     }
 
 }
@@ -79,7 +77,7 @@ private[keywords] trait LowPriorityShift0 extends LowPriorityShift1 {
   ): SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] =
     SameDomainStackSafeShiftDsl[LeftDomain !! RightDomain, Value] {
       val restDsl0 =
-        apply
+        Shift
           .liftContra[[X] =>> Dsl.Original[X, LeftDomain, RightDomain]](
             restDsl
           );
@@ -99,19 +97,18 @@ object Shift extends LowPriorityShift0 {
     Domain,
     Value
   ], NewDomain, Value] = Dsl.Original[Shift[Domain, Value], NewDomain, Value]
-  object StackSafeShiftDsl:
-    def apply[Domain, NewDomain, Value]: (
-      (
-          Shift[Domain, Value],
-          Value => NewDomain
-      ) => NewDomain
-    ) =:= StackSafeShiftDsl[Domain, NewDomain, Value] =
-      Dsl.Original.apply[Shift[Domain, Value], NewDomain, Value]
+  def StackSafeShiftDsl[Domain, NewDomain, Value]: (
+    (
+        Shift[Domain, Value],
+        Value => NewDomain
+    ) => NewDomain
+  ) =:= StackSafeShiftDsl[Domain, NewDomain, Value] =
+    Dsl.Original[Shift[Domain, Value], NewDomain, Value]
 
   private[keywords] type SameDomainStackSafeShiftDsl[Domain, Value] =
     StackSafeShiftDsl[Domain, Domain, Value]
-  object SameDomainStackSafeShiftDsl:
-    def apply[Domain, Value] = StackSafeShiftDsl[Domain, Domain, Value]
+  def SameDomainStackSafeShiftDsl[Domain, Value] =
+    StackSafeShiftDsl[Domain, Domain, Value]
 
   extension [C, R, A](inline fa: C)(using
       inline notKeyword: util.NotGiven[
@@ -205,6 +202,8 @@ object Shift extends LowPriorityShift0 {
         taskFlatMap(keyword, handler)
     }
 
-  def apply[R, A]: (R !! A) =:= Shift[R, A] = Dsl.Keyword.Opaque.Of.apply
-
 }
+
+def Shift[R, A](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): (R !! A) =:= Shift[R, A] = Dsl.Keyword.Opaque.Of

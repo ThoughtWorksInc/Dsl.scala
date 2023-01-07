@@ -19,6 +19,10 @@ import scala.language.implicitConversions
 opaque type Monadic[+FA] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[FA]
 
+@inline def Monadic[FA](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): FA =:= Monadic[FA] = Dsl.Keyword.Opaque.Of
+
 object Monadic {
 
   extension [FA, F[_], A](inline fa: FA)(using
@@ -29,8 +33,6 @@ object Monadic {
   )
     transparent inline def unary_! : A =
       Dsl.shift[Monadic[FA], A](Monadic[FA](fa)): A
-
-  @inline def apply[FA]: FA =:= Monadic[FA] = Dsl.Keyword.Opaque.Of.apply
 
   given [FA <: F[A], F[_], A]: IsKeyword[Monadic[FA], A] with {}
 }
