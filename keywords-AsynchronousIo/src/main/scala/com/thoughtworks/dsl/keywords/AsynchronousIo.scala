@@ -94,7 +94,7 @@ trait AsynchronousIo[+Value] extends Any with Dsl.Keyword.Trait {
 
 object AsynchronousIo {
   given [Keyword <: AsynchronousIo[Value], Value]: IsKeyword[Keyword, Value]
-    with {}
+  with {}
   final case class Connect(
       socket: AsynchronousSocketChannel,
       remote: SocketAddress

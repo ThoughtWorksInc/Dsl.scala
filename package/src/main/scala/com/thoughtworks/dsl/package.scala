@@ -189,7 +189,7 @@ package com.thoughtworks
   *
   * {{{
   *           import com.thoughtworks.dsl.keywords.Yield
-  *           
+  *
   *           import scala.util.parsing.json._
   *           def parseAndLog1(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = { (callback: JSONType => Stream[String]) =>
   *             !Yield(s"I am going to parse the JSON text $jsonContent...")
@@ -229,7 +229,7 @@ package com.thoughtworks
   *
   * {{{
   *           import com.thoughtworks.dsl.keywords.Yield
-  *           
+  *
   *           import scala.util.parsing.json._
   *           def parseAndLog2(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = _ {
   *             !Yield(s"I am going to parse the JSON text $jsonContent...")
@@ -263,7 +263,7 @@ package com.thoughtworks
   *
   * {{{
   *           import com.thoughtworks.dsl.keywords.Yield
-  *           
+  *
   *           import scala.util.parsing.json._
   *           def parseAndLog3(jsonContent: String, defaultValue: JSONType): Stream[String] !! JSONType = !! {
   *             !Yield(s"I am going to parse the JSON text $jsonContent...")
@@ -308,7 +308,7 @@ package com.thoughtworks
   * `Stream[String] !! Throwable !! Int` domain.
   *
   * {{{
-  *           
+  *
   *           import com.thoughtworks.dsl.keywords.Using
   *           import com.thoughtworks.dsl.keywords.Yield
   *           import com.thoughtworks.dsl.keywords.Shift._

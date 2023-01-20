@@ -407,8 +407,6 @@ object YieldSpec extends TestSuite {
   }
 }
 
-
-
 import scala.annotation.tailrec
 import scala.collection.{LinearSeq, SeqView}
 import scala.runtime.NonLocalReturnControl
