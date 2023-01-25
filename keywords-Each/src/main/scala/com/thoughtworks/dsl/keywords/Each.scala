@@ -87,7 +87,7 @@ object Each {
     object ToKeyword {
 
       def apply[ComprehensionOrKeyword, Keyword]: (
-        ComprehensionOrKeyword => Keyword
+          ComprehensionOrKeyword => Keyword
       ) =:= ToKeyword[ComprehensionOrKeyword, Keyword] = summon
 
       given [
@@ -105,7 +105,7 @@ object Each {
       ): ToKeyword[Dsl.For.Do.FlatForeach[
         Upstream,
         UpstreamElement,
-        Nested,
+        Nested
       ], FlatMap[
         UpstreamKeyword,
         FlatMap[Each[
@@ -169,7 +169,7 @@ object Each {
           ]
       ): ToKeyword[Dsl.For.Do.Foreach[
         Upstream,
-        UpstreamElement,
+        UpstreamElement
       ], FlatMap[
         UpstreamKeyword,
         Pure[Unit]
@@ -268,13 +268,13 @@ object Each {
           isUpstreamKeyword: Dsl.IsKeyword[Upstream, UpstreamElement]
       ): ToKeyword[Dsl.For.Do.Foreach[
         Upstream,
-        UpstreamElement,
+        UpstreamElement
       ], FlatMap[
         Upstream,
         Pure[Unit]
       ]] = Pure.liftCo[[X] =>> ToKeyword[Dsl.For.Do.Foreach[
         Upstream,
-        UpstreamElement,
+        UpstreamElement
       ], FlatMap[
         Upstream,
         X
@@ -317,7 +317,7 @@ object Each {
       ): ToKeyword[Dsl.For.Do.FlatForeach[
         Upstream,
         UpstreamElement,
-        Nested,
+        Nested
       ], FlatMap[
         Upstream,
         NestedKeyword
