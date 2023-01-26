@@ -3,6 +3,7 @@ package domains
 
 import com.thoughtworks.dsl.Dsl
 
+import scala.annotation.experimental
 import scala.language.higherKinds
 import scala.language.implicitConversions
 import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans}
@@ -130,7 +131,7 @@ import scala.util.control.NonFatal
   * @author
   *   杨博 (Yang Bo)
   */
-object scalaz extends scalaz.LowPriority0 {
+@experimental object scalaz extends scalaz.LowPriority0 {
 
   protected type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
