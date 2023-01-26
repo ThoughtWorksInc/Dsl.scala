@@ -14,8 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala:
-        - 2.12.15
+        include:
+        - scala: 3.2.2
 
     steps:
     - uses: actions/checkout@v3
@@ -35,10 +35,11 @@ jobs:
           ~/.sbt/
           ~/.coursier/
         key: |
-          ${{ runner.os }}-${{matrix.scala}}-${{ hashFiles('**/*.sbt') }}
-          ${{ runner.os }}-${{matrix.scala}}-
+          ${{runner.os}}-${{matrix.scala}}-${{hashFiles('**/*.sbt')}}-${{matrix.sbt-args}}
+          ${{runner.os}}-${{matrix.scala}}-${{hashFiles('**/*.sbt')}}-
+          ${{runner.os}}-${{matrix.scala}}-
     - name: Run tests
-      run: sbt ++${{ matrix.scala }} test
+      run: sbt ${{matrix.sbt-args}} ++${{ matrix.scala }} test
     - name: Publish to Maven Central Repository
       env:
         GITHUB_PERSONAL_ACCESS_TOKEN: ${{secrets.PERSONAL_ACCESS_TOKEN}}
