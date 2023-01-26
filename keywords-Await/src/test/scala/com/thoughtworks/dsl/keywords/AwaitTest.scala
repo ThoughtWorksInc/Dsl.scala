@@ -2,7 +2,6 @@ package com.thoughtworks.dsl
 package keywords
 
 import com.thoughtworks.dsl.macros.Reset.Default.*
-import Dsl.!!
 import Dsl.Run
 import Dsl.IsKeyword
 import keywords._, Match._
@@ -145,23 +144,23 @@ class AwaitTest extends AsyncFreeSpec with Matchers with Inside {
   "test1" in {
     val reified = reify[1](1)
     summon[reified.type <:< Typed[Suspend[Pure[1]], 1]]
-    Suspend.apply.flip(Typed.apply.flip(reified))() should be(1)
+    Suspend.flip(Typed.flip(reified))() should be(1)
   }
   "test2" in {
     val reified = reify[1] { 1 }
     summon[reified.type <:< Typed[Suspend[Pure[1]], 1]]
-    Suspend.apply.flip(Typed.apply.flip(reified))() should be(1)
+    Suspend.flip(Typed.flip(reified))() should be(1)
 
     val reified2 = reify[1](!reified)
     summon[reified2.type <:< Typed[Suspend[Typed[Suspend[Pure[1]], 1]], 1]]
-    Suspend.apply.flip(
-      Typed.apply.flip(Suspend.apply.flip(Typed.apply.flip(reified2))())
+    Suspend.flip(
+      Typed.flip(Suspend.flip(Typed.flip(reified2))())
     )() should be(1)
   }
   "test3" in {
     val reified = reify {}
     summon[reified.type <:< Typed[Suspend[Pure[Unit]], Unit]]
-    Suspend.apply.flip(Typed.apply.flip(reified))() should be(())
+    Suspend.flip(Typed.flip(reified))() should be(())
   }
   "test4" in {
     val reified = reify {

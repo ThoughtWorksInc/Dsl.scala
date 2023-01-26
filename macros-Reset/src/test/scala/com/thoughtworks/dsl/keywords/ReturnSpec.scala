@@ -1,6 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
-import com.thoughtworks.dsl.Dsl.!!
+
 import com.thoughtworks.dsl.macros.Reset
 import com.thoughtworks.dsl.macros.Reset.Default.*
 import utest.{TestSuite, Tests, given}

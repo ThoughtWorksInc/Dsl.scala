@@ -4,7 +4,7 @@ import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels._
 
-import com.thoughtworks.dsl.Dsl.{!!, IsKeyword}
+import com.thoughtworks.dsl.Dsl.IsKeyword
 
 import scala.util.control.NonFatal
 import scala.annotation.unchecked.uncheckedVariance
@@ -94,7 +94,7 @@ trait AsynchronousIo[+Value] extends Any with Dsl.Keyword.Trait {
 
 object AsynchronousIo {
   given [Keyword <: AsynchronousIo[Value], Value]: IsKeyword[Keyword, Value]
-    with {}
+  with {}
   final case class Connect(
       socket: AsynchronousSocketChannel,
       remote: SocketAddress

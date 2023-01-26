@@ -1,6 +1,5 @@
 package com.thoughtworks.dsl.keywords
 
-import com.thoughtworks.dsl.Dsl.!!
 import org.scalatest.freespec.AnyFreeSpec
 import com.thoughtworks.dsl.macros.Reset.Default.*
 import org.scalatest.matchers.should.Matchers

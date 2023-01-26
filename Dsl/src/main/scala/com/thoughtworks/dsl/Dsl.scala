@@ -1,5 +1,6 @@
 package com.thoughtworks.dsl
-import com.thoughtworks.dsl.Dsl.!!
+
+private type !![R, +A] = (A => R) => R
 
 import scala.annotation._
 import scala.collection._
@@ -39,6 +40,54 @@ opaque type Dsl[-Keyword, Domain, +Value] <: (
 ) => Domain = (Keyword, (Value => Domain)) => Domain
 
 private[dsl] trait LowPriorityDsl1 { this: Dsl.type =>
+
+  opaque type Searching[-Keyword, Domain, +Value] <: Dsl[
+    Keyword,
+    Domain,
+    Value
+  ] = Dsl[Keyword, Domain, Value]
+  object Searching
+      extends Searching.AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived:
+    private[Searching] trait StackUnsafeDerived:
+      given [Keyword, UnsafeDomain, Value](using
+          dsl: Dsl.Derived.StackUnsafe[Keyword, UnsafeDomain, Value]
+      ): Searching[Keyword, UnsafeDomain, Value] = dsl
+    private[Searching] trait StackSafeDerivedThenStackUnsafeDerived
+        extends Searching.StackUnsafeDerived:
+      given [Keyword, DerivedDomain, Value](using
+          dsl: Dsl.Derived.StackSafe[Keyword, DerivedDomain, Value]
+      ): Searching[Keyword, DerivedDomain, Value] = dsl
+    private[Searching] trait ComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends Searching.StackSafeDerivedThenStackUnsafeDerived:
+      given [ComposedKeyword, Domain, Value](using
+          dsl: Dsl.Composed[ComposedKeyword, Domain, Value]
+      ): Searching[ComposedKeyword, Domain, Value] = dsl
+    private[Searching] trait AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends Searching.ComposedThenStackSafeDerivedThenStackUnsafeDerived:
+      given [Keyword, Domain, Value](using
+          dsl: Dsl.Original[Keyword, Domain, Value]
+      ): Searching[Keyword, Domain, Value] = dsl
+    object AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
+        extends AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
+
+    private[Searching] trait ComposedThenStackUnsafeDerived
+        extends Searching.StackUnsafeDerived:
+      given [ComposedKeyword, Domain, Value](using
+          dsl: Dsl.Composed[ComposedKeyword, Domain, Value]
+      ): Searching[ComposedKeyword, Domain, Value] = dsl
+    private[Searching] trait StackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends Searching.ComposedThenStackUnsafeDerived:
+      given [Keyword, DerivedDomain, Value](using
+          dsl: Dsl.Derived.StackSafe[Keyword, DerivedDomain, Value]
+      ): Searching[Keyword, DerivedDomain, Value] = dsl
+    private[Searching] trait AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends Searching.StackSafeDerivedThenComposedThenStackUnsafeDerived:
+      given [Keyword, Domain, Value](using
+          dsl: Dsl.Original[Keyword, Domain, Value]
+      ): Searching[Keyword, Domain, Value] = dsl
+    object AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+        extends AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+  end Searching
 
   private def deriveFunction1Dsl[Keyword, State, Domain, Value](using
       restDsl: Dsl.Searching[Keyword, Domain, Value]
@@ -94,14 +143,18 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 
 }
 
-object Dsl extends LowPriorityDsl0 {
-  def apply[Keyword, Domain, Value]: (
+inline def Dsl[Keyword, Domain, Value](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): (
     (
         Keyword,
         (Value => Domain)
     ) => Domain
-  ) =:= Dsl[Keyword, Domain, Value] =
-    summon
+) =:= Dsl[Keyword, Domain, Value] =
+  summon
+
+object Dsl extends LowPriorityDsl0 {
+
   private[dsl] abstract class TrampolineFunction1[-A, +R] extends (A => R) {
     protected def step(): A => R
     @tailrec
@@ -163,14 +216,13 @@ object Dsl extends LowPriorityDsl0 {
       Value
     ] =
       Dsl[Keyword, Domain, Value]
-    object StackSafe:
-      def apply[Keyword, Domain, Value]: (
+    def StackSafe[Keyword, Domain, Value]: (
         (
             Keyword,
             (Value => Domain)
         ) => Domain
-      ) =:= StackSafe[Keyword, Domain, Value] =
-        summon
+    ) =:= StackSafe[Keyword, Domain, Value] =
+      summon
 
     /** A [[Dsl]] derived from a stack-unsafe domain, e.g.
       * [[scala.concurrent.Future]]
@@ -181,14 +233,13 @@ object Dsl extends LowPriorityDsl0 {
       Value
     ] =
       Dsl[Keyword, Domain, Value]
-    object StackUnsafe:
-      def apply[Keyword, Domain, Value]: (
+    def StackUnsafe[Keyword, Domain, Value]: (
         (
             Keyword,
             (Value => Domain)
         ) => Domain
-      ) =:= StackUnsafe[Keyword, Domain, Value] =
-        summon
+    ) =:= StackUnsafe[Keyword, Domain, Value] =
+      summon
 
   /** An [[Dsl]] for a control flow [[Keyword]], composed of other [[Dsl]]s for
     * subtree of the [[Keyword]]. For example, a [[Dsl.Composed]] for
@@ -200,14 +251,13 @@ object Dsl extends LowPriorityDsl0 {
     Domain,
     Value
   ] = Dsl[Keyword, Domain, Value]
-  object Composed:
-    def apply[Keyword, Domain, Value]: (
+  def Composed[Keyword, Domain, Value]: (
       (
           Keyword,
           (Value => Domain)
       ) => Domain
-    ) =:= Composed[Keyword, Domain, Value] =
-      summon
+  ) =:= Composed[Keyword, Domain, Value] =
+    summon
 
   /** An original [[Dsl]] for a [[Keyword]], i.e. neither [[Derived.StackSafe]]
     * nor [[Derived.StackUnsafe]] nor [[Composed]].
@@ -218,61 +268,14 @@ object Dsl extends LowPriorityDsl0 {
     Value
   ] =
     Dsl[Keyword, Domain, Value]
-  object Original:
-    def apply[Keyword, Domain, Value]: (
+
+  def Original[Keyword, Domain, Value]: (
       (
           Keyword,
           (Value => Domain)
       ) => Domain
-    ) =:= Original[Keyword, Domain, Value] =
-      summon
-
-  opaque type Searching[-Keyword, Domain, +Value] <: Dsl[
-    Keyword,
-    Domain,
-    Value
-  ] = Dsl[Keyword, Domain, Value]
-  object Searching
-      extends Searching.AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived:
-    private[Searching] trait StackUnsafeDerived:
-      given [Keyword, UnsafeDomain, Value](using
-          dsl: Dsl.Derived.StackUnsafe[Keyword, UnsafeDomain, Value]
-      ): Dsl.Searching[Keyword, UnsafeDomain, Value] = dsl
-    private[Searching] trait StackSafeDerivedThenStackUnsafeDerived
-        extends Searching.StackUnsafeDerived:
-      given [Keyword, DerivedDomain, Value](using
-          dsl: Dsl.Derived.StackSafe[Keyword, DerivedDomain, Value]
-      ): Dsl.Searching[Keyword, DerivedDomain, Value] = dsl
-    private[Searching] trait ComposedThenStackSafeDerivedThenStackUnsafeDerived
-        extends Searching.StackSafeDerivedThenStackUnsafeDerived:
-      given [ComposedKeyword, Domain, Value](using
-          dsl: Dsl.Composed[ComposedKeyword, Domain, Value]
-      ): Dsl.Searching[ComposedKeyword, Domain, Value] = dsl
-    private[Searching] trait AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
-        extends Searching.ComposedThenStackSafeDerivedThenStackUnsafeDerived:
-      given [Keyword, Domain, Value](using
-          dsl: Dsl.Original[Keyword, Domain, Value]
-      ): Dsl.Searching[Keyword, Domain, Value] = dsl
-    object AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
-        extends AtomicThenComposedThenStackSafeDerivedThenStackUnsafeDerived
-
-    private[Searching] trait ComposedThenStackUnsafeDerived
-        extends Searching.StackUnsafeDerived:
-      given [ComposedKeyword, Domain, Value](using
-          dsl: Dsl.Composed[ComposedKeyword, Domain, Value]
-      ): Dsl.Searching[ComposedKeyword, Domain, Value] = dsl
-    private[Searching] trait StackSafeDerivedThenComposedThenStackUnsafeDerived
-        extends Searching.ComposedThenStackUnsafeDerived:
-      given [Keyword, DerivedDomain, Value](using
-          dsl: Dsl.Derived.StackSafe[Keyword, DerivedDomain, Value]
-      ): Dsl.Searching[Keyword, DerivedDomain, Value] = dsl
-    private[Searching] trait AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
-        extends Searching.StackSafeDerivedThenComposedThenStackUnsafeDerived:
-      given [Keyword, Domain, Value](using
-          dsl: Dsl.Original[Keyword, Domain, Value]
-      ): Dsl.Searching[Keyword, Domain, Value] = dsl
-    object AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
-        extends AtomicThenStackSafeDerivedThenComposedThenStackUnsafeDerived
+  ) =:= Original[Keyword, Domain, Value] =
+    summon
 
   extension [Keyword, Value](
       inline from: Keyword
@@ -411,8 +414,6 @@ object Dsl extends LowPriorityDsl0 {
   ] !! Throwable, TailRecValue] =
     Dsl.Derived.StackUnsafe(derivedThrowableTailRecDsl)
 
-  private[dsl] type !![R, +A] = (A => R) => R
-
   @FunctionalInterface
   trait Lift[From, +To] extends (From => To)
   private[dsl] trait LowPriorityLift0 { this: Lift.type =>
@@ -452,7 +453,6 @@ object Dsl extends LowPriorityDsl0 {
 
     object OneStep extends LowPriorityOneStep0 {
 
-      import Dsl.!!
       given [LeftDomain, RightDomain]
           : OneStep[RightDomain, LeftDomain !! RightDomain] = r => _(r)
 
@@ -491,9 +491,7 @@ object Dsl extends LowPriorityDsl0 {
     opaque type Opaque = Any
     object Opaque {
       opaque type Of[+Self] <: Self & Opaque = Self
-      object Of {
-        def apply[Self]: Self =:= Of[Self] = summon
-      }
+      def Of[Self]: Self =:= Of[Self] = summon
     }
   }
 

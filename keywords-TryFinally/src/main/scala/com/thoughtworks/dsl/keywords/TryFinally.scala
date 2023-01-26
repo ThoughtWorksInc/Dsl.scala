@@ -1,6 +1,5 @@
 package com.thoughtworks.dsl
 package keywords
-import Dsl.!!
 import Dsl.IsKeyword
 import scala.util.control.Exception.Catcher
 import scala.concurrent._

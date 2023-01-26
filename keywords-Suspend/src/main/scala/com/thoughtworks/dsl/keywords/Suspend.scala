@@ -1,7 +1,6 @@
 package com.thoughtworks.dsl
 package keywords
 import Dsl.IsKeyword
-import Dsl.!!
 import Dsl.cpsApply
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
@@ -10,9 +9,11 @@ import scala.util.control.TailCalls
 
 opaque type Suspend[+Keyword] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of[() => Keyword]
+@inline def Suspend[Keyword](using
+    dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
+): (() => Keyword) =:= Suspend[Keyword] =
+  Dsl.Keyword.Opaque.Of
 object Suspend extends Suspend.LowPriority0 {
-  @inline def apply[Keyword]: (() => Keyword) =:= Suspend[Keyword] =
-    Dsl.Keyword.Opaque.Of.apply
 
   given [Upstream, UpstreamValue](using
       upstreamIsKeyword: => IsKeyword[Upstream, UpstreamValue]

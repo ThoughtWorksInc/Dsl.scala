@@ -15,7 +15,7 @@ private trait AwaitJS { this: Await.type =>
   given [JsPromiseResult, That]: Dsl.Original[Await[
     js.Promise[JsPromiseResult]
   ], js.Promise[That], JsPromiseResult] =
-    Await.apply
+    Await
       .liftCo[[X] =>> Dsl.Original[X, js.Promise[That], JsPromiseResult]](
         Dsl.Original(_ `then` _)
       )
@@ -23,7 +23,7 @@ private trait AwaitJS { this: Await.type =>
   given [JsPromiseResult, That](using ExecutionContext): Dsl.Original[Await[
     js.Promise[JsPromiseResult]
   ], Future[That], JsPromiseResult] =
-    Await.apply.liftCo[[X] =>> Dsl.Original[X, Future[That], JsPromiseResult]](
+    Await.liftCo[[X] =>> Dsl.Original[X, Future[That], JsPromiseResult]](
       Dsl.Original { (promise, handler) =>
         promise.toFuture.flatMap(handler)
       }

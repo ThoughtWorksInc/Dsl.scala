@@ -3,7 +3,6 @@ package domains
 
 import com.thoughtworks.dsl.macros.Reset
 import com.thoughtworks.dsl.macros.Reset.Default.*
-import com.thoughtworks.dsl.Dsl.{!!}
 import org.scalatest.Assertion
 import scala.language.implicitConversions
 
