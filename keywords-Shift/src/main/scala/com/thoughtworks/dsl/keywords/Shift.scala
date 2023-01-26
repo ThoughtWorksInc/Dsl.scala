@@ -98,10 +98,10 @@ object Shift extends LowPriorityShift0 {
     Value
   ], NewDomain, Value] = Dsl.Original[Shift[Domain, Value], NewDomain, Value]
   def StackSafeShiftDsl[Domain, NewDomain, Value]: (
-    (
-        Shift[Domain, Value],
-        Value => NewDomain
-    ) => NewDomain
+      (
+          Shift[Domain, Value],
+          Value => NewDomain
+      ) => NewDomain
   ) =:= StackSafeShiftDsl[Domain, NewDomain, Value] =
     Dsl.Original[Shift[Domain, Value], NewDomain, Value]
 

@@ -146,10 +146,10 @@ private[dsl] trait LowPriorityDsl0 extends LowPriorityDsl1 { this: Dsl.type =>
 inline def Dsl[Keyword, Domain, Value](using
     dummyImplicit: DummyImplicit = DummyImplicit.dummyImplicit
 ): (
-  (
-      Keyword,
-      (Value => Domain)
-  ) => Domain
+    (
+        Keyword,
+        (Value => Domain)
+    ) => Domain
 ) =:= Dsl[Keyword, Domain, Value] =
   summon
 
@@ -217,10 +217,10 @@ object Dsl extends LowPriorityDsl0 {
     ] =
       Dsl[Keyword, Domain, Value]
     def StackSafe[Keyword, Domain, Value]: (
-      (
-          Keyword,
-          (Value => Domain)
-      ) => Domain
+        (
+            Keyword,
+            (Value => Domain)
+        ) => Domain
     ) =:= StackSafe[Keyword, Domain, Value] =
       summon
 
@@ -234,10 +234,10 @@ object Dsl extends LowPriorityDsl0 {
     ] =
       Dsl[Keyword, Domain, Value]
     def StackUnsafe[Keyword, Domain, Value]: (
-      (
-          Keyword,
-          (Value => Domain)
-      ) => Domain
+        (
+            Keyword,
+            (Value => Domain)
+        ) => Domain
     ) =:= StackUnsafe[Keyword, Domain, Value] =
       summon
 
@@ -252,10 +252,10 @@ object Dsl extends LowPriorityDsl0 {
     Value
   ] = Dsl[Keyword, Domain, Value]
   def Composed[Keyword, Domain, Value]: (
-    (
-        Keyword,
-        (Value => Domain)
-    ) => Domain
+      (
+          Keyword,
+          (Value => Domain)
+      ) => Domain
   ) =:= Composed[Keyword, Domain, Value] =
     summon
 
@@ -270,10 +270,10 @@ object Dsl extends LowPriorityDsl0 {
     Dsl[Keyword, Domain, Value]
 
   def Original[Keyword, Domain, Value]: (
-    (
-        Keyword,
-        (Value => Domain)
-    ) => Domain
+      (
+          Keyword,
+          (Value => Domain)
+      ) => Domain
   ) =:= Original[Keyword, Domain, Value] =
     summon
 

@@ -119,7 +119,7 @@ opaque type Await[+AwaitableValue] <: Dsl.Keyword.Opaque =
   Dsl.Keyword.Opaque.Of
 object Await extends AwaitJS {
   given [FutureResult]: IsKeyword[Await[Future[FutureResult]], FutureResult]
-    with {}
+  with {}
 
   given [FutureResult, That](using
       ExecutionContext
