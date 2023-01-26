@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala:
-        - 3.2.1
+        include:
+        - scala: 3.2.2
 
     steps:
     - uses: actions/checkout@v2
