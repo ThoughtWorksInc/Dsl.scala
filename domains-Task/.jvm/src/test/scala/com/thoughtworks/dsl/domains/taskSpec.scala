@@ -34,15 +34,18 @@ final class taskSpec extends AsyncFreeSpec with Matchers {
       }
       summon[
         reified.type <:<
-          Typed[Suspend[FlatMap[
-            Pure[n.type],
-            Match.WithIndex[(0), Pure[(0)]] +:
-              Match.WithIndex[(1), Pure[(1)]] +:
-              Match.WithIndex[(2), FlatMap[
-                Shift[Task.TaskDomain, Int],
-                FlatMap[Shift[Task.TaskDomain, Int], Pure[Int]]
-              ]] +: Nothing
-          ]], Int]
+          Typed[
+            Suspend[FlatMap[
+              Pure[n.type],
+              Match.WithIndex[(0), Pure[(0)]] +:
+                Match.WithIndex[(1), Pure[(1)]] +:
+                Match.WithIndex[(2), FlatMap[
+                  Shift[Task.TaskDomain, Int],
+                  FlatMap[Shift[Task.TaskDomain, Int], Pure[Int]]
+                ]] +: Nothing
+            ]],
+            Int
+          ]
       ]
       Task {
 
