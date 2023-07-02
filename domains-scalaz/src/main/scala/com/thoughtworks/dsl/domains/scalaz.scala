@@ -81,13 +81,13 @@ import scala.util.control.NonFatal
   *   }}}
   *   Note that [[Dsl.Keyword#unary_$bang !-notation]] can be used on both
   *   `trampoline3` and `trampolineSuccess0` even when they are different types,
-  *   i.e. `trampoline3` is a vanilla [[scalaz.Free.Trampoline Trampoline]], while
-  *   `trampolineSuccess0` is a
+  *   i.e. `trampoline3` is a vanilla [[scalaz.Free.Trampoline Trampoline]],
+  *   while `trampolineSuccess0` is a
   *   [[com.thoughtworks.tryt.invariant.TryT TryT]]-transfomred
   *   [[scalaz.Free.Trampoline Trampoline]]. It is possible because the
-  *   interpreters of the [[keywords.Monadic]] invoke [[scalaz.MonadTrans.liftM]]
-  *   automatically. <p> The above `dslTryCatch` method is equivalent to the
-  *   following code in [[scalaz.syntax]]:
+  *   interpreters of the [[keywords.Monadic]] invoke
+  *   [[scalaz.MonadTrans.liftM]] automatically. <p> The above `dslTryCatch`
+  *   method is equivalent to the following code in [[scalaz.syntax]]:
   *   {{{
   *   import _root_.scalaz.syntax.monad._
   *   def scalazSyntaxTryCatch: TryTTransfomredTrampoline[String] = {
