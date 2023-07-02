@@ -1,1 +1,1 @@
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.15" % Optional
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.16" % Optional
