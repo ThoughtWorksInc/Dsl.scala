@@ -190,6 +190,8 @@ lazy val `domains-scalaz` =
       Dsl,
       `macros-Reset` % Test,
       `keywords-Monadic`,
+      `keywords-Get`,
+      `keywords-Put`,
       `keywords-Return`,
       `keywords-TryCatch`,
       `keywords-TryFinally`,
