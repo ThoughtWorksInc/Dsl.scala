@@ -4,7 +4,7 @@ libraryDependencies += "com.thoughtworks.tryt" %%% "invariant" % "3.0.0" % Test
 
 libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.3.7" % Test
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.16" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test
 
 enablePlugins(Example)
 
