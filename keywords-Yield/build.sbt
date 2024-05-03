@@ -1,4 +1,4 @@
-libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.1" % Test
+libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.3" % Test
 
 testFrameworks += new TestFramework("utest.runner.Framework")
 
