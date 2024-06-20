@@ -5,8 +5,16 @@ import com.thoughtworks.dsl.Dsl
 
 import scala.language.higherKinds
 import scala.language.implicitConversions
-import _root_.scalaz.{Applicative, Bind, Monad, MonadError, MonadTrans}
-import com.thoughtworks.dsl.keywords.{Monadic, Return}
+import _root_.scalaz.{
+  Applicative,
+  Bind,
+  Kleisli,
+  Monad,
+  MonadError,
+  MonadTrans,
+  ReaderT
+}
+import com.thoughtworks.dsl.keywords.{Get, Monadic, Put, Return}
 
 import scala.util.control.Exception.Catcher
 import scala.util.control.NonFatal
@@ -192,6 +200,11 @@ object scalaz extends scalaz.LowPriority0 {
     monadTrans.liftM(_)
   }
 
+  // ReaderT/Kleisli's type parameter order does not support partial unification for MonadTrans
+  given [E, F[_], A, B]: Dsl.Lift.OneStep[F[A], Kleisli[F, E, A]] = { fa =>
+    Kleisli(_ => fa)
+  }
+
   /** The [[Dsl]] instance that converts a [[domains.Monadic]] keyword to the
     * monad domain type then flatMap. This instance helps when the keyword
     * supports a domain `D` that can be lifted to the `F[A]`, while there is not
@@ -206,6 +219,20 @@ object scalaz extends scalaz.LowPriority0 {
       monad.bind(lift(Monadic.flip(keyword)))(
         handler
       )
+    }
+
+  given [E, F[_], A]: Dsl.Original[Get[E], ReaderT[E, F, A], E] = Dsl.Original {
+    (keyword, handler) =>
+      ReaderT { e =>
+        handler(e)(e)
+      }
+  }
+
+  given [E, F[_], A]: Dsl.Original[Put[E], ReaderT[E, F, A], Unit] =
+    Dsl.Original { (keyword, handler) =>
+      ReaderT { _ =>
+        handler(())(Put.apply.flip(keyword))
+      }
     }
 
 }
