@@ -2,7 +2,7 @@ libraryDependencies += "com.github.sbt" % "junit-interface" % "0.13.3" % Test
 
 libraryDependencies += "junit" % "junit" % "4.13.2" % Test
 
-libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.3" % Test
+libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.9" % Test
 
 libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.16" % Test
 
